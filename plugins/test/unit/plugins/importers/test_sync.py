@@ -50,7 +50,7 @@ class TestGenerateMetadataStep(unittest.TestCase):
         self.repo.working_dir = self.working_dir
         self.conduit = mock.MagicMock()
         plugin_config = {
-            importer_constants.KEY_FEED: 'http://pulpproject.org/',
+            importer_constants.KEY_FEED: 'http://ftp.fau.de/debian/dists/stable/main/binary-amd64/',
         }
         self.config = PluginCallConfiguration({}, plugin_config)
 
