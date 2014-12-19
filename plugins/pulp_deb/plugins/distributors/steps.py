@@ -1,6 +1,8 @@
 from gettext import gettext as _
 import logging
 import os
+import subprocess
+import gzip
 from pulp.plugins.util.publish_step import PluginStep, AtomicDirectoryPublishStep
 
 from pulp_deb.common import constants
@@ -37,8 +39,8 @@ class WebPublisher(PluginStep):
                                                          step_type=constants.PUBLISH_STEP_OVER_HTTP)
         atomic_publish_step.description = _('Making files available via web.')
 
-        self.add_child(PublishMetadataStep(working_dir=self.web_working_dir))
         self.add_child(PublishContentStep(working_dir=self.web_working_dir))
+        self.add_child(PublishMetadataStep(working_dir=self.web_working_dir))
         self.add_child(atomic_publish_step)
 
 
@@ -58,13 +60,25 @@ class PublishMetadataStep(PluginStep):
         Publish all the deb metadata or create a blank deb if this has never been synced
         """
         # Write out repo metadata into the working directory
+        packfile = os.path.join(self.get_working_dir(), "Packages")
+        dpkg_out = open(packfile, 'w')
+        proc = subprocess.Popen(['dpkg-scanpackages', '-m', '.'], cwd=self.get_working_dir(),
+                                stdout=subprocess.PIPE)
+        (out, err) = proc.communicate()
+        dpkg_out.write(out)
+        dpkg_out.close()
+
+        f_in = open(packfile, 'rb')
+        f_out = gzip.open(packfile + '.gz', 'wb')
+        f_out.writelines(f_in)
+        f_out.close()
+        f_in.close()
 
 
 class PublishContentStep(PluginStep):
     """
     Publish Content
     """
-
     def __init__(self, **kwargs):
         super(PublishContentStep, self).__init__(constants.PUBLISH_STEP_CONTENT, **kwargs)
         self.context = None
@@ -76,5 +90,10 @@ class PublishContentStep(PluginStep):
         """
         Publish all the deb files themselves
         """
-        # Symlink all sub directories of the storage dir except the refs directory
-        # Perhaps we should consider using PluginStepIterativeProcessingMixin
+        units = self.get_conduit().get_units()
+        if not os.path.isdir(self.get_working_dir()):
+            os.makedirs(self.get_working_dir())
+        for unit in units:
+            path = os.path.join(self.get_working_dir(), os.path.basename(unit.storage_path))
+            unit_path = os.path.join(constants.CONTENT_DIR, unit.storage_path)
+            os.symlink(unit_path, path)
