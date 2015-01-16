@@ -53,7 +53,6 @@ class PublishMetadataStep(PluginStep):
         super(PublishMetadataStep, self).__init__(constants.PUBLISH_STEP_METADATA, **kwargs)
         self.context = None
         self.redirect_context = None
-        self.working_directory = kwargs["working_dir"]
         self.description = _('Publishing Metadata.')
 
     def process_main(self):
@@ -61,8 +60,8 @@ class PublishMetadataStep(PluginStep):
         Publish all the deb metadata or create a blank deb if this has never been synced
         """
         # Write out repo metadata into the working directory
-        packfile = os.path.join(self.working_directory, "Packages")
-        status, out = commands.getstatusoutput("cd " + self.working_directory + "; dpkg-scanpackages -m . > " + packfile)
+        packfile = os.path.join(self.get_working_dir(), "Packages")
+        status, out = commands.getstatusoutput("cd " + self.get_working_dir() + "; dpkg-scanpackages -m . > " + packfile)
         f_in = open(packfile, 'rb')
         f_out = gzip.open(packfile + '.gz', 'wb')
         f_out.writelines(f_in)
@@ -81,8 +80,7 @@ class PublishContentStep(PluginStep):
         self.redirect_context = None
         self.description = _('Publishing Deb Content.')
         self.unit = None
-        self.working_directory = kwargs["working_dir"]
-        os.makedirs(self.working_directory)
+        os.makedirs(self.get_working_dir())
 
     def process_main(self):
         """
@@ -90,6 +88,6 @@ class PublishContentStep(PluginStep):
         """
         units = self.get_conduit().get_units()
         for unit in units:
-            path = os.path.join(self.working_directory, os.path.basename(unit.storage_path))
+            path = os.path.join(self.get_working_dir(), os.path.basename(unit.storage_path))
             unit_path = os.path.join(constants.CONTENT_DIR, unit.storage_path)
             os.symlink(unit_path, path)
