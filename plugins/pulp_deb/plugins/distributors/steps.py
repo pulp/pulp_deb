@@ -1,7 +1,7 @@
 from gettext import gettext as _
 import logging
 import os
-import commands
+import subprocess
 import gzip
 from pulp.plugins.util.publish_step import PluginStep, AtomicDirectoryPublishStep
 
@@ -61,7 +61,12 @@ class PublishMetadataStep(PluginStep):
         """
         # Write out repo metadata into the working directory
         packfile = os.path.join(self.get_working_dir(), "Packages")
-        status, out = commands.getstatusoutput("cd " + self.get_working_dir() + "; dpkg-scanpackages -m . > " + packfile)
+        dpkg_out = open(packfile, 'w')
+        proc = subprocess.Popen(['dpkg-scanpackages', '-m', '.'], cwd=self.get_working_dir(), stdout=subprocess.PIPE)
+        (out, err) = proc.communicate()
+        dpkg_out.write(out)
+        dpkg_out.close()
+
         f_in = open(packfile, 'rb')
         f_out = gzip.open(packfile + '.gz', 'wb')
         f_out.writelines(f_in)
