@@ -62,7 +62,8 @@ class PublishMetadataStep(PluginStep):
         # Write out repo metadata into the working directory
         packfile = os.path.join(self.get_working_dir(), "Packages")
         dpkg_out = open(packfile, 'w')
-        proc = subprocess.Popen(['dpkg-scanpackages', '-m', '.'], cwd=self.get_working_dir(), stdout=subprocess.PIPE)
+        proc = subprocess.Popen(['dpkg-scanpackages', '-m', '.'], cwd=self.get_working_dir(),
+                                stdout=subprocess.PIPE)
         (out, err) = proc.communicate()
         dpkg_out.write(out)
         dpkg_out.close()
@@ -78,20 +79,20 @@ class PublishContentStep(PluginStep):
     """
     Publish Content
     """
-
     def __init__(self, **kwargs):
         super(PublishContentStep, self).__init__(constants.PUBLISH_STEP_CONTENT, **kwargs)
         self.context = None
         self.redirect_context = None
         self.description = _('Publishing Deb Content.')
         self.unit = None
-        os.makedirs(self.get_working_dir())
 
     def process_main(self):
         """
         Publish all the deb files themselves
         """
         units = self.get_conduit().get_units()
+        if not os.path.isdir(self.get_working_dir()):
+            os.makedirs(self.get_working_dir())
         for unit in units:
             path = os.path.join(self.get_working_dir(), os.path.basename(unit.storage_path))
             unit_path = os.path.join(constants.CONTENT_DIR, unit.storage_path)
