@@ -248,5 +248,10 @@ texinfo_documents = [
 intersphinx_mapping = {'pylang': ('http://docs.python.org/2.7/', None),
                        'platform': ("http://pulp.readthedocs.org/en/latest/", None)}
 
-# this needs a "fixedbugs" entry after the first release.
-extlinks = {'bz': ('https://bugzilla.redhat.com/show_bug.cgi?id=%s', 'RHBZ #')}
+extlinks = {'redmine': ('https://pulp.plan.io/issues/%s', '#'),
+            'fixedbugs': ('https://pulp.plan.io/projects/pulp_deb/issues?utf8=%%E2%%9C%%93&set_'
+                          'filter=1&f%%5B%%5D=cf_15&op%%5Bcf_15%%5D=%%3D&v%%5Bcf_15%%5D%%5B%%5D'
+                          '=%s&f%%5B%%5D=tracker_id&op%%5Btracker_id%%5D=%%3D&v%%5Btracker_id%%'
+                          '5D%%5B%%5D=1&f%%5B%%5D=&c%%5B%%5D=tracker&c%%5B%%5D=status&c%%5B%%5D'
+                          '=priority&c%%5B%%5D=cf_5&c%%5B%%5D=subject&c%%5B%%5D=author&c%%5B%%5'
+                          'D=assigned_to&c%%5B%%5D=cf_3&group_by=', 'bugs fixed in ')}
