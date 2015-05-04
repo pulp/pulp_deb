@@ -45,6 +45,13 @@ class TestCreateDebrRepositoryCommand(unittest.TestCase):
         target_result = {}
         compare_dict(result, target_result)
 
+    def test_describe_set_packages_file_path(self):
+        command = cudl.CreateDebRepositoryCommand(Mock())
+        user_input = {'package-file-path': 'foo/bar'}
+        result = command._parse_importer_config(user_input)
+        target_result = {'package-file-path': 'foo/bar'}
+        compare_dict(result, target_result)
+
 
 class TestUpdateDebRepositoryCommand(unittest.TestCase):
 
@@ -59,11 +66,13 @@ class TestUpdateDebRepositoryCommand(unittest.TestCase):
     def test_run_with_importer_config(self):
         user_input = {
             'repo-id': 'foo-repo',
+            'package-file-path': 'foo/bar',
             KEY_FEED: 'blah'
         }
         self.command.run(**user_input)
 
-        expected_importer_config = {KEY_FEED: 'blah'}
+        expected_importer_config = {KEY_FEED: 'blah',
+                                    'package-file-path': 'foo/bar'}
 
         self.context.server.repo.update.assert_called_once_with('foo-repo', {},
                                                                 expected_importer_config, None)

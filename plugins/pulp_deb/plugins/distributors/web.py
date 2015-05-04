@@ -118,8 +118,7 @@ class WebDistributor(Distributor):
         :type  config: pulp.plugins.config.PluginCallConfiguration
         """
         # remove the directories that might have been created for this repo/distributor
-        dir_list = [repo.working_dir,
-                    configuration.get_master_publish_dir(repo, config),
+        dir_list = [configuration.get_master_publish_dir(repo, config),
                     configuration.get_web_publish_dir(repo, config)]
 
         for repo_dir in dir_list:

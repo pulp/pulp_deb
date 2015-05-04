@@ -1,14 +1,18 @@
 from gettext import gettext as _
+import hashlib
 import logging
 import os
 import shutil
+import urlparse
 
 from debian import debian_support
-
-from pulp.plugins.model import Unit
-from pulp.plugins.util.publish_step import PluginStep, GetLocalUnitsStep, DownloadStep
-from pulp_deb.common import constants
 from nectar.request import DownloadRequest
+from pulp.plugins.util import misc
+from pulp.plugins.util.publish_step import PluginStep, GetLocalUnitsStep, DownloadStep
+from pulp.server.exceptions import PulpCodedValidationException
+
+from pulp_deb.common import constants
+from pulp_deb.plugins import error_codes
 
 
 _logger = logging.getLogger(__name__)
@@ -38,12 +42,12 @@ class SyncStep(PluginStep):
 
         # config = self.get_config()
         working_dir = self.get_working_dir()
+        self.deb_data = {}
         # repo = self.get_repo()
 
         # create a Repository object to interact with
         self.add_child(GetMetadataStep())
-        self.step_get_local_units = GetLocalUnitsStepDeb(constants.UNIT_KEY_FIELDS,
-                                                         self.get_working_dir())
+        self.step_get_local_units = GetLocalUnitsStepDeb(self.get_working_dir())
         self.add_child(self.step_get_local_units)
         self.add_child(
             DownloadStep(constants.SYNC_STEP_DOWNLOAD, downloads=self.generate_download_requests(),
@@ -59,13 +63,17 @@ class SyncStep(PluginStep):
         :return:    generator of DownloadRequest instances
         :rtype:     collections.Iterable[DownloadRequest]
         """
+        feed_url = self.get_config().get('feed')
         for unit_key in self.step_get_local_units.units_to_download:
-            dest_dir = os.path.join(self.working_dir, os.path.basename(unit_key["filename"]))
-            packages_url = self.get_config().get('feed')
-            packages_url = packages_url.rpartition("/")
-            for i in range(1, 5):
-                packages_url = packages_url[0].rpartition("/")
-            packages_url = packages_url[0] + "/" + unit_key["filename"]
+            key_hash = get_key_hash(unit_key)
+            # Don't save all the units in one directory as there could be 50k + units
+            hash_dir = generate_internal_storage_path(self.deb_data[key_hash]['file_name'])
+            # make sure the download directory exists
+            dest_dir = os.path.join(self.working_dir, hash_dir)
+            download_dir = os.path.dirname(dest_dir)
+            misc.mkdir(download_dir)
+            file_path = self.deb_data[key_hash]['file_path']
+            packages_url = urlparse.urljoin(feed_url, file_path)
             yield DownloadRequest(packages_url, dest_dir)
 
 
@@ -97,28 +105,44 @@ class GetMetadataStep(PluginStep):
         super(GetMetadataStep, self).process_main()
         _logger.debug(self.description)
         packages_url = self.get_config().get('feed')
-        packpath = os.path.join(self.get_working_dir() + "Packages")
+        packages_path = self.get_config().get('package-file-path')
+        if not packages_url.endswith('/'):
+            packages_url += '/'
+        if packages_path:
+            if packages_path.startswith('/'):
+                packages_path = packages_path[1:]
+            packages_url = urlparse.urljoin(packages_url, packages_path)
+        packpath = os.path.join(self.get_working_dir(), "Packages")
         debian_support.download_file(packages_url + "Packages", packpath)
         for package in debian_support.PackageFile(packpath):
-            self.parent.available_units.append(get_metadata(dict(package)))
+            package_data = dict(package)
+            metadata = get_metadata(package_data)
+            unit_key_hash = get_key_hash(metadata)
+            self.parent.deb_data[unit_key_hash] = {
+                'file_name': os.path.basename(package_data['Filename']),
+                'file_path': package_data['Filename'],
+                'file_size': package_data['Size']
+            }
+            self.parent.available_units.append(metadata)
 
 
 class GetLocalUnitsStepDeb(GetLocalUnitsStep):
-    def __init__(self, unit_key_fields, working_dir):
+
+    def __init__(self, working_dir):
         super(GetLocalUnitsStepDeb, self).__init__(constants.WEB_IMPORTER_TYPE_ID,
-                                                   constants.DEB_TYPE_ID, unit_key_fields,
+                                                   constants.DEB_TYPE_ID, constants.UNIT_KEY_FIELDS,
                                                    working_dir)
 
-    def process_main(self):
-        super(GetLocalUnitsStepDeb, self).process_main()
-
     def _dict_to_unit(self, unit_dict):
-        storage_path = unit_dict["filename"]
-        unit_key = {}
+        unit_key_hash = get_key_hash(unit_dict)
+        file_name = self.parent.deb_data[unit_key_hash]['file_name']
+        storage_path = generate_internal_storage_path(file_name)
         unit_dict.pop('_id')
-        for val in self.unit_key_fields:
-            unit_key[val] = unit_dict[val].encode("ascii")
-        return Unit(constants.DEB_TYPE_ID, unit_key, unit_dict, storage_path)
+        return_unit = self.get_conduit().init_unit(
+            constants.DEB_TYPE_ID, unit_dict,
+            {'file_name': file_name},
+            storage_path)
+        return return_unit
 
 
 class SaveUnits(PluginStep):
@@ -131,11 +155,47 @@ class SaveUnits(PluginStep):
     def process_main(self):
         _logger.debug(self.description)
         for unit_key in self.parent.step_get_local_units.units_to_download:
-            dest_dir = os.path.join(self.working_dir, os.path.basename(unit_key["filename"]))
-            unit = self.get_conduit().init_unit(constants.DEB_TYPE_ID, unit_key, {},
-                                                unit_key["filename"])
+            hash_key = get_key_hash(unit_key)
+            file_name = self.parent.deb_data[hash_key]['file_name']
+            storage_path = generate_internal_storage_path(file_name)
+            dest_dir = os.path.join(self.working_dir, storage_path)
+            # validate the size of the file downloaded
+            file_size = int(self.parent.deb_data[hash_key]['file_size'])
+            if file_size != os.stat(dest_dir).st_size:
+                raise PulpCodedValidationException(error_code=error_codes.DEB1001,
+                                                   file_name=file_name)
+
+            unit = self.get_conduit().init_unit(constants.DEB_TYPE_ID, unit_key,
+                                                {'file_name': file_name},
+                                                storage_path)
             shutil.move(dest_dir, unit.storage_path)
             self.get_conduit().save_unit(unit)
+
+
+def get_key_hash(metadata):
+    unit_key_hash = '::'.join([metadata['name'],
+                               metadata['version'],
+                               metadata['architecture']])
+    return unit_key_hash
+
+
+def generate_internal_storage_path(file_name):
+    """
+    Generate the internal storage directory for a given deb filename
+
+    :param file_name: base filename of the unit
+    :type file_name: str
+
+    :returns str: The relative path for storing the unit
+    """
+    hasher = hashlib.md5()
+    hasher.update(file_name)
+    hash_digest = hasher.hexdigest()
+    part1 = hash_digest[0:1]
+    part2 = hash_digest[2:4]
+    part3 = hash_digest[5:]
+    storage_path = os.path.join(part1, part2, part3, file_name)
+    return storage_path
 
 
 def get_metadata(package):
@@ -147,5 +207,5 @@ def get_metadata(package):
     :rtype          dict
     """
     unit_key = {"name": package["Package"], "version": package["Version"],
-                "architecture": package["Architecture"], "filename": package["Filename"]}
+                "architecture": package["Architecture"]}
     return unit_key
