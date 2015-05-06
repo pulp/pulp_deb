@@ -3,13 +3,14 @@ import logging
 import os
 import subprocess
 import gzip
+from pulp.plugins.util import misc
 from pulp.plugins.util.publish_step import PluginStep, AtomicDirectoryPublishStep
 
 from pulp_deb.common import constants
 from pulp_deb.plugins.distributors import configuration
 
 
-_LOG = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 class WebPublisher(PluginStep):
@@ -55,24 +56,25 @@ class PublishMetadataStep(PluginStep):
         self.redirect_context = None
         self.description = _('Publishing Metadata.')
 
-    def process_main(self):
+    def process_main(self, item=None):
         """
         Publish all the deb metadata or create a blank deb if this has never been synced
         """
         # Write out repo metadata into the working directory
-        packfile = os.path.join(self.get_working_dir(), "Packages")
-        dpkg_out = open(packfile, 'w')
-        proc = subprocess.Popen(['dpkg-scanpackages', '-m', '.'], cwd=self.get_working_dir(),
-                                stdout=subprocess.PIPE)
-        (out, err) = proc.communicate()
-        dpkg_out.write(out)
-        dpkg_out.close()
+        packfile_name = os.path.join(self.get_working_dir(), "Packages")
+        packfile_gz_name = packfile_name + '.gz'
 
-        f_in = open(packfile, 'rb')
-        f_out = gzip.open(packfile + '.gz', 'wb')
-        f_out.writelines(f_in)
-        f_out.close()
-        f_in.close()
+        with open(packfile_name, 'wb') as dpkg_out:
+            packfile_gz = gzip.open(packfile_gz_name, 'wb')
+            try:
+                proc = subprocess.Popen(['dpkg-scanpackages', '-m', '.'],
+                                        cwd=self.get_working_dir(),
+                                        stdout=subprocess.PIPE)
+                (out, err) = proc.communicate()
+                dpkg_out.write(out)
+                packfile_gz.write(out)
+            finally:
+                packfile_gz.close()
 
 
 class PublishContentStep(PluginStep):
@@ -81,19 +83,31 @@ class PublishContentStep(PluginStep):
     """
     def __init__(self, **kwargs):
         super(PublishContentStep, self).__init__(constants.PUBLISH_STEP_CONTENT, **kwargs)
-        self.context = None
-        self.redirect_context = None
         self.description = _('Publishing Deb Content.')
-        self.unit = None
 
-    def process_main(self):
+    def initialize(self):
         """
-        Publish all the deb files themselves
+        Perform setup required before we start processing the individual units
         """
-        units = self.get_conduit().get_units()
-        if not os.path.isdir(self.get_working_dir()):
-            os.makedirs(self.get_working_dir())
-        for unit in units:
-            path = os.path.join(self.get_working_dir(), os.path.basename(unit.storage_path))
-            unit_path = os.path.join(constants.CONTENT_DIR, unit.storage_path)
-            os.symlink(unit_path, path)
+        misc.mkdir(self.get_working_dir())
+
+    def _get_total(self):
+        return self.get_repo().content_unit_counts[constants.DEB_TYPE_ID]
+
+    def get_iterator(self):
+        """
+        This method returns a generator to loop over items.
+        The items created by this generator will be iterated over by the process_item method.
+
+        :return: generator of items
+        :rtype: GeneratorType of items
+        """
+        units_iterator = self.get_conduit().get_units(as_generator=True)
+        return units_iterator
+
+    def process_main(self, item=None):
+        """
+        Publish an individual deb file
+        """
+        path = os.path.join(self.get_working_dir(), item.metadata['file_name'])
+        os.symlink(item.storage_path, path)

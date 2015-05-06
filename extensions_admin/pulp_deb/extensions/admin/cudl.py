@@ -15,7 +15,7 @@ from pulp_deb.common import constants
 d = _('if "true", on each successful sync the repository will automatically be '
       'published; if "false" content will only be available after manually publishing '
       'the repository; defaults to "true"')
-OPT_AUTO_PUBLISH = PulpCliOption('--auto-publish', d, required=False,
+OPT_AUTO_PUBLISH = PulpCliOption('--auto-publish', d, required=False, default='True',
                                  parse_func=parsers.parse_boolean)
 
 DESC_FEED = _('URL for the upstream deb repo')
@@ -58,7 +58,7 @@ class CreateDebRepositoryCommand(CreateAndConfigureRepositoryCommand, ImporterCo
         :rtype:     list of dict
         """
         config = {}
-        auto_publish = user_input.get('auto-publish', True)
+        auto_publish = user_input.get(OPT_AUTO_PUBLISH.keyword)
         data = [
             dict(distributor_type_id=constants.WEB_DISTRIBUTOR_TYPE_ID,
                  distributor_config=config,
