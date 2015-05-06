@@ -1,6 +1,7 @@
 from gettext import gettext as _
 
-from pulp.client import arg_utils, parsers
+from okaara import parsers
+from pulp.client import arg_utils
 from pulp.client.commands.repo.cudl import CreateAndConfigureRepositoryCommand
 from pulp.client.commands.repo.cudl import ListRepositoriesCommand
 from pulp.client.commands.repo.cudl import UpdateRepositoryCommand
@@ -18,6 +19,10 @@ OPT_AUTO_PUBLISH = PulpCliOption('--auto-publish', d, required=False,
                                  parse_func=parsers.parse_boolean)
 
 DESC_FEED = _('URL for the upstream deb repo')
+DESC_PACKAGE_FILE_PATH = _('Relative path from the Feed root to the directory containing the '
+                           'Packages file. If not specified it is assumed that the Packages file '
+                           'is in the root of the repository')
+OPT_PACKAGE_FILE_PATH = PulpCliOption('--package-file-path', DESC_PACKAGE_FILE_PATH, required=False)
 
 IMPORTER_CONFIGURATION_FLAGS = dict(
     include_ssl=False,
@@ -37,6 +42,7 @@ class CreateDebRepositoryCommand(CreateAndConfigureRepositoryCommand, ImporterCo
         ImporterConfigMixin.__init__(self, **IMPORTER_CONFIGURATION_FLAGS)
         self.add_option(OPT_AUTO_PUBLISH)
         self.options_bundle.opt_feed.description = DESC_FEED
+        self.sync_group.add_option(OPT_PACKAGE_FILE_PATH)
 
     def _describe_distributors(self, user_input):
         """
@@ -74,6 +80,8 @@ class CreateDebRepositoryCommand(CreateAndConfigureRepositoryCommand, ImporterCo
         :rtype:     dict
         """
         config = self.parse_user_input(user_input)
+        if OPT_PACKAGE_FILE_PATH.keyword in user_input:
+            config[OPT_PACKAGE_FILE_PATH.keyword] = user_input.get(OPT_PACKAGE_FILE_PATH.keyword)
         return config
 
 
@@ -84,11 +92,15 @@ class UpdateDebRepositoryCommand(UpdateRepositoryCommand, ImporterConfigMixin):
         ImporterConfigMixin.__init__(self, **IMPORTER_CONFIGURATION_FLAGS)
         self.add_option(OPT_AUTO_PUBLISH)
         self.options_bundle.opt_feed.description = DESC_FEED
+        self.sync_group.add_option(OPT_PACKAGE_FILE_PATH)
 
     def run(self, **kwargs):
         arg_utils.convert_removed_options(kwargs)
 
         importer_config = self.parse_user_input(kwargs)
+        if OPT_PACKAGE_FILE_PATH.keyword in kwargs:
+            importer_config[OPT_PACKAGE_FILE_PATH.keyword] = \
+                kwargs.get(OPT_PACKAGE_FILE_PATH.keyword)
 
         # Remove importer specific keys
         for key in importer_config.keys():
