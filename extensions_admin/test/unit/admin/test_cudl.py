@@ -22,7 +22,7 @@ class TestCreateDebrRepositoryCommand(unittest.TestCase):
 
     def test_describe_distributors(self):
         command = cudl.CreateDebRepositoryCommand(Mock())
-        user_input = {}
+        user_input = {cudl.OPT_AUTO_PUBLISH.keyword: True}
         result = command._describe_distributors(user_input)
         target_result = {'distributor_id': constants.CLI_WEB_DISTRIBUTOR_ID,
                          'distributor_type_id': constants.WEB_DISTRIBUTOR_TYPE_ID,
@@ -33,7 +33,7 @@ class TestCreateDebrRepositoryCommand(unittest.TestCase):
     def test_describe_distributors_override_auto_publish(self):
         command = cudl.CreateDebRepositoryCommand(Mock())
         user_input = {
-            'auto-publish': False
+            cudl.OPT_AUTO_PUBLISH.keyword: False
         }
         result = command._describe_distributors(user_input)
         self.assertEquals(result[0]["auto_publish"], False)
