@@ -28,8 +28,8 @@ class TestWebPublisher(unittest.TestCase):
         shutil.rmtree(self.working_directory)
 
     @patch('pulp_deb.plugins.distributors.steps.AtomicDirectoryPublishStep')
-    @patch('pulp_deb.plugins.distributors.steps.PublishContentStep')
     @patch('pulp_deb.plugins.distributors.steps.PublishMetadataStep')
+    @patch('pulp_deb.plugins.distributors.steps.PublishContentStep')
     def test_init_populated(self, mock_metadata, mock_content, mock_atomic):
         mock_conduit = Mock()
         mock_config = {
