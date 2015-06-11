@@ -2,7 +2,7 @@
 %{!?python_sitearch: %global python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(1))")}
 
 Name: python-pulp-deb
-Version: 1.0.0
+Version: 1.1.0
 Release: 0.1.alpha%{?dist}
 Summary: Support for Debian packages in the Pulp platform
 Group: Development/Languages
@@ -14,7 +14,7 @@ BuildArch:      noarch
 BuildRequires:  python-setuptools
 
 # This is the minimum platform version we require to function.
-%define pulp_version 2.7
+%define pulp_version 2.8
 
 %description
 Provides a collection of platform plugins and client extensions support for Python packages.

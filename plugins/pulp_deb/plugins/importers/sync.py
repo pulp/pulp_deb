@@ -47,7 +47,7 @@ class SyncStep(PluginStep):
 
         # create a Repository object to interact with
         self.add_child(GetMetadataStep())
-        self.step_get_local_units = GetLocalUnitsStepDeb(self.get_working_dir())
+        self.step_get_local_units = GetLocalUnitsStepDeb()
         self.add_child(self.step_get_local_units)
         self.add_child(
             DownloadStep(constants.SYNC_STEP_DOWNLOAD, downloads=self.generate_download_requests(),
@@ -128,10 +128,8 @@ class GetMetadataStep(PluginStep):
 
 class GetLocalUnitsStepDeb(GetLocalUnitsStep):
 
-    def __init__(self, working_dir):
-        super(GetLocalUnitsStepDeb, self).__init__(constants.WEB_IMPORTER_TYPE_ID,
-                                                   constants.DEB_TYPE_ID, constants.UNIT_KEY_FIELDS,
-                                                   working_dir)
+    def __init__(self):
+        super(GetLocalUnitsStepDeb, self).__init__(constants.WEB_IMPORTER_TYPE_ID)
 
     def _dict_to_unit(self, unit_dict):
         unit_key_hash = get_key_hash(unit_dict)
