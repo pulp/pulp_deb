@@ -27,10 +27,11 @@ class TestWebPublisher(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.working_directory)
 
+    @patch('pulp_deb.plugins.distributors.steps.WebPublisher.get_working_dir')
     @patch('pulp_deb.plugins.distributors.steps.AtomicDirectoryPublishStep')
     @patch('pulp_deb.plugins.distributors.steps.PublishMetadataStep')
     @patch('pulp_deb.plugins.distributors.steps.PublishContentStep')
-    def test_init_populated(self, mock_metadata, mock_content, mock_atomic):
+    def test_init_populated(self, mock_metadata, mock_content, mock_atomic, m_get_working_dir):
         mock_conduit = Mock()
         mock_config = {
             constants.DISTRIBUTOR_CONFIG_KEY_PUBLISH_DIRECTORY: self.publish_dir

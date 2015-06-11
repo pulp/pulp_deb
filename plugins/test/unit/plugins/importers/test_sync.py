@@ -220,7 +220,7 @@ class TestGenerateMetadataStep(unittest.TestCase):
 class TestGetLocalUnitsStepDeb(unittest.TestCase):
     def setUp(self):
         self.working_dir = tempfile.mkdtemp()
-        self.step = sync.GetLocalUnitsStepDeb(self.working_dir)
+        self.step = sync.GetLocalUnitsStepDeb()
         self.step.conduit = mock.MagicMock()
 
     def tearDown(self):
