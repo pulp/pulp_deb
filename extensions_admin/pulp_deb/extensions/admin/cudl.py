@@ -214,4 +214,8 @@ class CopyDebUnitCommand(UnitCopyCommand):
         :returns: a function to provide a user readable formatted name for a type
         :rtype: function
         """
-        return _get_formatter(type_id)
+        return _get_details
+
+
+def _get_details(package):
+    return '%s-%s-%s' % (package['name'], package['version'], package['architecture'])
