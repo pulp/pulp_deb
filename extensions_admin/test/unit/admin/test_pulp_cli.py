@@ -8,6 +8,7 @@ from pulp.client.commands.repo.sync_publish import PublishStatusCommand,\
     RunPublishRepositoryCommand, RunSyncRepositoryCommand
 from pulp.client.extensions.core import PulpCli
 
+from pulp_deb.extensions.admin import cudl
 from pulp_deb.extensions.admin import pulp_cli
 
 
@@ -31,6 +32,7 @@ class TestInitialize(unittest.TestCase):
         self.assertTrue(isinstance(repo_section.commands['delete'], DeleteRepositoryCommand))
         self.assertTrue(isinstance(repo_section.commands['update'], UpdateRepositoryCommand))
         self.assertTrue(isinstance(repo_section.commands['list'], ListRepositoriesCommand))
+        self.assertTrue(isinstance(repo_section.commands['copy'], cudl.CopyDebUnitCommand))
 
         section = repo_section.subsections['sync']
         self.assertTrue(isinstance(section.commands['run'], RunSyncRepositoryCommand))

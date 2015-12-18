@@ -6,6 +6,7 @@ from gettext import gettext as _
 
 from pulp.common.config import read_json_config
 from pulp.plugins.importer import Importer
+from pulp.server.db.model.criteria import UnitAssociationCriteria
 
 from pulp_deb.common import constants
 from pulp_deb.plugins.importers import sync
@@ -101,16 +102,14 @@ class WebImporter(Importer):
     def import_units(self, source_repo, dest_repo, import_conduit, config, units=None):
         # Determine which units are being copied
         if units is None:
-            repo = Repository.objects.get(repo_id=import_conduit.source_repo_id)
-            units = find_repo_content_units(repo, yield_content_unit=True)
+            criteria = UnitAssociationCriteria(type_ids=[constants.DEB_TYPE_ID])
+            units = import_conduit.get_source_units(criteria=criteria)
 
         # Associate to the new repository
-        units_to_return = []
         for u in units:
-            units_to_return.append(u)
             import_conduit.associate_unit(u)
 
-        return units_to_return
+        return units
 
     def cancel_sync_repo(self):
         """

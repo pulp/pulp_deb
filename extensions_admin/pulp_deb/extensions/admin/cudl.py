@@ -200,7 +200,7 @@ class ListDebRepositoriesCommand(ListRepositoriesCommand):
 
 class CopyDebUnitCommand(UnitCopyCommand):
     """
-    CLI Command for copying an iso unit from one repo to another
+    CLI Command for copying an deb unit from one repo to another
     """
     def __init__(self, context):
         UnitCopyCommand.__init__(self, context, type_id=constants.DEB_TYPE_ID)
@@ -214,8 +214,8 @@ class CopyDebUnitCommand(UnitCopyCommand):
         :returns: a function to provide a user readable formatted name for a type
         :rtype: function
         """
-        return _get_details
+        if type_id is not constants.DEB_TYPE_ID:
+            raise ValueError(_("The deb module formatter can not process %s units.") % type_id)
 
-
-def _get_details(package):
-    return '%s-%s-%s' % (package['name'], package['version'], package['architecture'])
+        return lambda package: '%s-%s-%s' % (package['name'], package['version'],
+                                             package['architecture'])

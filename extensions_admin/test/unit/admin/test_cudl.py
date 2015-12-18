@@ -1,6 +1,7 @@
 import unittest
+import types
 
-from mock import Mock
+from mock import Mock, MagicMock
 from pulp.common.constants import REPO_NOTE_TYPE_KEY
 from pulp.common.plugins.importer_constants import KEY_FEED
 from pulp.devel.unit.util import compare_dict
@@ -54,7 +55,6 @@ class TestCreateDebrRepositoryCommand(unittest.TestCase):
 
 
 class TestUpdateDebRepositoryCommand(unittest.TestCase):
-
     def setUp(self):
         self.context = Mock()
         self.context.config = {'output': {'poll_frequency_in_seconds': 3}}
@@ -180,3 +180,17 @@ class TestListDebRepositoriesCommand(unittest.TestCase):
         # Verify
         self.assertEqual(1, len(repos))
         self.assertEqual(repos[0]['repo_id'], 'non-deb-repo-1')
+
+
+class TestDebCopyCommand(unittest.TestCase):
+    def test_setup(self):
+        mock_context = MagicMock()
+        command = cudl.CopyDebUnitCommand(mock_context)
+        self.assertEquals(constants.DEB_TYPE_ID, command.type_id)
+
+    def test_get_formatter(self):
+        mock_context = MagicMock()
+        command = cudl.CopyDebUnitCommand(mock_context)
+        self.assertIsInstance(command.get_formatter_for_type(constants.DEB_TYPE_ID),
+                              types.FunctionType)
+        self.assertRaises(ValueError, command.get_formatter_for_type, 'fooType')
