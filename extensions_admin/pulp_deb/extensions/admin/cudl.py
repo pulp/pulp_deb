@@ -6,6 +6,7 @@ from pulp.client.commands.repo.cudl import CreateAndConfigureRepositoryCommand
 from pulp.client.commands.repo.cudl import ListRepositoriesCommand
 from pulp.client.commands.repo.cudl import UpdateRepositoryCommand
 from pulp.client.commands.repo.importer_config import ImporterConfigMixin
+from pulp.client.commands.unit import UnitCopyCommand
 from pulp.common.constants import REPO_NOTE_TYPE_KEY
 from pulp.client.extensions.extensions import PulpCliOption
 
@@ -195,3 +196,26 @@ class ListDebRepositoriesCommand(ListRepositoriesCommand):
             self.all_repos_cache = self.context.server.repo.repositories(query_params).response_body
 
         return self.all_repos_cache
+
+
+class CopyDebUnitCommand(UnitCopyCommand):
+    """
+    CLI Command for copying an deb unit from one repo to another
+    """
+    def __init__(self, context):
+        UnitCopyCommand.__init__(self, context, type_id=constants.DEB_TYPE_ID)
+
+    def get_formatter_for_type(self, type_id):
+        """
+        Hook to get a the formatter for a given type
+
+        :param type_id: the type id for which we need to get the formatter
+        :type type_id: str
+        :returns: a function to provide a user readable formatted name for a type
+        :rtype: function
+        """
+        if type_id is not constants.DEB_TYPE_ID:
+            raise ValueError(_("The deb module formatter can not process %s units.") % type_id)
+
+        return lambda package: '%s-%s-%s' % (package['name'], package['version'],
+                                             package['architecture'])

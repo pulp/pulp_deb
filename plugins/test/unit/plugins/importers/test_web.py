@@ -1,7 +1,12 @@
+import shutil
+import tempfile
+import mock
 from unittest import TestCase
 
 from mock import patch, Mock, MagicMock
-from pulp.plugins.model import Repository
+
+from pulp.plugins.conduits.unit_import import ImportUnitConduit
+from pulp.plugins.model import Repository, Unit
 
 from pulp_deb.common import constants
 from pulp_deb.plugins.importers.web import WebImporter, entry_point
@@ -75,3 +80,100 @@ class TestSyncRepo(TestCase):
                           self.sync_conduit, self.config)
 
         mock_rmtree.assert_called_once_with(mock_mkdtemp.return_value, ignore_errors=True)
+
+
+class TestISOImporter(TestCase):
+    """
+    Test the DEBImporter object.
+    """
+
+    def setUp(self):
+        self.temp_dir = tempfile.mkdtemp()
+        self.deb_importer = WebImporter()
+
+    def tearDown(self):
+        shutil.rmtree(self.temp_dir)
+
+    def test_import_units__units_empty_list(self):
+        """
+        Make sure that when an empty list is passed, we import zero units.
+        """
+        import_conduit = MagicMock()
+        # source_repo, dest_repo, and config aren't used by import_units, so we'll just set them to
+        # None for simplicity. Let's pass an empty list as the units we want to import
+        units_to_import = []
+        imported_units = self.deb_importer.import_units(None, None, import_conduit, None,
+                                                        units=units_to_import)
+
+        # There should have been zero calls to the import_conduit. None to get_source_units(), and
+        # none to associate units.
+        self.assertEqual(len(import_conduit.get_source_units.call_args_list), 0)
+        self.assertEqual(len(import_conduit.associate_unit.call_args_list), 0)
+
+        # Make sure that the returned units are correct
+        self.assertEqual(imported_units, units_to_import)
+
+    def test_import_units__units_none(self):
+        """
+        Make sure that when units=None, we import all units from the import_conduit.
+        """
+        source_units = [Unit(constants.DEB_TYPE_ID, {'name': 'test.deb'}, {}, '/path/test.deb'),
+                        Unit(constants.DEB_TYPE_ID, {'name': 'test2.deb'}, {}, '/path/test2.deb'),
+                        Unit(constants.DEB_TYPE_ID, {'name': 'test3.deb'}, {}, '/path/test3.deb')]
+        import_conduit = mock.Mock(spec=ImportUnitConduit)
+        import_conduit.get_source_units.return_value = source_units
+
+        # source_repo, dest_repo, and config aren't used by import_units, so we'll just set them to
+        # None for simplicity.
+        imported_units = self.deb_importer.import_units(None, None, import_conduit, None,
+                                                        units=None)
+
+        # There should have been four calls to the import_conduit. One to get_source_units(), and
+        # three to associate units.
+        # get_source_units should have a UnitAssociationCriteria that specified ISOs, so we'll
+        # assert that behavior.
+        self.assertEqual(len(import_conduit.get_source_units.call_args_list), 1)
+        get_source_units_args = tuple(import_conduit.get_source_units.call_args_list[0])[1]
+        self.assertEqual(get_source_units_args['criteria']['type_ids'], [constants.DEB_TYPE_ID])
+
+        # There are three Units, so there should be three calls to associate_unit since we didn't
+        # pass which units we wanted to import. Let's make sure the three calls were made with the
+        # correct Units.
+        self.assertEqual(len(import_conduit.associate_unit.call_args_list), 3)
+        expected_unit_names = ['test.deb', 'test2.deb', 'test3.deb']
+        actual_unit_names = [tuple(call)[0][0].unit_key['name']
+                             for call in import_conduit.associate_unit.call_args_list]
+        self.assertEqual(actual_unit_names, expected_unit_names)
+
+        # The three Units should have been returned
+        self.assertEqual(imported_units, source_units)
+
+    def test_import_units__units_some(self):
+        """
+        Make sure that when units are passed, we import only those units.
+        """
+        source_units = [Unit(constants.DEB_TYPE_ID, {'name': 'test.deb'}, {}, '/path/test.deb'),
+                        Unit(constants.DEB_TYPE_ID, {'name': 'test2.deb'}, {}, '/path/test2.deb'),
+                        Unit(constants.DEB_TYPE_ID, {'name': 'test3.deb'}, {}, '/path/test3.deb')]
+        import_conduit = MagicMock()
+        # source_repo, dest_repo, and config aren't used by import_units, so we'll just set them to
+        # None for simplicity. Let's use test.iso and test3.iso, leaving out test2.iso.
+        units_to_import = [source_units[i] for i in range(0, 3, 2)]
+        imported_units = self.deb_importer.import_units(None, None, import_conduit, None,
+                                                        units=units_to_import)
+
+        # There should have been two calls to the import_conduit. None to get_source_units(), and
+        # two to associate units.
+        self.assertEqual(len(import_conduit.get_source_units.call_args_list), 0)
+
+        # There are two Units, so there should be two calls to associate_unit since we passed which
+        # units we wanted to import. Let's make sure the two calls were made with the
+        # correct Units.
+        self.assertEqual(len(import_conduit.associate_unit.call_args_list), 2)
+        expected_unit_names = ['test.deb', 'test3.deb']
+        actual_unit_names = [tuple(call)[0][0].unit_key['name']
+                             for call in import_conduit.associate_unit.call_args_list]
+        self.assertEqual(actual_unit_names, expected_unit_names)
+
+        # Make sure that the returned units are correct
+        self.assertEqual(imported_units, units_to_import)

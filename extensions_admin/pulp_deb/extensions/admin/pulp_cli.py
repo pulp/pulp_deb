@@ -7,6 +7,7 @@ from pulp_deb.common import constants
 from pulp_deb.extensions.admin.cudl import CreateDebRepositoryCommand
 from pulp_deb.extensions.admin.cudl import UpdateDebRepositoryCommand
 from pulp_deb.extensions.admin.cudl import ListDebRepositoriesCommand
+from pulp_deb.extensions.admin.cudl import CopyDebUnitCommand
 
 SECTION_ROOT = 'deb'
 DESC_ROOT = _('manage deb repositories')
@@ -50,6 +51,7 @@ def add_repo_section(context, parent_section):
     repo_section.add_command(UpdateDebRepositoryCommand(context))
     repo_section.add_command(cudl.DeleteRepositoryCommand(context))
     repo_section.add_command(ListDebRepositoriesCommand(context))
+    repo_section.add_command(CopyDebUnitCommand(context))
 
     return repo_section
 
