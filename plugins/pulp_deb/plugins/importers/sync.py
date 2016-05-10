@@ -14,6 +14,8 @@ from pulp.server.exceptions import PulpCodedValidationException
 from pulp_deb.common import constants
 from pulp_deb.plugins import error_codes
 
+from pulp_deb.common.model import DebPackage
+
 
 _logger = logging.getLogger(__name__)
 
@@ -63,9 +65,10 @@ class SyncStep(PluginStep):
         :return:    generator of DownloadRequest instances
         :rtype:     collections.Iterable[DownloadRequest]
         """
-        feed_url = self.get_config().get('feed')
-        for unit_key in self.step_get_local_units.units_to_download:
-            key_hash = get_key_hash(unit_key)
+        download_url = self.get_config().get("download-root")
+
+        for deb_unit in self.step_get_local_units.units_to_download:
+            key_hash = deb_unit.unit_key_hash
             # Don't save all the units in one directory as there could be 50k + units
             hash_dir = generate_internal_storage_path(self.deb_data[key_hash]['file_name'])
             # make sure the download directory exists
@@ -73,7 +76,13 @@ class SyncStep(PluginStep):
             download_dir = os.path.dirname(dest_dir)
             misc.mkdir(download_dir)
             file_path = self.deb_data[key_hash]['file_path']
-            packages_url = urlparse.urljoin(feed_url, file_path)
+            packages_url = urlparse.urljoin(download_url, file_path)
+            
+            # check that the package is not already saved on local disk
+            test_path = "/var/lib/pulp/content/deb/" + generate_internal_storage_path(hash_dir)
+            if os.path.exists(test_path):
+                continue
+
             yield DownloadRequest(packages_url, dest_dir)
 
 
@@ -123,7 +132,11 @@ class GetMetadataStep(PluginStep):
                 'file_path': package_data['Filename'],
                 'file_size': package_data['Size']
             }
-            self.parent.available_units.append(metadata)
+            name, version, arch = metadata["name"], metadata["version"], metadata["architecture"]
+            unit = DebPackage(name=name, version=version, architecture=arch)
+            unit.unit_key_hash = unit_key_hash
+            unit.metadata = metadata
+            self.parent.available_units.append(unit)
 
 
 class GetLocalUnitsStepDeb(GetLocalUnitsStep):
@@ -153,7 +166,7 @@ class SaveUnits(PluginStep):
     def process_main(self):
         _logger.debug(self.description)
         for unit_key in self.parent.step_get_local_units.units_to_download:
-            hash_key = get_key_hash(unit_key)
+            hash_key = unit_key.unit_key_hash
             file_name = self.parent.deb_data[hash_key]['file_name']
             storage_path = generate_internal_storage_path(file_name)
             dest_dir = os.path.join(self.working_dir, storage_path)
@@ -163,7 +176,7 @@ class SaveUnits(PluginStep):
                 raise PulpCodedValidationException(error_code=error_codes.DEB1001,
                                                    file_name=file_name)
 
-            unit = self.get_conduit().init_unit(constants.DEB_TYPE_ID, unit_key,
+            unit = self.get_conduit().init_unit(constants.DEB_TYPE_ID, unit_key.metadata,
                                                 {'file_name': file_name},
                                                 storage_path)
             shutil.move(dest_dir, unit.storage_path)
