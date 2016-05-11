@@ -25,6 +25,8 @@ DESC_PACKAGE_FILE_PATH = _('Relative path from the Feed root to the directory co
                            'is in the root of the repository')
 OPT_PACKAGE_FILE_PATH = PulpCliOption('--package-file-path', DESC_PACKAGE_FILE_PATH, required=False)
 
+OPT_DOWNLOAD_ROOT = PulpCliOption("--download-root", "specify the server root to which we will append a package Filename for download")
+
 IMPORTER_CONFIGURATION_FLAGS = dict(
     include_ssl=False,
     include_sync=True,
@@ -42,6 +44,7 @@ class CreateDebRepositoryCommand(CreateAndConfigureRepositoryCommand, ImporterCo
         CreateAndConfigureRepositoryCommand.__init__(self, context)
         ImporterConfigMixin.__init__(self, **IMPORTER_CONFIGURATION_FLAGS)
         self.add_option(OPT_AUTO_PUBLISH)
+        self.add_option(OPT_DOWNLOAD_ROOT)
         self.options_bundle.opt_feed.description = DESC_FEED
         self.sync_group.add_option(OPT_PACKAGE_FILE_PATH)
 
@@ -83,6 +86,10 @@ class CreateDebRepositoryCommand(CreateAndConfigureRepositoryCommand, ImporterCo
         config = self.parse_user_input(user_input)
         if OPT_PACKAGE_FILE_PATH.keyword in user_input:
             config[OPT_PACKAGE_FILE_PATH.keyword] = user_input.get(OPT_PACKAGE_FILE_PATH.keyword)
+
+        if OPT_DOWNLOAD_ROOT.keyword in user_input:
+            config[OPT_DOWNLOAD_ROOT.keyword] = user_input.get(OPT_DOWNLOAD_ROOT.keyword)
+
         return config
 
 

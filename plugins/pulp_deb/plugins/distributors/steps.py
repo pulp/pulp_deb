@@ -9,6 +9,8 @@ from pulp.plugins.util.publish_step import PluginStep, AtomicDirectoryPublishSte
 from pulp_deb.common import constants
 from pulp_deb.plugins.distributors import configuration
 
+from pulp_deb.plugins.importers.sync import generate_internal_storage_path
+
 
 _logger = logging.getLogger(__name__)
 
@@ -109,5 +111,9 @@ class PublishContentStep(PluginStep):
         """
         Publish an individual deb file
         """
-        path = os.path.join(self.get_working_dir(), item.metadata['file_name'])
-        os.symlink(item.storage_path, path)
+        filename = item.metadata["file_name"]
+        tmp = os.path.join(self.get_working_dir(), filename)
+        store = "/var/lib/pulp/content/deb/" + generate_internal_storage_path(filename)
+        os.symlink(store, tmp)
+        if os.path.exists(tmp):
+            self.progress_successes += 1
