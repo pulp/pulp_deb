@@ -44,6 +44,7 @@ class CreateDebRepositoryCommand(CreateAndConfigureRepositoryCommand, ImporterCo
         CreateAndConfigureRepositoryCommand.__init__(self, context)
         ImporterConfigMixin.__init__(self, **IMPORTER_CONFIGURATION_FLAGS)
         self.add_option(OPT_AUTO_PUBLISH)
+        self.add_option(OPT_DOWNLOAD_ROOT)
         self.options_bundle.opt_feed.description = DESC_FEED
         self.sync_group.add_option(OPT_PACKAGE_FILE_PATH)
 
