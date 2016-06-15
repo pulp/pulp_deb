@@ -10,7 +10,7 @@ from pulp_deb.common import constants
 from pulp_deb.plugins.distributors import configuration
 
 from pulp_deb.plugins.importers.sync import generate_internal_storage_path
-
+from pulp_deb.common.model import DebPackage
 
 _logger = logging.getLogger(__name__)
 
@@ -104,6 +104,7 @@ class PublishContentStep(PluginStep):
         :return: generator of items
         :rtype: GeneratorType of items
         """
+
         units_iterator = self.get_conduit().get_units(as_generator=True)
         return units_iterator
 
