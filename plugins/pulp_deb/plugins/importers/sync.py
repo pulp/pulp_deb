@@ -124,25 +124,28 @@ class GetMetadataStep(PluginStep):
         packpath = os.path.join(self.get_working_dir(), "Packages")
         debian_support.download_file(packages_url + "Packages", packpath)
 
+        # mirror rather than additive, we want to remove packages if they have been removed
         new_units_names = [os.path.basename(dict(package)["Filename"]) for package in debian_support.PackageFile(packpath)]
-
         repo_name = self.get_repo().id
         existing_repo = "/var/www/pub/deb/web/{0}".format(repo_name)
-        published_links = os.listdir(existing_repo)
-        published_links.remove("Packages")
-        published_links.remove("Packages.gz")
+        try:
+            published_links = os.listdir(existing_repo)
+            published_links.remove("Packages")
+            published_links.remove("Packages.gz")
 
-        for link in published_links:
-            if link not in new_units_names:
-                associated_units = self.get_conduit().get_units()
-                for unit in associated_units:
-                    uk = unit.unit_key
-                    filename = "{0}_{1}_{2}.deb".format(uk["name"], uk["version"], uk["architecture"])
-                    if filename == link:
-                        self.get_conduit().remove_unit(unit)
-                    link_path = existing_repo + "/" + link
-                    if os.path.exists(link_path):
-                        os.remove(link_path)
+            for link in published_links:
+                if link not in new_units_names:
+                    associated_units = self.get_conduit().get_units()
+                    for unit in associated_units:
+                        uk = unit.unit_key
+                        filename = "{0}_{1}_{2}.deb".format(uk["name"], uk["version"], uk["architecture"])
+                        if filename == link:
+                            self.get_conduit().remove_unit(unit)
+                            link_path = existing_repo + "/" + link
+                            if os.path.exists(link_path):
+                                os.remove(link_path)
+        except (ValueError, OSError) as e:
+            _logger.debug(e)
 
         for package in debian_support.PackageFile(packpath):
             package_data = dict(package)
