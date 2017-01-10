@@ -1,10 +1,6 @@
 import os
 import shutil
 import tempfile
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
 
 import mock
 from pulp.common.plugins import importer_constants
@@ -13,39 +9,42 @@ from pulp.plugins.model import Repository as RepositoryModel, Unit
 from pulp.server import exceptions
 from pulp.server.managers import factory
 
+from .... import testbase
+
 from pulp_deb.common import constants
 from pulp_deb.plugins import error_codes
 from pulp_deb.plugins.importers import sync
 
 
-factory.initialize()
-
-
-class TestSyncStep(unittest.TestCase):
+class TestSync(testbase.TestCase):
     def setUp(self):
-        super(TestSyncStep, self).setUp()
+        super(TestSync, self).setUp()
 
         self.repo = RepositoryModel('repo1')
         self.conduit = mock.MagicMock()
         plugin_config = {
             importer_constants.KEY_FEED: 'http://pulpproject.org/',
         }
-        self.working_dir = tempfile.mkdtemp()
         self.config = PluginCallConfiguration({}, plugin_config)
-        self.step = sync.SyncStep(repo=self.repo,
+        self._task_current = mock.patch("pulp.server.managers.repo._common.task.current")
+        obj = self._task_current.__enter__()
+        obj.request.id = 'aabb'
+        worker_name = "worker01"
+        obj.request.configure_mock(hostname=worker_name)
+        os.makedirs(os.path.join(self.pulp_working_dir, worker_name))
+        self.step = sync.RepoSync(repo=self.repo,
                                   conduit=self.conduit,
-                                  config=self.config,
-                                  working_dir=self.working_dir)
+                                  config=self.config)
 
     def tearDown(self):
-        shutil.rmtree(self.working_dir)
+        self._task_current.__exit__()
 
     def test_init(self):
-        self.assertEqual(self.step.step_id, constants.IMPORT_STEP_MAIN)
+        self.assertEqual(self.step.step_id, constants.SYNC_STEP)
 
         # make sure the children are present
         step_ids = set([child.step_id for child in self.step.children])
-        self.assertTrue(constants.IMPORT_STEP_METADATA in step_ids)
+        self.assertTrue(constants.SYNC_STEP_METADATA in step_ids)
 
     @mock.patch('pulp_deb.plugins.importers.sync.misc.mkdir')
     def test_generate_download_requests_root_contextpath(self, mock_mkdir):
@@ -69,7 +68,7 @@ class TestSyncStep(unittest.TestCase):
 
         self.assertEquals(1, len(requests))
         download_request = requests[0]
-        download_dir = os.path.join(self.working_dir,
+        download_dir = os.path.join(self.pulp_working_dir,
                                     sync.generate_internal_storage_path('foo.deb'))
         download_url = 'http://pulpproject.org/pool/p/foo.deb'
         mock_mkdir.assert_called_once_with(os.path.dirname(download_dir))
@@ -100,7 +99,7 @@ class TestSyncStep(unittest.TestCase):
         requests = list(self.step.generate_download_requests())
         self.assertEquals(1, len(requests))
         download_request = requests[0]
-        download_dir = os.path.join(self.working_dir,
+        download_dir = os.path.join(self.pulp_working_dir,
                                     sync.generate_internal_storage_path('foo.deb'))
         download_url = 'http://pulpproject.org/foo/baz/pool/p/foo.deb'
         mock_mkdir.assert_called_once_with(os.path.dirname(download_dir))
@@ -108,11 +107,11 @@ class TestSyncStep(unittest.TestCase):
         self.assertEquals(download_request.url, download_url)
 
 
-class TestGenerateMetadataStep(unittest.TestCase):
+class TestGenerateMetadataStep(testbase.TestCase):
     def setUp(self):
-        self.working_dir = tempfile.mkdtemp()
+        super(TestGenerateMetadataStep, self).setUp()
         self.repo = RepositoryModel('repo1')
-        self.repo.working_dir = self.working_dir
+        self.repo.working_dir = os.path.join(self.pulp_working_dir, "repo1")
         self.conduit = mock.MagicMock()
         plugin_config = {
             importer_constants.KEY_FEED: 'http://ftp.fau.de/debian/dists/stable/main/binary-amd64/',
@@ -120,13 +119,9 @@ class TestGenerateMetadataStep(unittest.TestCase):
         self.config = PluginCallConfiguration({}, plugin_config)
 
         self.step = sync.GetMetadataStep(repo=self.repo, conduit=self.conduit, config=self.config,
-                                         working_dir=self.working_dir)
+                                         working_dir=self.repo.working_dir)
         self.step.parent = mock.MagicMock()
         self.index = self.step.parent.index_repository
-
-    def tearDown(self):
-        super(TestGenerateMetadataStep, self).tearDown()
-        shutil.rmtree(self.working_dir)
 
     @mock.patch('pulp_deb.plugins.importers.sync.debian_support.PackageFile')
     @mock.patch('pulp_deb.plugins.importers.sync.debian_support.download_file')
@@ -143,7 +138,7 @@ class TestGenerateMetadataStep(unittest.TestCase):
         self.step.parent.available_units = []
         self.step.process_main()
         download_feed = self.config.get(importer_constants.KEY_FEED) + 'Packages'
-        download_location = os.path.join(self.working_dir, 'Packages')
+        download_location = os.path.join(self.repo.working_dir, 'Packages')
         mock_deb_download.assert_called_once_with(download_feed, download_location)
         self.assertEquals(len(self.step.parent.available_units), 1)
         self.assertDictEqual(self.step.parent.available_units[0],
@@ -175,7 +170,7 @@ class TestGenerateMetadataStep(unittest.TestCase):
         self.step.parent.available_units = []
         self.step.process_main()
         download_feed = 'http://ftp.fau.de/debian/dists/stable/main/binary-amd64/Packages'
-        download_location = os.path.join(self.working_dir, 'Packages')
+        download_location = os.path.join(self.repo.working_dir, 'Packages')
         mock_deb_download.assert_called_once_with(download_feed, download_location)
         self.assertEquals(len(self.step.parent.available_units), 1)
         self.assertDictEqual(self.step.parent.available_units[0],
@@ -208,7 +203,7 @@ class TestGenerateMetadataStep(unittest.TestCase):
         self.step.parent.available_units = []
         self.step.process_main()
         download_feed = 'http://ftp.fau.de/debian/dists/stable/main/binary-amd64/Packages'
-        download_location = os.path.join(self.working_dir, 'Packages')
+        download_location = os.path.join(self.repo.working_dir, 'Packages')
         mock_deb_download.assert_called_once_with(download_feed, download_location)
         self.assertEquals(len(self.step.parent.available_units), 1)
         self.assertDictEqual(self.step.parent.available_units[0],
@@ -217,14 +212,11 @@ class TestGenerateMetadataStep(unittest.TestCase):
                               'architecture': 'x86_64'})
 
 
-class TestGetLocalUnitsStepDeb(unittest.TestCase):
+class TestGetLocalUnitsStepDeb(testbase.TestCase):
     def setUp(self):
-        self.working_dir = tempfile.mkdtemp()
+        super(TestGetLocalUnitsStepDeb, self).setUp()
         self.step = sync.GetLocalUnitsStepDeb()
         self.step.conduit = mock.MagicMock()
-
-    def tearDown(self):
-        shutil.rmtree(self.working_dir)
 
     def test_dict_to_unit(self):
         """
@@ -251,10 +243,10 @@ class TestGetLocalUnitsStepDeb(unittest.TestCase):
                                                             storage_path)
 
 
-class TestSaveUnits(unittest.TestCase):
+class TestSaveUnits(testbase.TestCase):
     def setUp(self):
-        self.working_dir = '/foo/bar'
-        self.step = sync.SaveUnits(self.working_dir)
+        super(TestSaveUnits, self).setUp()
+        self.step = sync.SaveUnits(self.pulp_working_dir)
         self.step.conduit = mock.MagicMock()
         self.step.parent = mock.MagicMock()
 
@@ -285,7 +277,7 @@ class TestSaveUnits(unittest.TestCase):
         self.step.conduit.init_unit.assert_called_once_with(constants.DEB_TYPE_ID,
                                                             unit_key, {'file_name': 'foo.deb'},
                                                             save_location)
-        source = os.path.join(self.working_dir, save_location)
+        source = os.path.join(self.pulp_working_dir, save_location)
         mock_shutil.assert_called_once_with(source, initialized_unit.storage_path)
 
     @mock.patch('pulp_deb.plugins.importers.sync.os.stat')

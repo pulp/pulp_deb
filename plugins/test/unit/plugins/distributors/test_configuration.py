@@ -1,9 +1,7 @@
 import os
-import shutil
-import tempfile
-import unittest
 
 from mock import Mock
+from .... import testbase
 
 from pulp.plugins.config import PluginCallConfiguration
 
@@ -11,40 +9,52 @@ from pulp_deb.common import constants
 from pulp_deb.plugins.distributors import configuration
 
 
-class TestConfigurationGetters(unittest.TestCase):
+class TestConfigurationGetters(testbase.TestCase):
 
     def setUp(self):
-        self.working_directory = tempfile.mkdtemp()
-        self.publish_dir = os.path.join(self.working_directory, 'publish')
-        self.repo_working = os.path.join(self.working_directory, 'work')
+        super(TestConfigurationGetters, self).setUp()
+        self.publish_dir = os.path.join(self.work_dir, 'publish')
+        self.repo_working_dir = os.path.join(self.work_dir, 'work')
 
-        self.repo = Mock(id='foo', working_dir=self.repo_working)
-        self.config = PluginCallConfiguration({constants.DISTRIBUTOR_CONFIG_KEY_PUBLISH_DIRECTORY:
-                                              self.publish_dir}, {})
-
-    def tearDown(self):
-        shutil.rmtree(self.working_directory)
-
-    def test_get_root_publish_directory(self):
-        directory = configuration.get_root_publish_directory(self.config)
-        self.assertEquals(directory, self.publish_dir)
+        self.repo = Mock(id='foo', working_dir=self.repo_working_dir)
+        self.config = PluginCallConfiguration(
+            {constants.PUBLISH_HTTP_KEYWORD: True,
+             constants.PUBLISH_HTTPS_KEYWORD: True,
+             constants.PUBLISH_RELATIVE_URL_KEYWORD: None,
+             constants.HTTP_PUBLISH_DIR_KEYWORD: self.publish_dir + '/http',
+             constants.HTTPS_PUBLISH_DIR_KEYWORD: self.publish_dir + '/https',
+             }, {})
 
     def test_get_master_publish_dir(self):
-        directory = configuration.get_master_publish_dir(self.repo, self.config)
-        self.assertEquals(directory, os.path.join(self.publish_dir, 'master', self.repo.id))
+        directory = configuration.get_master_publish_dir(self.repo,
+                                                         'deb_distributor')
+        self.assertEquals(directory,
+                          '/var/lib/pulp/published/deb/master/deb_distributor/foo')
 
-    def test_get_web_publish_dir(self):
-        directory = configuration.get_web_publish_dir(self.repo, self.config)
-        self.assertEquals(directory, os.path.join(self.publish_dir, 'web', self.repo.id))
+    def test_get_http_publish_dir(self):
+        directory = configuration.get_http_publish_dir(self.config)
+        self.assertEquals(directory, os.path.join(self.publish_dir, 'http'))
+
+    def test_get_https_publish_dir(self):
+        directory = configuration.get_https_publish_dir(self.config)
+        self.assertEquals(directory, os.path.join(self.publish_dir, 'https'))
 
     def test_get_repo_relative_path(self):
         directory = configuration.get_repo_relative_path(self.repo, self.config)
         self.assertEquals(directory, self.repo.id)
 
 
-class TestValidateConfig(unittest.TestCase):
+class TestValidateConfig(testbase.TestCase):
+    def _config_conduit(self):
+        ret = Mock()
+        ret.get_repo_distributors_by_relative_url.return_value = []
+        return ret
 
     def test_server_url_fully_qualified(self):
-        config = PluginCallConfiguration({}, {})
+        config = PluginCallConfiguration(
+            dict(http=True, https=False, relative_url=None), {})
+        repo = Mock(id='foo', working_dir=self.work_dir)
+        conduit = self._config_conduit()
+
         self.assertEquals((True, None),
-                          configuration.validate_config(config))
+                          configuration.validate_config(repo, config, conduit))
