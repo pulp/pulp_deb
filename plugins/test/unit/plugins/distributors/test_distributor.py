@@ -71,13 +71,32 @@ class TestConfiguration(BaseTest):
             distributor.validate_config(repo, config, conduit))
 
     def test_validate_config(self):
+        signer = self.new_file(name="signer", contents="#!/bin/bash").path
+        os.chmod(signer, 0o755)
+
         repo = mock.MagicMock(id="repo-1")
         conduit = self._config_conduit()
-        config = dict(http=True, https=False, relative_url=None)
+        config = dict(http=True, https=False, relative_url=None,
+                      gpg_cmd=signer)
         distributor = self.Module.DebDistributor()
         self.assertEquals(
             distributor.validate_config(repo, config, conduit),
             (True, None))
+
+    def test_validate_config_bad_signer(self):
+        # Signer is not an executable
+        signer = self.new_file(name="signer", contents="#!/bin/bash").path
+
+        repo = mock.MagicMock(id="repo-1")
+        conduit = self._config_conduit()
+        config = dict(http=True, https=False, relative_url=None,
+                      gpg_cmd=signer)
+        distributor = self.Module.DebDistributor()
+        self.assertEquals(
+            (False, '\n'.join([
+                "Command %s is not executable" % signer,
+            ])),
+            distributor.validate_config(repo, config, conduit))
 
 
 class PublishRepoMixIn(object):
@@ -98,10 +117,13 @@ class PublishRepoMixIn(object):
                 open(_p, "rb").read()).hexdigest()
         return units
 
+    @mock.patch("pulp_deb.plugins.distributors.distributor.aptrepo.tempfile.NamedTemporaryFile")
+    @mock.patch("pulp_deb.plugins.distributors.distributor.aptrepo.subprocess.Popen")
     @mock.patch("pulp_deb.plugins.distributors.distributor.aptrepo.debpkg.debfile")
     @mock.patch("pulp.server.managers.repo._common.task.current")
     @mock.patch('pulp.plugins.util.publish_step.repo_controller')
-    def test_publish_repo(self, _repo_controller, _task_current, _debfile):
+    def test_publish_repo(self, _repo_controller, _task_current, _debfile,
+                          _Popen, _NamedTemporaryFile):
         _task_current.request.id = 'aabb'
         worker_name = "worker01"
         _task_current.request.configure_mock(hostname=worker_name)
@@ -141,6 +163,12 @@ class PublishRepoMixIn(object):
             http_publish_dir=publish_dir + '/http/repos',
             https_publish_dir=publish_dir + '/https/repos')
 
+        signer = self.new_file(name="signer", contents="#!/bin/bash").path
+        os.chmod(signer, 0o755)
+
+        repo_config.update(gpg_cmd=signer)
+        _Popen.return_value.wait.return_value = 0
+
         distributor.publish_repo(repo, conduit, config=repo_config)
         self.assertEquals(
             [x[0][0] for x in conduit.build_success_report.call_args_list],
@@ -169,7 +197,8 @@ class PublishRepoMixIn(object):
             repo_config['relative_url'],
             'dists',
             'stable')
-        self.assertTrue(os.path.exists(os.path.join(comp_dir, 'Release')))
+        release_file = os.path.join(comp_dir, 'Release')
+        self.assertTrue(os.path.exists(release_file))
         self.assertTrue(os.path.exists(
             os.path.join(comp_dir, 'main', 'binary-amd64', 'Packages')))
 
@@ -189,6 +218,20 @@ class PublishRepoMixIn(object):
         lfpath = os.path.join(os.path.dirname(os.path.dirname(lfpath)),
                               'listing')
         self.assertEquals('level1', open(lfpath).read())
+
+        work_release_file = os.path.join(self.pulp_working_dir, worker_name,
+                                         "aabb", "dists", "stable", "Release")
+        # Make sure we've attempted to sign
+        _Popen.assert_called_once_with(
+            [signer, work_release_file],
+            env=dict(
+                GPG_CMD=signer,
+                GPG_DIST="stable",
+                GPG_REPOSITORY_NAME=repo_id,
+            ),
+            stdout=_NamedTemporaryFile.return_value,
+            stderr=_NamedTemporaryFile.return_value,
+        )
 
 
 class TestPublishRepoDeb(PublishRepoMixIn, BaseTest):

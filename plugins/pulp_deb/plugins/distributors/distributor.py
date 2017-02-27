@@ -4,6 +4,7 @@ import logging
 import os
 import shutil
 
+from pulp.common.config import read_json_config
 from pulp.plugins.util.publish_step import AtomicDirectoryPublishStep
 from pulp.plugins.util.publish_step import PluginStep, UnitModelPluginStep
 from pulp.plugins.distributor import Distributor
@@ -17,13 +18,16 @@ from debpkgr import aptrepo
 _logger = logging.getLogger(__name__)
 
 
+CONF_FILE_PATH = 'server/plugins.conf.d/%s.json' % ids.TYPE_ID_DISTRIBUTOR
+
+
 def entry_point():
     """
     Entry point that pulp platform uses to load the distributor
     :return: distributor class and its config
     :rtype:  Distributor, dict
     """
-    return DebDistributor, {}
+    return DebDistributor, read_json_config(CONF_FILE_PATH)
 
 
 class DebDistributor(Distributor):
@@ -250,7 +254,10 @@ class MetadataStep(PluginStep):
     def process_main(self, unit=None):
         units = self.parent.publish_units.units
         filenames = [x.storage_path for x in units]
+        sign_options = configuration.get_gpg_sign_options(self.get_repo(),
+                                                          self.get_config())
         arepo = aptrepo.AptRepo(self.get_working_dir(), name=self.get_repo().id,
+                                gpg_sign_options=sign_options,
                                 architectures=['amd64'],
                                 components=[self.Component],
                                 codename=self.Codename)

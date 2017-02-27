@@ -1,45 +1,25 @@
 import logging
 import os
-from ConfigParser import SafeConfigParser
+from debpkgr import aptrepo
 from gettext import gettext as _
 
 from pulp_deb.common.constants import PUBLISH_HTTP_KEYWORD, \
     PUBLISH_HTTPS_KEYWORD, PUBLISH_RELATIVE_URL_KEYWORD, \
-    HTTP_PUBLISH_DIR_KEYWORD, HTTPS_PUBLISH_DIR_KEYWORD
+    HTTP_PUBLISH_DIR_KEYWORD, HTTPS_PUBLISH_DIR_KEYWORD, \
+    GPG_CMD, GPG_KEY_ID
 
 _LOG = logging.getLogger(__name__)
 
 REQUIRED_CONFIG_KEYS = (PUBLISH_RELATIVE_URL_KEYWORD, PUBLISH_HTTP_KEYWORD,
                         PUBLISH_HTTPS_KEYWORD)
 
-OPTIONAL_CONFIG_KEYS = (HTTP_PUBLISH_DIR_KEYWORD, HTTPS_PUBLISH_DIR_KEYWORD)
+OPTIONAL_CONFIG_KEYS = (HTTP_PUBLISH_DIR_KEYWORD, HTTPS_PUBLISH_DIR_KEYWORD,
+                        GPG_CMD, GPG_KEY_ID)
 
 ROOT_PUBLISH_DIR = '/var/lib/pulp/published/deb'
 MASTER_PUBLISH_DIR = os.path.join(ROOT_PUBLISH_DIR, 'master')
 HTTP_PUBLISH_DIR = os.path.join(ROOT_PUBLISH_DIR, 'http', 'repos')
 HTTPS_PUBLISH_DIR = os.path.join(ROOT_PUBLISH_DIR, 'https', 'repos')
-
-
-def load_config(config_file_path):
-    """
-    Load and return a config parser for the given configuration file path.
-
-    :param config_file_path: full path to the configuration file
-    :type  config_file_path: str
-    :return: Parser representing the parsed configuration file
-    :rtype:  SafeConfigParser
-    """
-    _LOG.debug('Loading configuration file: %s' % config_file_path)
-
-    config = SafeConfigParser()
-
-    if os.access(config_file_path, os.F_OK | os.R_OK):
-        config.read(config_file_path)
-    else:
-        _LOG.warning(_('Could not load config file: %(f)s') %
-                     {'f': config_file_path})
-
-    return config
 
 
 def validate_config(repo, config, config_conduit):
@@ -108,6 +88,11 @@ def validate_config(repo, config, config_conduit):
     # check that the relative path does not conflict with any existing repos
     _check_for_relative_path_conflicts(repo, config, config_conduit,
                                        error_messages)
+
+    try:
+        get_gpg_sign_options(repo, config)
+    except aptrepo.SignerError as e:
+        error_messages.append(str(e))
 
     # if we have errors, log them, and return False with a concatenated
     # error message
@@ -198,6 +183,17 @@ def get_repo_relative_path(repo, config=None):
 
     relative_path.lstrip('/')
     return relative_path
+
+
+def get_gpg_sign_options(repo=None, config=None):
+    cfg = config or {}
+    cmd = cfg.get(GPG_CMD)
+    if not cmd:
+        return None
+    key_id = cfg.get(GPG_KEY_ID)
+    repository_name = None if repo is None else repo.id
+    return aptrepo.SignOptions(cmd, repository_name=repository_name,
+                               key_id=key_id)
 
 
 # -- required config validation -----------------------------------------------

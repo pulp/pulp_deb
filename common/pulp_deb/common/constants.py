@@ -53,3 +53,6 @@ SYNC_STEP = 'sync_step'
 SYNC_STEP_METADATA = 'sync_step_metadata'
 SYNC_STEP_DOWNLOAD = 'sync_step_download'
 SYNC_STEP_SAVE = 'sync_step_save'
+
+GPG_CMD = "gpg_cmd"
+GPG_KEY_ID = "gpg_key_id"

@@ -7,7 +7,7 @@
 %define inst_prefix pulp_deb
 
 Name: pulp-deb
-Version: 1.2
+Version: 1.3
 Release: 1%{?dist}
 Summary: Support for Debian packages in the Pulp platform
 Group: Development/Languages
@@ -88,6 +88,8 @@ Group: Development/Languages
 Requires: python-%{name}-common = %{version}-%{release}
 Requires: pulp-server
 Requires: python-debian
+Requires: python-debpkgr
+Requires: gnupg
 
 %description plugins
 Provides a collection of platform plugins that extend the Pulp platform
