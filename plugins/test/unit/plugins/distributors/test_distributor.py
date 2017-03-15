@@ -117,8 +117,8 @@ class PublishRepoMixIn(object):
                 open(_p, "rb").read()).hexdigest()
         return units
 
-    @mock.patch("pulp_deb.plugins.distributors.distributor.aptrepo.tempfile.NamedTemporaryFile")
-    @mock.patch("pulp_deb.plugins.distributors.distributor.aptrepo.subprocess.Popen")
+    @mock.patch("pulp_deb.plugins.distributors.distributor.aptrepo.signer.tempfile.NamedTemporaryFile")
+    @mock.patch("pulp_deb.plugins.distributors.distributor.aptrepo.signer.subprocess.Popen")
     @mock.patch("pulp_deb.plugins.distributors.distributor.aptrepo.debpkg.debfile")
     @mock.patch("pulp.server.managers.repo._common.task.current")
     @mock.patch('pulp.plugins.util.publish_step.repo_controller')

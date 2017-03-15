@@ -1,6 +1,6 @@
 import logging
 import os
-from debpkgr import aptrepo
+from debpkgr import signer
 from gettext import gettext as _
 
 from pulp_deb.common.constants import PUBLISH_HTTP_KEYWORD, \
@@ -91,7 +91,7 @@ def validate_config(repo, config, config_conduit):
 
     try:
         get_gpg_sign_options(repo, config)
-    except aptrepo.SignerError as e:
+    except signer.SignerError as e:
         error_messages.append(str(e))
 
     # if we have errors, log them, and return False with a concatenated
@@ -192,8 +192,8 @@ def get_gpg_sign_options(repo=None, config=None):
         return None
     key_id = cfg.get(GPG_KEY_ID)
     repository_name = None if repo is None else repo.id
-    return aptrepo.SignOptions(cmd, repository_name=repository_name,
-                               key_id=key_id)
+    return signer.SignOptions(cmd, repository_name=repository_name,
+                              key_id=key_id)
 
 
 # -- required config validation -----------------------------------------------
