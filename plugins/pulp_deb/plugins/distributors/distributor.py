@@ -256,12 +256,20 @@ class MetadataStep(PluginStep):
         filenames = [x.storage_path for x in units]
         sign_options = configuration.get_gpg_sign_options(self.get_repo(),
                                                           self.get_config())
-        arepo = aptrepo.AptRepo(self.get_working_dir(), name=self.get_repo().id,
-                                gpg_sign_options=sign_options,
-                                architectures=['amd64'],
-                                components=[self.Component],
-                                codename=self.Codename)
-        arepo.create(filenames, with_symlinks=True)
+        arch = 'amd64'
+        repometa = aptrepo.AptRepoMeta(
+            codename=self.Codename,
+            components=[self.Component],
+            architectures=[arch])
+        arepo = aptrepo.AptRepo(self.get_working_dir(),
+                                repo_name=self.get_repo().id,
+                                metadata=repometa,
+                                gpg_sign_options=sign_options)
+
+        arepo.create(filenames,
+                     component=self.Component,
+                     architecture=arch,
+                     with_symlinks=True)
 
 
 class GenerateListingFileStep(PluginStep):

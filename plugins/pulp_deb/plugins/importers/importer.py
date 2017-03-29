@@ -130,9 +130,8 @@ class DebImporter(Importer):
         :rtype:  pulp.plugins.model.SyncReport
         """
         _LOG.info("Repo sync started.")
-        repo = transfer_repo.repo_obj
-        sync_conduit.repo = repo
-        self._current_sync = sync.RepoSync(repo, sync_conduit, call_config)
-        report = self._current_sync.run()
+        sync_conduit.repo = transfer_repo.repo_obj
+        self._current_sync = sync.RepoSync(transfer_repo, sync_conduit, call_config)
+        report = self._current_sync.process_lifecycle()
         _LOG.info("Repo sync finished.")
         return report

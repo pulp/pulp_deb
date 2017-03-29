@@ -50,8 +50,12 @@ HTTP_PUBLISH_DIR_KEYWORD = 'http_publish_dir'
 HTTPS_PUBLISH_DIR_KEYWORD = 'https_publish_dir'
 
 SYNC_STEP = 'sync_step'
-SYNC_STEP_METADATA = 'sync_step_metadata'
-SYNC_STEP_DOWNLOAD = 'sync_step_download'
+SYNC_STEP_RELEASE_DOWNLOAD = 'sync_step_release_download'
+SYNC_STEP_RELEASE_PARSE = 'sync_step_release_parse'
+SYNC_STEP_PACKAGES_DOWNLOAD = 'sync_step_packages_download'
+SYNC_STEP_PACKAGES_PARSE = 'sync_step_packages_parse'
+SYNC_STEP_UNITS_DOWNLOAD_REQUESTS = 'sync_step_unit_download_requests'
+SYNC_STEP_UNITS_DOWNLOAD = 'sync_step_unit_download'
 SYNC_STEP_SAVE = 'sync_step_save'
 
 GPG_CMD = "gpg_cmd"

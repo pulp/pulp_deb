@@ -59,13 +59,15 @@ class DebPackage(FileContentUnit):
                 fobj = open(filename, "r")
             except IOError as e:
                 raise Error(str(e))
-        if not user_metadata:
-            user_metadata = {}
         unit_md = cls._read_metadata(filename)
         unit_md.update(checksumtype=util.TYPE_SHA256,
                        checksum=cls._compute_checksum(fobj),
                        size=fobj.tell())
 
+        return cls.from_metadata(unit_md, user_metadata)
+
+    @classmethod
+    def from_metadata(cls, unit_md, user_metadata=None):
         ignored = set(['filename'])
 
         metadata = dict()

@@ -117,12 +117,12 @@ class PublishRepoMixIn(object):
                 open(_p, "rb").read()).hexdigest()
         return units
 
-    @mock.patch("pulp_deb.plugins.distributors.distributor.aptrepo.signer.tempfile.NamedTemporaryFile")
+    @mock.patch("pulp_deb.plugins.distributors.distributor.aptrepo.signer.tempfile.NamedTemporaryFile")  # noqa
     @mock.patch("pulp_deb.plugins.distributors.distributor.aptrepo.signer.subprocess.Popen")
-    @mock.patch("pulp_deb.plugins.distributors.distributor.aptrepo.debpkg.debfile")
+    @mock.patch("pulp_deb.plugins.distributors.distributor.aptrepo.debpkg.debfile.DebFile")
     @mock.patch("pulp.server.managers.repo._common.task.current")
     @mock.patch('pulp.plugins.util.publish_step.repo_controller')
-    def test_publish_repo(self, _repo_controller, _task_current, _debfile,
+    def test_publish_repo(self, _repo_controller, _task_current, _DebFile,
                           _Popen, _NamedTemporaryFile):
         _task_current.request.id = 'aabb'
         worker_name = "worker01"
@@ -140,6 +140,11 @@ class PublishRepoMixIn(object):
             _l = unit_dict[type_id] = [u for u in units
                                        if u.type_id == type_id]
             unit_counts[type_id] = len(_l)
+
+        debcontrol = _DebFile.return_value.control.debcontrol.return_value
+        debcontrol.copy.side_effect = [
+            self._mkdeb(u) for u in units
+        ]
 
         distributor = self.Module.DebDistributor()
         repo = mock.Mock()
@@ -226,12 +231,17 @@ class PublishRepoMixIn(object):
             [signer, work_release_file],
             env=dict(
                 GPG_CMD=signer,
-                GPG_DIST="stable",
                 GPG_REPOSITORY_NAME=repo_id,
             ),
             stdout=_NamedTemporaryFile.return_value,
             stderr=_NamedTemporaryFile.return_value,
         )
+
+    @classmethod
+    def _mkdeb(cls, unit):
+        return dict(Package=unit['name'],
+                    Version=unit['version'],
+                    Architecture=unit['architecture'])
 
 
 class TestPublishRepoDeb(PublishRepoMixIn, BaseTest):

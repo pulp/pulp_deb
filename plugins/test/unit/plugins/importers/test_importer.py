@@ -255,5 +255,5 @@ class TestDebImporter(testbase.TestCase):
         self.assertEquals(pulpimp._current_sync,
                           _RepoSync.return_value)
         _RepoSync.assert_called_once_with(
-            repo.repo_obj, conduit, cfg)
+            repo, conduit, cfg)
         self.assertEquals(repo.repo_obj, conduit.repo)
