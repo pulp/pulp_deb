@@ -4,8 +4,8 @@ Contains tests for pulp_deb.plugins.db.models
 
 from __future__ import unicode_literals
 
-import mock
 import os
+from debian import deb822
 # Important to import testbase, since it mocks the server's config import snafu
 from .... import testbase
 from pulp_deb.plugins.db import models
@@ -52,96 +52,52 @@ class TestModel(testbase.TestCase):
         with self.assertRaises(ValueError):
             models.DebPackage.from_file(__file__)
 
-    @classmethod
-    def _make_property(cls, **properties):
-        l = [('Property', 'Value'), ('s72', 'l0')]
-        l.extend(sorted(properties.items()))
-        return '\n'.join('{}\t{}'.format(k, v) for (k, v) in l)
+    def test_dep_parse(self):
+        # Make sure we get the same behavior out of deb822 relationship
+        # parsing
+        tests = [
+            ('emacs | emacsen, make, debianutils (>= 1.7)',
+             [
+                 [{'restrictions': None, 'version': None, 'arch': None,
+                   'name': 'emacs', 'archqual': None},
+                  {'restrictions': None, 'version': None, 'arch': None,
+                   'name': 'emacsen', 'archqual': None}],
+                 [{'restrictions': None, 'version': None, 'arch': None,
+                   'name': 'make', 'archqual': None}],
+                 [{'restrictions': None, 'version': ('>=', '1.7'), 'arch': None,
+                   'name': 'debianutils', 'archqual': None}]],
+             [
+                 [{'name': 'emacs'}, {'name': 'emacsen'}],
+                 {'name': 'make'},
+                 {'name': 'debianutils', 'version': '1.7', 'flag': 'GE'},
+             ]),
 
-    @classmethod
-    def _make_table(cls, *tables):
-        return '\n'.join(tables)
+            ('tcl8.4-dev [amd64], procps [!hurd-i386]',
+             [
+                 [{'restrictions': None, 'version': None,
+                   'arch': [(True, 'amd64')],
+                   'name': 'tcl8.4-dev', 'archqual': None}],
+                 [{'restrictions': None, 'version': None,
+                   'arch': [(False, 'hurd-i386')],
+                   'name': 'procps', 'archqual': None}]],
+             [
+                 {'name': 'tcl8.4-dev', 'arch': ['amd64']},
+                 {'name': 'procps', 'arch': ['!hurd-i386']},
+             ]),
 
-    @mock.patch("pulp_deb.plugins.db.models")
-    def tttest_from_file_deb(self, _Popen):
-        msm_md_path = os.path.join(DATA_DIR, "msm-msiinfo-export.out")
-        msm_md = open(msm_md_path).read()
-        msi_properties = self._make_msi_property(
-            ProductName='lorem-ipsum',
-            ProductVersion='0.0.1',
-            Manufacturer='Cicero Enterprises',
-            ProductCode='{0FE5FDB7-1DA6-44D2-8C17-10510D12D0EE}',
-            UpgradeCode='{12345678-1234-1234-1234-111111111111}',
-        )
-        popen = _Popen.return_value
-        popen.configure_mock(returncode=0)
-        popen.communicate.side_effect = [
-            (self._make_msi_table("ModuleSignature", "Property"), ""),
-            (msi_properties, ""),
-            (msm_md, ""),
+            ('texlive <stage1 !cross> <stage2>',
+             [
+                 [{'restrictions': [
+                     [(True, 'stage1'), (False, 'cross')],
+                     [(True, 'stage2')]],
+                   'version': None, 'arch': None, 'name': 'texlive', 'archqual': None}]],
+             [
+                 {'name': 'texlive', 'restrictions': [['stage1', '!cross'],
+                                                      ['stage2']]},
+             ]),
         ]
-        metadata = dict(checksumtype='sha256',
-                        checksum='doesntmatter')
-        msi_path = os.path.join(DATA_DIR, "lorem-ipsum-0.0.1.msi")
-        pkg = models.DebPackage.from_file(msi_path, metadata)
-        self.assertEquals("lorem-ipsum",
-                          pkg.unit_key['name'])
-        self.assertEquals("0.0.1",
-                          pkg.unit_key['version'])
-        self.assertEquals(
-            [
-                dict(guid='8E012345_0123_4567_0123_0123456789AB',
-                     version='1.2.3.4', name='foobar'),
-            ],
-            pkg.ModuleSignature)
-
-    @mock.patch("pulp_deb.plugins.db.models")
-    def tttest_from_file_msi_no_module_signature(self, _Popen):
-        msm_md_path = os.path.join(DATA_DIR, "msm-msiinfo-export.out")
-        msm_md = open(msm_md_path).read()
-        msi_properties = self._make_msi_property(
-            ProductName='lorem-ipsum',
-            ProductVersion='0.0.1',
-            Manufacturer='Cicero Enterprises',
-            ProductCode='{0FE5FDB7-1DA6-44D2-8C17-10510D12D0EE}',
-            UpgradeCode='{12345678-1234-1234-1234-111111111111}',
-        )
-        popen = _Popen.return_value
-        popen.configure_mock(returncode=0)
-        popen.communicate.side_effect = [
-            (self._make_msi_table("Property"), ""),
-            (msi_properties, ""),
-            (msm_md, ""),
-        ]
-        metadata = dict(checksumtype='sha256',
-                        checksum='doesntmatter')
-        msi_path = os.path.join(DATA_DIR, "lorem-ipsum-0.0.1.msi")
-        pkg = models.DebPackage.from_file(msi_path, metadata)
-        self.assertEquals("lorem-ipsum",
-                          pkg.unit_key['name'])
-        self.assertEquals("0.0.1",
-                          pkg.unit_key['version'])
-        self.assertEquals(
-            [],
-            pkg.ModuleSignature)
-
-    @mock.patch("pulp_deb.plugins.db.models")
-    def tttest_from_file_msm(self, _Popen):
-        msm_md_path = os.path.join(DATA_DIR, "msm-msiinfo-export.out")
-        msm_md = open(msm_md_path).read()
-        popen = _Popen.return_value
-        popen.configure_mock(returncode=0)
-        popen.communicate.side_effect = [
-            ("ModuleSignature", ""),
-            (msm_md, ""),
-        ]
-        metadata = dict(checksumtype='sha256',
-                        checksum='doesntmatter')
-        msi_path = os.path.join(DATA_DIR, "lorem-ipsum-0.0.1.msi")
-        pkg = models.DebPackage.from_file(msi_path, metadata)
-        self.assertEquals("foobar",
-                          pkg.unit_key['name'])
-        self.assertEquals("1.2.3.4",
-                          pkg.unit_key['version'])
-        self.assertEquals("8E012345_0123_4567_0123_0123456789AB",
-                          pkg.guid)
+        for strdep, debdep, pulpdep in tests:
+            pkg = list(deb822.Packages.iter_paragraphs(
+                "Depends: {}".format(strdep)))[0]
+            self.assertEquals(debdep, pkg.relations['depends'])
+            self.assertEquals(pulpdep, models.DependencyParser.parse(debdep))

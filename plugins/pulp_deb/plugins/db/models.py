@@ -1,6 +1,7 @@
 
 import mongoengine
 from debian import debfile
+from debpkgr import debpkg
 from pulp.server import util
 from pulp.server.controllers import repository as repo_controller
 from pulp.server.db.model import FileContentUnit
@@ -22,7 +23,6 @@ class DebPackage(FileContentUnit):
                                  multi_arch="Multi-Arch",
                                  original_maintainer="Original-Maintainer",
                                  )
-
     name = mongoengine.StringField(required=True)
     version = mongoengine.StringField(required=True)
     architecture = mongoengine.StringField(required=True)
@@ -33,6 +33,19 @@ class DebPackage(FileContentUnit):
     filename = mongoengine.StringField(required=True)
     relativepath = mongoengine.StringField()
 
+    REL_FIELDS = ['breaks', 'conflicts', 'depends', 'enhances', 'pre_depends',
+                  'provides', 'recommends', 'replaces', 'suggests']
+
+    breaks = mongoengine.DynamicField()
+    conflicts = mongoengine.DynamicField()
+    depends = mongoengine.DynamicField()
+    enhances = mongoengine.DynamicField()
+    pre_depends = mongoengine.DynamicField()
+    provides = mongoengine.DynamicField()
+    recommends = mongoengine.DynamicField()
+    replaces = mongoengine.DynamicField()
+    suggests = mongoengine.DynamicField()
+
     # For backward compatibility
     _ns = mongoengine.StringField(required=True, default=meta['collection'])
     _content_type_id = mongoengine.StringField(required=True, default=TYPE_ID)
@@ -42,7 +55,6 @@ class DebPackage(FileContentUnit):
     source = mongoengine.StringField()
     maintainer = mongoengine.StringField()
     installed_size = mongoengine.StringField()
-    depends = mongoengine.StringField()
     section = mongoengine.StringField()
     priority = mongoengine.StringField()
     multi_arch = mongoengine.StringField()
@@ -140,7 +152,79 @@ class DebPackage(FileContentUnit):
             deb = debfile.DebFile(filename)
         except debfile.ArError as e:
             raise InvalidPackageError(str(e))
-        return dict(deb.debcontrol())
+        ret = dict(deb.debcontrol())
+        deps = debpkg.DebPkgRequires(**ret)
+        # Munge relation fields
+
+        for fname in cls.REL_FIELDS:
+            vals = deps.relations.get(fname, [])
+            vals = DependencyParser.parse(vals)
+            ret[fname] = vals
+        return ret
+
+
+class DependencyParser(object):
+    DEP_OPERATOR_MAP = {
+        '=': 'EQ',
+        '>>': 'GT',
+        '>=': 'GE',
+        '<<': 'LT',
+        '<=': 'LE',
+    }
+
+    @classmethod
+    def parse(cls, deps):
+        assert isinstance(deps, list)
+
+        return [cls._parse_one(x) for x in deps]
+
+    @classmethod
+    def _parse_one(cls, dep):
+        assert isinstance(dep, list)
+        pdeps = [cls._dep_simple(x) for x in dep]
+        if len(pdeps) == 1:
+            return pdeps[0]
+        # Conjunction (dep OR dep)
+        return pdeps
+
+    @classmethod
+    def _dep_simple(cls, dep):
+        ret = dict()
+        name = dep.get('name')
+        assert name is not None
+        ret.update(name=name)
+        version = dep.get('version')
+        if version is not None:
+            flag = cls.DEP_OPERATOR_MAP.get(version[0])
+            version = version[1]
+            ret.update(version=version, flag=flag)
+        arch = cls._dep_restrictions(dep.get('arch'))
+        if arch:
+            ret.update(arch=arch)
+
+        restrictions = dep.get('restrictions')
+        if restrictions:
+            restrictions = [cls._dep_restrictions(x) for x in restrictions]
+            ret.update(restrictions=restrictions)
+        return ret
+
+    @classmethod
+    def _dep_restrictions(cls, vlist):
+        if not vlist:
+            return None
+        return [cls._dep_restr(x) for x in vlist]
+
+    @classmethod
+    def _dep_restr(cls, value):
+        if not value:
+            return None
+        # (true, "a") -> "a"
+        # (false, "a") -> "!a"
+        assert isinstance(value, (list, tuple))
+        assert len(value) == 2
+        if value[0]:
+            return value[1]
+        return '!' + value[1]
 
 
 class Error(ValueError):

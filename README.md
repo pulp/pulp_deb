@@ -19,6 +19,58 @@ Server extensions need:
 Build the RPMs from spec file.
 Additionally, build python-debian and python-debpkgr as rpm packages.
 
+### Representing Debian Dependency Relationships
+
+This plugin uses `deb822.PkgRelation` to parse Debian dependency fields.
+
+We currently support `breaks`, `conflicts`, `depends`, `enhances`,
+`pre_depends`, `provides`, `recommends`, `replaces`, `suggests`.
+
+The representation of a Debian relationship is following, when possible,
+the conventions used by `pulp_rpm`:
+
+* The representation is a list of sub-items, with an implicit conjunction
+  (`AND`) for the sub-items. In other words, all the sub-items have to
+  evaluate to True in order for the relationship to be satisfied.
+* Simple (single package) items are dictionaries with a `name` field. They may
+  contain additional fields `version`, `flag`, `arch`, `restrictions`.
+* Versioned dependencies will have a `version` field to describe the desired
+  target version, and the `flag` field will denote the operator for comparing
+  versions. Where the operators in a Debian representation are one of "<<",
+  "<=", "=", ">=", ">>", `flag` will be `LT`, `LE`, `EQ`, `GE`, `GT`
+  respectively.
+* `arch` is a list of architecture strings. Negation is represented with a
+  leading exclamation mark.
+* `restrictions`, if present, is a list of one or more lists of strings.
+  Just like with architectures, negation is represented with a leading
+  exclamation mark.
+
+In addition, Debian supports disjunction. Where simple package dependencies
+are dictionaries, disjunction (`OR`) is a list of simple package dependencies.
+
+Here are examples of dependencies and their representation in Pulp:
+
+* `'emacs | emacsen, make, debianutils (>= 1.7)'`:
+```json
+ [
+     [{"name": "emacs"}, {"name": "emacsen"}],
+     {"name": "make"},
+     {"name": "debianutils", "version": "1.7", "flag": "GE"}
+ ]
+```
+* `'tcl8.4-dev [amd64], procps [!hurd-i386]'`:
+```json
+ [
+    {"name": "tcl8.4-dev", "arch": ["amd64"]},
+    {"name": "procps", "arch": ["!hurd-i386"]}
+ ]
+```
+* `'texlive <stage1 !cross> <stage2>'`:
+```json
+ [
+     {"name": "texlive", "restrictions": [["stage1", "!cross"], ["stage2"]]}
+ ]
+```
 
 ### Signing support
 

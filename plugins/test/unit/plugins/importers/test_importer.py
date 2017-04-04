@@ -187,6 +187,7 @@ class TestDebImporter(testbase.TestCase):
             filename=os.path.basename(file_path),
             architecture="x86_64",
             checksumtype="sha256",
+            depends=[{'name': 'glibc'}],
             checksum=checksum)
         package = models.DebPackage(**metadata)
         from_file.return_value = package
@@ -222,6 +223,9 @@ class TestDebImporter(testbase.TestCase):
             description=None,
             size=None,
         )
+        for fname in models.DebPackage.REL_FIELDS:
+            metadata[fname] = None
+        metadata['depends'] = [{'name': 'glibc'}]
         unit_key = dict((x, metadata[x])
                         for x in models.DebPackage.unit_key_fields)
 
