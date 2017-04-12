@@ -2,7 +2,7 @@
 %{!?python_sitearch: %global python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(1))")}
 
 # define required pulp platform version.
-%define pulp_version 2.10.1
+%define pulp_version 2.10.3
 
 %define inst_prefix pulp_deb
 
@@ -18,6 +18,8 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:      noarch
 BuildRequires:  python2-devel
 BuildRequires:  python-setuptools
+# Not required, but Jenkins needs lzma.h for python-debpkgr
+Requires: xz-devel
 
 %description
 Provides a collection of platform plugins and client extensions that provide
@@ -68,6 +70,7 @@ rm -rf %{buildroot}
 %package -n python-%{name}-common
 Summary: Pulp Debian support common library
 Group: Development/Languages
+Requires: python-pulp-common >= %{pulp_version}
 
 %description -n python-%{name}-common
 A collection of modules shared among all pulp-deb components.
@@ -86,7 +89,7 @@ A collection of modules shared among all pulp-deb components.
 Summary: Pulp Debian plugins
 Group: Development/Languages
 Requires: python-%{name}-common = %{version}-%{release}
-Requires: pulp-server
+Requires: pulp-server >= %{pulp_version}
 Requires: python-debian
 Requires: python-debpkgr >= 1.0.0
 Requires: gnupg
@@ -107,8 +110,8 @@ to provide Debian package support.
 %package admin-extensions
 Summary: The Debian admin client extensions
 Group: Development/Languages
-Requires: pulp-admin-client
 Requires: python-%{name}-common = %{version}-%{release}
+Requires: pulp-admin-client >= %{pulp_version}
 
 %description admin-extensions
 A collection of extensions that supplement and override generic admin

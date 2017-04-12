@@ -46,18 +46,17 @@ class PackageCopyCommandTests(PulpClientTests):
     Simply verifies the criteria_utils is called from the overridden methods.
     """
 
-    @mock.patch('pulp_deb.extensions.admin.criteria_utils.parse_key_value')
+    @mock.patch('pulp.client.commands.unit.UnitCopyCommand._parse_key_value')
     def test_key_value(self, mock_parse):
         command = copy_commands.DebCopyCommand(self.context, 'copy')
         command._parse_key_value('foo')
         mock_parse.assert_called_once_with('foo')
 
-    @mock.patch('pulp_deb.extensions.admin.criteria_utils.parse_sort')
+    @mock.patch('pulp.client.commands.unit.UnitCopyCommand._parse_sort')
     def test_sort(self, mock_parse):
         command = copy_commands.DebCopyCommand(self.context, 'copy')
         command._parse_sort('foo')
-        mock_parse.assert_called_once_with(
-            copy_commands.RecursiveCopyCommand, 'foo')
+        mock_parse.assert_called_once_with('foo')
 
     @mock.patch('pulp.client.commands.unit.UnitCopyCommand.modify_user_input')
     def test_modify_user_input(self, mock_super):
@@ -98,7 +97,7 @@ class OtherCopyCommandsTests(PulpClientTests):
         command = copy_commands.DebCopyCommand(self.context)
 
         # Verify
-        self.assertTrue(isinstance(command, copy_commands.PackageCopyCommand))
+        self.assertTrue(isinstance(command, copy_commands.RecursiveCopyCommand))
         self.assertEqual(command.name, TYPE_ID_DEB)
         self.assertEqual(command.description, copy_commands.DESC_DEB)
         self.assertEqual(command.type_id, TYPE_ID_DEB)

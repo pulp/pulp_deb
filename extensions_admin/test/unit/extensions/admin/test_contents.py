@@ -14,18 +14,17 @@ class PackageSearchCommandTests(PulpClientTests):
         self.assertTrue(isinstance(command, DisplayUnitAssociationsCommand))
         self.assertEqual(command.context, self.context)
 
-    @mock.patch('pulp_deb.extensions.admin.criteria_utils.parse_key_value')
+    @mock.patch('pulp.client.commands.criteria.DisplayUnitAssociationsCommand._parse_key_value')
     def test_parse_key_value_override(self, mock_parse):
         command = contents.BaseSearchCommand(self.context)
         command._parse_key_value('test-data')
         mock_parse.assert_called_once_with('test-data')
 
-    @mock.patch('pulp_deb.extensions.admin.criteria_utils.parse_sort')
+    @mock.patch('pulp.client.commands.criteria.DisplayUnitAssociationsCommand._parse_sort')
     def test_parse_sort(self, mock_parse):
         command = contents.BaseSearchCommand(self.context)
         command._parse_sort('test-data')
-        mock_parse.assert_called_once_with(DisplayUnitAssociationsCommand,
-                                           'test-data')
+        mock_parse.assert_called_once_with('test-data')
 
     @mock.patch('pulp.bindings.repository.RepositoryUnitAPI.search')
     def test_run_search(self, mock_search):

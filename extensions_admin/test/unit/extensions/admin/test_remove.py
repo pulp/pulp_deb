@@ -4,8 +4,7 @@ from pulp.client.commands.unit import UnitRemoveCommand
 from ...testbase import PulpClientTests
 from pulp_deb.extensions.admin import remove as remove_commands
 from pulp_deb.common.ids import TYPE_ID_DEB
-from pulp_deb.extensions.admin.remove import (
-    BaseRemoveCommand, PackageRemoveCommand)
+from pulp_deb.extensions.admin.remove import BaseRemoveCommand
 
 
 class BaseRemoveCommandTests(PulpClientTests):
@@ -36,18 +35,17 @@ class PackageRemoveCommandTests(PulpClientTests):
     Simply verifies the criteria_utils is called from the overridden methods.
     """
 
-    @mock.patch('pulp_deb.extensions.admin.criteria_utils.parse_key_value')
+    @mock.patch('pulp.client.commands.unit.UnitRemoveCommand._parse_key_value')
     def test_key_value(self, mock_parse):
         command = remove_commands.DebRemoveCommand(self.context, 'copy')
         command._parse_key_value('foo')
         mock_parse.assert_called_once_with('foo')
 
-    @mock.patch('pulp_deb.extensions.admin.criteria_utils.parse_sort')
+    @mock.patch('pulp.client.commands.unit.UnitRemoveCommand._parse_sort')
     def test_sort(self, mock_parse):
         command = remove_commands.DebRemoveCommand(self.context, 'copy')
         command._parse_sort('foo')
-        mock_parse.assert_called_once_with(
-            remove_commands.BaseRemoveCommand, 'foo')
+        mock_parse.assert_called_once_with('foo')
 
     @mock.patch('pulp.client.commands.unit.UnitRemoveCommand.modify_user_input')  # noqa
     def test_modify_user_input(self, mock_super):
@@ -74,7 +72,7 @@ class RemoveCommandsTests(PulpClientTests):
         command = remove_commands.DebRemoveCommand(self.context)
 
         # Verify
-        self.assertTrue(isinstance(command, PackageRemoveCommand))
+        self.assertTrue(isinstance(command, BaseRemoveCommand))
         self.assertEqual(command.name, TYPE_ID_DEB)
         self.assertEqual(command.description, remove_commands.DESC_DEB)
         self.assertEqual(command.type_id, TYPE_ID_DEB)

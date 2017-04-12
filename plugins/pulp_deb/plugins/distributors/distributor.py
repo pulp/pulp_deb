@@ -8,11 +8,10 @@ from pulp.common.config import read_json_config
 from pulp.plugins.util.publish_step import AtomicDirectoryPublishStep
 from pulp.plugins.util.publish_step import PluginStep, UnitModelPluginStep
 from pulp.plugins.distributor import Distributor
-from pulp_rpm.yum_plugin import util as yum_util
 
 from pulp_deb.common import ids, constants
 from pulp_deb.plugins.db import models
-from . import configuration
+from . import configuration, yum_plugin_util
 from debpkgr import aptrepo
 
 _logger = logging.getLogger(__name__)
@@ -284,4 +283,4 @@ class GenerateListingFileStep(PluginStep):
         self.target_dir = target_dir
 
     def process_main(self, item=None):
-        yum_util.generate_listing_files(self.root_dir, self.target_dir)
+        yum_plugin_util.generate_listing_files(self.root_dir, self.target_dir)

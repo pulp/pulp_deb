@@ -117,13 +117,15 @@ class PublishRepoMixIn(object):
                 open(_p, "rb").read()).hexdigest()
         return units
 
+    @mock.patch('pulp.plugins.util.publish_step.selinux.restorecon')
     @mock.patch("pulp_deb.plugins.distributors.distributor.aptrepo.signer.tempfile.NamedTemporaryFile")  # noqa
     @mock.patch("pulp_deb.plugins.distributors.distributor.aptrepo.signer.subprocess.Popen")
     @mock.patch("pulp_deb.plugins.distributors.distributor.aptrepo.debpkg.debfile.DebFile")
     @mock.patch("pulp.server.managers.repo._common.task.current")
     @mock.patch('pulp.plugins.util.publish_step.repo_controller')
     def test_publish_repo(self, _repo_controller, _task_current, _DebFile,
-                          _Popen, _NamedTemporaryFile):
+                          _Popen, _NamedTemporaryFile,
+                          _restorecon):
         _task_current.request.id = 'aabb'
         worker_name = "worker01"
         _task_current.request.configure_mock(hostname=worker_name)

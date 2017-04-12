@@ -2,7 +2,6 @@ from gettext import gettext as _
 import logging
 
 from pulp.client.commands.criteria import DisplayUnitAssociationsCommand
-from pulp_deb.extensions.admin import criteria_utils
 from pulp_deb.common import ids
 
 # -- constants ----------------------------------------------------------------
@@ -88,15 +87,6 @@ class BaseSearchCommand(DisplayUnitAssociationsCommand):
             out_func(units, FIELDS_BY_TYPE[type_ids[0]])
         else:
             out_func(units)
-
-    @staticmethod
-    def _parse_key_value(args):
-        return criteria_utils.parse_key_value(args)
-
-    @classmethod
-    def _parse_sort(cls, sort_args):
-        return criteria_utils.parse_sort(DisplayUnitAssociationsCommand,
-                                         sort_args)
 
     def package_search(self, **kwargs):
         def out_func(document_list, display_filter=self.__class__.FIELDS):
