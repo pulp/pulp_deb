@@ -68,7 +68,7 @@ SHA256:
 
         # Make sure we got a request for the best compression
         self.assertEquals(
-            ['http://example.com/main/binary-amd64/Packages.bz2'],
+            ['http://example.com/dists/stable/main/binary-amd64/Packages.bz2'],
             [x.url for x in self.step.step_download_Packages.downloads])
         self.assertEquals(
             [os.path.join(
@@ -93,7 +93,7 @@ SHA256:
         with self.assertRaises(exceptions.PulpCodedTaskFailedException) as ctx:
             step.process_lifecycle()
         self.assertEquals(
-            'Unable to sync repo1 from http://example.com/: expected one comp, got 2',
+            'Unable to sync repo1 from http://example.com/dists/stable/: expected one comp, got 2',
             str(ctx.exception))
 
     def _mock_repometa(self):
@@ -195,6 +195,6 @@ SHA256:
         with self.assertRaises(exceptions.PulpCodedTaskFailedException) as ctx:
             step.process_lifecycle()
         self.assertEquals(
-            'Unable to sync repo1 from http://example.com/:'
+            'Unable to sync repo1 from http://example.com/dists/stable/:'
             ' mismatching checksums for file.deb: expected 00aa, actual AABB',
             str(ctx.exception))
