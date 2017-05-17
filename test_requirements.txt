@@ -1,6 +1,7 @@
 coverage
-flake8
-mock
+coveralls
+flake8==2.6.2
+mock<1.1
 nose
 nosexcover
-unittest2
+pep257

@@ -3,6 +3,9 @@
 
 import optparse
 import os
+import pip
+import re
+import subprocess
 import sys
 
 from pulp.devel import environment
@@ -13,6 +16,11 @@ WARNING_RESET = '\033[0m'
 
 DIRS = ('/var/lib/pulp/published/deb/web',)
 
+# It is important for longer operators to come before shorter operators when
+# there is overlap
+RPMCMPOPS = ["<=", "<", ">=", ">", "="]
+RPMCMPSEP = re.compile("(%s)" % '|'.join(RPMCMPOPS))
+
 #
 # Str entry assumes same src and dst relative path.
 # Tuple entry is explicit (src, dst)
@@ -21,6 +29,7 @@ DIRS = ('/var/lib/pulp/published/deb/web',)
 
 # Standard directories
 DIR_PLUGINS = '/usr/lib/pulp/plugins'
+
 ROOT_DIR = os.path.abspath(os.path.dirname(__file__))
 
 LINKS = (
@@ -29,13 +38,17 @@ LINKS = (
      '/etc/pulp/server/plugins.conf.d/deb_distributor.json'),
     ('plugins/etc/pulp/server/plugins.conf.d/deb_importer.json',
      '/etc/pulp/server/plugins.conf.d/deb_importer.json'),
-    ('plugins/types/deb.json', DIR_PLUGINS + '/types/deb.json'),
 )
+
+PIP_INSTALLABLE = set(['debpkgr'])
 
 
 def parse_cmdline():
     """
     Parse and validate the command line options.
+
+    :return: A 2-tuple of the options and arguments that the user provided.
+    :rtype:  tuple
     """
     parser = optparse.OptionParser()
 
@@ -97,15 +110,30 @@ def getlinks():
 
 
 def install(opts):
+    currdir = os.path.abspath(os.path.dirname(__file__))
+    warnings = []
+    # Attempt to install setuptools first; setuptools cannot upgrade itself
+    # since it runs into an infinite loop
+    subprocess.call(["pip", "install", "setuptools>=19.0"])
+    # Extract the version of debpkgr
+    pobj = subprocess.Popen(
+        ["/usr/bin/rpmspec", "-q", "--queryformat", r"[%{REQUIRENEVRS}\n]",
+         "{}/pulp-deb.spec".format(currdir)],
+        stdout=subprocess.PIPE)
+    retcode = pobj.wait()
+    if retcode == 0:
+        reqs = [x.strip() for x in pobj.stdout]
+        warnings.extend(pip_install(reqs))
+    else:
+        warnings.append("Failed to query spec file")
+
     # Install the packages in developer mode
     environment.manage_setup_pys('install', ROOT_DIR)
 
-    warnings = []
     create_dirs(opts)
     # Ensure the directory is owned by apache
-    os.system('chown -R apache:apache /var/lib/pulp/published/deb')
+    os.system('chown -R apache:apache /var/lib/pulp/published/python')
 
-    currdir = os.path.abspath(os.path.dirname(__file__))
     for src, dst in getlinks():
         warning_msg = create_link(opts, os.path.join(currdir, src), dst)
         if warning_msg:
@@ -118,6 +146,45 @@ def install(opts):
     return os.EX_OK
 
 
+def pip_install(rpm_reqs):
+    warnings = []
+    to_install = []
+    for rpm_req in rpm_reqs:
+        try:
+            to_install.extend(_to_pip_install(rpm_req))
+        except ValueError as e:
+            warnings.append(str(e))
+
+    if to_install:
+        pip.main(["install"] + to_install)
+    return warnings
+
+
+def _to_pip_install(rpm_req):
+    to_install = []
+    arr = RPMCMPSEP.split(rpm_req)
+    # Remove extra whitespaces
+    arr = [x.strip() for x in arr]
+    name = arr[0]
+    if name not in PIP_INSTALLABLE:
+        if not name.startswith('python-'):
+            return to_install
+        # Strip python- prefix
+        name = name[7:]
+        if name not in PIP_INSTALLABLE:
+            return to_install
+    if len(arr) > 1:
+        if len(arr) != 3:
+            raise ValueError("Invalid comparison expression '%s'" % rpm_req)
+        operator, operand = arr[1:]
+        if operator == '=':
+            # pip uses ==
+            operator = '=='
+        name = "{}{}{}".format(name, operator, operand)
+    to_install.append(name)
+    return to_install
+
+
 def uninstall(opts):
     for src, dst in getlinks():
         debug(opts, 'removing link: %s' % dst)
@@ -128,7 +195,6 @@ def uninstall(opts):
 
     # Uninstall the packages
     environment.manage_setup_pys('uninstall', ROOT_DIR)
-
     return os.EX_OK
 
 

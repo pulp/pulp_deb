@@ -1,316 +1,200 @@
 import os
-import shutil
-import tempfile
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
 
 import mock
 from pulp.common.plugins import importer_constants
 from pulp.plugins.config import PluginCallConfiguration
-from pulp.plugins.model import Repository as RepositoryModel, Unit
+from pulp.plugins.model import Repository as RepositoryModel
 from pulp.server import exceptions
-from pulp.server.managers import factory
+
+from .... import testbase
 
 from pulp_deb.common import constants
-from pulp_deb.plugins import error_codes
 from pulp_deb.plugins.importers import sync
 
 
-factory.initialize()
-
-
-class TestSyncStep(unittest.TestCase):
+class TestSync(testbase.TestCase):
     def setUp(self):
-        super(TestSyncStep, self).setUp()
+        super(TestSync, self).setUp()
 
         self.repo = RepositoryModel('repo1')
         self.conduit = mock.MagicMock()
         plugin_config = {
-            importer_constants.KEY_FEED: 'http://pulpproject.org/',
+            importer_constants.KEY_FEED: 'http://example.com/',
         }
-        self.working_dir = tempfile.mkdtemp()
         self.config = PluginCallConfiguration({}, plugin_config)
-        self.step = sync.SyncStep(repo=self.repo,
+        self._task_current = mock.patch("pulp.server.managers.repo._common.task.current")
+        obj = self._task_current.__enter__()
+        obj.request.id = 'aabb'
+        worker_name = "worker01"
+        obj.request.configure_mock(hostname=worker_name)
+        os.makedirs(os.path.join(self.pulp_working_dir, worker_name))
+        self.step = sync.RepoSync(repo=self.repo,
                                   conduit=self.conduit,
-                                  config=self.config,
-                                  working_dir=self.working_dir)
+                                  config=self.config)
+        open(self.step.release_file, "wb").write("""\
+Architectures: amd64
+Components: main
+SHA256:
+ 0000000000000000000000000000000000000000000000000000000000000001            67863 main/binary-amd64/Packages
+ 0000000000000000000000000000000000000000000000000000000000000003             9144 main/binary-amd64/Packages.bz2
+ 0000000000000000000000000000000000000000000000000000000000000002            14457 main/binary-amd64/Packages.gz
+""")  # noqa
 
     def tearDown(self):
-        shutil.rmtree(self.working_dir)
+        self._task_current.__exit__()
 
     def test_init(self):
-        self.assertEqual(self.step.step_id, constants.IMPORT_STEP_MAIN)
+        self.assertEqual(self.step.step_id, constants.SYNC_STEP)
 
         # make sure the children are present
-        step_ids = set([child.step_id for child in self.step.children])
-        self.assertTrue(constants.IMPORT_STEP_METADATA in step_ids)
+        step_ids = [child.step_id for child in self.step.children]
+        self.assertEquals(
+            [
+                constants.SYNC_STEP_RELEASE_DOWNLOAD,
+                constants.SYNC_STEP_RELEASE_PARSE,
+                constants.SYNC_STEP_PACKAGES_DOWNLOAD,
+                constants.SYNC_STEP_PACKAGES_PARSE,
+                'get_local',
+                constants.SYNC_STEP_UNITS_DOWNLOAD_REQUESTS,
+                constants.SYNC_STEP_UNITS_DOWNLOAD,
+                constants.SYNC_STEP_SAVE,
+            ],
+            step_ids)
 
-    @mock.patch('pulp_deb.plugins.importers.sync.misc.mkdir')
-    def test_generate_download_requests_root_contextpath(self, mock_mkdir):
-        """
-        Test with a repository at the root context path.
-        """
-        sample_unit = {
-            'name': 'foo',
-            'version': '1.5',
-            'architecture': 'x86_64',
-            'filename': 'foo.deb'}
-        self.step.step_get_local_units.units_to_download = [sample_unit]
-        self.step.deb_data = {
-            sync.get_key_hash(sample_unit): {
-                'file_path': '/pool/p/foo.deb',
-                'file_name': 'foo.deb'
-            }
-        }
+    def test_ParseReleaseStep(self):
+        step = self.step.children[1]
+        self.assertEquals(constants.SYNC_STEP_RELEASE_PARSE, step.step_id)
+        step.process_lifecycle()
 
-        requests = list(self.step.generate_download_requests())
+        # Make sure we got a request for the best compression
+        self.assertEquals(
+            ['http://example.com/main/binary-amd64/Packages.bz2'],
+            [x.url for x in self.step.step_download_Packages.downloads])
+        self.assertEquals(
+            [os.path.join(
+                self.pulp_working_dir,
+                'worker01/aabb/dists/foo/main/binary-amd64/Packages.bz2')],
+            [x.destination for x in self.step.step_download_Packages.downloads])
+        # apt_repo_meta is set as a side-effect
+        self.assertEquals(
+            ['amd64'],
+            self.step.apt_repo_meta.architectures)
 
-        self.assertEquals(1, len(requests))
-        download_request = requests[0]
-        download_dir = os.path.join(self.working_dir,
-                                    sync.generate_internal_storage_path('foo.deb'))
-        download_url = 'http://pulpproject.org/pool/p/foo.deb'
-        mock_mkdir.assert_called_once_with(os.path.dirname(download_dir))
-        self.assertEquals(download_request.destination, download_dir)
-        self.assertEquals(download_request.url, download_url)
+    @mock.patch('pulp_deb.plugins.importers.sync.aptrepo.AptRepoMeta')
+    def test_ParseReleaseStep_too_many_comp_arches(self, _AptRepoMeta):
+        self.repo.repo_obj = mock.MagicMock(repo_id=self.repo.id)
 
-    @mock.patch('pulp_deb.plugins.importers.sync.misc.mkdir')
-    def test_generate_download_requests_subdirectory_contextpath(self, mock_mkdir):
-        """
-        Test with a repository at a subdirectory of the context root.
-        """
-        plugin_config = {
-            importer_constants.KEY_FEED: 'http://pulpproject.org/foo/baz/',
-        }
-        self.step.config = PluginCallConfiguration({}, plugin_config)
-        sample_unit = {
-            'name': 'foo',
-            'version': '1.5',
-            'architecture': 'x86_64',
-            'filename': 'foo.deb'}
-        self.step.step_get_local_units.units_to_download = [sample_unit]
-        self.step.deb_data = {
-            sync.get_key_hash(sample_unit): {
-                'file_path': 'pool/p/foo.deb',
-                'file_name': 'foo.deb'
-            }
-        }
-        requests = list(self.step.generate_download_requests())
-        self.assertEquals(1, len(requests))
-        download_request = requests[0]
-        download_dir = os.path.join(self.working_dir,
-                                    sync.generate_internal_storage_path('foo.deb'))
-        download_url = 'http://pulpproject.org/foo/baz/pool/p/foo.deb'
-        mock_mkdir.assert_called_once_with(os.path.dirname(download_dir))
-        self.assertEquals(download_request.destination, download_dir)
-        self.assertEquals(download_request.url, download_url)
+        repometa = _AptRepoMeta.return_value
+        repometa.iter_component_arch_binaries.return_value = ["a", "b"]
 
+        step = self.step.children[1]
+        self.assertEquals(constants.SYNC_STEP_RELEASE_PARSE, step.step_id)
 
-class TestGenerateMetadataStep(unittest.TestCase):
-    def setUp(self):
-        self.working_dir = tempfile.mkdtemp()
-        self.repo = RepositoryModel('repo1')
-        self.repo.working_dir = self.working_dir
-        self.conduit = mock.MagicMock()
-        plugin_config = {
-            importer_constants.KEY_FEED: 'http://ftp.fau.de/debian/dists/stable/main/binary-amd64/',
-        }
-        self.config = PluginCallConfiguration({}, plugin_config)
+        with self.assertRaises(exceptions.PulpCodedTaskFailedException) as ctx:
+            step.process_lifecycle()
+        self.assertEquals(
+            'Unable to sync repo1 from http://example.com/: expected one comp, got 2',
+            str(ctx.exception))
 
-        self.step = sync.GetMetadataStep(repo=self.repo, conduit=self.conduit, config=self.config,
-                                         working_dir=self.working_dir)
-        self.step.parent = mock.MagicMock()
-        self.index = self.step.parent.index_repository
+    def _mock_repometa(self):
+        repometa = self.step.apt_repo_meta = mock.MagicMock(
+            upstream_url="http://example.com/deb/dists/stable/")
 
-    def tearDown(self):
-        super(TestGenerateMetadataStep, self).tearDown()
-        shutil.rmtree(self.working_dir)
+        pkgs = [
+            dict(Package=x, Version="1-1", Architecture="amd64",
+                 SHA256="00{0}{0}".format(x),
+                 Filename="pool/stable/{0}_1-1_amd64.deb".format(x))
+            for x in ["a", "b"]]
 
-    @mock.patch('pulp_deb.plugins.importers.sync.debian_support.PackageFile')
-    @mock.patch('pulp_deb.plugins.importers.sync.debian_support.download_file')
-    def test_process_main(self, mock_deb_download, mock_deb_packagefile):
-        mock_deb_packagefile.return_value = [
-            {
-                'Package': 'foo',
-                'Version': '1.5',
-                'Architecture': 'x86_64',
-                'Size': '105',
-                'Filename': 'foo.deb'
-            }
-        ]
-        self.step.parent.available_units = []
-        self.step.process_main()
-        download_feed = self.config.get(importer_constants.KEY_FEED) + 'Packages'
-        download_location = os.path.join(self.working_dir, 'Packages')
-        mock_deb_download.assert_called_once_with(download_feed, download_location)
-        self.assertEquals(len(self.step.parent.available_units), 1)
-        self.assertDictEqual(self.step.parent.available_units[0],
-                             {'name': 'foo',
-                              'version': '1.5',
-                              'architecture': 'x86_64'})
+        comp_arch = mock.MagicMock(component='stable', arch="amd64")
+        comp_arch.iter_packages.return_value = pkgs
 
-    @mock.patch('pulp_deb.plugins.importers.sync.debian_support.PackageFile')
-    @mock.patch('pulp_deb.plugins.importers.sync.debian_support.download_file')
-    def test_process_main_sub_packagefile(self, mock_deb_download, mock_deb_packagefile):
-        """
-        Test when the Packages file is not in the feed directory.
-        """
-        mock_deb_packagefile.return_value = [
-            {
-                'Package': 'foo',
-                'Version': '1.5',
-                'Architecture': 'x86_64',
-                'Size': '105',
-                'Filename': 'foo.deb'
-            }
-        ]
-        plugin_config = {
-            importer_constants.KEY_FEED: 'http://ftp.fau.de/debian/',
-            'package-file-path': 'dists/stable/main/binary-amd64/'
-        }
-        self.config = PluginCallConfiguration({}, plugin_config)
-        self.step.config = plugin_config
-        self.step.parent.available_units = []
-        self.step.process_main()
-        download_feed = 'http://ftp.fau.de/debian/dists/stable/main/binary-amd64/Packages'
-        download_location = os.path.join(self.working_dir, 'Packages')
-        mock_deb_download.assert_called_once_with(download_feed, download_location)
-        self.assertEquals(len(self.step.parent.available_units), 1)
-        self.assertDictEqual(self.step.parent.available_units[0],
-                             {'name': 'foo',
-                              'version': '1.5',
-                              'architecture': 'x86_64'})
+        repometa.iter_component_arch_binaries.return_value = [comp_arch]
+        return pkgs
 
-    @mock.patch('pulp_deb.plugins.importers.sync.debian_support.PackageFile')
-    @mock.patch('pulp_deb.plugins.importers.sync.debian_support.download_file')
-    def test_process_main_missing_slashes(self, mock_deb_download, mock_deb_packagefile):
-        """
-        Test when the the feed is missing a '/' at the end and the package_file_path is
-        not relative.
-        """
-        mock_deb_packagefile.return_value = [
-            {
-                'Package': 'foo',
-                'Version': '1.5',
-                'Architecture': 'x86_64',
-                'Size': '105',
-                'Filename': 'foo.deb'
-            }
-        ]
-        plugin_config = {
-            importer_constants.KEY_FEED: 'http://ftp.fau.de/debian',
-            'package-file-path': '/dists/stable/main/binary-amd64/'
-        }
-        self.config = PluginCallConfiguration({}, plugin_config)
-        self.step.config = plugin_config
-        self.step.parent.available_units = []
-        self.step.process_main()
-        download_feed = 'http://ftp.fau.de/debian/dists/stable/main/binary-amd64/Packages'
-        download_location = os.path.join(self.working_dir, 'Packages')
-        mock_deb_download.assert_called_once_with(download_feed, download_location)
-        self.assertEquals(len(self.step.parent.available_units), 1)
-        self.assertDictEqual(self.step.parent.available_units[0],
-                             {'name': 'foo',
-                              'version': '1.5',
-                              'architecture': 'x86_64'})
+    def test_ParsePackagesStep(self):
+        pkgs = self._mock_repometa()
+        dl1 = mock.MagicMock(destination="dest1")
+        dl2 = mock.MagicMock(destination="dest2")
+        self.step.step_download_Packages._downloads = [dl1, dl2]
+        step = self.step.children[3]
+        self.assertEquals(constants.SYNC_STEP_PACKAGES_PARSE, step.step_id)
+        step.process_lifecycle()
 
+        self.assertEquals(
+            [x['SHA256'] for x in pkgs],
+            [x.checksum for x in self.step.step_local_units.available_units])
 
-class TestGetLocalUnitsStepDeb(unittest.TestCase):
-    def setUp(self):
-        self.working_dir = tempfile.mkdtemp()
-        self.step = sync.GetLocalUnitsStepDeb()
-        self.step.conduit = mock.MagicMock()
+    def test_CreateRequestsUnitsToDownload(self):
+        pkgs = self._mock_repometa()
+        units = [mock.MagicMock(checksum=x['SHA256'])
+                 for x in pkgs]
+        self.step.step_local_units.units_to_download = units
 
-    def tearDown(self):
-        shutil.rmtree(self.working_dir)
+        step = self.step.children[5]
+        self.assertEquals(constants.SYNC_STEP_UNITS_DOWNLOAD_REQUESTS,
+                          step.step_id)
+        step.process_lifecycle()
 
-    def test_dict_to_unit(self):
-        """
-        Test basic conversion of a unit dictionary to an unit object
-        """
-        unit_dict = {'name': 'foo', 'version': '1.5', 'architecture': 'x86_64',
-                     '_id': 'blah'}
-        unit_key_hash = sync.get_key_hash(unit_dict)
-        deb_data = {
-            unit_key_hash: {
-                'file_name': 'foo.deb'
-            }
-        }
-        self.step.parent = mock.MagicMock(deb_data=deb_data)
+        self.assertEquals(
+            ['http://example.com/deb/{}'.format(x['Filename'])
+             for x in pkgs],
+            [x.url for x in self.step.step_download_units.downloads])
 
-        unit = self.step._dict_to_unit(unit_dict)
+        self.assertEquals(
+            [os.path.join(
+                self.pulp_working_dir,
+                'worker01/aabb/packages/stable/{}'.format(os.path.basename(
+                    x['Filename'])))
+             for x in pkgs],
+            [x.destination for x in self.step.step_download_units.downloads])
 
-        self.assertTrue(unit is self.step.conduit.init_unit.return_value)
-        unit_key = {'name': 'foo', 'version': '1.5',
-                    'architecture': 'x86_64'}
-        storage_path = sync.generate_internal_storage_path('foo.deb')
-        self.step.conduit.init_unit.assert_called_once_with(constants.DEB_TYPE_ID,
-                                                            unit_key, {'file_name': 'foo.deb'},
-                                                            storage_path)
+    def test_SaveDownloadedUnits(self):
+        self.repo.repo_obj = mock.MagicMock(repo_id=self.repo.id)
+        pkgs = self._mock_repometa()
+        units = [mock.MagicMock(checksum=x['SHA256'])
+                 for x in pkgs]
 
+        dest_dir = os.path.join(self.pulp_working_dir, 'packages')
+        os.makedirs(dest_dir)
 
-class TestSaveUnits(unittest.TestCase):
-    def setUp(self):
-        self.working_dir = '/foo/bar'
-        self.step = sync.SaveUnits(self.working_dir)
-        self.step.conduit = mock.MagicMock()
-        self.step.parent = mock.MagicMock()
+        path_to_unit = dict()
+        for pkg, unit in zip(pkgs, units):
+            path = os.path.join(dest_dir, os.path.basename(pkg['Filename']))
+            open(path, "wb")
+            path_to_unit[path] = unit
+            unit._compute_checksum.return_value = unit.checksum
 
-    @mock.patch('pulp_deb.plugins.importers.sync.os.stat')
-    @mock.patch('pulp_deb.plugins.importers.sync.shutil.move')
-    def test_process_main(self, mock_shutil, mock_stat):
-        """
-        Test that we save properly if everything is ok
-        """
-        unit_key = {'name': 'foo', 'version': '1.5',
-                    'architecture': 'x86_64'}
-        unit_key_hash = sync.get_key_hash(unit_key)
-        deb_data = {
-            unit_key_hash: {
-                'file_name': 'foo.deb',
-                'file_size': '5'
-            }
-        }
-        self.step.parent = mock.MagicMock(deb_data=deb_data)
+        self.step.step_download_units.path_to_unit = path_to_unit
 
-        self.step.parent.step_get_local_units.units_to_download = [unit_key]
-        mock_stat.return_value.st_size = 5
-        initialized_unit = Unit(constants.DEB_TYPE_ID, unit_key, {}, 'some/directory')
-        save_location = sync.generate_internal_storage_path('foo.deb')
+        step = self.step.children[7]
+        self.assertEquals(constants.SYNC_STEP_SAVE, step.step_id)
+        step.process_lifecycle()
 
-        self.step.conduit.init_unit.return_value = initialized_unit
-        self.step.process_main()
-        self.step.conduit.init_unit.assert_called_once_with(constants.DEB_TYPE_ID,
-                                                            unit_key, {'file_name': 'foo.deb'},
-                                                            save_location)
-        source = os.path.join(self.working_dir, save_location)
-        mock_shutil.assert_called_once_with(source, initialized_unit.storage_path)
+        repo = self.repo.repo_obj
+        for path, unit in path_to_unit.items():
+            unit.save_and_associate.assert_called_once_with(path, repo)
 
-    @mock.patch('pulp_deb.plugins.importers.sync.os.stat')
-    @mock.patch('pulp_deb.plugins.importers.sync.shutil.move')
-    def test_process_main_file_size_failure(self, mock_shutil, mock_stat):
-        """
-        Test that we error if the file size does not match the metadata
-        """
-        unit_key = {'name': 'foo', 'version': '1.5',
-                    'architecture': 'x86_64'}
-        unit_key_hash = sync.get_key_hash(unit_key)
-        deb_data = {
-            unit_key_hash: {
-                'file_name': 'foo.deb',
-                'file_size': '5'
-            }
-        }
-        self.step.parent = mock.MagicMock(deb_data=deb_data)
+    def test_SaveDownloadedUnits_bad_checksum(self):
+        self.repo.repo_obj = mock.MagicMock(repo_id=self.repo.id)
+        # Force a checksum mismatch
+        dest_dir = os.path.join(self.pulp_working_dir, 'packages')
+        os.makedirs(dest_dir)
 
-        self.step.parent.step_get_local_units.units_to_download = [unit_key]
-        mock_stat.return_value.st_size = 7
-        initialized_unit = Unit(constants.DEB_TYPE_ID, unit_key, {}, 'some/directory')
-        self.step.conduit.init_unit.return_value = initialized_unit
-        try:
-            self.step.process_main()
-            self.fail('This should have raised an exception')
-        except exceptions.PulpCodedValidationException as e:
-            self.assertEquals(e.error_code, error_codes.DEB1001)
+        path = os.path.join(dest_dir, "file.deb")
+        open(path, "wb")
+
+        unit = mock.MagicMock(checksum="00aa")
+        unit._compute_checksum.return_value = "AABB"
+        path_to_unit = {path: unit}
+
+        self.step.step_download_units.path_to_unit = path_to_unit
+
+        step = self.step.children[7]
+        self.assertEquals(constants.SYNC_STEP_SAVE, step.step_id)
+        with self.assertRaises(exceptions.PulpCodedTaskFailedException) as ctx:
+            step.process_lifecycle()
+        self.assertEquals(
+            'Unable to sync repo1 from http://example.com/:'
+            ' mismatching checksums for file.deb: expected 00aa, actual AABB',
+            str(ctx.exception))

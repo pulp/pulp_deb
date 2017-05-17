@@ -2,6 +2,10 @@
 __pycache__/
 *.py[cod]
 
+# sjtindell
+restart.sh
+mongo.py
+
 # C extensions
 *.so
 
