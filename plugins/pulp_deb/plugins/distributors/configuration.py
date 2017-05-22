@@ -181,8 +181,7 @@ def get_repo_relative_path(repo, config=None):
     cfg = config or {}
     relative_path = cfg.get(PUBLISH_RELATIVE_URL_KEYWORD, repo.id) or repo.id
 
-    relative_path.lstrip('/')
-    return relative_path
+    return relative_path.lstrip('/')
 
 
 def get_gpg_sign_options(repo=None, config=None):
