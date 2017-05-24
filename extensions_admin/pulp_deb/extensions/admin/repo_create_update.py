@@ -23,6 +23,7 @@ from pulp_deb.common import constants, ids
 
 CONFIG_KEY_SKIP = 'type_skip_list'
 CONFIG_KEY_SUITE = 'suite'
+CONFIG_KEY_ARCHITECTURES = 'architectures'
 
 DISTRIBUTOR_CONFIG_KEYS = [
     (constants.PUBLISH_RELATIVE_URL_KEYWORD, 'relative_url'),
@@ -42,6 +43,9 @@ class PkgRepoOptionsBundle(OptionsBundle):
         self.opt_remove_missing.description += _('; defaults to false')
 
         # Add custom options
+        d = _('Comma separated list of architectures')
+        self.opt_architectures = PulpCliOption('--architectures', d,
+                                               required=False)
         d = _('distribution suite or codename to sync; defaults to stable')
         self.opt_suite = PulpCliOption('--suite', d,
                                        required=False)
@@ -74,6 +78,7 @@ class PkgRepoCreateCommand(CreateRepositoryCommand, ImporterConfigMixin):
         """
         super(PkgRepoCreateCommand, self).populate_sync_group()
         self.sync_group.add_option(self.options_bundle.opt_suite)
+        self.unit_policy_group.add_option(self.options_bundle.opt_architectures)
         self.sync_group.add_option(repo_options.OPT_SKIP)
 
     def parse_sync_group(self, user_input):
@@ -81,6 +86,8 @@ class PkgRepoCreateCommand(CreateRepositoryCommand, ImporterConfigMixin):
         safe_parse(user_input, config,
                    self.options_bundle.opt_suite.keyword,
                    CONFIG_KEY_SUITE)
+        safe_parse(user_input, config, self.options_bundle.opt_architectures.keyword,
+                   CONFIG_KEY_ARCHITECTURES)
         safe_parse(user_input, config, repo_options.OPT_SKIP.keyword,
                    CONFIG_KEY_SKIP)
         return config
@@ -210,6 +217,7 @@ class PkgRepoUpdateCommand(UpdateRepositoryCommand, ImporterConfigMixin):
         """
         super(PkgRepoUpdateCommand, self).populate_sync_group()
         self.sync_group.add_option(self.options_bundle.opt_suite)
+        self.unit_policy_group.add_option(self.options_bundle.opt_architectures)
         self.sync_group.add_option(repo_options.OPT_SKIP)
 
     def parse_sync_group(self, user_input):
@@ -228,6 +236,8 @@ class PkgRepoUpdateCommand(UpdateRepositoryCommand, ImporterConfigMixin):
         safe_parse(user_input, config,
                    self.options_bundle.opt_suite.keyword,
                    CONFIG_KEY_SUITE)
+        safe_parse(user_input, config, self.options_bundle.opt_architectures.keyword,
+                   CONFIG_KEY_ARCHITECTURES)
         safe_parse(user_input, config, repo_options.OPT_SKIP.keyword,
                    CONFIG_KEY_SKIP)
         return config
