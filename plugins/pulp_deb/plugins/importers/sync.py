@@ -50,17 +50,20 @@ class RepoSync(publish_step.PluginStep):
         self.description = _('Syncing Repository')
 
         self.apt_repo_meta = None
-        self.feed_url = self.get_config().get('feed')
+        # https://pulp.plan.io/issues/2765 should remove the need to hardcode
+        # the dist/component here
+        self.feed_url = self.get_config().get('feed').strip('/') + '/dists/stable/'
         self.release_file = os.path.join(self.get_working_dir(),
                                          "Release")
         self.available_units = None
+        rel_url = urlparse.urljoin(self.feed_url, 'Release')
+        _logger.info("Downloading %s", rel_url)
         self.add_child(publish_step.DownloadStep(
             constants.SYNC_STEP_RELEASE_DOWNLOAD,
             plugin_type=ids.TYPE_ID_IMPORTER,
             description=_('Retrieving metadata: release file'),
             downloads=[
-                DownloadRequest(urlparse.urljoin(self.feed_url, 'Release'),
-                                self.release_file)]))
+                DownloadRequest(rel_url, self.release_file)]))
         self.add_child(ParseReleaseStep(constants.SYNC_STEP_RELEASE_PARSE))
         self.step_download_Packages = publish_step.DownloadStep(
             constants.SYNC_STEP_PACKAGES_DOWNLOAD,
