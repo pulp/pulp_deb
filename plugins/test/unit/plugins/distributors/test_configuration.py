@@ -43,6 +43,11 @@ class TestConfigurationGetters(testbase.TestCase):
         directory = configuration.get_repo_relative_path(self.repo, self.config)
         self.assertEquals(directory, self.repo.id)
 
+    def test_get_repo_relative_path__with_slash(self):
+        cfg = self.config.__class__(dict(relative_url='/a/b'), dict())
+        directory = configuration.get_repo_relative_path(self.repo, cfg)
+        self.assertEquals(directory, 'a/b')
+
 
 class TestValidateConfig(testbase.TestCase):
     def _config_conduit(self):
