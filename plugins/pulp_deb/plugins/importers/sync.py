@@ -54,6 +54,8 @@ class RepoSync(publish_step.PluginStep):
         # the dist/component here
         self.feed_url = self.get_config().get('feed').strip('/') + '/dists/' \
             + self.get_config().get('suite', 'stable') + '/'
+        self.architectures = self.get_config().get('architectures')
+        self.components = self.get_config().get('components')
         self.release_file = os.path.join(self.get_working_dir(),
                                          "Release")
         self.available_units = None
@@ -92,17 +94,39 @@ class RepoSync(publish_step.PluginStep):
 
 class ParseReleaseStep(publish_step.PluginStep):
     def process_main(self, item=None):
+        architectures = split_or_none(self.parent.architectures)
+        components = split_or_none(self.parent.components)
         self.parent.apt_repo_meta = repometa = aptrepo.AptRepoMeta(
             release=open(self.parent.release_file, "rb"),
             upstream_url=self.parent.feed_url)
-        components = list(repometa.iter_component_arch_binaries())
-        if len(components) != 1:
+        comp_archs = list(repometa.iter_component_arch_binaries())
+        # this filter is only to test whether to throw DEBSYNC001
+        # it would be nicer, if create_Packages_download_requests
+        # could honor our filtered comp_archs list
+        if architectures:
+            comp_archs = [
+                x for x in comp_archs
+                if x.architecture in architectures]
+        if components:
+            comp_archs = [
+                x for x in comp_archs
+                if x.component in components]
+        if len(comp_archs) != 1:
             raise PulpCodedTaskFailedException(
                 DEBSYNC001, repo_id=self.get_repo().repo_obj.repo_id,
                 feed_url=self.parent.feed_url,
-                comp_count=len(components))
+                comp_count=len(comp_archs))
         dl_reqs = repometa.create_Packages_download_requests(
             self.get_working_dir())
+        # Filtering again; this time for real
+        if architectures:
+            dl_reqs = [
+                x for x in dl_reqs
+                if x.data['architecture'] in architectures]
+        if components:
+            dl_reqs = [
+                x for x in dl_reqs
+                if x.data['component'] in components]
         self.parent.step_download_Packages._downloads = [
             DownloadRequest(x.url, x.destination, data=x.data)
             for x in dl_reqs]
@@ -170,3 +194,9 @@ class SaveDownloadedUnits(publish_step.PluginStep):
                     checksum_expected=unit.checksum,
                     checksum_actual=csum)
             unit.save_and_associate(path, repo)
+
+
+def split_or_none(data):
+    if data:
+        return data.split(',')
+    return None
