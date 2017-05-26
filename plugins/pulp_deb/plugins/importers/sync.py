@@ -52,7 +52,8 @@ class RepoSync(publish_step.PluginStep):
         self.apt_repo_meta = None
         # https://pulp.plan.io/issues/2765 should remove the need to hardcode
         # the dist/component here
-        self.feed_url = self.get_config().get('feed').strip('/') + '/dists/stable/'
+        self.feed_url = self.get_config().get('feed').strip('/') + '/dists/' \
+            + self.get_config().get('suite', 'stable') + '/'
         self.release_file = os.path.join(self.get_working_dir(),
                                          "Release")
         self.available_units = None

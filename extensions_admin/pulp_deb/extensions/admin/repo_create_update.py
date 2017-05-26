@@ -12,6 +12,7 @@ from pulp.client.commands.repo.cudl import (CreateRepositoryCommand,
 from pulp.client.commands.repo.importer_config import (OptionsBundle,
                                                        ImporterConfigMixin,
                                                        safe_parse)
+from pulp.client.extensions.extensions import PulpCliOption
 from pulp.common import constants as pulp_constants
 from pulp.common.plugins import importer_constants
 from pulp.common.util import encode_unicode
@@ -21,6 +22,7 @@ from pulp_deb.common import constants, ids
 
 
 CONFIG_KEY_SKIP = 'type_skip_list'
+CONFIG_KEY_SUITE = 'suite'
 
 DISTRIBUTOR_CONFIG_KEYS = [
     (constants.PUBLISH_RELATIVE_URL_KEYWORD, 'relative_url'),
@@ -38,6 +40,11 @@ class PkgRepoOptionsBundle(OptionsBundle):
     def __init__(self):
         super(PkgRepoOptionsBundle, self).__init__()
         self.opt_remove_missing.description += _('; defaults to false')
+
+        # Add custom options
+        d = _('distribution suite or codename to sync; defaults to stable')
+        self.opt_suite = PulpCliOption('--suite', d,
+                                       required=False)
 
 
 class PkgRepoCreateCommand(CreateRepositoryCommand, ImporterConfigMixin):
@@ -66,10 +73,14 @@ class PkgRepoCreateCommand(CreateRepositoryCommand, ImporterConfigMixin):
         Overridden from ImporterConfigMixin to add in the skip option.
         """
         super(PkgRepoCreateCommand, self).populate_sync_group()
+        self.sync_group.add_option(self.options_bundle.opt_suite)
         self.sync_group.add_option(repo_options.OPT_SKIP)
 
     def parse_sync_group(self, user_input):
         config = ImporterConfigMixin.parse_sync_group(self, user_input)
+        safe_parse(user_input, config,
+                   self.options_bundle.opt_suite.keyword,
+                   CONFIG_KEY_SUITE)
         safe_parse(user_input, config, repo_options.OPT_SKIP.keyword,
                    CONFIG_KEY_SKIP)
         return config
@@ -198,6 +209,7 @@ class PkgRepoUpdateCommand(UpdateRepositoryCommand, ImporterConfigMixin):
         Overridden from ImporterConfigMixin to add in the skip option.
         """
         super(PkgRepoUpdateCommand, self).populate_sync_group()
+        self.sync_group.add_option(self.options_bundle.opt_suite)
         self.sync_group.add_option(repo_options.OPT_SKIP)
 
     def parse_sync_group(self, user_input):
@@ -213,6 +225,9 @@ class PkgRepoUpdateCommand(UpdateRepositoryCommand, ImporterConfigMixin):
         :rtype:  dict
         """
         config = super(PkgRepoUpdateCommand, self).parse_sync_group(user_input)
+        safe_parse(user_input, config,
+                   self.options_bundle.opt_suite.keyword,
+                   CONFIG_KEY_SUITE)
         safe_parse(user_input, config, repo_options.OPT_SKIP.keyword,
                    CONFIG_KEY_SKIP)
         return config
