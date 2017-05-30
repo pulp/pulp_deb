@@ -99,26 +99,9 @@ class ParseReleaseStep(publish_step.PluginStep):
         self.parent.apt_repo_meta = repometa = aptrepo.AptRepoMeta(
             release=open(self.parent.release_file, "rb"),
             upstream_url=self.parent.feed_url)
-        comp_archs = list(repometa.iter_component_arch_binaries())
-        # this filter is only to test whether to throw DEBSYNC001
-        # it would be nicer, if create_Packages_download_requests
-        # could honor our filtered comp_archs list
-        if architectures:
-            comp_archs = [
-                x for x in comp_archs
-                if x.architecture in architectures]
-        if components:
-            comp_archs = [
-                x for x in comp_archs
-                if x.component in components]
-        if len(comp_archs) != 1:
-            raise PulpCodedTaskFailedException(
-                DEBSYNC001, repo_id=self.get_repo().repo_obj.repo_id,
-                feed_url=self.parent.feed_url,
-                comp_count=len(comp_archs))
         dl_reqs = repometa.create_Packages_download_requests(
             self.get_working_dir())
-        # Filtering again; this time for real
+        # Filtering the dl_requests by selected architecture and component
         if architectures:
             dl_reqs = [
                 x for x in dl_reqs

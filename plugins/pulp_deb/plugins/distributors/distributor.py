@@ -4,6 +4,8 @@ import logging
 import os
 import shutil
 
+from collections import defaultdict
+
 from pulp.common.config import read_json_config
 from pulp.plugins.util.publish_step import AtomicDirectoryPublishStep
 from pulp.plugins.util.publish_step import PluginStep, UnitModelPluginStep
@@ -251,23 +253,31 @@ class MetadataStep(PluginStep):
 
     def process_main(self, unit=None):
         units = self.parent.publish_units.units
-        filenames = [x.storage_path for x in units]
+        arch_units = defaultdict(list)
+        for x in units:
+            arch_units[x.architecture].append(x)
+        # architecture 'all' is special; append it to all other architectures
+        all_units = arch_units.pop('all', [])
+        for arch in arch_units:
+            arch_units[arch].extend(all_units)
+
         sign_options = configuration.get_gpg_sign_options(self.get_repo(),
                                                           self.get_config())
-        arch = 'amd64'
         repometa = aptrepo.AptRepoMeta(
             codename=self.Codename,
             components=[self.Component],
-            architectures=[arch])
+            architectures=arch_units.keys())
         arepo = aptrepo.AptRepo(self.get_working_dir(),
                                 repo_name=self.get_repo().id,
                                 metadata=repometa,
                                 gpg_sign_options=sign_options)
 
-        arepo.create(filenames,
-                     component=self.Component,
-                     architecture=arch,
-                     with_symlinks=True)
+        for arch in arch_units:
+            filenames = [x.storage_path for x in arch_units[arch]]
+            arepo.create(filenames,
+                         component=self.Component,
+                         architecture=arch,
+                         with_symlinks=True)
 
 
 class GenerateListingFileStep(PluginStep):

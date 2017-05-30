@@ -80,22 +80,6 @@ SHA256:
             ['amd64'],
             self.step.apt_repo_meta.architectures)
 
-    @mock.patch('pulp_deb.plugins.importers.sync.aptrepo.AptRepoMeta')
-    def test_ParseReleaseStep_too_many_comp_arches(self, _AptRepoMeta):
-        self.repo.repo_obj = mock.MagicMock(repo_id=self.repo.id)
-
-        repometa = _AptRepoMeta.return_value
-        repometa.iter_component_arch_binaries.return_value = ["a", "b"]
-
-        step = self.step.children[1]
-        self.assertEquals(constants.SYNC_STEP_RELEASE_PARSE, step.step_id)
-
-        with self.assertRaises(exceptions.PulpCodedTaskFailedException) as ctx:
-            step.process_lifecycle()
-        self.assertEquals(
-            'Unable to sync repo1 from http://example.com/dists/stable/: expected one comp, got 2',
-            str(ctx.exception))
-
     def _mock_repometa(self):
         repometa = self.step.apt_repo_meta = mock.MagicMock(
             upstream_url="http://example.com/deb/dists/stable/")
