@@ -86,7 +86,7 @@ class DebDistributor(Distributor):
         if self._publisher is not None:
             self._publisher.cancel()
 
-    def distributor_removed(self, transfer_repo, config):
+    def distributor_removed(self, repo, config):
         """
         Called when a distributor of this type is removed from a repository.
         This hook allows the distributor to clean up any files that may have
@@ -106,7 +106,6 @@ class DebDistributor(Distributor):
         :param config: plugin configuration
         :type  config: pulp.plugins.config.PluginCallConfiguration
         """
-        repo = transfer_repo.repo_obj
         # remove the directories that might have been created for this repo/distributor
 
         repo_dir = configuration.get_master_publish_dir(
