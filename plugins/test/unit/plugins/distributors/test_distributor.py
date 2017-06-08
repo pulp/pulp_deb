@@ -117,15 +117,13 @@ class PublishRepoMixIn(object):
                 open(_p, "rb").read()).hexdigest()
         return units
 
+    @mock.patch("pulp_deb.plugins.distributors.distributor.aptrepo.AptRepo.sign")
     @mock.patch('pulp.plugins.util.publish_step.selinux.restorecon')
-    @mock.patch("pulp_deb.plugins.distributors.distributor.aptrepo.signer.tempfile.NamedTemporaryFile")  # noqa
-    @mock.patch("pulp_deb.plugins.distributors.distributor.aptrepo.signer.subprocess.Popen")
     @mock.patch("pulp_deb.plugins.distributors.distributor.aptrepo.debpkg.debfile.DebFile")
     @mock.patch("pulp.server.managers.repo._common.task.current")
     @mock.patch('pulp.plugins.util.publish_step.repo_controller')
     def test_publish_repo(self, _repo_controller, _task_current, _DebFile,
-                          _Popen, _NamedTemporaryFile,
-                          _restorecon):
+                          _restorecon, _sign):
         _task_current.request.id = 'aabb'
         worker_name = "worker01"
         _task_current.request.configure_mock(hostname=worker_name)
@@ -144,8 +142,9 @@ class PublishRepoMixIn(object):
             unit_counts[type_id] = len(_l)
 
         debcontrol = _DebFile.return_value.control.debcontrol.return_value
+
         debcontrol.copy.side_effect = [
-            self._mkdeb(u) for u in units
+            self._mkdeb(units[i]) for i in self.Sample_Units_Order
         ]
 
         distributor = self.Module.DebDistributor()
@@ -174,7 +173,6 @@ class PublishRepoMixIn(object):
         os.chmod(signer, 0o755)
 
         repo_config.update(gpg_cmd=signer)
-        _Popen.return_value.wait.return_value = 0
 
         distributor.publish_repo(repo, conduit, config=repo_config)
         self.assertEquals(
@@ -206,8 +204,11 @@ class PublishRepoMixIn(object):
             'stable')
         release_file = os.path.join(comp_dir, 'Release')
         self.assertTrue(os.path.exists(release_file))
-        self.assertTrue(os.path.exists(
-            os.path.join(comp_dir, 'main', 'binary-amd64', 'Packages')))
+        self.assertFalse(os.path.exists(
+            os.path.join(comp_dir, 'main', 'binary-all', 'Packages')))
+        for arch in self.Architectures:
+            self.assertTrue(os.path.exists(
+                os.path.join(comp_dir, 'main', 'binary-' + arch, 'Packages')))
 
         exp = [
             mock.call(repo.id, models.DebPackage, None),
@@ -229,15 +230,8 @@ class PublishRepoMixIn(object):
         work_release_file = os.path.join(self.pulp_working_dir, worker_name,
                                          "aabb", "dists", "stable", "Release")
         # Make sure we've attempted to sign
-        _Popen.assert_called_once_with(
-            [signer, work_release_file],
-            env=dict(
-                GPG_CMD=signer,
-                GPG_REPOSITORY_NAME=repo_id,
-            ),
-            stdout=_NamedTemporaryFile.return_value,
-            stderr=_NamedTemporaryFile.return_value,
-        )
+        self.assertTrue(_sign.call_count == len(self.Architectures))
+        _sign.assert_any_call(work_release_file)
 
     @classmethod
     def _mkdeb(cls, unit):
@@ -254,6 +248,24 @@ class TestPublishRepoDeb(PublishRepoMixIn, BaseTest):
         dict(name='chablis', version='0.2013.0', architecture='amd64',
              checksum='yz', checksumtype='sha3.14'),
     ]
+    Sample_Units_Order = [0, 1]
+    Architectures = ['amd64']
+
+
+class TestPublishRepoMultiArchDeb(PublishRepoMixIn, BaseTest):
+    Model = models.DebPackage
+    Sample_Units = [
+        dict(name='burgundy', version='0.1938.0', architecture='amd64',
+             checksum='abcde', checksumtype='sha3.14'),
+        dict(name='chablis', version='0.2013.0', architecture='amd64',
+             checksum='yz', checksumtype='sha3.14'),
+        dict(name='dornfelder', version='0.2017.0', architecture='i386',
+             checksum='wxy', checksumtype='sha3.14'),
+        dict(name='elbling', version='0.2017.0', architecture='all',
+             checksum='foo', checksumtype='sha3.14'),
+    ]
+    Sample_Units_Order = [2, 3, 0, 1, 3]
+    Architectures = ['amd64', 'i386']
 
 
 class TestDistributorRemoved(BaseTest):
