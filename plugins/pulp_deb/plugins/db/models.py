@@ -61,6 +61,7 @@ class DebPackage(FileContentUnit):
     homepage = mongoengine.StringField()
     description = mongoengine.StringField()
     original_maintainer = mongoengine.StringField()
+    component = mongoengine.StringField()
 
     @classmethod
     def from_file(cls, filename, user_metadata=None):

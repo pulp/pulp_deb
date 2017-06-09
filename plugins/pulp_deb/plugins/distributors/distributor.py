@@ -246,13 +246,13 @@ class PublishDebStep(UnitModelPluginStep):
 
 class MetadataStep(PluginStep):
     Codename = 'stable'
-    Component = 'main'
 
     def __init__(self):
         super(MetadataStep, self).__init__(constants.PUBLISH_REPODATA)
 
     def process_main(self, unit=None):
         units = self.parent.publish_units.units
+        # group units by architecture (all, amd64, armeb, ...)
         arch_units = defaultdict(list)
         for x in units:
             arch_units[x.architecture].append(x)
@@ -260,24 +260,30 @@ class MetadataStep(PluginStep):
         all_units = arch_units.pop('all', [])
         for arch in arch_units:
             arch_units[arch].extend(all_units)
+        # group units by component (main, contrib, non-free, ...)
+        comp_arch_units = defaultdict(lambda: defaultdict(list))
+        for arch in arch_units:
+            for unit in arch_units[arch]:
+                comp_arch_units[unit.component or 'main'][arch].append(unit)
 
         sign_options = configuration.get_gpg_sign_options(self.get_repo(),
                                                           self.get_config())
         repometa = aptrepo.AptRepoMeta(
             codename=self.Codename,
-            components=[self.Component],
+            components=comp_arch_units.keys(),
             architectures=arch_units.keys())
         arepo = aptrepo.AptRepo(self.get_working_dir(),
                                 repo_name=self.get_repo().id,
                                 metadata=repometa,
                                 gpg_sign_options=sign_options)
 
-        for arch in arch_units:
-            filenames = [x.storage_path for x in arch_units[arch]]
-            arepo.create(filenames,
-                         component=self.Component,
-                         architecture=arch,
-                         with_symlinks=True)
+        for comp in comp_arch_units:
+            for arch in comp_arch_units[comp]:
+                filenames = [x.storage_path for x in comp_arch_units[comp][arch]]
+                arepo.create(filenames,
+                             component=comp,
+                             architecture=arch,
+                             with_symlinks=True)
 
 
 class GenerateListingFileStep(PluginStep):

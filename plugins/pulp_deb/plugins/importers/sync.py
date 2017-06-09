@@ -54,8 +54,8 @@ class RepoSync(publish_step.PluginStep):
         # the dist/component here
         self.feed_url = self.get_config().get('feed').strip('/') + '/dists/' \
             + self.get_config().get('suite', 'stable') + '/'
-        self.architectures = self.get_config().get('architectures')
-        self.components = self.get_config().get('components')
+        self.architectures = split_or_none(self.get_config().get('architectures'))
+        self.components = split_or_none(self.get_config().get('components'))
         self.release_file = os.path.join(self.get_working_dir(),
                                          "Release")
         self.available_units = None
@@ -94,8 +94,8 @@ class RepoSync(publish_step.PluginStep):
 
 class ParseReleaseStep(publish_step.PluginStep):
     def process_main(self, item=None):
-        architectures = split_or_none(self.parent.architectures)
-        components = split_or_none(self.parent.components)
+        architectures = self.parent.architectures
+        components = self.parent.components
         self.parent.apt_repo_meta = repometa = aptrepo.AptRepoMeta(
             release=open(self.parent.release_file, "rb"),
             upstream_url=self.parent.feed_url)
@@ -125,6 +125,7 @@ class ParsePackagesStep(publish_step.PluginStep):
             for pkg in ca.iter_packages():
                 pkg['checksumtype'] = 'sha256'
                 pkg['checksum'] = pkg['SHA256']
+                pkg['component'] = ca.component
                 unit = models.DebPackage.from_metadata(pkg)
                 units.append(unit)
         self.parent.step_local_units.available_units = units
