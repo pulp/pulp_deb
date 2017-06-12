@@ -250,12 +250,12 @@ class MetadataStep(PluginStep):
     def __init__(self):
         super(MetadataStep, self).__init__(constants.PUBLISH_REPODATA)
 
-    def process_main(self, unit=None):
+    def process_main(self):
         units = self.parent.publish_units.units
         # group units by architecture (all, amd64, armeb, ...)
         arch_units = defaultdict(list)
-        for x in units:
-            arch_units[x.architecture].append(x)
+        for unit in units:
+            arch_units[unit.architecture].append(unit)
         # architecture 'all' is special; append it to all other architectures
         all_units = arch_units.pop('all', [])
         for arch in arch_units:
@@ -279,7 +279,7 @@ class MetadataStep(PluginStep):
 
         for comp in comp_arch_units:
             for arch in comp_arch_units[comp]:
-                filenames = [x.storage_path for x in comp_arch_units[comp][arch]]
+                filenames = [unit.storage_path for unit in comp_arch_units[comp][arch]]
                 arepo.create(filenames,
                              component=comp,
                              architecture=arch,
