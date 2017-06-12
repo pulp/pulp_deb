@@ -193,7 +193,7 @@ class PublishRepoMixIn(object):
                 repo_config['http_publish_dir'],
                 repo_config['relative_url'],
                 'pool',
-                'main',
+                unit.component or 'main',
                 unit.filename)
             self.assertEquals(os.readlink(published_path), unit.storage_path)
         # Make sure the dists directory exists
@@ -204,11 +204,12 @@ class PublishRepoMixIn(object):
             'stable')
         release_file = os.path.join(comp_dir, 'Release')
         self.assertTrue(os.path.exists(release_file))
-        self.assertFalse(os.path.exists(
-            os.path.join(comp_dir, 'main', 'binary-all', 'Packages')))
-        for arch in self.Architectures:
-            self.assertTrue(os.path.exists(
-                os.path.join(comp_dir, 'main', 'binary-' + arch, 'Packages')))
+        for comp in self.Components:
+            self.assertFalse(os.path.exists(
+                os.path.join(comp_dir, comp, 'binary-all', 'Packages')))
+            for arch in self.Architectures:
+                self.assertTrue(os.path.exists(
+                    os.path.join(comp_dir, comp, 'binary-' + arch, 'Packages')))
 
         exp = [
             mock.call(repo.id, models.DebPackage, None),
@@ -229,8 +230,8 @@ class PublishRepoMixIn(object):
 
         work_release_file = os.path.join(self.pulp_working_dir, worker_name,
                                          "aabb", "dists", "stable", "Release")
-        # Make sure we've attempted to sign
-        self.assertTrue(_sign.call_count == len(self.Architectures))
+        # Make sure we've attempted to sign all comp_archs
+        self.assertTrue(_sign.call_count == len(self.Architectures) * len(self.Components))
         _sign.assert_any_call(work_release_file)
 
     @classmethod
@@ -250,6 +251,7 @@ class TestPublishRepoDeb(PublishRepoMixIn, BaseTest):
     ]
     Sample_Units_Order = [0, 1]
     Architectures = ['amd64']
+    Components = ['main']
 
 
 class TestPublishRepoMultiArchDeb(PublishRepoMixIn, BaseTest):
@@ -266,6 +268,26 @@ class TestPublishRepoMultiArchDeb(PublishRepoMixIn, BaseTest):
     ]
     Sample_Units_Order = [2, 3, 0, 1, 3]
     Architectures = ['amd64', 'i386']
+    Components = ['main']
+
+
+class TestPublishRepoMultiCompArchDeb(PublishRepoMixIn, BaseTest):
+    Model = models.DebPackage
+    Sample_Units = [
+        dict(name='burgundy', version='0.1938.0', architecture='amd64',
+             checksum='abcde', checksumtype='sha3.14'),
+        dict(name='chablis', version='0.2013.0', architecture='amd64',
+             checksum='yz', checksumtype='sha3.14'),
+        dict(name='dornfelder', version='0.2017.0', architecture='i386',
+             checksum='wxy', checksumtype='sha3.14'),
+        dict(name='elbling', version='0.2017.0', architecture='all',
+             checksum='foo', checksumtype='sha3.14'),
+        dict(name='federweisser', version='0.2017.0', architecture='all',
+             checksum='foo', checksumtype='sha3.14', component='premature'),
+    ]
+    Sample_Units_Order = [2, 3, 0, 1, 3, 4, 4]
+    Architectures = ['amd64', 'i386']
+    Components = ['main', 'premature']
 
 
 class TestDistributorRemoved(BaseTest):
