@@ -22,7 +22,7 @@ from pulp_deb.common import constants, ids
 
 
 CONFIG_KEY_SKIP = 'type_skip_list'
-CONFIG_KEY_SUITE = 'suite'
+CONFIG_KEY_SUITES = 'suites'
 CONFIG_KEY_ARCHITECTURES = 'architectures'
 CONFIG_KEY_COMPONENTS = 'components'
 
@@ -44,15 +44,15 @@ class PkgRepoOptionsBundle(OptionsBundle):
         self.opt_remove_missing.description += _('; defaults to false')
 
         # Add custom options
-        d = _('Comma separated list of architectures')
-        self.opt_architectures = PulpCliOption('--architectures', d,
-                                               required=False)
-        d = _('distribution suite or codename to sync; defaults to stable')
-        self.opt_suite = PulpCliOption('--suite', d,
-                                       required=False)
+        d = _('distribution suites or codenames to sync; defaults to stable')
+        self.opt_suites = PulpCliOption('--suites', d,
+                                        required=False)
         d = _('components to sync')
         self.opt_components = PulpCliOption('--components', d,
                                             required=False)
+        d = _('Comma separated list of architectures')
+        self.opt_architectures = PulpCliOption('--architectures', d,
+                                               required=False)
 
 
 class PkgRepoCreateCommand(CreateRepositoryCommand, ImporterConfigMixin):
@@ -81,7 +81,7 @@ class PkgRepoCreateCommand(CreateRepositoryCommand, ImporterConfigMixin):
         Overridden from ImporterConfigMixin to add in the skip option.
         """
         super(PkgRepoCreateCommand, self).populate_sync_group()
-        self.sync_group.add_option(self.options_bundle.opt_suite)
+        self.sync_group.add_option(self.options_bundle.opt_suites)
         self.sync_group.add_option(self.options_bundle.opt_components)
         self.sync_group.add_option(self.options_bundle.opt_architectures)
         self.sync_group.add_option(repo_options.OPT_SKIP)
@@ -89,8 +89,8 @@ class PkgRepoCreateCommand(CreateRepositoryCommand, ImporterConfigMixin):
     def parse_sync_group(self, user_input):
         config = ImporterConfigMixin.parse_sync_group(self, user_input)
         safe_parse(user_input, config,
-                   self.options_bundle.opt_suite.keyword,
-                   CONFIG_KEY_SUITE)
+                   self.options_bundle.opt_suites.keyword,
+                   CONFIG_KEY_SUITES)
         safe_parse(user_input, config, self.options_bundle.opt_components.keyword,
                    CONFIG_KEY_COMPONENTS)
         safe_parse(user_input, config, self.options_bundle.opt_architectures.keyword,
@@ -223,7 +223,7 @@ class PkgRepoUpdateCommand(UpdateRepositoryCommand, ImporterConfigMixin):
         Overridden from ImporterConfigMixin to add in the skip option.
         """
         super(PkgRepoUpdateCommand, self).populate_sync_group()
-        self.sync_group.add_option(self.options_bundle.opt_suite)
+        self.sync_group.add_option(self.options_bundle.opt_suites)
         self.sync_group.add_option(self.options_bundle.opt_components)
         self.sync_group.add_option(self.options_bundle.opt_architectures)
         self.sync_group.add_option(repo_options.OPT_SKIP)
@@ -242,8 +242,8 @@ class PkgRepoUpdateCommand(UpdateRepositoryCommand, ImporterConfigMixin):
         """
         config = super(PkgRepoUpdateCommand, self).parse_sync_group(user_input)
         safe_parse(user_input, config,
-                   self.options_bundle.opt_suite.keyword,
-                   CONFIG_KEY_SUITE)
+                   self.options_bundle.opt_suites.keyword,
+                   CONFIG_KEY_SUITES)
         safe_parse(user_input, config, self.options_bundle.opt_components.keyword,
                    CONFIG_KEY_COMPONENTS)
         safe_parse(user_input, config, self.options_bundle.opt_architectures.keyword,
