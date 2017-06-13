@@ -254,3 +254,30 @@ class TestPublishRepoDeb(PublishRepoMixIn, BaseTest):
         dict(name='chablis', version='0.2013.0', architecture='amd64',
              checksum='yz', checksumtype='sha3.14'),
     ]
+
+
+class TestDistributorRemoved(BaseTest):
+    def test_dirstibutor_removed(self):
+        repo_id = 'repo-1'
+        distributor = self.Module.DebDistributor()
+        repo = mock.MagicMock(id=repo_id)
+        config = {}
+
+        # Create master directory
+        repo_dir = os.path.join(
+            self.Configuration.MASTER_PUBLISH_DIR,
+            ids.TYPE_ID_DISTRIBUTOR,
+            repo_id)
+        # Create published directories
+        http_dir = os.path.join(self.Configuration.HTTP_PUBLISH_DIR, repo_id)
+        https_dir = os.path.join(self.Configuration.HTTPS_PUBLISH_DIR, repo_id)
+        os.makedirs(repo_dir)
+        for d in [http_dir, https_dir]:
+            os.makedirs(os.path.dirname(d))
+            os.symlink(repo_dir, d)
+
+        distributor.distributor_removed(repo, config)
+
+        self.assertFalse(os.path.exists(repo_dir))
+        self.assertFalse(os.path.islink(http_dir))
+        self.assertFalse(os.path.islink(https_dir))
