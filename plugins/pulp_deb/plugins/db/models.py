@@ -4,7 +4,7 @@ from debian import debfile
 from debpkgr import debpkg
 from pulp.server import util
 from pulp.server.controllers import repository as repo_controller
-from pulp.server.db.model import FileContentUnit
+from pulp.server.db.model import ContentUnit, FileContentUnit
 from pulp_deb.common import ids
 
 NotUniqueError = mongoengine.NotUniqueError
@@ -161,6 +161,76 @@ class DebPackage(FileContentUnit):
             vals = DependencyParser.parse(vals)
             ret[fname] = vals
         return ret
+
+
+class DebComponent(ContentUnit):
+    """
+    This unittype represents a deb release component
+    """
+    TYPE_ID = ids.TYPE_ID_DEB_COMP
+    meta = dict(collection="units_deb_component",
+                indexes=list(ids.UNIT_KEY_DEB_COMP))
+    unit_key_fields = ids.UNIT_KEY_DEB_COMP
+    unit_referenced_types = ['deb']
+    _deb_references = mongoengine.ListField()
+
+    name = mongoengine.StringField(required=True)
+    release = mongoengine.StringField(required=True)
+    repoid = mongoengine.StringField(required=True)
+
+    @classmethod
+    def get_or_create_and_associate(cls, repo, release_unit, name):
+        unit = cls()
+        unit.name = name
+        repoid = repo.id
+        release = release_unit.codename
+        try:
+            unit.save()
+        except NotUniqueError:
+            unit = cls.objects.filter(**unit.unit_key).first()
+        repo_controller.associate_single_unit(
+            repository=repo.repo_obj, unit=unit)
+        return unit
+
+    # For backward compatibility
+    _ns = mongoengine.StringField(required=True, default=meta['collection'])
+    _content_type_id = mongoengine.StringField(required=True, default=TYPE_ID)
+
+
+class DebRelease(ContentUnit):
+    """
+    This unittype represents a deb release
+    """
+    TYPE_ID = ids.TYPE_ID_DEB_RELEASE
+    meta = dict(collection="units_deb_release",
+                indexes=list(ids.UNIT_KEY_DEB_RELEASE))
+    unit_key_fields = ids.UNIT_KEY_DEB_RELEASE
+    unit_referenced_types = ['deb_component']
+    _deb_component_references = mongoengine.ListField()
+
+    repoid = mongoengine.StringField(required=True)
+    codename = mongoengine.StringField(required=True)
+    suite = mongoengine.StringField()
+
+    # For backward compatibility
+    _ns = mongoengine.StringField(required=True, default=meta['collection'])
+    _content_type_id = mongoengine.StringField(required=True, default=TYPE_ID)
+
+    @classmethod
+    def get_or_create_and_associate(cls, repo, codename, suite):
+        unit = cls()
+        unit.repoid = repo.id
+        unit.codename = codename
+        unit.suite = suite
+        try:
+            unit.save()
+        except NotUniqueError:
+            unit = cls.objects.filter(**unit.unit_key).first()
+            unit.suite = suite
+            unit.save()
+        repo_controller.associate_single_unit(
+            repository=repo.repo_obj, unit=unit)
+        return unit
 
 
 class DependencyParser(object):

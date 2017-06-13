@@ -21,6 +21,8 @@ setup(
         ],
         'pulp.unit_models': [
             'deb=pulp_deb.plugins.db.models:DebPackage',
+            'deb_release=pulp_deb.plugins.db.models:DebRelease',
+            'deb_component=pulp_deb.plugins.db.models:DebComponent',
         ],
    },
    include_package_data=True,
