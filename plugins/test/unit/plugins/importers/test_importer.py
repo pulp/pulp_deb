@@ -165,7 +165,7 @@ class TestDebImporter(testbase.TestCase):
         expected_value = {
             'id': ids.TYPE_ID_IMPORTER,
             'display_name': _('Debian importer'),
-            'types': [ids.TYPE_ID_DEB], }
+            'types': [ids.TYPE_ID_DEB, ids.TYPE_ID_DEB_COMP, ids.TYPE_ID_DEB_RELEASE], }
         self.assertEqual(metadata, expected_value)
 
     @mock.patch("pulp_deb.plugins.db.models.repo_controller")

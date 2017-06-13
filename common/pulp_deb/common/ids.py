@@ -11,4 +11,16 @@ EXTRA_FIELDS_DEB = set([
     'breaks', 'conflicts', 'depends', 'enhances', 'pre_depends',
     'provides', 'recommends', 'replaces', 'suggests'])
 
-SUPPORTED_TYPES = set([TYPE_ID_DEB])
+TYPE_ID_DEB_COMP = 'deb_component'
+UNIT_KEY_DEB_COMP = (
+    'name', 'release', 'repoid')
+EXTRA_FIELDS_DEB_COMP = set([
+    'packages'])
+
+TYPE_ID_DEB_RELEASE = 'deb_release'
+UNIT_KEY_DEB_RELEASE = (
+    'codename', 'repoid')
+EXTRA_FIELDS_DEB_RELEASE = set([
+    'suite'])
+
+SUPPORTED_TYPES = set([TYPE_ID_DEB, TYPE_ID_DEB_COMP, TYPE_ID_DEB_RELEASE])
