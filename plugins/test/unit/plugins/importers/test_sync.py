@@ -62,7 +62,8 @@ SHA256:
             ],
             step_ids)
 
-    def test_ParseReleaseStep(self):
+    @mock.patch('pulp_deb.plugins.importers.sync.models.DebRelease')
+    def test_ParseReleaseStep(self, _DebRelease):
         step = self.step.children[1]
         self.assertEquals(constants.SYNC_STEP_RELEASE_PARSE, step.step_id)
         step.process_lifecycle()
@@ -80,6 +81,7 @@ SHA256:
         self.assertEquals(
             ['amd64'],
             self.step.apt_repo_meta['stable'].architectures)
+        _DebRelease.assert_called_once()
 
     def _mock_repometa(self):
         repometa = self.step.apt_repo_meta['stable'] = mock.MagicMock(
