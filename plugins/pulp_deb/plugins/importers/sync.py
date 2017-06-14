@@ -59,6 +59,7 @@ class RepoSync(publish_step.PluginStep):
         self.available_units = None
         # dicts with release names as keys to multiplex variables
         self.apt_repo_meta = {}
+        self.release_units = {}
         self.release_files = {
             release: os.path.join(self.get_working_dir(), release, 'Release')
             for release in self.releases}
@@ -121,6 +122,10 @@ class ParseReleaseStep(publish_step.PluginStep):
             self.parent.apt_repo_meta[release] = repometa = aptrepo.AptRepoMeta(
                 release=open(self.parent.release_files[release], "rb"),
                 upstream_url=self.parent.feed_urls[release])
+            codename = repometa.codename
+            suite = repometa.release.get('suite')
+            self.parent.release_units[release] = models.DebRelease.get_or_create_and_associate(
+                self.parent.repo, codename, suite)
             rel_dl_reqs = repometa.create_Packages_download_requests(
                 self.get_working_dir())
             # Filter the rel_dl_reqs by selected components and architectures
