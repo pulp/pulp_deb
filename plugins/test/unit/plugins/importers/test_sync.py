@@ -1,4 +1,5 @@
 import os
+import re
 
 import mock
 from pulp.common.plugins import importer_constants
@@ -19,7 +20,7 @@ class TestSync(testbase.TestCase):
         self.repo = RepositoryModel('repo1')
         self.conduit = mock.MagicMock()
         plugin_config = {
-            importer_constants.KEY_FEED: 'http://example.com/',
+            importer_constants.KEY_FEED: 'http://example.com/deb',
         }
         self.config = PluginCallConfiguration({}, plugin_config)
         self._task_current = mock.patch("pulp.server.managers.repo._common.task.current")
@@ -31,7 +32,7 @@ class TestSync(testbase.TestCase):
         self.step = sync.RepoSync(repo=self.repo,
                                   conduit=self.conduit,
                                   config=self.config)
-        open(self.step.release_file, "wb").write("""\
+        open(self.step.release_files['stable'], "wb").write("""\
 Architectures: amd64
 Components: main
 SHA256:
@@ -68,7 +69,7 @@ SHA256:
 
         # Make sure we got a request for the best compression
         self.assertEquals(
-            ['http://example.com/dists/stable/main/binary-amd64/Packages.bz2'],
+            ['http://example.com/deb/dists/stable/main/binary-amd64/Packages.bz2'],
             [x.url for x in self.step.step_download_Packages.downloads])
         self.assertEquals(
             [os.path.join(
@@ -78,26 +79,10 @@ SHA256:
         # apt_repo_meta is set as a side-effect
         self.assertEquals(
             ['amd64'],
-            self.step.apt_repo_meta.architectures)
-
-    @mock.patch('pulp_deb.plugins.importers.sync.aptrepo.AptRepoMeta')
-    def test_ParseReleaseStep_too_many_comp_arches(self, _AptRepoMeta):
-        self.repo.repo_obj = mock.MagicMock(repo_id=self.repo.id)
-
-        repometa = _AptRepoMeta.return_value
-        repometa.iter_component_arch_binaries.return_value = ["a", "b"]
-
-        step = self.step.children[1]
-        self.assertEquals(constants.SYNC_STEP_RELEASE_PARSE, step.step_id)
-
-        with self.assertRaises(exceptions.PulpCodedTaskFailedException) as ctx:
-            step.process_lifecycle()
-        self.assertEquals(
-            'Unable to sync repo1 from http://example.com/dists/stable/: expected one comp, got 2',
-            str(ctx.exception))
+            self.step.apt_repo_meta['stable'].architectures)
 
     def _mock_repometa(self):
-        repometa = self.step.apt_repo_meta = mock.MagicMock(
+        repometa = self.step.apt_repo_meta['stable'] = mock.MagicMock(
             upstream_url="http://example.com/deb/dists/stable/")
 
         pkgs = [
@@ -116,6 +101,8 @@ SHA256:
         pkgs = self._mock_repometa()
         dl1 = mock.MagicMock(destination="dest1")
         dl2 = mock.MagicMock(destination="dest2")
+        self.step.packages_urls['stable'] = set(
+            [u'http://example.com/deb/dists/stable/main/binary-amd64/Packages.bz2'])
         self.step.step_download_Packages._downloads = [dl1, dl2]
         step = self.step.children[3]
         self.assertEquals(constants.SYNC_STEP_PACKAGES_PARSE, step.step_id)
@@ -125,11 +112,13 @@ SHA256:
             [x['SHA256'] for x in pkgs],
             [x.checksum for x in self.step.step_local_units.available_units])
 
-    def test_CreateRequestsUnitsToDownload(self):
+    @mock.patch('pulp_deb.plugins.importers.sync.misc.mkdir')
+    def test_CreateRequestsUnitsToDownload(self, _mkdir):
         pkgs = self._mock_repometa()
         units = [mock.MagicMock(checksum=x['SHA256'])
                  for x in pkgs]
         self.step.step_local_units.units_to_download = units
+        self.step.unit_relative_urls = dict((p['SHA256'], p['Filename']) for p in pkgs)
 
         step = self.step.children[5]
         self.assertEquals(constants.SYNC_STEP_UNITS_DOWNLOAD_REQUESTS,
@@ -141,13 +130,17 @@ SHA256:
              for x in pkgs],
             [x.url for x in self.step.step_download_units.downloads])
 
-        self.assertEquals(
-            [os.path.join(
+        # self.assertEquals(
+        test_patterns = [
+            os.path.join(
                 self.pulp_working_dir,
-                'worker01/aabb/packages/stable/{}'.format(os.path.basename(
+                'worker01/aabb/packages/.*{}'.format(os.path.basename(
                     x['Filename'])))
-             for x in pkgs],
-            [x.destination for x in self.step.step_download_units.downloads])
+                for x in pkgs]
+        test_values = [x.destination for x in self.step.step_download_units.downloads]
+        for pattern, value in zip(test_patterns, test_values):
+            self.assertIsNotNone(re.match(pattern, value),
+                                 "Mismatching: {} !~ {}".format(pattern, value))
 
     def test_SaveDownloadedUnits(self):
         self.repo.repo_obj = mock.MagicMock(repo_id=self.repo.id)
@@ -195,6 +188,6 @@ SHA256:
         with self.assertRaises(exceptions.PulpCodedTaskFailedException) as ctx:
             step.process_lifecycle()
         self.assertEquals(
-            'Unable to sync repo1 from http://example.com/dists/stable/:'
+            'Unable to sync repo1 from http://example.com/deb:'
             ' mismatching checksums for file.deb: expected 00aa, actual AABB',
             str(ctx.exception))
