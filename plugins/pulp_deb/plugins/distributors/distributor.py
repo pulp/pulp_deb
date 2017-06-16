@@ -4,6 +4,8 @@ import logging
 import os
 import shutil
 
+from collections import defaultdict
+
 from pulp.common.config import read_json_config
 from pulp.plugins.util.publish_step import AtomicDirectoryPublishStep
 from pulp.plugins.util.publish_step import PluginStep, UnitModelPluginStep
@@ -214,8 +216,11 @@ class ModulePublisher(PluginStep):
         kwargs.setdefault('step_type', constants.PUBLISH_MODULES_STEP)
         super(ModulePublisher, self).__init__(**kwargs)
         self.description = self.__class__.description
-        work_dir = self.get_working_dir()
-        self.publish_units = PublishDebStep(work_dir)
+        self.publish_releases = PublishDebReleaseStep()
+        self.add_child(self.publish_releases)
+        self.publish_components = PublishDebComponentStep()
+        self.add_child(self.publish_components)
+        self.publish_units = PublishDebStep()
         self.add_child(self.publish_units)
         self.add_child(MetadataStep())
 
@@ -226,14 +231,39 @@ class ModulePublisher(PluginStep):
         return len(self.publish_units.units)
 
 
+class PublishDebReleaseStep(UnitModelPluginStep):
+    ID_PUBLISH_STEP = constants.PUBLISH_DEB_RELEASE_STEP
+    Model = models.DebRelease
+
+    def __init__(self, **kwargs):
+        super(PublishDebReleaseStep, self).__init__(
+            self.ID_PUBLISH_STEP, [self.Model], **kwargs)
+        self.units = []
+
+    def process_main(self, item=None):
+        self.units.append(item)
+
+
+class PublishDebComponentStep(UnitModelPluginStep):
+    ID_PUBLISH_STEP = constants.PUBLISH_DEB_COMP_STEP
+    Model = models.DebComponent
+
+    def __init__(self, **kwargs):
+        super(PublishDebComponentStep, self).__init__(
+            self.ID_PUBLISH_STEP, [self.Model], **kwargs)
+        self.units = []
+
+    def process_main(self, item=None):
+        self.units.append(item)
+
+
 class PublishDebStep(UnitModelPluginStep):
     ID_PUBLISH_STEP = constants.PUBLISH_DEB_STEP
     Model = models.DebPackage
 
-    def __init__(self, work_dir, **kwargs):
+    def __init__(self, **kwargs):
         super(PublishDebStep, self).__init__(
             self.ID_PUBLISH_STEP, [self.Model], **kwargs)
-        self.working_dir = work_dir
         self.units = []
 
     def process_main(self, item=None):
@@ -241,31 +271,55 @@ class PublishDebStep(UnitModelPluginStep):
 
 
 class MetadataStep(PluginStep):
-    Codename = 'stable'
-    Component = 'main'
-
     def __init__(self):
         super(MetadataStep, self).__init__(constants.PUBLISH_REPODATA)
 
-    def process_main(self, unit=None):
+    def process_main(self, item=None):
         units = self.parent.publish_units.units
-        filenames = [x.storage_path for x in units]
+        comp_units = self.parent.publish_components.units
+
         sign_options = configuration.get_gpg_sign_options(self.get_repo(),
                                                           self.get_config())
-        arch = 'amd64'
-        repometa = aptrepo.AptRepoMeta(
-            codename=self.Codename,
-            components=[self.Component],
-            architectures=[arch])
-        arepo = aptrepo.AptRepo(self.get_working_dir(),
-                                repo_name=self.get_repo().id,
-                                metadata=repometa,
-                                gpg_sign_options=sign_options)
 
-        arepo.create(filenames,
-                     component=self.Component,
-                     architecture=arch,
-                     with_symlinks=True)
+        for release_unit in self.parent.publish_releases.units:
+            codename = release_unit.codename
+            rel_components = [comp for comp in comp_units
+                              if comp.id in release_unit._deb_component_references]
+            architectures = set()
+
+            comp_arch_units = {}
+            for component_unit in rel_components:
+                # group units by architecture (all, amd64, armeb, ...)
+                arch_units = defaultdict(list)
+                for unit in [unit for unit in units if unit.id in component_unit._deb_references]:
+                    arch_units[unit.architecture].append(unit)
+                # architecture 'all' is special; append it to all other architectures
+                all_units = arch_units.pop('all', [])
+                for arch in arch_units:
+                    arch_units[arch].extend(all_units)
+                    architectures.add(arch)
+                comp_arch_units[component_unit.name] = arch_units
+
+            repometa = aptrepo.AptRepoMeta(
+                codename=codename,
+                components=[comp.name for comp in rel_components],
+                architectures=list(architectures),
+            )
+            # TODO Get the suite to work in debpkgr
+            # repometa.release.setdefault('Suite', suite)
+
+            arepo = aptrepo.AptRepo(self.get_working_dir(),
+                                    repo_name=self.get_repo().id,
+                                    metadata=repometa,
+                                    gpg_sign_options=sign_options)
+
+            for component in comp_arch_units:
+                for architecture, ca_units in comp_arch_units[component].iteritems():
+                    filenames = [unit.storage_path for unit in ca_units]
+                    arepo.create(filenames,
+                                 component=component,
+                                 architecture=architecture,
+                                 with_symlinks=True)
 
 
 class GenerateListingFileStep(PluginStep):

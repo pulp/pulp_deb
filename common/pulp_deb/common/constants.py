@@ -33,6 +33,8 @@ DISPLAY_UNITS_THRESHOLD = 100
 PUBLISH_REPO_STEP = 'publish_repo'
 PUBLISH_MODULES_STEP = "publish_modules"
 PUBLISH_DEB_STEP = "publish_deb"
+PUBLISH_DEB_RELEASE_STEP = "publish_deb_releases"
+PUBLISH_DEB_COMP_STEP = "publish_deb_components"
 PUBLISH_REPODATA = "publish_repodata"
 
 PUBLISH_STEPS = (PUBLISH_REPO_STEP, PUBLISH_MODULES_STEP,
