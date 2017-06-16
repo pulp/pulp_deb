@@ -102,30 +102,32 @@ class TestConfiguration(BaseTest):
 class PublishRepoMixIn(object):
     @classmethod
     def _units(cls, storage_dir):
-        units = [
-            cls.Model(
+        units = []
+        for Model in cls.Sample_Units:
+            units.extend([Model(
                 _storage_path=None,
                 **x)
-            for x in cls.Sample_Units]
+                for x in cls.Sample_Units[Model]])
         for unit in units:
-            unit.filename = unit.filename_from_unit_key(unit.unit_key)
-            _p = unit._storage_path = os.path.join(
-                storage_dir, unit.filename)
-            file(_p, "wb").write(str(uuid.uuid4()))
-            unit.checksumtype = 'sha256'
-            unit.checksum = hashlib.sha256(
-                open(_p, "rb").read()).hexdigest()
+            try:
+                unit.filename = unit.filename_from_unit_key(unit.unit_key)
+                _p = unit._storage_path = os.path.join(
+                    storage_dir, unit.filename)
+                file(_p, "wb").write(str(uuid.uuid4()))
+                unit.checksumtype = 'sha256'
+                unit.checksum = hashlib.sha256(
+                    open(_p, "rb").read()).hexdigest()
+            except:
+                pass
         return units
 
+    @mock.patch("pulp_deb.plugins.distributors.distributor.aptrepo.AptRepo.sign")
     @mock.patch('pulp.plugins.util.publish_step.selinux.restorecon')
-    @mock.patch("pulp_deb.plugins.distributors.distributor.aptrepo.signer.tempfile.NamedTemporaryFile")  # noqa
-    @mock.patch("pulp_deb.plugins.distributors.distributor.aptrepo.signer.subprocess.Popen")
     @mock.patch("pulp_deb.plugins.distributors.distributor.aptrepo.debpkg.debfile.DebFile")
     @mock.patch("pulp.server.managers.repo._common.task.current")
     @mock.patch('pulp.plugins.util.publish_step.repo_controller')
     def test_publish_repo(self, _repo_controller, _task_current, _DebFile,
-                          _Popen, _NamedTemporaryFile,
-                          _restorecon):
+                          _restorecon, _sign):
         _task_current.request.id = 'aabb'
         worker_name = "worker01"
         _task_current.request.configure_mock(hostname=worker_name)
@@ -144,8 +146,9 @@ class PublishRepoMixIn(object):
             unit_counts[type_id] = len(_l)
 
         debcontrol = _DebFile.return_value.control.debcontrol.return_value
+
         debcontrol.copy.side_effect = [
-            self._mkdeb(u) for u in units
+            self._mkdeb(unit_dict[ids.TYPE_ID_DEB][i]) for i in self.Sample_Units_Order
         ]
 
         distributor = self.Module.DebDistributor()
@@ -174,8 +177,8 @@ class PublishRepoMixIn(object):
         os.chmod(signer, 0o755)
 
         repo_config.update(gpg_cmd=signer)
-        _Popen.return_value.wait.return_value = 0
 
+        # This call is to be tested
         distributor.publish_repo(repo, conduit, config=repo_config)
         self.assertEquals(
             [x[0][0] for x in conduit.build_success_report.call_args_list],
@@ -188,28 +191,44 @@ class PublishRepoMixIn(object):
         self.assertEquals(
             [len(x[0][1][0]['sub_steps'])
              for x in conduit.build_success_report.call_args_list],
-            [2])
+            [4])
+
+        # Make sure all three models (packages, components, releases) are retrieved
+        self.assertEqual(_repo_controller.get_unit_model_querysets.call_count, 3)
+
         # Make sure symlinks got created
-        for unit in units:
-            published_path = os.path.join(
+        for unit in unit_dict[ids.TYPE_ID_DEB]:
+            units_components = [comp.name for comp in unit_dict[ids.TYPE_ID_DEB_COMP]
+                                if unit.id in comp._deb_references]
+            for component in units_components:
+                published_path = os.path.join(
+                    repo_config['http_publish_dir'],
+                    repo_config['relative_url'],
+                    'pool',
+                    component,
+                    unit.filename)
+                self.assertEquals(os.readlink(published_path), unit.storage_path)
+        # Make sure the release files exist
+        for release in unit_dict[ids.TYPE_ID_DEB_RELEASE]:
+            comp_dir = os.path.join(
                 repo_config['http_publish_dir'],
                 repo_config['relative_url'],
-                'pool',
-                'main',
-                unit.filename)
-            self.assertEquals(os.readlink(published_path), unit.storage_path)
-        # Make sure the dists directory exists
-        comp_dir = os.path.join(
-            repo_config['http_publish_dir'],
-            repo_config['relative_url'],
-            'dists',
-            'stable')
-        release_file = os.path.join(comp_dir, 'Release')
-        self.assertTrue(os.path.exists(release_file))
-        self.assertTrue(os.path.exists(
-            os.path.join(comp_dir, 'main', 'binary-amd64', 'Packages')))
+                'dists',
+                release.codename)
+            release_file = os.path.join(comp_dir, 'Release')
+            self.assertTrue(os.path.exists(release_file))
+            # Make sure the components Packages files exist
+            for comp in [comp.name for comp in unit_dict[ids.TYPE_ID_DEB_COMP]
+                         if comp.id in release._deb_component_references]:
+                self.assertFalse(os.path.exists(
+                    os.path.join(comp_dir, comp, 'binary-all', 'Packages')))
+                for arch in self.Architectures:
+                    self.assertTrue(os.path.exists(
+                        os.path.join(comp_dir, comp, 'binary-' + arch, 'Packages')))
 
         exp = [
+            mock.call(repo.id, models.DebRelease, None),
+            mock.call(repo.id, models.DebComponent, None),
             mock.call(repo.id, models.DebPackage, None),
         ]
         self.assertEquals(
@@ -226,18 +245,10 @@ class PublishRepoMixIn(object):
                               'listing')
         self.assertEquals('level1', open(lfpath).read())
 
-        work_release_file = os.path.join(self.pulp_working_dir, worker_name,
-                                         "aabb", "dists", "stable", "Release")
-        # Make sure we've attempted to sign
-        _Popen.assert_called_once_with(
-            [signer, work_release_file],
-            env=dict(
-                GPG_CMD=signer,
-                GPG_REPOSITORY_NAME=repo_id,
-            ),
-            stdout=_NamedTemporaryFile.return_value,
-            stderr=_NamedTemporaryFile.return_value,
-        )
+        for release in unit_dict[ids.TYPE_ID_DEB_RELEASE]:
+            work_release_file = os.path.join(self.pulp_working_dir, worker_name,
+                                             "aabb", "dists", release.codename, "Release")
+            _sign.assert_any_call(work_release_file)
 
     @classmethod
     def _mkdeb(cls, unit):
@@ -247,13 +258,74 @@ class PublishRepoMixIn(object):
 
 
 class TestPublishRepoDeb(PublishRepoMixIn, BaseTest):
-    Model = models.DebPackage
-    Sample_Units = [
-        dict(name='burgundy', version='0.1938.0', architecture='amd64',
-             checksum='abcde', checksumtype='sha3.14'),
-        dict(name='chablis', version='0.2013.0', architecture='amd64',
-             checksum='yz', checksumtype='sha3.14'),
-    ]
+    Sample_Units = {
+        models.DebPackage: [
+            dict(name='burgundy', version='0.1938.0', architecture='amd64',
+                 checksum='abcde', checksumtype='sha3.14', id='bbbb'),
+            dict(name='chablis', version='0.2013.0', architecture='amd64',
+                 checksum='yz', checksumtype='sha3.14', id='cccc'),
+        ],
+        models.DebComponent: [
+            dict(name='main', release='stable', id='mainid', _deb_references=['bbbb', 'cccc']),
+        ],
+        models.DebRelease: [
+            dict(codename='stable', id='stableid', _deb_component_references=['mainid']),
+        ],
+    }
+    Sample_Units_Order = [0, 1]
+    Architectures = ['amd64']
+
+
+class TestPublishRepoMultiArchDeb(PublishRepoMixIn, BaseTest):
+    Sample_Units = {
+        models.DebPackage: [
+            dict(name='burgundy', version='0.1938.0', architecture='amd64',
+                 checksum='abcde', checksumtype='sha3.14', id='bbbb'),
+            dict(name='chablis', version='0.2013.0', architecture='amd64',
+                 checksum='yz', checksumtype='sha3.14', id='cccc'),
+            dict(name='dornfelder', version='0.2017.0', architecture='i386',
+                 checksum='wxy', checksumtype='sha3.14', id='dddd'),
+            dict(name='elbling', version='0.2017.0', architecture='all',
+                 checksum='foo', checksumtype='sha3.14', id='eeee'),
+        ],
+        models.DebComponent: [
+            dict(name='main', release='stable', id='mainid',
+                 _deb_references=['bbbb', 'cccc', 'dddd', 'eeee']),
+        ],
+        models.DebRelease: [
+            dict(codename='stable', id='stableid', _deb_component_references=['mainid']),
+        ],
+    }
+    Sample_Units_Order = [2, 3, 0, 1, 3]
+    Architectures = ['amd64', 'i386']
+
+
+class TestPublishRepoMultiCompArchDeb(PublishRepoMixIn, BaseTest):
+    Sample_Units = {
+        models.DebPackage: [
+            dict(name='burgundy', version='0.1938.0', architecture='amd64',
+                 checksum='abcde', checksumtype='sha3.14', id='bbbb'),
+            dict(name='chablis', version='0.2013.0', architecture='amd64',
+                 checksum='yz', checksumtype='sha3.14', id='cccc'),
+            dict(name='dornfelder', version='0.2017.0', architecture='i386',
+                 checksum='wxy', checksumtype='sha3.14', id='dddd'),
+            dict(name='elbling', version='0.2017.0', architecture='all',
+                 checksum='foo', checksumtype='sha3.14', id='eeee'),
+            dict(name='federweisser', version='0.2017.0', architecture='ppc',
+                 checksum='foo', checksumtype='sha3.14', id='ffff'),
+        ],
+        models.DebComponent: [
+            dict(name='main', release='oldstable', id='mainid',
+                 _deb_references=['bbbb', 'cccc', 'dddd', 'eeee']),
+            dict(name='premature', release='oldstable', id='preid', _deb_references=['ffff']),
+        ],
+        models.DebRelease: [
+            dict(codename='old-stable', id='oldstableid',
+                 _deb_component_references=['mainid', 'preid']),
+        ],
+    }
+    Sample_Units_Order = [2, 3, 0, 1, 3, 4, 4]
+    Architectures = ['amd64', 'i386']
 
 
 class TestDistributorRemoved(BaseTest):
