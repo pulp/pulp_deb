@@ -2,6 +2,7 @@ import logging
 import os
 import urlparse
 import hashlib
+from collections import defaultdict
 from gettext import gettext as _
 
 from debpkgr import aptrepo
@@ -70,6 +71,9 @@ class RepoSync(publish_step.PluginStep):
             release: urlparse.urljoin(self.feed_urls[release] + '/', 'Release')
             for release in self.releases}
         self.packages_urls = {}
+        # double dicts with release/component as keys
+        self.component_units = defaultdict(dict)
+        self.component_packages = defaultdict(dict)
 
         for release in self.releases:
             misc.mkdir(os.path.dirname(self.release_files[release]))
@@ -111,6 +115,9 @@ class RepoSync(publish_step.PluginStep):
 
         self.add_child(SaveDownloadedUnits(constants.SYNC_STEP_SAVE))
 
+        #  metadata
+        self.add_child(SaveMetadataStep(constants.SYNC_STEP_SAVE_META))
+
 
 class ParseReleaseStep(publish_step.PluginStep):
     def process_main(self, item=None):
@@ -122,10 +129,21 @@ class ParseReleaseStep(publish_step.PluginStep):
             self.parent.apt_repo_meta[release] = repometa = aptrepo.AptRepoMeta(
                 release=open(self.parent.release_files[release], "rb"),
                 upstream_url=self.parent.feed_urls[release])
+            # get release unit
             codename = repometa.codename
             suite = repometa.release.get('suite')
-            self.parent.release_units[release] = models.DebRelease.get_or_create_and_associate(
-                self.parent.repo, codename, suite)
+            rel_unit = self.parent.release_units[release] = models.DebRelease.\
+                get_or_create_and_associate(self.parent.repo, codename, suite)
+            # get release component units
+            for component in repometa.components:
+                if components is None or component in components:
+                    comp_unit = self.parent.component_units[release][component] = \
+                        models.DebComponent.get_or_create_and_associate(self.parent.repo,
+                                                                        rel_unit,
+                                                                        component)
+                    self.parent.conduit.link_unit(rel_unit, comp_unit)
+                    self.parent.component_packages[release][component] = []
+            # generate download requests for all relevant packages files
             rel_dl_reqs = repometa.create_Packages_download_requests(
                 self.get_working_dir())
             # Filter the rel_dl_reqs by selected components and architectures
@@ -161,7 +179,7 @@ class ParsePackagesStep(publish_step.PluginStep):
                     self.parent.unit_relative_urls[pkg['checksum']] = pkg['Filename']
                     unit = models.DebPackage.from_metadata(pkg)
                     units.append(unit)
-                    # TODO: append to release component
+                    self.parent.component_packages[release][ca.component].append(unit.unit_key)
         self.parent.step_local_units.available_units = units
 
 
@@ -206,6 +224,19 @@ class SaveDownloadedUnits(publish_step.PluginStep):
                     checksum_expected=unit.checksum,
                     checksum_actual=csum)
             unit.save_and_associate(path, repo)
+
+
+class SaveMetadataStep(publish_step.PluginStep):
+    def process_main(self, item=None):
+        for release in self.parent.releases:
+            for comp, comp_unit in self.parent.component_units[release].iteritems():
+                for unit in [unit_key_to_unit(unit_key)
+                             for unit_key in self.parent.component_packages[release][comp]]:
+                    self.parent.conduit.link_unit(comp_unit, unit)
+
+
+def unit_key_to_unit(unit_key):
+    return models.DebPackage.objects.filter(**unit_key).first()
 
 
 def generate_internal_storage_path(filename):

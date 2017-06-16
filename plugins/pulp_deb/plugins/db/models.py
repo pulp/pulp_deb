@@ -182,8 +182,8 @@ class DebComponent(ContentUnit):
     def get_or_create_and_associate(cls, repo, release_unit, name):
         unit = cls()
         unit.name = name
-        repoid = repo.id
-        release = release_unit.codename
+        unit.repoid = repo.id
+        unit.release = release_unit.codename
         try:
             unit.save()
         except NotUniqueError:

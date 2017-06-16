@@ -59,11 +59,13 @@ SHA256:
                 constants.SYNC_STEP_UNITS_DOWNLOAD_REQUESTS,
                 constants.SYNC_STEP_UNITS_DOWNLOAD,
                 constants.SYNC_STEP_SAVE,
+                constants.SYNC_STEP_SAVE_META,
             ],
             step_ids)
 
+    @mock.patch('pulp_deb.plugins.importers.sync.models.DebComponent')
     @mock.patch('pulp_deb.plugins.importers.sync.models.DebRelease')
-    def test_ParseReleaseStep(self, _DebRelease):
+    def test_ParseReleaseStep(self, _DebRelease, _DebComponent):
         step = self.step.children[1]
         self.assertEquals(constants.SYNC_STEP_RELEASE_PARSE, step.step_id)
         step.process_lifecycle()
@@ -81,7 +83,8 @@ SHA256:
         self.assertEquals(
             ['amd64'],
             self.step.apt_repo_meta['stable'].architectures)
-        _DebRelease.assert_called_once()
+        _DebRelease.get_or_create_and_associate.assert_called_once()
+        _DebComponent.get_or_create_and_associate.assert_called_once()
 
     def _mock_repometa(self):
         repometa = self.step.apt_repo_meta['stable'] = mock.MagicMock(
@@ -90,10 +93,10 @@ SHA256:
         pkgs = [
             dict(Package=x, Version="1-1", Architecture="amd64",
                  SHA256="00{0}{0}".format(x),
-                 Filename="pool/stable/{0}_1-1_amd64.deb".format(x))
+                 Filename="pool/main/{0}_1-1_amd64.deb".format(x))
             for x in ["a", "b"]]
 
-        comp_arch = mock.MagicMock(component='stable', arch="amd64")
+        comp_arch = mock.MagicMock(component='main', arch="amd64")
         comp_arch.iter_packages.return_value = pkgs
 
         repometa.iter_component_arch_binaries.return_value = [comp_arch]
@@ -106,6 +109,7 @@ SHA256:
         self.step.packages_urls['stable'] = set(
             [u'http://example.com/deb/dists/stable/main/binary-amd64/Packages.bz2'])
         self.step.step_download_Packages._downloads = [dl1, dl2]
+        self.step.component_packages['stable']['main'] = []
         step = self.step.children[3]
         self.assertEquals(constants.SYNC_STEP_PACKAGES_PARSE, step.step_id)
         step.process_lifecycle()
@@ -113,6 +117,7 @@ SHA256:
         self.assertEquals(
             [x['SHA256'] for x in pkgs],
             [x.checksum for x in self.step.step_local_units.available_units])
+        self.assertEquals(len(self.step.component_packages['stable']['main']), 2)
 
     @mock.patch('pulp_deb.plugins.importers.sync.misc.mkdir')
     def test_CreateRequestsUnitsToDownload(self, _mkdir):
@@ -193,3 +198,17 @@ SHA256:
             'Unable to sync repo1 from http://example.com/deb:'
             ' mismatching checksums for file.deb: expected 00aa, actual AABB',
             str(ctx.exception))
+
+    @mock.patch('pulp_deb.plugins.importers.sync.unit_key_to_unit')
+    def test_SaveMetadata(self, _UnitKeyToUnit):
+        _Conduit = self.conduit = mock.MagicMock()
+        _DebComponent = self.step.component_units['stable']['main'] = mock.MagicMock()
+        self.step.component_packages['stable']['main'] = [
+            {'name': 'ape', 'version': '1.2a-4~exp', 'architecture': 'DNA'}]
+        _Unit = _UnitKeyToUnit.return_value = mock.MagicMock()
+        step = self.step.children[8]
+        self.assertEquals(constants.SYNC_STEP_SAVE_META, step.step_id)
+        step.process_lifecycle()
+        _Conduit.link_unit.assert_called_once(_DebComponent, _Unit)
+        _UnitKeyToUnit.assert_called_once_with(
+            {'name': 'ape', 'version': '1.2a-4~exp', 'architecture': 'DNA'})

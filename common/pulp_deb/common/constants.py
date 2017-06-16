@@ -57,6 +57,7 @@ SYNC_STEP_PACKAGES_PARSE = 'sync_step_packages_parse'
 SYNC_STEP_UNITS_DOWNLOAD_REQUESTS = 'sync_step_unit_download_requests'
 SYNC_STEP_UNITS_DOWNLOAD = 'sync_step_unit_download'
 SYNC_STEP_SAVE = 'sync_step_save'
+SYNC_STEP_SAVE_META = 'sync_step_save_meta'
 
 GPG_CMD = "gpg_cmd"
 GPG_KEY_ID = "gpg_key_id"
