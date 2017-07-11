@@ -199,7 +199,7 @@ class PublishRepoMixIn(object):
         # Make sure symlinks got created
         for unit in unit_dict[ids.TYPE_ID_DEB]:
             units_components = [comp.name for comp in unit_dict[ids.TYPE_ID_DEB_COMP]
-                                if unit.id in comp._deb_references]
+                                if unit.id in comp.packages]
             for component in units_components:
                 published_path = os.path.join(
                     repo_config['http_publish_dir'],
@@ -219,7 +219,7 @@ class PublishRepoMixIn(object):
             self.assertTrue(os.path.exists(release_file))
             # Make sure the components Packages files exist
             for comp in [comp.name for comp in unit_dict[ids.TYPE_ID_DEB_COMP]
-                         if comp.id in release._deb_component_references]:
+                         if comp.id in release.components]:
                 self.assertFalse(os.path.exists(
                     os.path.join(comp_dir, comp, 'binary-all', 'Packages')))
                 for arch in self.Architectures:
@@ -266,10 +266,10 @@ class TestPublishRepoDeb(PublishRepoMixIn, BaseTest):
                  checksum='yz', checksumtype='sha3.14', id='cccc'),
         ],
         models.DebComponent: [
-            dict(name='main', release='stable', id='mainid', _deb_references=['bbbb', 'cccc']),
+            dict(name='main', release='stable', id='mainid', packages=['bbbb', 'cccc']),
         ],
         models.DebRelease: [
-            dict(codename='stable', id='stableid', _deb_component_references=['mainid']),
+            dict(codename='stable', id='stableid', components=['mainid']),
         ],
     }
     Sample_Units_Order = [0, 1]
@@ -290,10 +290,10 @@ class TestPublishRepoMultiArchDeb(PublishRepoMixIn, BaseTest):
         ],
         models.DebComponent: [
             dict(name='main', release='stable', id='mainid',
-                 _deb_references=['bbbb', 'cccc', 'dddd', 'eeee']),
+                 packages=['bbbb', 'cccc', 'dddd', 'eeee']),
         ],
         models.DebRelease: [
-            dict(codename='stable', id='stableid', _deb_component_references=['mainid']),
+            dict(codename='stable', id='stableid', components=['mainid']),
         ],
     }
     Sample_Units_Order = [2, 3, 0, 1, 3]
@@ -316,12 +316,12 @@ class TestPublishRepoMultiCompArchDeb(PublishRepoMixIn, BaseTest):
         ],
         models.DebComponent: [
             dict(name='main', release='oldstable', id='mainid',
-                 _deb_references=['bbbb', 'cccc', 'dddd', 'eeee']),
-            dict(name='premature', release='oldstable', id='preid', _deb_references=['ffff']),
+                 packages=['bbbb', 'cccc', 'dddd', 'eeee']),
+            dict(name='premature', release='oldstable', id='preid', packages=['ffff']),
         ],
         models.DebRelease: [
             dict(codename='old-stable', id='oldstableid',
-                 _deb_component_references=['mainid', 'preid']),
+                 components=['mainid', 'preid']),
         ],
     }
     Sample_Units_Order = [2, 3, 0, 1, 3, 4, 4]

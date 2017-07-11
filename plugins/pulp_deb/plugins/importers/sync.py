@@ -141,7 +141,9 @@ class ParseReleaseStep(publish_step.PluginStep):
                         models.DebComponent.get_or_create_and_associate(self.parent.repo,
                                                                         rel_unit,
                                                                         component)
-                    self.parent.conduit.link_unit(rel_unit, comp_unit)
+                    if comp_unit.id not in rel_unit.components:
+                        rel_unit.components.append(comp_unit.id)
+                        rel_unit.save()
                     self.parent.component_packages[release][component] = []
             # generate download requests for all relevant packages files
             rel_dl_reqs = repometa.create_Packages_download_requests(
@@ -232,7 +234,9 @@ class SaveMetadataStep(publish_step.PluginStep):
             for comp, comp_unit in self.parent.component_units[release].iteritems():
                 for unit in [unit_key_to_unit(unit_key)
                              for unit_key in self.parent.component_packages[release][comp]]:
-                    self.parent.conduit.link_unit(comp_unit, unit)
+                    if unit.id not in comp_unit.packages:
+                        comp_unit.packages.append(unit.id)
+                        comp_unit.save()
 
 
 def unit_key_to_unit(unit_key):
