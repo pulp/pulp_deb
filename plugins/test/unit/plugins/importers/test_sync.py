@@ -201,14 +201,13 @@ SHA256:
 
     @mock.patch('pulp_deb.plugins.importers.sync.unit_key_to_unit')
     def test_SaveMetadata(self, _UnitKeyToUnit):
-        _Conduit = self.conduit = mock.MagicMock()
-        _DebComponent = self.step.component_units['stable']['main'] = mock.MagicMock()
+        self.conduit = mock.MagicMock()
+        self.step.component_units['stable']['main'] = mock.MagicMock()
         self.step.component_packages['stable']['main'] = [
             {'name': 'ape', 'version': '1.2a-4~exp', 'architecture': 'DNA'}]
-        _Unit = _UnitKeyToUnit.return_value = mock.MagicMock()
+        _UnitKeyToUnit.return_value = mock.MagicMock()
         step = self.step.children[8]
         self.assertEquals(constants.SYNC_STEP_SAVE_META, step.step_id)
         step.process_lifecycle()
-        _Conduit.link_unit.assert_called_once(_DebComponent, _Unit)
         _UnitKeyToUnit.assert_called_once_with(
             {'name': 'ape', 'version': '1.2a-4~exp', 'architecture': 'DNA'})

@@ -171,12 +171,11 @@ class DebComponent(ContentUnit):
     meta = dict(collection="units_deb_component",
                 indexes=list(ids.UNIT_KEY_DEB_COMP))
     unit_key_fields = ids.UNIT_KEY_DEB_COMP
-    unit_referenced_types = ['deb']
-    _deb_references = mongoengine.ListField()
 
     name = mongoengine.StringField(required=True)
     release = mongoengine.StringField(required=True)
     repoid = mongoengine.StringField(required=True)
+    packages = mongoengine.ListField()
 
     @classmethod
     def get_or_create_and_associate(cls, repo, release_unit, name):
@@ -205,12 +204,11 @@ class DebRelease(ContentUnit):
     meta = dict(collection="units_deb_release",
                 indexes=list(ids.UNIT_KEY_DEB_RELEASE))
     unit_key_fields = ids.UNIT_KEY_DEB_RELEASE
-    unit_referenced_types = ['deb_component']
-    _deb_component_references = mongoengine.ListField()
 
     repoid = mongoengine.StringField(required=True)
     codename = mongoengine.StringField(required=True)
     suite = mongoengine.StringField()
+    components = mongoengine.ListField()
 
     # For backward compatibility
     _ns = mongoengine.StringField(required=True, default=meta['collection'])

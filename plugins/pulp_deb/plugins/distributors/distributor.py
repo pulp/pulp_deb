@@ -284,14 +284,14 @@ class MetadataStep(PluginStep):
         for release_unit in self.parent.publish_releases.units:
             codename = release_unit.codename
             rel_components = [comp for comp in comp_units
-                              if comp.id in release_unit._deb_component_references]
+                              if comp.id in release_unit.components]
             architectures = set()
 
             comp_arch_units = {}
             for component_unit in rel_components:
                 # group units by architecture (all, amd64, armeb, ...)
                 arch_units = defaultdict(list)
-                for unit in [unit for unit in units if unit.id in component_unit._deb_references]:
+                for unit in [unit for unit in units if unit.id in component_unit.packages]:
                     arch_units[unit.architecture].append(unit)
                 # architecture 'all' is special; append it to all other architectures
                 all_units = arch_units.pop('all', [])

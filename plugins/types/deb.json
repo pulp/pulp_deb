@@ -12,15 +12,13 @@
         "display_name": "DEB_COMP",
         "description": "Deb Release Component",
         "unit_key": ["name", "release", "repoid"],
-        "search_indexes": [],
-        "referenced_types": ["deb"]
+        "search_indexes": []
     },
     {
         "id": "deb_release",
         "display_name": "DEB_RELEASE",
         "description": "Deb Release",
         "unit_key": ["codename", "repoid"],
-        "search_indexes": [],
-        "referenced_types": ["deb_component"]
+        "search_indexes": []
     }
 ]}
