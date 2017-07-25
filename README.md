@@ -16,8 +16,69 @@ Server extensions need:
 
 ### Installation
 
-Build the RPMs from spec file.
-Additionally, build python-debian and python-debpkgr as rpm packages.
+#### Installation via package manager
+
+The debian plugin is now available as RPMs for RHEL7, Fedora 24 and Fedora 25.
+To install the plugin to an existing pulp server, install the following
+packages:
+
+```
+$ sudo dnf install \
+  pulp-deb-plugins \
+  python-debian \
+  python-pulp-deb-common \
+  python2-debpkgr
+```
+
+On a machine with the `pulp-admin` client, install the admin client extensions:
+
+```
+$ sudo dnf install pulp-deb-admin-extensions
+```
+
+To enable the plugin, you will need to stop pulp services and migrate the
+database, and then restart the services.
+
+To do this, on the pulp server run:
+
+```
+$ sudo systemctl stop \
+  httpd \
+  pulp_celerybeat \
+  pulp_resource_manager \
+  pulp_streamer \
+  pulp_workers \
+  qpidd \
+  goferd
+
+$ sudo -u apache pulp-manage-db
+
+... output omitted ...
+
+$ sudo systemctl start
+  httpd \
+  pulp_celerybeat \
+  pulp_resource_manager \
+  pulp_streamer \
+  pulp_workers \
+  qpidd \
+  goferd
+```
+
+> The pulp_streamer and goferd services should be omitted if those services are
+> not installed.
+
+On a machine with the pulp-admin client configured to control your pulp server,
+and with the `pulp-deb-admin-extensions` package installed, you should now be
+able to create debian repositories.
+
+```
+$ pulp-admin deb repo create --repo-id now-i-serve-debian-packages
+```
+
+#### Build your own RPMs
+Alternatively, you can build the RPMs from spec file and then install with rpm.
+If you do this, you must also build python-debian and python-debpkgr as rpm packages and install.
 
 ### Representing Debian Dependency Relationships
 
