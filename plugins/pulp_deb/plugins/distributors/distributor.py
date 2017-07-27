@@ -4,6 +4,8 @@ import logging
 import os
 import shutil
 
+from collections import defaultdict
+
 from pulp.common.config import read_json_config
 from pulp.plugins.util.publish_step import AtomicDirectoryPublishStep
 from pulp.plugins.util.publish_step import PluginStep, UnitModelPluginStep
@@ -244,30 +246,44 @@ class PublishDebStep(UnitModelPluginStep):
 
 class MetadataStep(PluginStep):
     Codename = 'stable'
-    Component = 'main'
 
     def __init__(self):
         super(MetadataStep, self).__init__(constants.PUBLISH_REPODATA)
 
-    def process_main(self, unit=None):
+    def process_main(self):
         units = self.parent.publish_units.units
-        filenames = [x.storage_path for x in units]
+        # group units by architecture (all, amd64, armeb, ...)
+        arch_units = defaultdict(list)
+        for unit in units:
+            arch_units[unit.architecture].append(unit)
+        # architecture 'all' is special; append it to all other architectures
+        all_units = arch_units.pop('all', [])
+        for arch in arch_units:
+            arch_units[arch].extend(all_units)
+        # group units by component (main, contrib, non-free, ...)
+        comp_arch_units = defaultdict(lambda: defaultdict(list))
+        for arch in arch_units:
+            for unit in arch_units[arch]:
+                comp_arch_units[unit.component or 'main'][arch].append(unit)
+
         sign_options = configuration.get_gpg_sign_options(self.get_repo(),
                                                           self.get_config())
-        arch = 'amd64'
         repometa = aptrepo.AptRepoMeta(
             codename=self.Codename,
-            components=[self.Component],
-            architectures=[arch])
+            components=comp_arch_units.keys(),
+            architectures=arch_units.keys())
         arepo = aptrepo.AptRepo(self.get_working_dir(),
                                 repo_name=self.get_repo().id,
                                 metadata=repometa,
                                 gpg_sign_options=sign_options)
 
-        arepo.create(filenames,
-                     component=self.Component,
-                     architecture=arch,
-                     with_symlinks=True)
+        for comp in comp_arch_units:
+            for arch in comp_arch_units[comp]:
+                filenames = [unit.storage_path for unit in comp_arch_units[comp][arch]]
+                arepo.create(filenames,
+                             component=comp,
+                             architecture=arch,
+                             with_symlinks=True)
 
 
 class GenerateListingFileStep(PluginStep):

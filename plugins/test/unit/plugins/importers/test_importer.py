@@ -219,6 +219,7 @@ class TestDebImporter(testbase.TestCase):
             maintainer=None,
             multi_arch=None,
             original_maintainer=None,
+            component=None,
             homepage=None,
             description=None,
             size=None,
