@@ -80,6 +80,29 @@ $ pulp-admin deb repo create --repo-id now-i-serve-debian-packages
 Alternatively, you can build the RPMs from spec file and then install with rpm.
 If you do this, you must also build python-debian and python-debpkgr as rpm packages and install.
 
+### Synchronizing Debian / Ubuntu Repositories
+
+To sync the stable and testing releases of the usual debian archive run:
+```shell
+pulp-admin deb repo create --repo-id 'debian-st' --feed 'ftp://ftp.debian.org/debian/' --releases 'stable,testing'
+pulp-admin deb repo sync run --repo-id 'debian-st'
+```
+The `--releases` option is a comma separated list of releases to be synchronized.
+In a similar way, `--components` and `--architectures` are used to select which
+components and which architectures of the archive are to be synched.
+
+For example to create a testing distribution for sparc that uses main and contrib component, run:
+```shell
+pulp-admin deb repo create --repo-id 'debian-testing-sparc-mc' --feed 'ftp://ftp.debian.org/debian/' \
+  --releases 'testing' --components 'main,contrib' --architectures 'sparc'
+```
+
+The typical Ubuntu use case could be like
+```shell
+pulp-admin deb repo create --repo-id 'xenial-amd64' --feed 'http://de.archive.ubuntu.com/ubuntu' \
+  --releases 'xenial' --components 'main' --architectures 'amd64'
+```
+
 ### Representing Debian Dependency Relationships
 
 This plugin uses `deb822.PkgRelation` to parse Debian dependency fields.
