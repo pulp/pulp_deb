@@ -272,7 +272,7 @@ class TestPublishRepoDeb(PublishRepoMixIn, BaseTest):
             dict(codename='stable', id='stableid', components=['mainid']),
         ],
     }
-    Sample_Units_Order = [0, 1]
+    Sample_Units_Order = [0, 1, 0, 1]
     Architectures = ['amd64']
 
 
@@ -296,7 +296,7 @@ class TestPublishRepoMultiArchDeb(PublishRepoMixIn, BaseTest):
             dict(codename='stable', id='stableid', components=['mainid']),
         ],
     }
-    Sample_Units_Order = [2, 3, 0, 1, 3]
+    Sample_Units_Order = [2, 3, 0, 1, 3, 0, 1, 2, 3, 3]
     Architectures = ['amd64', 'i386']
 
 
@@ -324,7 +324,7 @@ class TestPublishRepoMultiCompArchDeb(PublishRepoMixIn, BaseTest):
                  components=['mainid', 'preid']),
         ],
     }
-    Sample_Units_Order = [2, 3, 0, 1, 3, 4, 4]
+    Sample_Units_Order = [2, 3, 0, 1, 3, 4, 4, 0, 1, 2, 4, 3, 3]
     Architectures = ['amd64', 'i386']
 
 
