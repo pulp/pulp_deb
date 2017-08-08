@@ -321,6 +321,34 @@ class MetadataStep(PluginStep):
                                  architecture=architecture,
                                  with_symlinks=True)
 
+        # create a special release with one component to include all packets
+        # group units by architecture (all, amd64, armeb, ...)
+        architectures = set()
+        arch_units = defaultdict(list)
+        for unit in units:
+            arch_units[unit.architecture].append(unit)
+        # architecture 'all' is special; append it to all other architectures
+        all_units = arch_units.pop('all', [])
+        for arch in arch_units:
+            arch_units[arch].extend(all_units)
+            architectures.add(arch)
+
+        repo_meta = aptrepo.AptRepoMeta(
+            codename='default',
+            components=['all'],
+            architectures=list(architectures),
+        )
+        arepo = aptrepo.AptRepo(self.get_working_dir(),
+                                repo_name=self.get_repo().id,
+                                metadata=repo_meta,
+                                gpg_sign_options=sign_options)
+        for architecture, a_units in arch_units.iteritems():
+            filenames = [unit.storage_path for unit in a_units]
+            arepo.create(filenames,
+                         component='all',
+                         architecture=architecture,
+                         with_symlinks=True)
+
 
 class GenerateListingFileStep(PluginStep):
     def __init__(self, root_dir, target_dir,
