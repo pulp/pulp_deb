@@ -258,6 +258,10 @@ def _check_for_relative_path_conflicts(repo, config, config_conduit,
     # in all honesty, this loop should execute at most once
     # but it may be interesting/useful for erroneous situations
     for distributor in conflicting_distributors:
+        # skip, if it is the same repository
+        # (when updating without changing the relative_path)
+        if repo.repo_id == distributor['repo_id']:
+            continue
         conflicting_repo_id = distributor['repo_id']
         conflicting_relative_url = None
         if 'relative_url' in distributor['config']:
@@ -269,6 +273,6 @@ def _check_for_relative_path_conflicts(repo, config, config_conduit,
                     'repo id for existing repository [{conflict_repo}]')
         error_messages.append(msg.format(
             relative_path=relative_path,
-            repo_id=repo.id,
+            repo_id=repo.repo_id,
             conflict_url=conflicting_relative_url,
             conflict_repo=conflicting_repo_id))
