@@ -50,16 +50,48 @@ class TestConfigurationGetters(testbase.TestCase):
 
 
 class TestValidateConfig(testbase.TestCase):
-    def _config_conduit(self):
+    def _config_conduit(self, empty=True):
         ret = Mock()
-        ret.get_repo_distributors_by_relative_url.return_value = []
+        if empty:
+            ret.get_repo_distributors_by_relative_url.return_value = []
+        else:
+            ret.get_repo_distributors_by_relative_url.return_value = [
+                {
+                    'repo_id': 'foo',
+                    'config': {
+                        'http': True,
+                        'https': True,
+                        'relative_url': '/bar',
+                    },
+                },
+            ]
         return ret
 
     def test_server_url_fully_qualified(self):
         config = PluginCallConfiguration(
             dict(http=True, https=False, relative_url=None), {})
-        repo = Mock(id='foo', working_dir=self.work_dir)
+        repo = Mock(repo_id='foo', working_dir=self.work_dir)
         conduit = self._config_conduit()
 
         self.assertEquals((True, None),
+                          configuration.validate_config(repo, config, conduit))
+
+    def test_update_distributor_same_url(self):
+        config = PluginCallConfiguration(
+            dict(http=True, https=False, relative_url='bar'), {})
+        repo = Mock(repo_id='foo', working_dir=self.work_dir)
+        conduit = self._config_conduit(False)
+
+        self.assertEquals((True, None),
+                          configuration.validate_config(repo, config, conduit))
+
+    def test_create_distributor_same_url(self):
+        config = PluginCallConfiguration(
+            dict(http=True, https=False, relative_url='bar'), {})
+        repo = Mock(repo_id='fool', working_dir=self.work_dir)
+        conduit = self._config_conduit(False)
+
+        self.assertEquals((False, 'Relative URL [bar] for repository [fool] ' +
+                           'conflicts with existing relative URL [/bar] ' +
+                           'for repository [foo]'),
                           configuration.validate_config(repo, config, conduit))
