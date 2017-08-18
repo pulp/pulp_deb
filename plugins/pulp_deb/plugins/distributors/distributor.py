@@ -277,11 +277,12 @@ class MetadataStep(PluginStep):
     def process_main(self, item=None):
         units = self.parent.publish_units.units
         comp_units = self.parent.publish_components.units
+        release_units = self.parent.publish_releases.units
 
         sign_options = configuration.get_gpg_sign_options(self.get_repo(),
                                                           self.get_config())
 
-        for release_unit in self.parent.publish_releases.units:
+        for release_unit in release_units:
             codename = release_unit.codename
             rel_components = [comp for comp in comp_units
                               if comp.id in release_unit.components]
@@ -323,6 +324,15 @@ class MetadataStep(PluginStep):
 
         # create a special release with one component to include all packets
         # group units by architecture (all, amd64, armeb, ...)
+        # In case, no release_units were available (old style repository),
+        # name it 'stable/main'
+        if len(release_units) == 0:
+            codename = 'stable'
+            component_name = 'main'
+        else:
+            codename = 'default'
+            component_name = 'all'
+
         architectures = set()
         arch_units = defaultdict(list)
         for unit in units:
@@ -334,8 +344,8 @@ class MetadataStep(PluginStep):
             architectures.add(arch)
 
         repo_meta = aptrepo.AptRepoMeta(
-            codename='default',
-            components=['all'],
+            codename=codename,
+            components=[component_name],
             architectures=list(architectures),
         )
         arepo = aptrepo.AptRepo(self.get_working_dir(),
@@ -345,7 +355,7 @@ class MetadataStep(PluginStep):
         for architecture, a_units in arch_units.iteritems():
             filenames = [unit.storage_path for unit in a_units]
             arepo.create(filenames,
-                         component='all',
+                         component=component_name,
                          architecture=architecture,
                          with_symlinks=True)
 
