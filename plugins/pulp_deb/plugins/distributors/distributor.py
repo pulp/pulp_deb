@@ -187,18 +187,16 @@ class Publisher(PluginStep):
             root_publish_dir = configuration.get_http_publish_dir(config)
             repo_publish_dir = os.path.join(root_publish_dir,
                                             repo_relative_path)
-            target_directories.append(root_publish_dir)
+            target_directories.append(('/', repo_publish_dir))
             listing_steps.append(GenerateListingFileStep(root_publish_dir,
                                                          repo_publish_dir))
         if config.get(constants.PUBLISH_HTTPS_KEYWORD):
             root_publish_dir = configuration.get_https_publish_dir(config)
             repo_publish_dir = os.path.join(root_publish_dir,
                                             repo_relative_path)
-            target_directories.append(root_publish_dir)
+            target_directories.append(('/', repo_publish_dir))
             listing_steps.append(GenerateListingFileStep(root_publish_dir,
                                                          repo_publish_dir))
-        target_directories = [('/', os.path.join(x, repo_relative_path))
-                              for x in target_directories]
         atomic_publish_step = AtomicDirectoryPublishStep(
             self.get_working_dir(),
             target_directories,
