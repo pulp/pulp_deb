@@ -177,6 +177,10 @@ class DebComponent(ContentUnit):
     repoid = mongoengine.StringField(required=True)
     packages = mongoengine.ListField()
 
+    # For backward compatibility
+    _ns = mongoengine.StringField(required=True, default=meta['collection'])
+    _content_type_id = mongoengine.StringField(required=True, default=TYPE_ID)
+
     @classmethod
     def get_or_create_and_associate(cls, repo, release_unit, name):
         unit = cls()
@@ -191,9 +195,10 @@ class DebComponent(ContentUnit):
             repository=repo.repo_obj, unit=unit)
         return unit
 
-    # For backward compatibility
-    _ns = mongoengine.StringField(required=True, default=meta['collection'])
-    _content_type_id = mongoengine.StringField(required=True, default=TYPE_ID)
+    def associate(self, repo):
+        repo_controller.associate_single_unit(
+            repository=repo, unit=self)
+        return self
 
 
 class DebRelease(ContentUnit):
@@ -229,6 +234,11 @@ class DebRelease(ContentUnit):
         repo_controller.associate_single_unit(
             repository=repo.repo_obj, unit=unit)
         return unit
+
+    def associate(self, repo):
+        repo_controller.associate_single_unit(
+            repository=repo, unit=self)
+        return self
 
 
 class DependencyParser(object):
