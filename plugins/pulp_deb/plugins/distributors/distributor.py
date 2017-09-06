@@ -285,7 +285,7 @@ class MetadataStep(PluginStep):
         for release_unit in release_units:
             codename = release_unit.codename
             rel_components = [comp for comp in comp_units
-                              if comp.id in release_unit.components]
+                              if comp.release == codename]
             architectures = set()
 
             comp_arch_units = {}

@@ -213,7 +213,6 @@ class DebRelease(ContentUnit):
     repoid = mongoengine.StringField(required=True)
     codename = mongoengine.StringField(required=True)
     suite = mongoengine.StringField()
-    components = mongoengine.ListField()
 
     # For backward compatibility
     _ns = mongoengine.StringField(required=True, default=meta['collection'])

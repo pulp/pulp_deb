@@ -219,7 +219,7 @@ class PublishRepoMixIn(object):
             self.assertTrue(os.path.exists(release_file))
             # Make sure the components Packages files exist
             for comp in [comp.name for comp in unit_dict[ids.TYPE_ID_DEB_COMP]
-                         if comp.id in release.components]:
+                         if comp.release == release.codename]:
                 self.assertFalse(os.path.exists(
                     os.path.join(comp_dir, comp, 'binary-all', 'Packages')))
                 for arch in self.Architectures:
@@ -269,7 +269,7 @@ class TestPublishRepoDeb(PublishRepoMixIn, BaseTest):
             dict(name='main', release='stable', id='mainid', packages=['bbbb', 'cccc']),
         ],
         models.DebRelease: [
-            dict(codename='stable', id='stableid', components=['mainid']),
+            dict(codename='stable', id='stableid'),
         ],
     }
     Sample_Units_Order = [0, 1, 0, 1]
@@ -293,7 +293,7 @@ class TestPublishRepoMultiArchDeb(PublishRepoMixIn, BaseTest):
                  packages=['bbbb', 'cccc', 'dddd', 'eeee']),
         ],
         models.DebRelease: [
-            dict(codename='stable', id='stableid', components=['mainid']),
+            dict(codename='stable', id='stableid'),
         ],
     }
     Sample_Units_Order = [2, 3, 0, 1, 3, 0, 1, 2, 3, 3]
@@ -315,13 +315,12 @@ class TestPublishRepoMultiCompArchDeb(PublishRepoMixIn, BaseTest):
                  checksum='foo', checksumtype='sha3.14', id='ffff'),
         ],
         models.DebComponent: [
-            dict(name='main', release='oldstable', id='mainid',
+            dict(name='main', release='old-stable', id='mainid',
                  packages=['bbbb', 'cccc', 'dddd', 'eeee']),
-            dict(name='premature', release='oldstable', id='preid', packages=['ffff']),
+            dict(name='premature', release='old-stable', id='preid', packages=['ffff']),
         ],
         models.DebRelease: [
-            dict(codename='old-stable', id='oldstableid',
-                 components=['mainid', 'preid']),
+            dict(codename='old-stable', id='oldstableid'),
         ],
     }
     Sample_Units_Order = [2, 3, 0, 1, 3, 4, 4, 0, 1, 2, 4, 3, 3]
