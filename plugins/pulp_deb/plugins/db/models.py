@@ -196,9 +196,27 @@ class DebComponent(ContentUnit):
         return unit
 
     def associate(self, repo):
+        # actually update the corresponding unit in the repository
+        # or create a new copy
+        unit = self
+        if unit.repoid != repo.repo_id:
+            # find the corresponding unit
+            unit = self.__class__.objects.filter(repoid=repo.repo_id,
+                                                 name=self.name,
+                                                 release=self.release).first()
+            if unit is None:
+                # create a new one
+                unit = self.__class__()
+                unit.repoid = repo.repo_id
+                unit.name = self.name
+                unit.release = self.release
+
+            # update data
+            unit.packages = self.packages
+            unit.save()
         repo_controller.associate_single_unit(
-            repository=repo, unit=self)
-        return self
+            repository=repo, unit=unit)
+        return unit
 
 
 class DebRelease(ContentUnit):
@@ -235,9 +253,25 @@ class DebRelease(ContentUnit):
         return unit
 
     def associate(self, repo):
+        # actually update the corresponding unit in the repository
+        # or create a new copy
+        unit = self
+        if unit.repoid != repo.repo_id:
+            # find the corresponding unit
+            unit = self.__class__.objects.filter(repoid=repo.repo_id,
+                                                 codename=self.codename).first()
+            if unit is None:
+                # create a new one
+                unit = self.__class__()
+                unit.repoid = repo.repo_id
+                unit.codename = self.codename
+
+            # update data
+            unit.suite = self.suite
+            unit.save()
         repo_controller.associate_single_unit(
-            repository=repo, unit=self)
-        return self
+            repository=repo, unit=unit)
+        return unit
 
 
 class DependencyParser(object):
