@@ -137,13 +137,10 @@ class ParseReleaseStep(publish_step.PluginStep):
             # get release component units
             for component in repometa.components:
                 if components is None or component in components:
-                    comp_unit = self.parent.component_units[release][component] = \
+                    self.parent.component_units[release][component] = \
                         models.DebComponent.get_or_create_and_associate(self.parent.repo,
                                                                         rel_unit,
                                                                         component)
-                    if comp_unit.id not in rel_unit.components:
-                        rel_unit.components.append(comp_unit.id)
-                        rel_unit.save()
                     self.parent.component_packages[release][component] = []
             # generate download requests for all relevant packages files
             rel_dl_reqs = repometa.create_Packages_download_requests(

@@ -20,7 +20,5 @@ EXTRA_FIELDS_DEB_COMP = set([
 TYPE_ID_DEB_RELEASE = 'deb_release'
 UNIT_KEY_DEB_RELEASE = (
     'codename', 'repoid')
-EXTRA_FIELDS_DEB_RELEASE = set([
-    'suite', 'components'])
 
 SUPPORTED_TYPES = set([TYPE_ID_DEB, TYPE_ID_DEB_COMP, TYPE_ID_DEB_RELEASE])
