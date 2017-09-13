@@ -50,6 +50,7 @@ PUBLISH_GENERATE_LISTING_FILE_STEP = 'generate_listing_files'
 
 HTTP_PUBLISH_DIR_KEYWORD = 'http_publish_dir'
 HTTPS_PUBLISH_DIR_KEYWORD = 'https_publish_dir'
+PUBLISH_DEFAULT_RELEASE_KEYWORD = 'publish_default_release'
 
 SYNC_STEP = 'sync_step'
 SYNC_STEP_RELEASE_DOWNLOAD = 'sync_step_release_download'

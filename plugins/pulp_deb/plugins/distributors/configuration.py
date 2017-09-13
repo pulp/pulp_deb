@@ -6,6 +6,7 @@ from gettext import gettext as _
 from pulp_deb.common.constants import PUBLISH_HTTP_KEYWORD, \
     PUBLISH_HTTPS_KEYWORD, PUBLISH_RELATIVE_URL_KEYWORD, \
     HTTP_PUBLISH_DIR_KEYWORD, HTTPS_PUBLISH_DIR_KEYWORD, \
+    PUBLISH_DEFAULT_RELEASE_KEYWORD, \
     GPG_CMD, GPG_KEY_ID
 
 _LOG = logging.getLogger(__name__)
@@ -14,6 +15,7 @@ REQUIRED_CONFIG_KEYS = (PUBLISH_RELATIVE_URL_KEYWORD, PUBLISH_HTTP_KEYWORD,
                         PUBLISH_HTTPS_KEYWORD)
 
 OPTIONAL_CONFIG_KEYS = (HTTP_PUBLISH_DIR_KEYWORD, HTTPS_PUBLISH_DIR_KEYWORD,
+                        PUBLISH_DEFAULT_RELEASE_KEYWORD,
                         GPG_CMD, GPG_KEY_ID)
 
 ROOT_PUBLISH_DIR = '/var/lib/pulp/published/deb'
@@ -75,6 +77,7 @@ def validate_config(repo, config, config_conduit):
         # optional options
         HTTP_PUBLISH_DIR_KEYWORD: _validate_http_publish_dir,
         HTTPS_PUBLISH_DIR_KEYWORD: _validate_https_publish_dir,
+        PUBLISH_DEFAULT_RELEASE_KEYWORD: _validate_publish_default_release,
     }
 
     # iterate through the options that have validation methods, validate them
@@ -203,6 +206,11 @@ def _validate_http(http, error_messages):
 
 def _validate_https(https, error_messages):
     _validate_boolean(HTTPS_PUBLISH_DIR_KEYWORD, https, error_messages)
+
+
+def _validate_publish_default_release(publish_default_release, error_messages):
+    _validate_boolean(PUBLISH_DEFAULT_RELEASE_KEYWORD, publish_default_release,
+                      error_messages)
 
 
 def _validate_relative_url(relative_url, error_messages):

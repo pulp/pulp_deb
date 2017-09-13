@@ -322,42 +322,48 @@ class MetadataStep(PluginStep):
                                  architecture=architecture,
                                  with_symlinks=True)
 
+        # Prepare generic releases containing all packages in one component
+        generic_release_names = []
+
+        # In case, no release_units were available (old style repository),
+        # publish as 'stable/main'
+        if len(release_units) == 0:
+            generic_release_names.append(('stable', 'main'))
+
         # create a special release with one component to include all packets
         # group units by architecture (all, amd64, armeb, ...)
-        # In case, no release_units were available (old style repository),
-        # name it 'stable/main'
-        if len(release_units) == 0:
-            codename = 'stable'
-            component_name = 'main'
-        else:
-            codename = 'default'
-            component_name = 'all'
+        if self.get_config().get(constants.PUBLISH_DEFAULT_RELEASE_KEYWORD, False):
+            generic_release_names.append(('default', 'all'))
 
-        architectures = set()
-        arch_units = defaultdict(list)
-        for unit in units:
-            arch_units[unit.architecture].append(unit)
-        # architecture 'all' is special; append it to all other architectures
-        all_units = arch_units.pop('all', [])
-        for arch in arch_units:
-            arch_units[arch].extend(all_units)
-            architectures.add(arch)
+        # only do this, iff necessary
+        if len(generic_release_names) > 0:
+            # collect all package units
+            architectures = set()
+            arch_units = defaultdict(list)
+            for unit in units:
+                arch_units[unit.architecture].append(unit)
+            # architecture 'all' is special; append it to all other architectures
+            all_units = arch_units.pop('all', [])
+            for arch in arch_units:
+                arch_units[arch].extend(all_units)
+                architectures.add(arch)
 
-        repo_meta = aptrepo.AptRepoMeta(
-            codename=codename,
-            components=[component_name],
-            architectures=list(architectures),
-        )
-        arepo = aptrepo.AptRepo(self.get_working_dir(),
-                                repo_name=self.get_repo().id,
-                                metadata=repo_meta,
-                                gpg_sign_options=sign_options)
-        for architecture, a_units in arch_units.iteritems():
-            filenames = [unit.storage_path for unit in a_units]
-            arepo.create(filenames,
-                         component=component_name,
-                         architecture=architecture,
-                         with_symlinks=True)
+            for codename, component_name in generic_release_names:
+                repo_meta = aptrepo.AptRepoMeta(
+                    codename=codename,
+                    components=[component_name],
+                    architectures=list(architectures),
+                )
+                arepo = aptrepo.AptRepo(self.get_working_dir(),
+                                        repo_name=self.get_repo().id,
+                                        metadata=repo_meta,
+                                        gpg_sign_options=sign_options)
+                for architecture, a_units in arch_units.iteritems():
+                    filenames = [unit.storage_path for unit in a_units]
+                    arepo.create(filenames,
+                                 component=component_name,
+                                 architecture=architecture,
+                             with_symlinks=True)
 
 
 class GenerateListingFileStep(PluginStep):
