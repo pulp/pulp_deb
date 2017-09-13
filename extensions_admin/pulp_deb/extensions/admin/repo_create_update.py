@@ -114,7 +114,7 @@ class PkgRepoCreateCommand(CreateRepositoryCommand, ImporterConfigMixin):
         display_name = kwargs.pop(std_options.OPTION_NAME.keyword, None)
         notes = kwargs.pop(std_options.OPTION_NOTES.keyword, None) or {}
 
-        # Add a note to indicate this is an RPM repository
+        # Add a note to indicate this is an DEB repository
         notes[pulp_constants.REPO_NOTE_TYPE_KEY] = constants.REPO_NOTE_PKG
 
         # Generate the appropriate plugin configs
