@@ -30,6 +30,7 @@ DISTRIBUTOR_CONFIG_KEYS = [
     (constants.PUBLISH_RELATIVE_URL_KEYWORD, 'relative_url'),
     (constants.PUBLISH_HTTP_KEYWORD, constants.CONFIG_SERVE_HTTP),
     (constants.PUBLISH_HTTPS_KEYWORD, constants.CONFIG_SERVE_HTTPS),
+    (constants.PUBLISH_DEFAULT_RELEASE_KEYWORD, constants.PUBLISH_DEFAULT_RELEASE_KEYWORD),
     ('skip', 'skip'),
 ]
 

@@ -76,6 +76,11 @@ d = _('if "true", the repository will be served over HTTPS; defaults to true')
 OPT_SERVE_HTTPS = PulpCliOption('--serve-https', d, required=False,
                                 parse_func=parsers.parse_boolean)
 
+d = _('if "true", the "default" release with component "all" will be published.')
+OPT_PUBLISH_DEFAULT_RELEASE = PulpCliOption('--publish-default-release', d,
+                                            required=False,
+                                            parse_func=parsers.parse_boolean)
+
 
 def add_distributor_config_to_command(command):
     """
@@ -91,6 +96,7 @@ def add_distributor_config_to_command(command):
     publish_group.add_option(OPT_RELATIVE_URL)
     publish_group.add_option(OPT_SERVE_HTTP)
     publish_group.add_option(OPT_SERVE_HTTPS)
+    publish_group.add_option(OPT_PUBLISH_DEFAULT_RELEASE)
 
     # Order added indicates order in usage, so pay attention to this order
     # when dorking with it to make sure it makes sense
