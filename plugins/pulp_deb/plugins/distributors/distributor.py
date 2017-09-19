@@ -363,7 +363,7 @@ class MetadataStep(PluginStep):
                     arepo.create(filenames,
                                  component=component_name,
                                  architecture=architecture,
-                             with_symlinks=True)
+                                 with_symlinks=True)
 
 
 class GenerateListingFileStep(PluginStep):
