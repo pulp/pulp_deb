@@ -8,7 +8,7 @@ import hashlib
 import mock
 from .... import testbase
 
-from pulp_deb.common import ids
+from pulp_deb.common import ids, constants
 from pulp_deb.plugins.db import models
 
 
@@ -172,6 +172,8 @@ class PublishRepoMixIn(object):
             relative_url='level1/' + repo.id,
             http_publish_dir=publish_dir + '/http/repos',
             https_publish_dir=publish_dir + '/https/repos')
+        if self.default_release:
+            repo_config[constants.PUBLISH_DEFAULT_RELEASE_KEYWORD] = True
 
         signer = self.new_file(name="signer", contents="#!/bin/bash").path
         os.chmod(signer, 0o755)
@@ -180,6 +182,8 @@ class PublishRepoMixIn(object):
 
         # This call is to be tested
         distributor.publish_repo(repo, conduit, config=repo_config)
+
+        # Assert, certain things have been called
         self.assertEquals(
             [x[0][0] for x in conduit.build_success_report.call_args_list],
             [{'publish_directory': 'FINISHED', 'publish_modules': 'FINISHED',
@@ -208,8 +212,19 @@ class PublishRepoMixIn(object):
                     component,
                     unit.filename)
                 self.assertEquals(os.readlink(published_path), unit.storage_path)
+
         # Make sure the release files exist
-        for release in unit_dict[ids.TYPE_ID_DEB_RELEASE]:
+        release_units = unit_dict[ids.TYPE_ID_DEB_RELEASE]
+        component_units = unit_dict[ids.TYPE_ID_DEB_COMP]
+        # Old-style repositories do not have release units and should be published as "stable/main"
+        if not release_units:
+            release_units.append(models.DebRelease(codename='stable', id='stableid'))
+            component_units.append(models.DebComponent(name='main', id='mainid', release='stable'))
+        # Test for default/all release
+        if self.default_release:
+            release_units.append(models.DebRelease(codename='default', id='defaultid'))
+            component_units.append(models.DebComponent(name='all', id='allid', release='default'))
+        for release in release_units:
             comp_dir = os.path.join(
                 repo_config['http_publish_dir'],
                 repo_config['relative_url'],
@@ -218,7 +233,7 @@ class PublishRepoMixIn(object):
             release_file = os.path.join(comp_dir, 'Release')
             self.assertTrue(os.path.exists(release_file))
             # Make sure the components Packages files exist
-            for comp in [comp.name for comp in unit_dict[ids.TYPE_ID_DEB_COMP]
+            for comp in [comp.name for comp in component_units
                          if comp.release == release.codename]:
                 self.assertFalse(os.path.exists(
                     os.path.join(comp_dir, comp, 'binary-all', 'Packages')))
@@ -257,6 +272,24 @@ class PublishRepoMixIn(object):
                     Architecture=unit['architecture'])
 
 
+class TestPublishOldRepoDeb(PublishRepoMixIn, BaseTest):
+    Sample_Units = {
+        models.DebPackage: [
+            dict(name='burgundy', version='0.1938.0', architecture='amd64',
+                 checksum='abcde', checksumtype='sha3.14', id='bbbb'),
+            dict(name='chablis', version='0.2013.0', architecture='amd64',
+                 checksum='yz', checksumtype='sha3.14', id='cccc'),
+        ],
+        models.DebComponent: [
+        ],
+        models.DebRelease: [
+        ],
+    }
+    Sample_Units_Order = [0, 1]
+    Architectures = ['amd64']
+    default_release = False
+
+
 class TestPublishRepoDeb(PublishRepoMixIn, BaseTest):
     Sample_Units = {
         models.DebPackage: [
@@ -274,6 +307,7 @@ class TestPublishRepoDeb(PublishRepoMixIn, BaseTest):
     }
     Sample_Units_Order = [0, 1, 0, 1]
     Architectures = ['amd64']
+    default_release = False
 
 
 class TestPublishRepoMultiArchDeb(PublishRepoMixIn, BaseTest):
@@ -298,6 +332,7 @@ class TestPublishRepoMultiArchDeb(PublishRepoMixIn, BaseTest):
     }
     Sample_Units_Order = [2, 3, 0, 1, 3, 0, 1, 2, 3, 3]
     Architectures = ['amd64', 'i386']
+    default_release = False
 
 
 class TestPublishRepoMultiCompArchDeb(PublishRepoMixIn, BaseTest):
@@ -325,6 +360,7 @@ class TestPublishRepoMultiCompArchDeb(PublishRepoMixIn, BaseTest):
     }
     Sample_Units_Order = [2, 3, 0, 1, 3, 4, 4, 0, 1, 2, 4, 3, 3]
     Architectures = ['amd64', 'i386']
+    default_release = True
 
 
 class TestDistributorRemoved(BaseTest):
