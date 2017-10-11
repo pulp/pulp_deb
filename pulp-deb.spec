@@ -8,7 +8,7 @@
 
 Name: pulp-deb
 Version: 1.5.2
-Release: 1%{?dist}
+Release: 2%{?dist}
 Summary: Support for Debian packages in the Pulp platform
 Group: Development/Languages
 License: GPLv2
@@ -80,7 +80,6 @@ A collection of modules shared among all pulp-deb components.
 %dir %{python_sitelib}/%{inst_prefix}
 %{python_sitelib}/%{inst_prefix}_common*.egg-info
 %{python_sitelib}/%{inst_prefix}/__init__.py*
-%{python_sitelib}/%{inst_prefix}/extensions/__init__.py*
 %{python_sitelib}/%{inst_prefix}/common/
 %doc COPYRIGHT LICENSE AUTHORS
 
@@ -125,6 +124,8 @@ client capabilites with Debian specific features.
 %doc COPYRIGHT LICENSE AUTHORS
 
 %changelog
+* Wed Oct 11 2017 Bernhard Suttner <suttner@atix.de> 1.5.2-2
+- Fixed duplicate file conflict in RPM spec
 * Tue Jan 10 2017 Mihai Ibanescu <mihai.ibanescu@gmail.com> 1.2-1
 - Updated for pulp 2.10
 * Wed May 6 2015 Barnaby Court<bcourt@redhat.com> 1.0.0-0.1.alpha
