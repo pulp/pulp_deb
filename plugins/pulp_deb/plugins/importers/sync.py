@@ -165,7 +165,7 @@ class ParsePackagesStep(publish_step.PluginStep):
     def process_main(self, item=None):
         releases = self.parent.releases
         dl_reqs = self.parent.step_download_Packages.downloads
-        units = []
+        units = {}
         for release in releases:
             repometa = self.parent.apt_repo_meta[release]
             repometa.validate_component_arch_packages_downloads(
@@ -176,10 +176,13 @@ class ParsePackagesStep(publish_step.PluginStep):
                     pkg['checksumtype'] = 'sha256'
                     pkg['checksum'] = pkg['SHA256']
                     self.parent.unit_relative_urls[pkg['checksum']] = pkg['Filename']
-                    unit = models.DebPackage.from_metadata(pkg)
-                    units.append(unit)
+                    if pkg['checksum'] in units:
+                        unit = units[pkg['checksum']]
+                    else:
+                        unit = models.DebPackage.from_metadata(pkg)
+                        units[pkg['checksum']] = unit
                     self.parent.component_packages[release][ca.component].append(unit.unit_key)
-        self.parent.step_local_units.available_units = units
+        self.parent.step_local_units.available_units = units.values()
 
 
 class CreateRequestsUnitsToDownload(publish_step.PluginStep):

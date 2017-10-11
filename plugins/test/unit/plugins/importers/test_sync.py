@@ -115,8 +115,8 @@ SHA256:
         step.process_lifecycle()
 
         self.assertEquals(
-            [x['SHA256'] for x in pkgs],
-            [x.checksum for x in self.step.step_local_units.available_units])
+            set([x['SHA256'] for x in pkgs]),
+            set([x.checksum for x in self.step.step_local_units.available_units]))
         self.assertEquals(len(self.step.component_packages['stable']['main']), 2)
 
     @mock.patch('pulp_deb.plugins.importers.sync.misc.mkdir')
