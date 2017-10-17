@@ -232,11 +232,12 @@ class SaveMetadataStep(publish_step.PluginStep):
     def process_main(self, item=None):
         for release in self.parent.releases:
             for comp, comp_unit in self.parent.component_units[release].iteritems():
+                comp_unit_packages_set = set(comp_unit.packages)
                 for unit in [unit_key_to_unit(unit_key)
                              for unit_key in self.parent.component_packages[release][comp]]:
-                    if unit.id not in comp_unit.packages:
-                        comp_unit.packages.append(unit.id)
-                        comp_unit.save()
+                    comp_unit_packages_set.add(unit.id)
+                comp_unit.packages = list(comp_unit_packages_set)
+                comp_unit.save()
 
 
 def unit_key_to_unit(unit_key):
