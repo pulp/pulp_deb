@@ -232,7 +232,7 @@ class ModulePublisher(PluginStep):
             self.non_halting_exceptions = []
 
     def _get_total(self):
-        return len(self.publish_units.units)
+        return len(self.publish_units.unit_dict)
 
 
 class PublishDebReleaseStep(UnitModelPluginStep):
@@ -268,10 +268,10 @@ class PublishDebStep(UnitModelPluginStep):
     def __init__(self, **kwargs):
         super(PublishDebStep, self).__init__(
             self.ID_PUBLISH_STEP, [self.Model], **kwargs)
-        self.units = []
+        self.unit_dict = {}
 
     def process_main(self, item=None):
-        self.units.append(item)
+        self.unit_dict[item.id] = item
 
 
 class MetadataStep(PluginStep):
@@ -279,7 +279,7 @@ class MetadataStep(PluginStep):
         super(MetadataStep, self).__init__(constants.PUBLISH_REPODATA)
 
     def process_main(self, item=None):
-        units = self.parent.publish_units.units
+        unit_dict = self.parent.publish_units.unit_dict
         comp_units = self.parent.publish_components.units
         release_units = self.parent.publish_releases.units
 
@@ -296,8 +296,10 @@ class MetadataStep(PluginStep):
             for component_unit in rel_components:
                 # group units by architecture (all, amd64, armeb, ...)
                 arch_units = defaultdict(list)
-                for unit in [unit for unit in units if unit.id in component_unit.packages]:
-                    arch_units[unit.architecture].append(unit)
+                for unit_id in component_unit.packages:
+                    unit = unit_dict.get(unit_id)
+                    if unit:
+                        arch_units[unit.architecture].append(unit)
                 # architecture 'all' is special; append it to all other architectures
                 all_units = arch_units.pop('all', [])
                 for arch in arch_units:
@@ -320,7 +322,7 @@ class MetadataStep(PluginStep):
 
             for component in comp_arch_units:
                 for architecture, ca_units in comp_arch_units[component].iteritems():
-                    filenames = [unit.storage_path for unit in ca_units]
+                    filenames = [_unit.storage_path for _unit in ca_units]
                     arepo.create(filenames,
                                  component=component,
                                  architecture=architecture,
@@ -344,7 +346,7 @@ class MetadataStep(PluginStep):
             architectures = set()
             # group units by architecture (all, amd64, armeb, ...)
             arch_units = defaultdict(list)
-            for unit in units:
+            for unit in unit_dict.values():
                 arch_units[unit.architecture].append(unit)
             # architecture 'all' is special; append it to all other architectures
             all_units = arch_units.pop('all', [])
