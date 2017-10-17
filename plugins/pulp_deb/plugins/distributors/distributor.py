@@ -216,12 +216,16 @@ class ModulePublisher(PluginStep):
         kwargs.setdefault('step_type', constants.PUBLISH_MODULES_STEP)
         super(ModulePublisher, self).__init__(**kwargs)
         self.description = self.__class__.description
+
         self.publish_releases = PublishDebReleaseStep()
         self.add_child(self.publish_releases)
+
         self.publish_components = PublishDebComponentStep()
         self.add_child(self.publish_components)
+
         self.publish_units = PublishDebStep()
         self.add_child(self.publish_units)
+
         self.add_child(MetadataStep())
 
         if self.non_halting_exceptions is None:
@@ -331,7 +335,6 @@ class MetadataStep(PluginStep):
             generic_release_names.append(('stable', 'main'))
 
         # create a special release with one component to include all packets
-        # group units by architecture (all, amd64, armeb, ...)
         if self.get_config().get(constants.PUBLISH_DEFAULT_RELEASE_KEYWORD, False):
             generic_release_names.append(('default', 'all'))
 
@@ -339,6 +342,7 @@ class MetadataStep(PluginStep):
         if len(generic_release_names) > 0:
             # collect all package units
             architectures = set()
+            # group units by architecture (all, amd64, armeb, ...)
             arch_units = defaultdict(list)
             for unit in units:
                 arch_units[unit.architecture].append(unit)
