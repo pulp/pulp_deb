@@ -120,6 +120,9 @@ class RepoSync(publish_step.PluginStep):
 
 
 class ParseReleaseStep(publish_step.PluginStep):
+    def __init__(self, *args, **kwargs):
+        super(ParseReleaseStep, self).__init__(*args, **kwargs)
+        self.description = _('Parse Release Files')
     def process_main(self, item=None):
         releases = self.parent.releases
         components = self.parent.components
@@ -162,6 +165,9 @@ class ParseReleaseStep(publish_step.PluginStep):
 
 
 class ParsePackagesStep(publish_step.PluginStep):
+    def __init__(self, *args, **kwargs):
+        super(ParsePackagesStep, self).__init__(*args, **kwargs)
+        self.description = _('Parse Packages Files')
     def process_main(self, item=None):
         releases = self.parent.releases
         dl_reqs = self.parent.step_download_Packages.downloads
@@ -186,6 +192,9 @@ class ParsePackagesStep(publish_step.PluginStep):
 
 
 class CreateRequestsUnitsToDownload(publish_step.PluginStep):
+    def __init__(self, *args, **kwargs):
+        super(CreateRequestsUnitsToDownload, self).__init__(*args, **kwargs)
+        self.description = _('Prepare Package Download')
     def process_main(self, item=None):
         wdir = os.path.join(self.get_working_dir())
         reqs = []
@@ -211,6 +220,9 @@ class CreateRequestsUnitsToDownload(publish_step.PluginStep):
 
 
 class SaveDownloadedUnits(publish_step.PluginStep):
+    def __init__(self, *args, **kwargs):
+        super(SaveDownloadedUnits, self).__init__(*args, **kwargs)
+        self.description = _('Save and associate downloaded units')
     def process_main(self, item=None):
         path_to_unit = self.parent.step_download_units.path_to_unit
         repo = self.get_repo().repo_obj
@@ -229,6 +241,9 @@ class SaveDownloadedUnits(publish_step.PluginStep):
 
 
 class SaveMetadataStep(publish_step.PluginStep):
+    def __init__(self, *args, **kwargs):
+        super(SaveMetadataStep, self).__init__(*args, **kwargs)
+        self.description = _('Save metadata')
     def process_main(self, item=None):
         for release in self.parent.releases:
             for comp, comp_unit in self.parent.component_units[release].iteritems():
