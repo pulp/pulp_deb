@@ -1,0 +1,9 @@
+pycodestyle:
+    max-line-length: 100  # Default is 79 in PEP8
+    ignore:  # Errors and warnings to ignore
+        - E401 # multiple imports on one line
+    exclude:
+        - "./docs/*"
+        - "*/build/*"
+scanner:
+    diff_only: True
