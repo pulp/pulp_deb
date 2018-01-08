@@ -190,7 +190,10 @@ A minimal sign command using GPG could be:
 
 KEYID=${GPG_KEY_ID:-45BA0816}
 
+rm -f ${1}.gpg
+
 gpg --homedir /var/lib/pulp/gpg-home \
+    --batch \
     --detach-sign --default-key $KEYID \
     --armor --output ${1}.gpg ${1}
 ```
