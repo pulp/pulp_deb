@@ -40,7 +40,7 @@ LINKS = (
      '/etc/pulp/server/plugins.conf.d/deb_importer.json'),
 )
 
-PIP_INSTALLABLE = set(['debpkgr'])
+PIP_INSTALLABLE = set(['debpkgr', 'gnupg'])
 
 
 def parse_cmdline():

@@ -18,6 +18,10 @@ CONFIG_NUM_THREADS = 'num_threads'
 CONFIG_NUM_THREADS_DEFAULT = 5
 CONFIG_REMOVE_MISSING_UNITS = 'remove_missing_units'
 CONFIG_REMOVE_MISSING_UNITS_DEFAULT = False
+CONFIG_REQUIRE_SIGNATURE = 'require_signature'
+CONFIG_ALLOWED_KEYS = 'allowed_keys'
+CONFIG_KEYSERVER = 'keyserver'
+CONFIG_KEYSERVER_DEFAULT = 'hkp://wwwkeys.pgp.net'
 
 # Distributor configuration key names
 CONFIG_SERVE_HTTP = 'serve_http'

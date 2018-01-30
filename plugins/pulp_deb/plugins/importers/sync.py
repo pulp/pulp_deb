@@ -2,6 +2,7 @@ import logging
 import os
 import urlparse
 import hashlib
+import gnupg
 from collections import defaultdict
 from gettext import gettext as _
 
@@ -87,7 +88,11 @@ class RepoSync(publish_step.PluginStep):
             description=_('Retrieving metadata: release file(s)'),
             downloads=[
                 DownloadRequest(self.release_urls[release], self.release_files[release])
-                for release in self.releases]))
+                for release in self.releases] + [
+                DownloadRequest(self.release_urls[release] + '.gpg',
+                                self.release_files[release] + '.gpg')
+                for release in self.releases]
+        ))
 
         self.add_child(ParseReleaseStep(constants.SYNC_STEP_RELEASE_PARSE))
 
@@ -123,12 +128,41 @@ class ParseReleaseStep(publish_step.PluginStep):
     def __init__(self, *args, **kwargs):
         super(ParseReleaseStep, self).__init__(*args, **kwargs)
         self.description = _('Parse Release Files')
+
+    def verify_release(self, release):
+        # check if Release file exists
+        if not os.path.isfile(self.parent.release_files[release]):
+            raise Exception("Release file not found. Check the feed option.")
+        # check signature
+        if not self.get_config().get_boolean(constants.CONFIG_REQUIRE_SIGNATURE, False):
+            return
+        gpg = gnupg.GPG(homedir=os.path.join(self.get_working_dir(), 'gpg-home'))
+        shared_gpg = gnupg.GPG(homedir=os.path.join('/', 'var', 'lib', 'pulp', 'gpg-home'))
+
+        fingerprints = self.get_config().get(constants.CONFIG_ALLOWED_KEYS).split(',')
+        # TODO check if full fingerprints are provided
+        for fingerprint in fingerprints:
+            if fingerprint not in [
+                    key['fingerprint'] for key in shared_gpg.list_keys()]:
+                keyserver = self.get_config().get(constants.CONFIG_KEYSERVER,
+                                                  constants.CONFIG_KEYSERVER_DEFAULT)
+                shared_gpg.recv_keys(keyserver, fingerprint)
+        gpg.import_keys(shared_gpg.export_keys(fingerprints))
+        if not os.path.isfile(self.parent.release_files[release] + '.gpg'):
+            raise Exception("Release.gpg not found. Could not verify release integrity.")
+        with open(self.parent.release_files[release]) as f:
+            verified = gpg.verify_file(f, self.parent.release_files[release] + '.gpg')
+            if not verified.valid:
+                raise Exception("Verification of Release failed! {}".format(verified.stderr))
+
     def process_main(self, item=None):
         releases = self.parent.releases
         components = self.parent.components
         architectures = self.parent.architectures
         dl_reqs = []
         for release in releases:
+            self.verify_release(release)
+            # generate repo_metas for Releases
             self.parent.apt_repo_meta[release] = repometa = aptrepo.AptRepoMeta(
                 release=open(self.parent.release_files[release], "rb"),
                 upstream_url=self.parent.feed_urls[release])
@@ -168,6 +202,7 @@ class ParsePackagesStep(publish_step.PluginStep):
     def __init__(self, *args, **kwargs):
         super(ParsePackagesStep, self).__init__(*args, **kwargs)
         self.description = _('Parse Packages Files')
+
     def process_main(self, item=None):
         releases = self.parent.releases
         dl_reqs = self.parent.step_download_Packages.downloads
@@ -195,6 +230,7 @@ class CreateRequestsUnitsToDownload(publish_step.PluginStep):
     def __init__(self, *args, **kwargs):
         super(CreateRequestsUnitsToDownload, self).__init__(*args, **kwargs)
         self.description = _('Prepare Package Download')
+
     def process_main(self, item=None):
         wdir = os.path.join(self.get_working_dir())
         reqs = []
@@ -223,6 +259,7 @@ class SaveDownloadedUnits(publish_step.PluginStep):
     def __init__(self, *args, **kwargs):
         super(SaveDownloadedUnits, self).__init__(*args, **kwargs)
         self.description = _('Save and associate downloaded units')
+
     def process_main(self, item=None):
         path_to_unit = self.parent.step_download_units.path_to_unit
         repo = self.get_repo().repo_obj
@@ -244,6 +281,7 @@ class SaveMetadataStep(publish_step.PluginStep):
     def __init__(self, *args, **kwargs):
         super(SaveMetadataStep, self).__init__(*args, **kwargs)
         self.description = _('Save metadata')
+
     def process_main(self, item=None):
         for release in self.parent.releases:
             for comp, comp_unit in self.parent.component_units[release].iteritems():
