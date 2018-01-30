@@ -37,7 +37,8 @@ DISTRIBUTOR_CONFIG_KEYS = [
 
 class PkgRepoOptionsBundle(OptionsBundle):
     """
-    Contains small modifications to the default option descriptions.
+    Contains small modifications to the default option descriptions,
+    and additional options.
     """
 
     def __init__(self):
@@ -54,6 +55,12 @@ class PkgRepoOptionsBundle(OptionsBundle):
         d = _('Comma separated list of architectures')
         self.opt_architectures = PulpCliOption('--architectures', d,
                                                required=False)
+        d = _('Require that Release files are signed and verified')
+        self.opt_require_signature = PulpCliOption('--require-signature', d,
+                                                   required=False)
+        d = _('fingerprints of gpg-keys to verify releases signature against')
+        self.opt_allowed_keys = PulpCliOption('--allowed-keys', d,
+                                              required=False)
 
 
 class PkgRepoCreateCommand(CreateRepositoryCommand, ImporterConfigMixin):
@@ -86,6 +93,8 @@ class PkgRepoCreateCommand(CreateRepositoryCommand, ImporterConfigMixin):
         self.sync_group.add_option(self.options_bundle.opt_components)
         self.sync_group.add_option(self.options_bundle.opt_architectures)
         self.sync_group.add_option(repo_options.OPT_SKIP)
+        self.sync_group.add_option(self.options_bundle.opt_require_signature)
+        self.sync_group.add_option(self.options_bundle.opt_allowed_keys)
 
     def parse_sync_group(self, user_input):
         config = ImporterConfigMixin.parse_sync_group(self, user_input)
@@ -98,6 +107,10 @@ class PkgRepoCreateCommand(CreateRepositoryCommand, ImporterConfigMixin):
                    CONFIG_KEY_ARCHITECTURES)
         safe_parse(user_input, config, repo_options.OPT_SKIP.keyword,
                    CONFIG_KEY_SKIP)
+        safe_parse(user_input, config, self.options_bundle.opt_require_signature.keyword,
+                   constants.CONFIG_REQUIRE_SIGNATURE)
+        safe_parse(user_input, config, self.options_bundle.opt_allowed_keys.keyword,
+                   constants.CONFIG_ALLOWED_KEYS)
         return config
 
     # -- create repository command overrides ----------------------------------
@@ -228,6 +241,8 @@ class PkgRepoUpdateCommand(UpdateRepositoryCommand, ImporterConfigMixin):
         self.sync_group.add_option(self.options_bundle.opt_components)
         self.sync_group.add_option(self.options_bundle.opt_architectures)
         self.sync_group.add_option(repo_options.OPT_SKIP)
+        self.sync_group.add_option(self.options_bundle.opt_require_signature)
+        self.sync_group.add_option(self.options_bundle.opt_allowed_keys)
 
     def parse_sync_group(self, user_input):
         """
@@ -251,6 +266,10 @@ class PkgRepoUpdateCommand(UpdateRepositoryCommand, ImporterConfigMixin):
                    CONFIG_KEY_ARCHITECTURES)
         safe_parse(user_input, config, repo_options.OPT_SKIP.keyword,
                    CONFIG_KEY_SKIP)
+        safe_parse(user_input, config, self.options_bundle.opt_require_signature.keyword,
+                   constants.CONFIG_REQUIRE_SIGNATURE)
+        safe_parse(user_input, config, self.options_bundle.opt_allowed_keys.keyword,
+                   constants.CONFIG_ALLOWED_KEYS)
         return config
 
     def run(self, **kwargs):
