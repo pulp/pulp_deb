@@ -21,6 +21,7 @@ class TestSync(testbase.TestCase):
         self.conduit = mock.MagicMock()
         plugin_config = {
             importer_constants.KEY_FEED: 'http://example.com/deb',
+            constants.CONFIG_REQUIRE_SIGNATURE: False,
         }
         self.config = PluginCallConfiguration({}, plugin_config)
         self._task_current = mock.patch("pulp.server.managers.repo._common.task.current")
@@ -40,6 +41,8 @@ SHA256:
  0000000000000000000000000000000000000000000000000000000000000003             9144 main/binary-amd64/Packages.bz2
  0000000000000000000000000000000000000000000000000000000000000002            14457 main/binary-amd64/Packages.gz
 """)  # noqa
+        with open(self.step.release_files['stable'] + '.gpg', "wb") as f:
+            f.write("")
 
     def tearDown(self):
         self._task_current.__exit__()
@@ -211,3 +214,18 @@ SHA256:
         step.process_lifecycle()
         _UnitKeyToUnit.assert_called_once_with(
             {'name': 'ape', 'version': '1.2a-4~exp', 'architecture': 'DNA'})
+
+    @mock.patch('pulp_deb.plugins.importers.sync.models.DebComponent')
+    @mock.patch('pulp_deb.plugins.importers.sync.models.DebRelease')
+    @mock.patch('pulp_deb.plugins.importers.sync.gnupg.GPG')
+    def test_VerifySignature(self, _GPG, _DebRelease, _DebComponent):
+        key_fpr = '0000111122223333444455556666777788889999AAAABBBBCCCCDDDDEEEEFFFF'
+        step = self.step.children[1]
+        self.assertEquals(constants.SYNC_STEP_RELEASE_PARSE, step.step_id)
+        step.get_config().repo_plugin_config['require_signature'] = True
+        step.get_config().repo_plugin_config['allowed_keys'] = key_fpr
+        step.process_lifecycle()
+        self.assertEqual(_GPG.call_count, 2)
+        _GPG.return_value.import_keys.assert_called_once()
+        self.assertEqual(_GPG.return_value.export_keys.call_args, mock.call([key_fpr]))
+        _GPG.return_value.verify_file.assert_called_once()
