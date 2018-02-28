@@ -235,8 +235,6 @@ class PublishRepoMixIn(object):
             # Make sure the components Packages files exist
             for comp in [comp.name for comp in component_units
                          if comp.release == release.codename]:
-                self.assertFalse(os.path.exists(
-                    os.path.join(comp_dir, comp, 'binary-all', 'Packages')))
                 for arch in self.Architectures:
                     self.assertTrue(os.path.exists(
                         os.path.join(comp_dir, comp, 'binary-' + arch, 'Packages')))
@@ -286,7 +284,7 @@ class TestPublishOldRepoDeb(PublishRepoMixIn, BaseTest):
         ],
     }
     Sample_Units_Order = [0, 1]
-    Architectures = ['amd64']
+    Architectures = ['all', 'amd64']
     default_release = False
 
 
@@ -305,8 +303,8 @@ class TestPublishRepoDeb(PublishRepoMixIn, BaseTest):
             dict(codename='stable', id='stableid'),
         ],
     }
-    Sample_Units_Order = [0, 1, 0, 1]
-    Architectures = ['amd64']
+    Sample_Units_Order = [0, 1]
+    Architectures = ['all', 'amd64']
     default_release = False
 
 
@@ -330,8 +328,8 @@ class TestPublishRepoMultiArchDeb(PublishRepoMixIn, BaseTest):
             dict(codename='stable', id='stableid'),
         ],
     }
-    Sample_Units_Order = [2, 3, 0, 1, 3, 0, 1, 2, 3, 3]
-    Architectures = ['amd64', 'i386']
+    Sample_Units_Order = [2, 3, 0, 1, 3, 3]
+    Architectures = ['all', 'amd64', 'i386']
     default_release = False
 
 
@@ -358,8 +356,8 @@ class TestPublishRepoMultiCompArchDeb(PublishRepoMixIn, BaseTest):
             dict(codename='old-stable', id='oldstableid'),
         ],
     }
-    Sample_Units_Order = [2, 3, 0, 1, 3, 4, 4, 0, 1, 2, 4, 3, 3]
-    Architectures = ['amd64', 'i386']
+    Sample_Units_Order = [2, 3, 0, 1, 3, 3, 4, 4, 0, 1, 2, 4, 3, 3, 3]
+    Architectures = ['all', 'amd64', 'i386', 'ppc']
     default_release = True
 
 

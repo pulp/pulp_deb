@@ -290,7 +290,7 @@ class MetadataStep(PluginStep):
             codename = release_unit.codename
             rel_components = [comp for comp in comp_units
                               if comp.release == codename]
-            architectures = set()
+            architectures = set(['all'])
 
             comp_arch_units = {}
             for component_unit in rel_components:
@@ -300,11 +300,13 @@ class MetadataStep(PluginStep):
                     unit = unit_dict.get(unit_id)
                     if unit:
                         arch_units[unit.architecture].append(unit)
-                # architecture 'all' is special; append it to all other architectures
+                # architecture 'all' is special; append it to all other architectures...
                 all_units = arch_units.pop('all', [])
                 for arch in arch_units:
                     arch_units[arch].extend(all_units)
                     architectures.add(arch)
+                # ...and make sure it is present as architecture as well
+                arch_units['all'] = all_units
                 comp_arch_units[component_unit.name] = arch_units
 
             repometa = aptrepo.AptRepoMeta(
@@ -343,16 +345,18 @@ class MetadataStep(PluginStep):
         # only do this, iff necessary
         if len(generic_release_names) > 0:
             # collect all package units
-            architectures = set()
+            architectures = set(['all'])
             # group units by architecture (all, amd64, armeb, ...)
             arch_units = defaultdict(list)
             for unit in unit_dict.values():
                 arch_units[unit.architecture].append(unit)
-            # architecture 'all' is special; append it to all other architectures
+            # architecture 'all' is special; append it to all other architectures...
             all_units = arch_units.pop('all', [])
             for arch in arch_units:
                 arch_units[arch].extend(all_units)
                 architectures.add(arch)
+            # ...and make sure it is present as architecture as well
+            arch_units['all'] = all_units
 
             for codename, component_name in generic_release_names:
                 repo_meta = aptrepo.AptRepoMeta(
