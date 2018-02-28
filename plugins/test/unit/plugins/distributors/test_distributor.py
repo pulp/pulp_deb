@@ -212,6 +212,14 @@ class PublishRepoMixIn(object):
                     component,
                     unit.filename)
                 self.assertEquals(os.readlink(published_path), unit.storage_path)
+            if self.default_release:
+                published_path = os.path.join(
+                    repo_config['http_publish_dir'],
+                    repo_config['relative_url'],
+                    'pool',
+                    'all',
+                    unit.filename)
+                self.assertEquals(os.readlink(published_path), unit.storage_path)
 
         # Make sure the release files exist
         release_units = unit_dict[ids.TYPE_ID_DEB_RELEASE]
@@ -356,7 +364,7 @@ class TestPublishRepoMultiCompArchDeb(PublishRepoMixIn, BaseTest):
             dict(codename='old-stable', id='oldstableid'),
         ],
     }
-    Sample_Units_Order = [2, 3, 0, 1, 3, 3, 4, 4, 0, 1, 2, 4, 3, 3, 3]
+    Sample_Units_Order = [2, 3, 0, 1, 3, 3, 4, 4, 3, 2, 3, 1, 0, 3, 3]
     Architectures = ['all', 'amd64', 'i386', 'ppc']
     default_release = True
 
