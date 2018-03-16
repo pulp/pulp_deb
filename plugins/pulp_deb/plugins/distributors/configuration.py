@@ -18,6 +18,8 @@ OPTIONAL_CONFIG_KEYS = (HTTP_PUBLISH_DIR_KEYWORD, HTTPS_PUBLISH_DIR_KEYWORD,
                         PUBLISH_DEFAULT_RELEASE_KEYWORD,
                         GPG_CMD, GPG_KEY_ID)
 
+LOCAL_CONFIG_KEYS = [GPG_CMD]
+
 ROOT_PUBLISH_DIR = '/var/lib/pulp/published/deb'
 MASTER_PUBLISH_DIR = os.path.join(ROOT_PUBLISH_DIR, 'master')
 HTTP_PUBLISH_DIR = os.path.join(ROOT_PUBLISH_DIR, 'http', 'repos')
@@ -40,10 +42,22 @@ def validate_config(repo, config, config_conduit):
     or not and why
     :rtype:  tuple of (bool, str or None)
     """
+    # Keys in LOCAL_CONFIG_KEYS cannot be set in remote configs
+    # Perform these the checks before flattening the config, to
+    # give feedback on which configuration carries invalid options
+    error_messages = []
+    msg = _('Configuration key [%(k)s] is not allowed in %(config)s configuration')
+    remote_configs = [
+        (config.repo_plugin_config, "repository plugin"),
+        (config.override_config, "override")]
+    for key in LOCAL_CONFIG_KEYS:
+        for cfgdict, cfgname in remote_configs:
+            if cfgdict.get(key):
+                error_messages.append(msg % dict(k=key, config=cfgname))
+
     # squish it into a dictionary so we can manipulate it
     if not isinstance(config, dict):
         config = config.flatten()
-    error_messages = []
 
     configured_keys = set(config)
     required_keys = set(REQUIRED_CONFIG_KEYS)
