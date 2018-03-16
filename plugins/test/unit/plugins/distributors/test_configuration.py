@@ -95,3 +95,15 @@ class TestValidateConfig(testbase.TestCase):
                            'conflicts with existing relative URL [/bar] ' +
                            'for repository [foo]'),
                           configuration.validate_config(repo, config, conduit))
+
+    def test__repocfg_gpg_cmd(self):
+        config = PluginCallConfiguration(
+            dict(http=True, https=False, relative_url='fool'),
+            dict(gpg_cmd="/bin/true should fail"))
+        repo = Mock(repo_id='fool', working_dir=self.work_dir)
+        conduit = self._config_conduit()
+
+        expected_reason = ('Configuration key [gpg_cmd] is not allowed '
+                           'in repository plugin configuration')
+        self.assertEquals((False, expected_reason),
+                          configuration.validate_config(repo, config, conduit))
