@@ -8,6 +8,7 @@ import hashlib
 import mock
 from .... import testbase
 
+from pulp.plugins.config import PluginCallConfiguration
 from pulp_deb.common import ids, constants
 from pulp_deb.plugins.db import models
 
@@ -59,7 +60,7 @@ class TestConfiguration(BaseTest):
     def test_validate_config_empty(self):
         repo = mock.MagicMock(id="repo-1")
         conduit = self._config_conduit()
-        config = {}
+        config = PluginCallConfiguration({}, {})
         distributor = self.Module.DebDistributor()
         self.assertEquals(
             (False, '\n'.join([
@@ -76,8 +77,9 @@ class TestConfiguration(BaseTest):
 
         repo = mock.MagicMock(id="repo-1")
         conduit = self._config_conduit()
-        config = dict(http=True, https=False, relative_url=None,
-                      gpg_cmd=signer)
+        config = PluginCallConfiguration(
+            dict(gpg_cmd=signer),
+            dict(http=True, https=False, relative_url=None))
         distributor = self.Module.DebDistributor()
         self.assertEquals(
             distributor.validate_config(repo, config, conduit),
@@ -89,8 +91,9 @@ class TestConfiguration(BaseTest):
 
         repo = mock.MagicMock(id="repo-1")
         conduit = self._config_conduit()
-        config = dict(http=True, https=False, relative_url=None,
-                      gpg_cmd=signer)
+        config = PluginCallConfiguration(
+            dict(gpg_cmd=signer),
+            dict(http=True, https=False, relative_url=None))
         distributor = self.Module.DebDistributor()
         self.assertEquals(
             (False, '\n'.join([
