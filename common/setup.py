@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pulp_deb_common',
-    version='1.7c2',
+    version='1.7',
     packages=find_packages(),
     url='http://www.pulpproject.org',
     license='GPLv2+',
