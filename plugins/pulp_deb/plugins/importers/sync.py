@@ -156,13 +156,14 @@ class ParseReleaseStep(publish_step.PluginStep):
         gpg = gnupg.GPG(homedir=os.path.join(self.get_working_dir(), 'gpg-home'))
         shared_gpg = gnupg.GPG(homedir=os.path.join('/', 'var', 'lib', 'pulp', 'gpg-home'))
 
+        keyserver = self.get_config().get(constants.CONFIG_KEYSERVER,
+                                          constants.CONFIG_KEYSERVER_DEFAULT)
+
         fingerprints = self.get_config().get(constants.CONFIG_ALLOWED_KEYS).split(',')
         # TODO check if full fingerprints are provided
         for fingerprint in fingerprints:
             if fingerprint not in [
                     key['fingerprint'] for key in shared_gpg.list_keys()]:
-                keyserver = self.get_config().get(constants.CONFIG_KEYSERVER,
-                                                  constants.CONFIG_KEYSERVER_DEFAULT)
                 shared_gpg.recv_keys(keyserver, fingerprint)
         gpg.import_keys(shared_gpg.export_keys(fingerprints))
         if not os.path.isfile(self.parent.release_files[release] + '.gpg'):
