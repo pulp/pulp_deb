@@ -5,6 +5,7 @@ import hashlib
 import gnupg
 from collections import defaultdict
 from gettext import gettext as _
+from distutils.version import LooseVersion
 
 from debpkgr import aptrepo
 from nectar.request import DownloadRequest
@@ -146,15 +147,24 @@ class ParseReleaseStep(publish_step.PluginStep):
         super(ParseReleaseStep, self).__init__(*args, **kwargs)
         self.description = _('Parse Release Files')
 
+    def gnupg_factory(self, *args, **kwargs):
+        if 'homedir' in kwargs.keys():
+            module_version_gnupg = LooseVersion(gnupg.__version__)
+            if module_version_gnupg < LooseVersion('1.0.0'):
+                kwargs['gnupghome'] = kwargs['homedir']
+                del(kwargs['homedir'])
+        return gnupg.GPG(*args, **kwargs)
+
     def verify_release(self, release):
+        rel_file = self.parent.release_files[release]
         # check if Release file exists
-        if not os.path.isfile(self.parent.release_files[release]):
+        if not os.path.isfile(rel_file):
             raise Exception("Release file not found. Check the feed option.")
         # check signature
         if not self.get_config().get_boolean(constants.CONFIG_REQUIRE_SIGNATURE, False):
             return
-        gpg = gnupg.GPG(homedir=os.path.join(self.get_working_dir(), 'gpg-home'))
-        shared_gpg = gnupg.GPG(homedir=os.path.join('/', 'var', 'lib', 'pulp', 'gpg-home'))
+        gpg = self.gnupg_factory(homedir=os.path.join(self.get_working_dir(), 'gpg-home'))
+        shared_gpg = self.gnupg_factory(homedir=os.path.join('/', 'var', 'lib', 'pulp', 'gpg-home'))
 
         keyserver = self.get_config().get(constants.CONFIG_KEYSERVER,
                                           constants.CONFIG_KEYSERVER_DEFAULT)
@@ -166,12 +176,19 @@ class ParseReleaseStep(publish_step.PluginStep):
                     key['fingerprint'] for key in shared_gpg.list_keys()]:
                 shared_gpg.recv_keys(keyserver, fingerprint)
         gpg.import_keys(shared_gpg.export_keys(fingerprints))
-        if not os.path.isfile(self.parent.release_files[release] + '.gpg'):
+        if not os.path.isfile(rel_file + '.gpg'):
             raise Exception("Release.gpg not found. Could not verify release integrity.")
-        with open(self.parent.release_files[release]) as f:
-            verified = gpg.verify_file(f, self.parent.release_files[release] + '.gpg')
-            if not verified.valid:
-                raise Exception("Verification of Release failed! {}".format(verified.stderr))
+
+        if LooseVersion(gnupg.__version__) < LooseVersion('1.0.0'):
+            with open(rel_file + '.gpg') as f:
+                verified = gpg.verify_file(f, rel_file)
+                if not verified.valid:
+                    raise Exception("Verification of Release failed! {}".format(verified.stderr))
+        else:
+            with open(rel_file) as f:
+                verified = gpg.verify_file(f, rel_file + '.gpg')
+                if not verified.valid:
+                    raise Exception("Verification of Release failed! {}".format(verified.stderr))
 
     def process_main(self, item=None):
         releases = self.parent.releases
