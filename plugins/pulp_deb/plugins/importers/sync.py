@@ -169,9 +169,11 @@ class ParseReleaseStep(publish_step.PluginStep):
         keyserver = self.get_config().get(constants.CONFIG_KEYSERVER,
                                           constants.CONFIG_KEYSERVER_DEFAULT)
 
-        fingerprints = self.get_config().get(constants.CONFIG_ALLOWED_KEYS).split(',')
+        fingerprints = split_or_none(self.get_config().get(constants.CONFIG_ALLOWED_KEYS)) or []
         # TODO check if full fingerprints are provided
         for fingerprint in fingerprints:
+            # remove spaces from fingerprint (space would mark the next key)
+            fingerprint = fingerprint.replace(' ', '')
             if fingerprint not in [
                     key['fingerprint'] for key in shared_gpg.list_keys()]:
                 shared_gpg.recv_keys(keyserver, fingerprint)
@@ -385,5 +387,5 @@ def generate_internal_storage_path(filename):
 
 def split_or_none(data):
     if data:
-        return data.split(',')
+        return [x.strip() for x in data.split(',')]
     return None
