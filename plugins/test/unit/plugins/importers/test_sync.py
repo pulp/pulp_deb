@@ -2,6 +2,7 @@ import os
 import re
 
 import mock
+from argparse import Namespace
 from pulp.common.plugins import importer_constants
 from pulp.plugins.config import PluginCallConfiguration
 from pulp.plugins.model import Repository as RepositoryModel
@@ -10,18 +11,25 @@ from pulp.server import exceptions
 from .... import testbase
 
 from pulp_deb.common import constants
+from pulp_deb.common import ids
 from pulp_deb.plugins.importers import sync
 
 
-class TestSync(testbase.TestCase):
+class _TestSyncBase(testbase.TestCase):
     def setUp(self):
-        super(TestSync, self).setUp()
+        super(_TestSyncBase, self).setUp()
 
         self.repo = RepositoryModel('repo1')
         self.conduit = mock.MagicMock()
+        self.conduit.get_units.return_value = [
+            Namespace(type_id=ids.TYPE_ID_DEB_RELEASE),
+            Namespace(type_id=ids.TYPE_ID_DEB_COMP),
+            Namespace(type_id=ids.TYPE_ID_DEB),
+        ]
         plugin_config = {
             importer_constants.KEY_FEED: 'http://example.com/deb',
             constants.CONFIG_REQUIRE_SIGNATURE: False,
+            importer_constants.KEY_UNITS_REMOVE_MISSING: self.remove_missing,
         }
         self.config = PluginCallConfiguration({}, plugin_config)
         self._task_current = mock.patch("pulp.server.managers.repo._common.task.current")
@@ -33,7 +41,8 @@ class TestSync(testbase.TestCase):
         self.step = sync.RepoSync(repo=self.repo,
                                   conduit=self.conduit,
                                   config=self.config)
-        open(self.step.release_files['stable'], "wb").write("""\
+        with open(self.step.release_files['stable'], "wb") as f:
+            f.write("""\
 Architectures: amd64
 Components: main
 SHA256:
@@ -52,25 +61,29 @@ SHA256:
 
         # make sure the children are present
         step_ids = [child.step_id for child in self.step.children]
-        self.assertEquals(
-            [
-                constants.SYNC_STEP_RELEASE_DOWNLOAD,
-                constants.SYNC_STEP_RELEASE_PARSE,
-                constants.SYNC_STEP_PACKAGES_DOWNLOAD,
-                constants.SYNC_STEP_PACKAGES_PARSE,
-                'get_local',
-                constants.SYNC_STEP_UNITS_DOWNLOAD_REQUESTS,
-                constants.SYNC_STEP_UNITS_DOWNLOAD,
-                constants.SYNC_STEP_SAVE,
-                constants.SYNC_STEP_SAVE_META,
-            ],
-            step_ids)
+        expected_step_ids = [
+            constants.SYNC_STEP_RELEASE_DOWNLOAD,
+            constants.SYNC_STEP_RELEASE_PARSE,
+            constants.SYNC_STEP_PACKAGES_DOWNLOAD,
+            constants.SYNC_STEP_PACKAGES_PARSE,
+            'get_local',
+            constants.SYNC_STEP_UNITS_DOWNLOAD_REQUESTS,
+            constants.SYNC_STEP_UNITS_DOWNLOAD,
+            constants.SYNC_STEP_SAVE,
+            constants.SYNC_STEP_SAVE_META,
+        ]
+        if self.remove_missing:
+            expected_step_ids.append(constants.SYNC_STEP_ORPHAN_REMOVED_UNITS)
+        self.assertEquals(expected_step_ids, step_ids)
+        self.assertEquals(self.remove_missing, self.step.conduit.get_units.called)
 
     @mock.patch('pulp_deb.plugins.importers.sync.models.DebComponent')
     @mock.patch('pulp_deb.plugins.importers.sync.models.DebRelease')
     def test_ParseReleaseStep(self, _DebRelease, _DebComponent):
         step = self.step.children[1]
         self.assertEquals(constants.SYNC_STEP_RELEASE_PARSE, step.step_id)
+        self.step.deb_releases_to_check = mock.MagicMock()
+        self.step.deb_comps_to_check = mock.MagicMock()
         step.process_lifecycle()
 
         # Make sure we got a request for the best compression
@@ -88,6 +101,8 @@ SHA256:
             self.step.apt_repo_meta['stable'].architectures)
         _DebRelease.get_or_create_and_associate.assert_called_once()
         _DebComponent.get_or_create_and_associate.assert_called_once()
+        self.step.deb_releases_to_check.remove.assert_called_once()
+        self.step.deb_comps_to_check.remove.assert_called_once()
 
     def _mock_repometa(self):
         repometa = self.step.apt_repo_meta['stable'] = mock.MagicMock(
@@ -119,7 +134,7 @@ SHA256:
 
         self.assertEquals(
             set([x['SHA256'] for x in pkgs]),
-            set([x.checksum for x in self.step.step_local_units.available_units]))
+            set([x.checksum for x in self.step.available_units]))
         self.assertEquals(len(self.step.component_packages['stable']['main']), 2)
 
     @mock.patch('pulp_deb.plugins.importers.sync.misc.mkdir')
@@ -204,14 +219,16 @@ SHA256:
 
     @mock.patch('pulp_deb.plugins.importers.sync.unit_key_to_unit')
     def test_SaveMetadata(self, _UnitKeyToUnit):
-        self.conduit = mock.MagicMock()
         self.step.component_units['stable']['main'] = mock.MagicMock()
         self.step.component_packages['stable']['main'] = [
             {'name': 'ape', 'version': '1.2a-4~exp', 'architecture': 'DNA'}]
+        self.step.debs_to_check = mock.MagicMock()
         _UnitKeyToUnit.return_value = mock.MagicMock()
         step = self.step.children[8]
         self.assertEquals(constants.SYNC_STEP_SAVE_META, step.step_id)
         step.process_lifecycle()
+        self.step.debs_to_check.remove.assert_called_once_with(
+            _UnitKeyToUnit.return_value)
         _UnitKeyToUnit.assert_called_once_with(
             {'name': 'ape', 'version': '1.2a-4~exp', 'architecture': 'DNA'})
 
@@ -229,3 +246,22 @@ SHA256:
         _GPG.return_value.import_keys.assert_called_once()
         self.assertEqual(_GPG.return_value.export_keys.call_args, mock.call([key_fpr]))
         _GPG.return_value.verify_file.assert_called_once()
+
+    def test_OrphanRemoved(self):
+        if self.remove_missing:
+            step = self.step.children[9]
+            self.assertEquals(constants.SYNC_STEP_ORPHAN_REMOVED_UNITS, step.step_id)
+            self.step.conduit.remove_unit = mock.MagicMock()
+            step.process_lifecycle()
+            self.assertEqual([mock.call(item) for item in self.conduit.get_units.return_value],
+                             self.step.conduit.remove_unit.call_args_list)
+        else:
+            self.assertEqual(9, len(self.step.children))
+
+
+class TestSyncKeepMissing(_TestSyncBase):
+    remove_missing = False
+
+
+class TestSyncRemoveMissing(_TestSyncBase):
+    remove_missing = True
