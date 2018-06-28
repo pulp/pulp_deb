@@ -56,6 +56,8 @@ class RepoSync(publish_step.PluginStep):
         self.releases = self.get_config().get('releases', 'stable').split(',')
         self.architectures = split_or_none(self.get_config().get('architectures'))
         self.components = split_or_none(self.get_config().get('components'))
+        self.remove_missing = self.get_config().get_boolean(
+            constants.CONFIG_REMOVE_MISSING_UNITS, constants.CONFIG_REMOVE_MISSING_UNITS_DEFAULT)
 
         self.unit_relative_urls = {}
         self.available_units = None
@@ -123,6 +125,21 @@ class RepoSync(publish_step.PluginStep):
         #  metadata
         self.add_child(SaveMetadataStep(constants.SYNC_STEP_SAVE_META))
 
+        self.debs_to_check = []
+        self.deb_comps_to_check = []
+        self.deb_releases_to_check = []
+        # cleanup
+        if self.remove_missing:
+            units_to_check = self.conduit.get_units()
+            self.debs_to_check = [unit for unit in units_to_check
+                                  if unit.type_id == ids.TYPE_ID_DEB]
+            self.deb_comps_to_check = [unit for unit in units_to_check
+                                       if unit.type_id == ids.TYPE_ID_DEB_COMP]
+            self.deb_releases_to_check = [unit for unit in units_to_check
+                                          if unit.type_id == ids.TYPE_ID_DEB_RELEASE]
+            del units_to_check
+            self.add_child(OrphanRemovedUnits(constants.SYNC_STEP_ORPHAN_REMOVED_UNITS))
+
 
 class ParseReleaseStep(publish_step.PluginStep):
     def __init__(self, *args, **kwargs):
@@ -171,14 +188,24 @@ class ParseReleaseStep(publish_step.PluginStep):
             suite = repometa.release.get('suite')
             rel_unit = self.parent.release_units[release] = models.DebRelease.\
                 get_or_create_and_associate(self.parent.repo, codename, suite)
+            # Prevent this unit from being cleaned up
+            try:
+                self.parent.deb_releases_to_check.remove(rel_unit)
+            except ValueError:
+                pass
             # get release component units
             for component in repometa.components:
                 if components is None or component in components:
-                    self.parent.component_units[release][component] = \
+                    comp_unit = self.parent.component_units[release][component] = \
                         models.DebComponent.get_or_create_and_associate(self.parent.repo,
                                                                         rel_unit,
                                                                         component)
                     self.parent.component_packages[release][component] = []
+                    # Prevent this unit from being cleaned up
+                    try:
+                        self.parent.deb_comps_to_check.remove(comp_unit)
+                    except ValueError:
+                        pass
             # generate download requests for all relevant packages files
             rel_dl_reqs = repometa.create_Packages_download_requests(
                 self.get_working_dir())
@@ -223,7 +250,7 @@ class ParsePackagesStep(publish_step.PluginStep):
                         unit = models.DebPackage.from_metadata(pkg)
                         units[pkg['checksum']] = unit
                     self.parent.component_packages[release][ca.component].append(unit.unit_key)
-        self.parent.step_local_units.available_units = units.values()
+        self.parent.available_units = units.values()
 
 
 class CreateRequestsUnitsToDownload(publish_step.PluginStep):
@@ -285,12 +312,35 @@ class SaveMetadataStep(publish_step.PluginStep):
     def process_main(self, item=None):
         for release in self.parent.releases:
             for comp, comp_unit in self.parent.component_units[release].iteritems():
-                comp_unit_packages_set = set(comp_unit.packages)
+                # Start with an empty set if we want to delete old entries
+                if self.parent.remove_missing:
+                    comp_unit_packages_set = set()
+                else:
+                    comp_unit_packages_set = set(comp_unit.packages)
                 for unit in [unit_key_to_unit(unit_key)
                              for unit_key in self.parent.component_packages[release][comp]]:
                     comp_unit_packages_set.add(unit.id)
+                    # Prevent this unit from being cleaned up
+                    try:
+                        self.parent.debs_to_check.remove(unit)
+                    except ValueError:
+                        pass
                 comp_unit.packages = list(comp_unit_packages_set)
                 comp_unit.save()
+
+
+class OrphanRemovedUnits(publish_step.PluginStep):
+    def __init__(self, *args, **kwargs):
+        super(OrphanRemovedUnits, self).__init__(*args, **kwargs)
+        self.description = _('Orphan removed units')
+
+    def process_main(self, item=None):
+        for unit in self.parent.deb_releases_to_check:
+            self.parent.conduit.remove_unit(unit)
+        for unit in self.parent.deb_comps_to_check:
+            self.parent.conduit.remove_unit(unit)
+        for unit in self.parent.debs_to_check:
+            self.parent.conduit.remove_unit(unit)
 
 
 def unit_key_to_unit(unit_key):

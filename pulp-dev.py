@@ -4,7 +4,6 @@ import optparse
 import os
 import pip
 import re
-import subprocess
 import sys
 
 from pulp.devel import environment

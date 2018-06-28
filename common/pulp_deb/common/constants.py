@@ -1,3 +1,5 @@
+from pulp.common.plugins import importer_constants
+
 # -- progress states ----------------------------------------------------------
 
 STATE_NOT_STARTED = 'NOT_STARTED'
@@ -16,7 +18,7 @@ CONFIG_COPY_CHILDREN = 'copy_children'
 CONFIG_MAX_SPEED = 'max_speed'
 CONFIG_NUM_THREADS = 'num_threads'
 CONFIG_NUM_THREADS_DEFAULT = 5
-CONFIG_REMOVE_MISSING_UNITS = 'remove_missing_units'
+CONFIG_REMOVE_MISSING_UNITS = importer_constants.KEY_UNITS_REMOVE_MISSING
 CONFIG_REMOVE_MISSING_UNITS_DEFAULT = False
 CONFIG_REQUIRE_SIGNATURE = 'require_signature'
 CONFIG_ALLOWED_KEYS = 'allowed_keys'
@@ -65,6 +67,7 @@ SYNC_STEP_UNITS_DOWNLOAD_REQUESTS = 'sync_step_unit_download_requests'
 SYNC_STEP_UNITS_DOWNLOAD = 'sync_step_unit_download'
 SYNC_STEP_SAVE = 'sync_step_save'
 SYNC_STEP_SAVE_META = 'sync_step_save_meta'
+SYNC_STEP_ORPHAN_REMOVED_UNITS = 'sync_step_orphan_removed_units'
 
 GPG_CMD = "gpg_cmd"
 GPG_KEY_ID = "gpg_key_id"
