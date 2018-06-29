@@ -65,7 +65,7 @@ $ sudo systemctl start
   goferd
 ```
 
-> The pulp_streamer and goferd services should be omitted if those services are
+> The `pulp_streamer` and `goferd` services should be omitted if those services are
 > not installed.
 
 On a machine with the pulp-admin client configured to control your pulp server,
@@ -102,6 +102,17 @@ The typical Ubuntu use case could be like
 pulp-admin deb repo create --repo-id 'xenial-amd64' --feed 'http://de.archive.ubuntu.com/ubuntu' \
   --releases 'xenial' --components 'main' --architectures 'amd64'
 ```
+
+If you add `--remove-missing true` to the `pulp-admin deb repo create` or `... update` commands,
+packages no longer seen upstream will be removed from the repository after sync.
+The same behaviour can be configured as default by adding
+```
+{
+  <...>
+  'remove_missing': true
+}
+```
+in the importer config file `/etc/pulp/server/plugins.conf.d/deb_importer.json`.
 
 ### Representing Debian Dependency Relationships
 
