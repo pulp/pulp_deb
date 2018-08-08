@@ -166,18 +166,29 @@ class ParseReleaseStep(publish_step.PluginStep):
         gpg = self.gnupg_factory(homedir=os.path.join(self.get_working_dir(), 'gpg-home'))
         shared_gpg = self.gnupg_factory(homedir=os.path.join('/', 'var', 'lib', 'pulp', 'gpg-home'))
 
-        keyserver = self.get_config().get(constants.CONFIG_KEYSERVER,
-                                          constants.CONFIG_KEYSERVER_DEFAULT)
+        if self.get_config().get(constants.CONFIG_GPG_KEYS):
+            import_res = gpg.import_keys(self.get_config().get(constants.CONFIG_GPG_KEYS))
+            _logger.info("Importing GPG-Key: %r", import_res.results)
+            if import_res.count == 0:
+                raise Exception("GPG-Key not imported: %r" % import_res.results)
 
-        fingerprints = split_or_none(self.get_config().get(constants.CONFIG_ALLOWED_KEYS)) or []
-        # TODO check if full fingerprints are provided
-        for fingerprint in fingerprints:
-            # remove spaces from fingerprint (space would mark the next key)
-            fingerprint = fingerprint.replace(' ', '')
-            if fingerprint not in [
-                    key['fingerprint'] for key in shared_gpg.list_keys()]:
-                shared_gpg.recv_keys(keyserver, fingerprint)
-        gpg.import_keys(shared_gpg.export_keys(fingerprints))
+        if self.get_config().get(constants.CONFIG_ALLOWED_KEYS):
+            keyserver = self.get_config().get(constants.CONFIG_KEYSERVER,
+                                              constants.CONFIG_KEYSERVER_DEFAULT)
+
+            fingerprints = split_or_none(self.get_config().get(constants.CONFIG_ALLOWED_KEYS)) or []
+            # TODO check if full fingerprints are provided
+            for fingerprint in fingerprints:
+                # remove spaces from fingerprint (space would mark the next key)
+                fingerprint = fingerprint.replace(' ', '')
+                if fingerprint not in [
+                        key['fingerprint'] for key in shared_gpg.list_keys()]:
+                    shared_gpg.recv_keys(keyserver, fingerprint)
+            gpg.import_keys(shared_gpg.export_keys(fingerprints))
+
+        if len(gpg.list_keys()) == 0:
+            raise Exception("No GPG-keys in keyring, did the import fail?")
+
         if not os.path.isfile(rel_file + '.gpg'):
             raise Exception("Release.gpg not found. Could not verify release integrity.")
 
