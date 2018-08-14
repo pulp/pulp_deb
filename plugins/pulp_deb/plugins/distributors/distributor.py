@@ -285,6 +285,7 @@ class MetadataStep(PluginStep):
 
         sign_options = configuration.get_gpg_sign_options(self.get_repo(),
                                                           self.get_config())
+        repo = self.get_repo()
 
         for release_unit in release_units:
             codename = release_unit.codename
@@ -313,12 +314,14 @@ class MetadataStep(PluginStep):
                 codename=codename,
                 components=[comp.name for comp in rel_components],
                 architectures=list(architectures),
+                description=repo.description,
+                label=repo.id,
             )
             # TODO Get the suite to work in debpkgr
             # repometa.release.setdefault('Suite', suite)
 
             arepo = aptrepo.AptRepo(self.get_working_dir(),
-                                    repo_name=self.get_repo().id,
+                                    repo_name=repo.id,
                                     metadata=repometa,
                                     gpg_sign_options=sign_options)
 
@@ -363,6 +366,8 @@ class MetadataStep(PluginStep):
                     codename=codename,
                     components=[component_name],
                     architectures=list(architectures),
+                    description=repo.description,
+                    label=repo.id,
                 )
                 arepo = aptrepo.AptRepo(self.get_working_dir(),
                                         repo_name=self.get_repo().id,

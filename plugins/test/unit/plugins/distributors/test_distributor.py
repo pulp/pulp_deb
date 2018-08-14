@@ -5,6 +5,7 @@ import time
 import uuid
 import hashlib
 
+from debian import deb822
 import mock
 from .... import testbase
 
@@ -156,10 +157,12 @@ class PublishRepoMixIn(object):
 
         distributor = self.Module.DebDistributor()
         repo = mock.Mock()
-        repo_id = "repo-%d-deb-level0" % int(time.time())
+        repo_time = int(time.time())
+        repo_id = "repo-%d-deb-level0" % repo_time
         repo.configure_mock(
             working_dir=os.path.join(self.work_dir, 'work_dir'),
             content_unit_counts=unit_counts,
+            description="Repo %d description" % repo_time,
             id=repo_id)
 
         def mock_get_units(repo_id, model_class, *args, **kwargs):
@@ -249,6 +252,10 @@ class PublishRepoMixIn(object):
                 for arch in self.Architectures:
                     self.assertTrue(os.path.exists(
                         os.path.join(comp_dir, comp, 'binary-' + arch, 'Packages')))
+            # #3917: make sure Description and Label are properly set
+            rel_file_contents = deb822.Deb822(sequence=open(release_file))
+            self.assertEqual(repo.id, rel_file_contents['Label'])
+            self.assertEqual(repo.description, rel_file_contents['Description'])
 
         exp = [
             mock.call(repo.id, models.DebRelease, None),
