@@ -41,6 +41,7 @@ def parse_skip_types(t):
 
     return parsed
 
+
 # group names
 NAME_PUBLISHING = _('Publishing')
 NAME_AUTH = _('Consumer Authentication')

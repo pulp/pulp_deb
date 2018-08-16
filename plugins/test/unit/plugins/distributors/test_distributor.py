@@ -116,11 +116,11 @@ class PublishRepoMixIn(object):
                 unit.filename = unit.filename_from_unit_key(unit.unit_key)
                 _p = unit._storage_path = os.path.join(
                     storage_dir, unit.filename)
-                file(_p, "wb").write(str(uuid.uuid4()))
+                open(_p, "wb").write(str(uuid.uuid4()))
                 unit.checksumtype = 'sha256'
                 unit.checksum = hashlib.sha256(
                     open(_p, "rb").read()).hexdigest()
-            except:
+            except Exception:
                 pass
         return units
 

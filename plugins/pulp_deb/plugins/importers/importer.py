@@ -37,7 +37,7 @@ class DebImporter(Importer):
         try:
             importer_config.validate_config(config)
             return True, None
-        except importer_config.InvalidConfig, e:
+        except importer_config.InvalidConfig as e:
             # Concatenate all of the failure messages into a single message
             msg = _('Configuration errors:\n')
             for failure_message in e.failure_messages:

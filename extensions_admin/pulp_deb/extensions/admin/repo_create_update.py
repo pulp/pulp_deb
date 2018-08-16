@@ -134,7 +134,7 @@ class PkgRepoCreateCommand(CreateRepositoryCommand, ImporterConfigMixin):
         try:
             importer_config = self.parse_user_input(kwargs)
             distributor_config = args_to_distributor_config(kwargs)
-        except InvalidConfig, e:
+        except InvalidConfig as e:
             self.prompt.render_failure_message(str(e))
             return os.EX_DATAERR
 
@@ -287,7 +287,7 @@ class PkgRepoUpdateCommand(UpdateRepositoryCommand, ImporterConfigMixin):
         try:
             importer_config = self.parse_user_input(kwargs)
             distributor_config = args_to_distributor_config(kwargs)
-        except InvalidConfig, e:
+        except InvalidConfig as e:
             self.prompt.render_failure_message(str(e))
             return
 
