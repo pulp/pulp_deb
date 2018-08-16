@@ -79,7 +79,7 @@ def create_dirs(opts):
             environment.debug(opts, 'skipping %s exists' % d)
             continue
         environment.debug(opts, 'creating directory: %s' % d)
-        os.makedirs(d, 0777)
+        os.makedirs(d, 0o777)
     os.system('chown -R apache:apache /var/lib/pulp/published')
 
 
@@ -111,7 +111,7 @@ def install(opts):
             warnings.append(warning_msg)
 
     if warnings:
-        print "\n***\nPossible problems:  Please read below\n***"
+        print("\n***\nPossible problems:  Please read below\n***")
         for w in warnings:
             environment.warning(w)
     return os.EX_OK
@@ -145,7 +145,7 @@ def create_link(opts, src, dst):
         try:
             os.unlink(dst)
             return _create_link(opts, src, dst)
-        except:
+        except Exception:
             msg = ("[%s] was a broken symlink, failed to delete and relink to [%s], please fix "
                    "this manually" % (dst, src))
             return msg
@@ -163,7 +163,7 @@ def _create_link(opts, src, dst):
         environment.debug(opts, 'creating link: %s pointing to %s' % (dst, src))
         try:
             os.symlink(src, dst)
-        except OSError, e:
+        except OSError as e:
             msg = ("Unable to create symlink for [%s] pointing to [%s], received error: "
                    "<%s>" % (dst, src, e))
             return msg

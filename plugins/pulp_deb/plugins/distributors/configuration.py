@@ -231,7 +231,7 @@ def _validate_relative_url(relative_url, error_messages):
     if relative_url is None:
         return
 
-    if not isinstance(relative_url, basestring):
+    if not isinstance(relative_url, str):
         msg = _('Configuration value for [{kw}] must be a string, but is a %(t)s'.format(
             kw=PUBLISH_RELATIVE_URL_KEYWORD))
         error_messages.append(msg % {'t': str(type(relative_url))})
