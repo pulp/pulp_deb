@@ -226,7 +226,7 @@ class ParseReleaseStep(publish_step.PluginStep):
                 pass
             # get release component units
             for component in repometa.components:
-                if components is None or component in components:
+                if components is None or component.split('/')[-1] in components:
                     comp_unit = self.parent.component_units[release][component] = \
                         models.DebComponent.get_or_create_and_associate(self.parent.repo,
                                                                         rel_unit,
@@ -244,7 +244,7 @@ class ParseReleaseStep(publish_step.PluginStep):
             if components:
                 rel_dl_reqs = [
                     dlr for dlr in rel_dl_reqs
-                    if dlr.data['component'] in components]
+                    if dlr.data['component'].split('/')[-1] in components]
             if architectures:
                 rel_dl_reqs = [
                     dlr for dlr in rel_dl_reqs
