@@ -31,5 +31,6 @@ setup(
         ('/usr/lib/pulp/plugins/types', ['types/deb.json']),
     ],
     install_requires=[
+        'gnupg',
     ],
 )
