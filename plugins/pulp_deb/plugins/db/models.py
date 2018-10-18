@@ -226,6 +226,25 @@ class DebPackage(FileContentUnit):
         cstype = util.TYPE_SHA256
         return util.calculate_checksums(fobj, [cstype])[cstype]
 
+    @staticmethod
+    def calculate_deb_checksums(input_file_path):
+        """
+        Uses util.calculate_checksums() to calculate the md5sum, sha1, and sha256
+        of a file. The return dict is guaranteed to use the deb style keys
+        'md5sum', 'sha1', and 'sha256'.
+
+        :param file_path: the path to the file for which checksums are needed
+        :returns: a dict containing the checksums
+        """
+        CHECKSUM_TYPES = {
+            'md5sum': util.TYPE_MD5,
+            'sha1': util.TYPE_SHA1,
+            'sha256': util.TYPE_SHA256,
+        }
+        with open(input_file_path) as input_file:
+            checksums = util.calculate_checksums(input_file, CHECKSUM_TYPES.values())
+        return {deb_key: checksums[util_key] for deb_key, util_key in CHECKSUM_TYPES.items()}
+
     @classmethod
     def filename_from_unit_key(cls, unit_key):
         return "{0}_{1}_{2}.{3}".format(
