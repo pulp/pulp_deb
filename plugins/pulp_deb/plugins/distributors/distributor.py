@@ -13,8 +13,12 @@ from pulp.plugins.distributor import Distributor
 
 from pulp_deb.common import ids, constants
 from pulp_deb.plugins.db import models
+from metadata_files import (write_packages_file,
+                            write_release_file,
+                            gzip_compress_file,
+                            bz2_compress_file,)
+
 from . import configuration, yum_plugin_util
-from debpkgr import aptrepo
 
 _logger = logging.getLogger(__name__)
 
@@ -282,103 +286,144 @@ class MetadataStep(PluginStep):
         unit_dict = self.parent.publish_units.unit_dict
         comp_units = self.parent.publish_components.units
         release_units = self.parent.publish_releases.units
-
-        sign_options = configuration.get_gpg_sign_options(self.get_repo(),
-                                                          self.get_config())
         repo = self.get_repo()
+        config = self.get_config()
+        base_path = self.get_working_dir()
 
-        for release_unit in release_units:
-            codename = release_unit.codename
-            rel_components = [comp for comp in comp_units
-                              if comp.release == codename]
-            architectures = set(['all'])
+        # Add missing checksum fields (this is bad for performance):
+        # This is a temporary fix!
+        for package in unit_dict.itervalues():
+            checksums = models.DebPackage.calculate_deb_checksums(package.storage_path)
+            package.sha1 = checksums['sha1']
+            package.sha256 = checksums['sha256']
+            package.md5sum = checksums['md5sum']
 
-            comp_arch_units = {}
-            for component_unit in rel_components:
-                # group units by architecture (all, amd64, armeb, ...)
-                arch_units = defaultdict(list)
-                for unit_id in component_unit.packages:
-                    unit = unit_dict.get(unit_id)
-                    if unit:
-                        arch_units[unit.architecture].append(unit)
-                # architecture 'all' is special; append it to all other architectures...
-                all_units = arch_units.pop('all', [])
-                for arch in arch_units:
-                    arch_units[arch].extend(all_units)
-                    architectures.add(arch)
-                # ...and make sure it is present as architecture as well
-                arch_units['all'] = all_units
-                comp_arch_units[component_unit.name] = arch_units
+        # Do nothing, if the repository is empty (review this behaviour):
+        if len(unit_dict) == 0:
+            return
 
-            repometa = aptrepo.AptRepoMeta(
-                codename=codename,
-                components=[comp.name for comp in rel_components],
-                architectures=list(architectures),
-                description=repo.description,
-                label=repo.id,
-            )
-            # TODO Get the suite to work in debpkgr
-            # repometa.release.setdefault('Suite', suite)
-
-            arepo = aptrepo.AptRepo(self.get_working_dir(),
-                                    repo_name=repo.id,
-                                    metadata=repometa,
-                                    gpg_sign_options=sign_options)
-
-            for component in comp_arch_units:
-                for architecture, ca_units in comp_arch_units[component].iteritems():
-                    filenames = [_unit.storage_path for _unit in ca_units]
-                    arepo.create(filenames,
-                                 component=component,
-                                 architecture=architecture,
-                                 with_symlinks=True)
-
-        # Prepare generic releases containing all packages in one component
-        generic_release_names = []
-
-        # In case, no release_units were available (old style repository),
-        # publish as 'stable/main'
+        # If there are no release_units (old style repo) publish as 'stable/main':
         if len(release_units) == 0:
-            generic_release_names.append(('stable', 'main'))
+            default_release = models.DebRelease(suite='stable')
+            release_units.append(default_release)
+            all_component = models.DebComponent(
+                name='main',
+                release='stable',
+                packages=[package_id for package_id in unit_dict],
+            )
+            comp_units.append(all_component)
 
-        # create a special release with one component to include all packets
-        if self.get_config().get(constants.PUBLISH_DEFAULT_RELEASE_KEYWORD, False):
-            generic_release_names.append(('default', 'all'))
+        # If configured to do so, also publish as 'default/all':
+        if config.get(constants.PUBLISH_DEFAULT_RELEASE_KEYWORD, False):
+            default_release = models.DebRelease(codename='default', suite='default')
+            release_units.append(default_release)
+            all_component = models.DebComponent(
+                name='all',
+                release='default',
+                packages=[package_id for package_id in unit_dict],
+            )
+            comp_units.append(all_component)
 
-        # only do this, iff necessary
-        if len(generic_release_names) > 0:
-            # collect all package units
-            architectures = set(['all'])
-            # group units by architecture (all, amd64, armeb, ...)
-            arch_units = defaultdict(list)
-            for unit in unit_dict.values():
-                arch_units[unit.architecture].append(unit)
-            # architecture 'all' is special; append it to all other architectures...
-            all_units = arch_units.pop('all', [])
-            for arch in arch_units:
-                arch_units[arch].extend(all_units)
-                architectures.add(arch)
-            # ...and make sure it is present as architecture as well
-            arch_units['all'] = all_units
+        # Create the 'pool' folder:
+        pool_path = os.path.join(base_path, 'pool')
+        os.mkdir(pool_path)
 
-            for codename, component_name in generic_release_names:
-                repo_meta = aptrepo.AptRepoMeta(
-                    codename=codename,
-                    components=[component_name],
-                    architectures=list(architectures),
-                    description=repo.description,
-                    label=repo.id,
-                )
-                arepo = aptrepo.AptRepo(self.get_working_dir(),
-                                        repo_name=self.get_repo().id,
-                                        metadata=repo_meta,
-                                        gpg_sign_options=sign_options)
-                for architecture, a_units in arch_units.iteritems():
-                    filenames = [unit.storage_path for unit in a_units]
-                    arepo.create(filenames,
-                                 component=component_name,
-                                 architecture=architecture,
-                                 with_symlinks=True)
+        # Symlink packages for each component in 'pool/<component_name>/':
+        for component in comp_units:
+            component_path = os.path.join(pool_path, component.name)
+            if not os.path.exists(component_path):
+                # Use makedirs() since component.name may contain '/'!
+                os.makedirs(component_path)
+
+            # Should we add additional subdirectories here (e.g.: /a/; /liba/)?
+            for package_id in component.packages:
+                package = unit_dict[package_id]
+                destination_path = os.path.join(component_path, package.filename)
+                if not os.path.exists(destination_path):
+                    os.symlink(package.storage_path, destination_path)
+
+        # Create the 'dists' folder:
+        dists_path = os.path.join(base_path, 'dists')
+        os.mkdir(dists_path)
+
+        # Create the 'dists' folder structure for each release:
+        for release in release_units:
+            release_meta_data = {
+                'architectures': set(),
+                'components': set(),
+            }
+            release_meta_files = []
+            release_name = None
+            if release.codename:
+                release_name = release.codename
+                release_meta_data['codename'] = release.codename
+            if release.suite:
+                if not release_name:
+                    release_name = release.suite
+                release_meta_data['suite'] = release.suite
+            if not release_name:
+                raise RuntimeError('Neither codename nor suite is set!')
+            release_path = os.path.join(dists_path, release_name)
+            os.mkdir(release_path)
+
+            # Continue the 'dists' folder structure for each component...
+            for component in comp_units:
+                # ...of the current release:
+                if component.release == release_name:
+                    release_meta_data['components'].add(component.name)
+                    component_path = os.path.join(release_path, component.name)
+                    # Use makedirs() since component.name may contain '/'!
+                    os.makedirs(component_path)
+
+                    # Create arch_units since there is no corresponding db entry:
+                    # Note: This method will not create arches containing no arch
+                    # specific packages (see: https://pulp.plan.io/issues/4094).
+                    # (also not great for performance)
+                    arch_units = defaultdict(list)
+                    for package_id in component.packages:
+                        package = unit_dict.get(package_id)
+                        if package:
+                            arch_units[package.architecture].append(package)
+
+                    # The units/packages for arch all need to be appended to
+                    # every other arch:
+                    all_units = arch_units.pop('all', [])
+                    for arch in arch_units:
+                        arch_units[arch].extend(all_units)
+                    # ...and then be readded to the list of architectures:
+                    arch_units['all'] = all_units
+
+                    # Now create 'binary-<arch>' folders for each arch:
+                    for arch, packages in arch_units.items():
+                        release_meta_data['architectures'].add(arch)
+                        arch_folder = 'binary-' + arch
+                        arch_path = os.path.join(component_path, arch_folder)
+                        os.mkdir(arch_path)
+
+                        # Create 'Packages' files for each arch:
+                        packages_file_path = write_packages_file(arch_path,
+                                                                 component.name,
+                                                                 packages,)
+
+                        # Compress and record 'Packages' files:
+                        release_meta_files.append(packages_file_path)
+                        gz_file_path = gzip_compress_file(packages_file_path)
+                        release_meta_files.append(gz_file_path)
+                        bz2_file_path = bz2_compress_file(packages_file_path)
+                        release_meta_files.append(bz2_file_path)
+
+            # Create the 'Release' file (for each release):
+            release_meta_data['architectures'].remove('all')
+            if repo.description:
+                release_meta_data['description'] = repo.description
+            release_meta_data['label'] = repo.id
+            release_file_path = write_release_file(release_path,
+                                                   release_meta_data,
+                                                   release_meta_files,)
+
+            signer = configuration.get_gpg_signer(repo, config)
+            if signer is not None:
+                signer.sign(release_file_path)
 
 
 class GenerateListingFileStep(PluginStep):

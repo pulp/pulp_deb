@@ -125,13 +125,11 @@ class PublishRepoMixIn(object):
                 pass
         return units
 
-    @mock.patch("pulp_deb.plugins.distributors.distributor.aptrepo.AptRepo.sign")
+    @mock.patch("pulp_deb.plugins.distributors.configuration.signer.Signer.sign")
     @mock.patch('pulp.plugins.util.publish_step.selinux.restorecon')
-    @mock.patch("pulp_deb.plugins.distributors.distributor.aptrepo.debpkg.debfile.DebFile")
     @mock.patch("pulp.server.managers.repo._common.task.current")
     @mock.patch('pulp.plugins.util.publish_step.repo_controller')
-    def test_publish_repo(self, _repo_controller, _task_current, _DebFile,
-                          _restorecon, _sign):
+    def test_publish_repo(self, _repo_controller, _task_current, _restorecon, _sign):
         _task_current.request.id = 'aabb'
         worker_name = "worker01"
         _task_current.request.configure_mock(hostname=worker_name)
@@ -148,12 +146,6 @@ class PublishRepoMixIn(object):
             _l = unit_dict[type_id] = [u for u in units
                                        if u.type_id == type_id]
             unit_counts[type_id] = len(_l)
-
-        debcontrol = _DebFile.return_value.control.debcontrol.return_value
-
-        debcontrol.copy.side_effect = [
-            self._mkdeb(unit_dict[ids.TYPE_ID_DEB][i]) for i in self.Sample_Units_Order
-        ]
 
         distributor = self.Module.DebDistributor()
         repo = mock.Mock()
@@ -301,7 +293,6 @@ class TestPublishOldRepoDeb(PublishRepoMixIn, BaseTest):
         models.DebRelease: [
         ],
     }
-    Sample_Units_Order = [0, 1]
     Architectures = ['all', 'amd64']
     default_release = False
 
@@ -321,7 +312,6 @@ class TestPublishRepoDeb(PublishRepoMixIn, BaseTest):
             dict(codename='stable', id='stableid'),
         ],
     }
-    Sample_Units_Order = [0, 1]
     Architectures = ['all', 'amd64']
     default_release = False
 
@@ -346,7 +336,6 @@ class TestPublishRepoMultiArchDeb(PublishRepoMixIn, BaseTest):
             dict(codename='stable', id='stableid'),
         ],
     }
-    Sample_Units_Order = [2, 3, 0, 1, 3, 3]
     Architectures = ['all', 'amd64', 'i386']
     default_release = False
 
@@ -367,14 +356,14 @@ class TestPublishRepoMultiCompArchDeb(PublishRepoMixIn, BaseTest):
         ],
         models.DebComponent: [
             dict(name='main', release='old-stable', id='mainid',
-                 packages=['bbbb', 'cccc', 'dddd', 'eeee']),
-            dict(name='premature', release='old-stable', id='preid', packages=['ffff']),
+                 packages=['bbbb', 'cccc', 'dddd', 'eeee', 'ffff']),
+            dict(name='premature', release='old-stable', id='preid',
+                 packages=['cccc', 'dddd', 'eeee', 'ffff']),
         ],
         models.DebRelease: [
             dict(codename='old-stable', id='oldstableid'),
         ],
     }
-    Sample_Units_Order = [2, 3, 0, 1, 3, 3, 4, 4, 3, 2, 3, 1, 0, 3, 3]
     Architectures = ['all', 'amd64', 'i386', 'ppc']
     default_release = True
 

@@ -107,7 +107,7 @@ def validate_config(repo, config, config_conduit):
                                        error_messages)
 
     try:
-        get_gpg_sign_options(repo, config)
+        get_gpg_signer(repo, config)
     except signer.SignerError as e:
         error_messages.append(str(e))
 
@@ -201,18 +201,20 @@ def get_repo_relative_path(repo, config=None):
     return relative_path.lstrip('/')
 
 
-def get_gpg_sign_options(repo=None, config=None):
+def get_gpg_signer(repo=None, config=None):
     cfg = config or {}
     cmd = cfg.get(GPG_CMD)
     if not cmd:
         return None
     key_id = cfg.get(GPG_KEY_ID)
     repository_name = None if repo is None else repo.id
-    return signer.SignOptions(cmd, repository_name=repository_name,
-                              key_id=key_id)
+    sign_options = signer.SignOptions(cmd, repository_name=repository_name,
+                                      key_id=key_id)
+    return signer.Signer(sign_options)
 
 
 # -- required config validation -----------------------------------------------
+
 
 def _validate_http(http, error_messages):
     _validate_boolean(HTTP_PUBLISH_DIR_KEYWORD, http, error_messages)
@@ -238,6 +240,7 @@ def _validate_relative_url(relative_url, error_messages):
 
 
 # -- optional config validation -----------------------------------------------
+
 
 def _validate_http_publish_dir(http_publish_dir, error_messages):
     _validate_usable_directory(HTTP_PUBLISH_DIR_KEYWORD, http_publish_dir,
