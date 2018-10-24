@@ -1,0 +1,8 @@
+coverage
+flake8
+flake8-docstrings
+flake8-tuple
+flake8-quotes
+mock
+git+https://github.com/PulpQE/pulp-smash.git#egg=pulp-smash
+pytest
