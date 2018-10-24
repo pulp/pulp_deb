@@ -6,7 +6,7 @@ from pulpcore.plugin.models import (
     Publication,
     PublishedArtifact,
     PublishedMetadata,
-    RemoteArtifact
+    RemoteArtifact,
 )
 from pulpcore.plugin.tasking import WorkingDirectory
 
@@ -25,7 +25,11 @@ def publish(publisher_pk, repository_version_pk):
         repository_version_pk (str): Create a publication from this repository version.
     """
     publisher = DebPublisher.objects.get(pk=publisher_pk)
-    repository_version = RepositoryVersion.objects.get(pk=repository_version_pk)
+    if not publisher.verbatim:
+        raise NotImplementedError(
+            "Only verbatim publishing is possible for now.")
+    repository_version = RepositoryVersion.objects.get(
+        pk=repository_version_pk)
 
     log.info(_('Publishing: repository={repo}, version={ver}, publisher={pub}').format(
         repo=repository_version.repository.name,
@@ -33,7 +37,7 @@ def publish(publisher_pk, repository_version_pk):
         pub=publisher.name
     ))
     with WorkingDirectory():
-        with Publication.create(repository_version, publisher) as publication:
+        with Publication.create(repository_version, publisher, pass_through=True) as publication:
             # Write any Artifacts (files) to the file system, and the database.
             #
             # artifact = YourArtifactWriter.write(relative_path)
@@ -52,5 +56,6 @@ def publish(publisher_pk, repository_version_pk):
             #     file=File(open(manifest.relative_path, 'rb')))
             # metadata.save()
             pass
+            # TODO: publish the symlink for stable -> jessie
 
-    log.info(_('Publication: {publication} created').format(publication.pk))
+    log.info(_('Publication: {publication} created').format(publication=publication.pk))

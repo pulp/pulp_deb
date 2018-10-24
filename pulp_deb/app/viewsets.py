@@ -1,46 +1,108 @@
-"""
-Check `Plugin Writer's Guide`_ for more details.
+from gettext import gettext as _
 
-.. _Plugin Writer's Guide:
-    http://docs.pulpproject.org/en/3.0/nightly/plugins/plugin-writer/index.html
-"""
-
+from django.db import transaction
 from drf_yasg.utils import swagger_auto_schema
+from rest_framework.decorators import detail_route
+from rest_framework import serializers, status
+from rest_framework.response import Response
 
-from pulpcore.plugin import viewsets as core
 from pulpcore.plugin.serializers import (
     AsyncOperationResponseSerializer,
     RepositoryPublishURLSerializer,
     RepositorySyncURLSerializer,
 )
 from pulpcore.plugin.tasking import enqueue_with_reservation
-from rest_framework.decorators import detail_route
+from pulpcore.plugin.viewsets import (
+    ContentViewSet,
+    RemoteViewSet,
+    OperationPostponedResponse,
+    PublisherViewSet,
+    BaseFilterSet)
 
 from . import models, serializers, tasks
 
 
-class DebContentViewSet(core.ContentViewSet):
+class GenericContentFilter(BaseFilterSet):
     """
-    A ViewSet for DebContent.
-
-    Define endpoint name which will appear in the API endpoint for this content type.
-    For example::
-        http://pulp.example.com/pulp/api/v3/content/deb/
-
-    Also specify queryset and serializer for DebContent.
+    FilterSet for GenericContent.
     """
 
-    endpoint_name = 'deb'
-    queryset = models.DebContent.objects.all()
-    serializer_class = serializers.DebContentSerializer
+    class Meta:
+        model = models.GenericContent
+        fields = [
+            'relative_path',
+        ]
 
 
-class DebRemoteViewSet(core.RemoteViewSet):
+class ReleaseFilter(BaseFilterSet):
+    """
+    FilterSet for Release.
+    """
+
+    class Meta:
+        model = models.Release
+        fields = [
+            'codename',
+            'suite',
+            'relative_path',
+        ]
+
+
+class PackageFilter(BaseFilterSet):
+    """
+    FilterSet for Package.
+    """
+
+    class Meta:
+        model = models.Package
+        fields = [
+            'relative_path',
+        ]
+
+
+class GenericContentViewSet(ContentViewSet):
+    """
+    A ViewSet for GenericContent.
+    """
+
+    endpoint_name = 'deb/generic_contents'
+    queryset = models.GenericContent.objects.all()
+    serializer_class = serializers.GenericContentSerializer
+
+
+class ReleaseViewSet(ContentViewSet):
+    """
+    A ViewSet for Release.
+    """
+
+    endpoint_name = 'deb/releases'
+    queryset = models.Release.objects.all()
+    serializer_class = serializers.ReleaseSerializer
+
+
+class PackageIndexViewSet(ContentViewSet):
+    """
+    A ViewSet for PackageIndex.
+    """
+
+    endpoint_name = 'deb/package_index'
+    queryset = models.PackageIndex.objects.all()
+    serializer_class = serializers.PackageIndexSerializer
+
+
+class PackageViewSet(ContentViewSet):
+    """
+    A ViewSet for Package.
+    """
+
+    endpoint_name = 'deb/packages'
+    queryset = models.Package.objects.all()
+    serializer_class = serializers.PackageSerializer
+
+
+class DebRemoteViewSet(RemoteViewSet):
     """
     A ViewSet for DebRemote.
-
-    Similar to the DebContentViewSet above, define endpoint_name,
-    queryset and serializer, at a minimum.
     """
 
     endpoint_name = 'deb'
@@ -56,31 +118,33 @@ class DebRemoteViewSet(core.RemoteViewSet):
     @detail_route(methods=('post',), serializer_class=RepositorySyncURLSerializer)
     def sync(self, request, pk):
         """
-        Synchronizes a repository. The ``repository`` field has to be provided.
+        Synchronizes a repository.
+
+        The ``repository`` field has to be provided.
         """
         remote = self.get_object()
-        serializer = RepositorySyncURLSerializer(data=request.data, context={'request': request})
+        serializer = RepositorySyncURLSerializer(
+            data=request.data, context={'request': request})
 
         # Validate synchronously to return 400 errors.
         serializer.is_valid(raise_exception=True)
         repository = serializer.validated_data.get('repository')
+        mirror = serializer.validated_data.get('mirror', True)
         result = enqueue_with_reservation(
             tasks.synchronize,
             [repository, remote],
             kwargs={
                 'remote_pk': remote.pk,
-                'repository_pk': repository.pk
+                'repository_pk': repository.pk,
+                'mirror': mirror,
             }
         )
-        return core.OperationPostponedResponse(result, request)
+        return OperationPostponedResponse(result, request)
 
 
-class DebPublisherViewSet(core.PublisherViewSet):
+class DebPublisherViewSet(PublisherViewSet):
     """
     A ViewSet for DebPublisher.
-
-    Similar to the DebContentViewSet above, define endpoint_name,
-    queryset and serializer, at a minimum.
     """
 
     endpoint_name = 'deb'
@@ -104,10 +168,11 @@ class DebPublisherViewSet(core.PublisherViewSet):
         publisher = self.get_object()
         serializer = RepositoryPublishURLSerializer(
             data=request.data,
-            context={'request': request}
+            context={'request': request},
         )
         serializer.is_valid(raise_exception=True)
-        repository_version = serializer.validated_data.get('repository_version')
+        repository_version = serializer.validated_data.get(
+            'repository_version')
 
         result = enqueue_with_reservation(
             tasks.publish,
@@ -117,4 +182,4 @@ class DebPublisherViewSet(core.PublisherViewSet):
                 'repository_version_pk': str(repository_version.pk)
             }
         )
-        return core.OperationPostponedResponse(result, request)
+        return OperationPostponedResponse(result, request)

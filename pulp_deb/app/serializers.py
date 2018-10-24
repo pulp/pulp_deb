@@ -1,71 +1,169 @@
-"""
-Check `Plugin Writer's Guide`_ for more details.
-
-.. _Plugin Writer's Guide:
-    http://docs.pulpproject.org/en/3.0/nightly/plugins/plugin-writer/index.html
-"""
 from rest_framework import serializers
-from pulpcore.plugin import serializers as platform
+
+from pulpcore.plugin.serializers import (
+    ContentSerializer,
+    RelatedField,
+    RemoteSerializer,
+    PublisherSerializer
+)
 
 from . import models
 
 
-class DebContentSerializer(platform.ContentSerializer):
+class GenericContentSerializer(ContentSerializer):
     """
-    A Serializer for DebContent.
-
-    Add serializers for the new fields defined in DebContent and
-    add those fields to the Meta class keeping fields from the parent class as well.
-
-    For example::
-
-    field1 = serializers.TextField()
-    field2 = serializers.IntegerField()
-    field3 = serializers.CharField()
-
-    class Meta:
-        fields = platform.ContentSerializer.Meta.fields + ('field1', 'field2', 'field3')
-        model = models.DebContent
+    A serializer for GenericContent.
     """
 
+    relative_path = serializers.CharField(
+        help_text='Path of file relative to url.',
+        required=False,
+    )
+
     class Meta:
-        fields = platform.ContentSerializer.Meta.fields
-        model = models.DebContent
+        fields = tuple(set(ContentSerializer.Meta.fields) - {'artifacts'}) + ('relative_path',
+                                                                              'artifact')
+        model = models.GenericContent
 
 
-class DebRemoteSerializer(platform.RemoteSerializer):
+class ReleaseSerializer(ContentSerializer):
+    """
+    A serializer for Release.
+    """
+
+    codename = serializers.CharField(
+        help_text='Codename of the release, i.e. "buster".',
+        required=True,
+    )
+
+    suite = serializers.CharField(
+        help_text='Suite of the release, i.e. "stable".',
+        required=False,
+    )
+
+    distribution = serializers.CharField(
+        help_text='Distribution of the release, i.e. "stable/updates".',
+        required=False,
+    )
+
+    relative_path = serializers.CharField(
+        help_text='Path of file relative to url.',
+        required=False,
+    )
+
+    class Meta:
+        fields = tuple(set(ContentSerializer.Meta.fields) -
+                       {'artifacts'}) + ('codename', 'suite', 'distribution', 'relative_path', 'artifact')
+        model = models.GenericContent
+
+
+class PackageIndexSerializer(ContentSerializer):
+    """
+    A serializer for PackageIndex.
+    """
+    component = serializers.CharField(
+        help_text='Component of the component - architecture combination.',
+        required=True,
+    )
+
+    architecture = serializers.CharField(
+        help_text='Architecture of the component - architecture combination.',
+        required=True,
+    )
+
+    relative_path = serializers.CharField(
+        help_text='Path of file relative to url.',
+        required=False,
+    )
+
+    class Meta:
+        fields = ContentSerializer.Meta.fields + \
+            ('release', 'component', 'architecture', 'relative_path')
+        model = models.PackageIndex
+
+
+class PackageSerializer(ContentSerializer):
+    """
+    A Serializer for Package.
+    """
+
+    relative_path = serializers.CharField(
+        help_text='Path of file relative to url.',
+        required=False,
+    )
+
+    class Meta:
+        fields = tuple(set(ContentSerializer.Meta.fields) - {'artifacts'}) + (
+            'relative_path',
+            'artifact',
+            'package_name',
+            'source',
+            'version',
+            'architecture',
+            'section',
+            'priority',
+            'origin',
+            'tag',
+            'bugs',
+            'essential',
+            'build_essential',
+            'installed_size',
+            'maintainer',
+            'original_maintainer',
+            'description',
+            'description_md5',
+            'homepage',
+            'built_using',
+            'auto_built_package',
+            'multi_arch',
+            'breaks',
+            'conflicts',
+            'depends',
+            'recommends',
+            'suggests',
+            'enhances',
+            'pre_depends',
+            'provides',
+            'replaces',
+        )
+        model = models.Package
+
+
+class DebRemoteSerializer(RemoteSerializer):
     """
     A Serializer for DebRemote.
-
-    Add any new fields if defined on DebRemote.
-    Similar to the example above, in DebContentSerializer.
-    Additional validators can be added to the parent validators list
-
-    For example::
-
-    class Meta:
-        validators = platform.RemoteSerializer.Meta.validators + [myValidator1, myValidator2]
     """
 
+    distributions = serializers.CharField(
+        help_text='Comma separated list of distributions to sync',
+        required=True,
+    )
+    components = serializers.CharField(
+        help_text='Comma separatet list of components to sync',
+        required=False,
+    )
+    architectures = serializers.CharField(
+        help_text='Comma separated list of architectures to sync',
+        required=False,
+    )
+
     class Meta:
-        fields = platform.RemoteSerializer.Meta.fields
+        fields = RemoteSerializer.Meta.fields + \
+            ('distributions', 'components', 'architectures')
         model = models.DebRemote
 
 
-class DebPublisherSerializer(platform.PublisherSerializer):
+class DebPublisherSerializer(PublisherSerializer):
     """
     A Serializer for DebPublisher.
-
-    Add any new fields if defined on DebPublisher.
-    Similar to the example above, in DebContentSerializer.
-    Additional validators can be added to the parent validators list
-
-    For example::
-
-    class Meta:
-        validators = platform.PublisherSerializer.Meta.validators + [myValidator1, myValidator2]
     """
 
+    verbatim = serializers.BooleanField(
+        help_text='Publish upstream repository verbatim. Works only with synched content.',
+        required=False,
+        default=False,
+    )
+
     class Meta:
-        fields = platform.PublisherSerializer.Meta.fields
+        fields = PublisherSerializer.Meta.fields + ('verbatim',)
         model = models.DebPublisher
