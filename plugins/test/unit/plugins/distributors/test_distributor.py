@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
 import os
 import shutil
 import sys
 import time
 import uuid
 import hashlib
+import unittest
 
 from debian import deb822
 import mock
@@ -365,6 +367,104 @@ class TestPublishRepoMultiCompArchDeb(PublishRepoMixIn, BaseTest):
         ],
     }
     Architectures = ['all', 'amd64', 'i386', 'ppc']
+    default_release = True
+
+
+@unittest.skip("Skip until https://pulp.plan.io/issues/4094 is fixed!")
+class TestPublishAllArchCompDeb(PublishRepoMixIn, BaseTest):
+    """
+    All packages in component 'all-only' have architecture='all'.
+    The resulting repository should nevertheless contain the 'amd64'
+    architecture for this component.
+    """
+    Sample_Units = {
+        models.DebPackage: [
+            dict(name='burgundy', version='0.1938.0', architecture='all',
+                 checksum='abcde', checksumtype='sha3.14', id='bbbb'),
+            dict(name='chablis', version='0.2013.0', architecture='all',
+                 checksum='yz', checksumtype='sha3.14', id='cccc'),
+            dict(name='dornfelder', version='0.2017.0', architecture='all',
+                 checksum='wxy', checksumtype='sha3.14', id='dddd'),
+            dict(name='federweisser', version='0.2017.0', architecture='amd64',
+                 checksum='foo', checksumtype='sha3.14', id='ffff'),
+        ],
+        models.DebComponent: [
+            dict(name='main', release='old-stable', id='mainid',
+                 packages=['bbbb', 'cccc', 'dddd', 'ffff']),
+            dict(name='all-only', release='old-stable', id='preid',
+                 packages=['bbbb', 'cccc', 'dddd']),
+        ],
+        models.DebRelease: [
+            dict(codename='old-stable', id='oldstableid'),
+        ],
+    }
+    Architectures = ['all', 'amd64']
+    default_release = True
+
+
+class TestPublishRepoNonAsciiDeb(PublishRepoMixIn, BaseTest):
+    Sample_Units = {
+        models.DebPackage: [
+            dict(name='gaertner',
+                 source='gärtner',
+                 version='0.1938.0',
+                 installed_size=23,
+                 maintainer='gärtner',
+                 original_maintainer='gärtner',
+                 architecture='amd64',
+                 replaces='gärtner',
+                 provides='gärtner',
+                 depends='gärtner',
+                 pre_depends='gärtner',
+                 recommends='gärtner',
+                 suggests='gärtner',
+                 enhances='gärtner',
+                 conflicts='gärtner',
+                 breaks='gärtner',
+                 description='gärtner',
+                 multi_arch='gärtner',
+                 homepage='gärtner',
+                 section='gärtner',
+                 priority='gärtner',
+                 filename='gärtner',
+                 size=12,
+                 checksum='abcde',
+                 checksumtype='sha3.14',
+                 id='aaaa'),
+        ],
+        models.DebComponent: [
+            dict(name='main', release='stable', id='mainid', packages=['aaaa']),
+        ],
+        models.DebRelease: [
+            dict(codename='stable', id='stableid'),
+        ],
+    }
+    Architectures = ['all', 'amd64']
+    default_release = False
+
+
+class TestPublishRepoLayeredComponentDeb(PublishRepoMixIn, BaseTest):
+    """
+    Some debian repositories (e.g. debian-security) use additional layers ("/")
+    in the component name as given by the 'Release' file (e.g. component =
+    "updates/main"). This special case has many potential pitfalls and is
+    covered by this test.
+    """
+    Sample_Units = {
+        models.DebPackage: [
+            dict(name='burgundy', version='0.1938.0', architecture='amd64',
+                 checksum='abcde', checksumtype='sha3.14', id='bbbb'),
+            dict(name='chablis', version='0.2013.0', architecture='all',
+                 checksum='yz', checksumtype='sha3.14', id='cccc'),
+        ],
+        models.DebComponent: [
+            dict(name='updates/main', release='stable', id='mainid', packages=['bbbb', 'cccc']),
+        ],
+        models.DebRelease: [
+            dict(codename='stable', id='stableid'),
+        ],
+    }
+    Architectures = ['all', 'amd64']
     default_release = True
 
 
