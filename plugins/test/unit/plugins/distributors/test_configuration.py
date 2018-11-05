@@ -91,8 +91,8 @@ class TestValidateConfig(testbase.TestCase):
         repo = Mock(repo_id='fool', working_dir=self.work_dir)
         conduit = self._config_conduit(False)
 
-        self.assertEquals((False, 'Relative URL [bar] for repository [fool] ' +
-                           'conflicts with existing relative URL [/bar] ' +
+        self.assertEquals((False, 'Relative URL [bar] for repository [fool] '
+                           'conflicts with existing relative URL [/bar] '
                            'for repository [foo]'),
                           configuration.validate_config(repo, config, conduit))
 
