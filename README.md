@@ -11,7 +11,7 @@ Admin extensions do not need any additional tools.
 
 Server extensions need:
 * python-debian: https://pypi.python.org/pypi/python-debian
-* python-debpkgr: https://pypi.python.org/pypi/python-debpkgr
+* python-debpkgr: https://pypi.python.org/pypi/debpkgr
 
 
 ### Installation
