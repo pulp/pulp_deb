@@ -2,6 +2,8 @@ import os
 
 from logging import getLogger
 
+from debian import deb822
+
 from django.db import models
 
 from pulpcore.plugin.models import Content, ContentArtifact, Remote, Publisher
@@ -176,6 +178,72 @@ class Package(Content):
             '{}_{}_{}.deb'.format(self.package_name, self.version, self.architecture)
         )
 
+    def to822(self, component=''):
+        ret = deb822.Packages()
+        ret['Package'] = self.package_name
+        if self.source:
+            ret['Source'] = self.source
+        ret['Version'] = self.version
+        ret['Architecture'] = self.architecture
+        if self.section:
+            ret['Section'] = self.section
+        if self.priority:
+            ret['Priority'] = self.priority
+        if self.origin:
+            ret['Origin'] = self.origin
+        if self.tag:
+            ret['Tag'] = self.tag
+        if self.bugs:
+            ret['Bugs'] = self.bugs
+        if self.essential:
+            ret['Essential'] = self.essential
+        if self.build_essential:
+            ret['Build-Essential'] = self.build_essential
+        if self.installed_size:
+            ret['Installed-Size'] = self.installed_size
+        ret['Maintainer'] = self.maintainer
+        if self.original_maintainer:
+            ret['Original-Maintainer'] = self.original_maintainer
+        ret['Description'] = self.description
+        if self.description_md5:
+            ret['Description-MD5'] = self.description_md5
+        if self.homepage:
+            ret['Homepage'] = self.homepage
+        if self.built_using:
+            ret['Built-Using'] = self.built_using
+        if self.auto_built_package:
+            ret['Auto-Built-Package'] = self.auto_built_package
+        if self.multi_arch:
+            ret['Multi-Arch'] = self.multi_arch
+
+        if self.breaks:
+            ret['Breaks'] = self.breaks
+        if self.conflicts:
+            ret['Conflicts'] = self.conflicts
+        if self.depends:
+            ret['Depends'] = self.depends
+        if self.recommends:
+            ret['Recommends'] = self.recommends
+        if self.suggests:
+            ret['Suggests'] = self.suggests
+        if self.enhances:
+            ret['Enhances'] = self.enhances
+        if self.pre_depends:
+            ret['Pre-Depends'] = self.pre_depends
+        if self.provides:
+            ret['Provides'] = self.provides
+        if self.replaces:
+            ret['Replaces'] = self.replaces
+
+
+        artifact = self.artifacts.get()
+        ret['MD5sum'] = artifact.md5
+        ret['SHA1'] = artifact.sha1
+        ret['SHA256'] = artifact.sha256
+        ret['Filename'] = self.filename(component)
+
+        return ret
+
     class Meta:
         unique_together=(
             ('package_name', 'architecture', 'version'),
@@ -192,6 +260,8 @@ class DebPublisher(Publisher):
     TYPE = 'deb'
 
     verbatim = models.BooleanField(default=False)
+    simple = models.BooleanField(default=False)
+    structured = models.BooleanField(default=False)
 
 
 class DebRemote(Remote):
