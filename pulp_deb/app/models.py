@@ -1,3 +1,5 @@
+import os
+
 from logging import getLogger
 
 from django.db import models
@@ -159,6 +161,20 @@ class Package(Content):
                                  content=self,
                                  relative_path=self.relative_path)
             ca.save()
+
+    def filename(self, component=''):
+        sourcename = self.source or self.package_name
+        if sourcename.startswith('lib'):
+            prefix = sourcename[0:4]
+        else:
+            prefix = sourcename[0]
+        return os.path.join(
+            'pool',
+            component,
+            prefix,
+            sourcename,
+            '{}_{}_{}.deb'.format(self.package_name, self.version, self.architecture)
+        )
 
     class Meta:
         unique_together=(
