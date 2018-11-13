@@ -153,16 +153,21 @@ class DebRemoteSerializer(RemoteSerializer):
         model = models.DebRemote
 
 
+class DebVerbatimPublisherSerializer(PublisherSerializer):
+    """
+    A Serializer for DebVerbatimPublisher.
+    """
+
+    class Meta:
+        fields = PublisherSerializer.Meta.fields
+        model = models.DebVerbatimPublisher
+
+
 class DebPublisherSerializer(PublisherSerializer):
     """
     A Serializer for DebPublisher.
     """
 
-    verbatim = serializers.BooleanField(
-        help_text='Publish upstream repository verbatim. Works only with synched content.',
-        required=False,
-        default=False,
-    )
     simple = serializers.BooleanField(
         help_text='Activate simple publishing mode (all packages in one release component).',
         default=False,
@@ -176,17 +181,12 @@ class DebPublisherSerializer(PublisherSerializer):
         """
         Check that the publishing modes are compatible.
         """
-        if data['verbatim']:
-            if data['simple'] or data['structured']:
-                raise serializers.ValidationError("verbatim publishing mode cannot combined with simple or structured")
-        else:
-            if not data['simple'] and not data['structured']:
-                raise serializers.ValidationError("one of verbatim, simple or structured publishing mode must be selected")
+        if not data['simple'] and not data['structured']:
+            raise serializers.ValidationError("one of simple or structured publishing mode must be selected")
         return data
 
     class Meta:
         fields = PublisherSerializer.Meta.fields + (
-            'verbatim',
             'simple',
             'structured',
         )

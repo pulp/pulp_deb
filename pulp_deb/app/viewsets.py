@@ -142,6 +142,49 @@ class DebRemoteViewSet(RemoteViewSet):
         return OperationPostponedResponse(result, request)
 
 
+class DebVerbatimPublisherViewSet(PublisherViewSet):
+    """
+    A ViewSet for DebVerbatimPublisher.
+    """
+
+    endpoint_name = 'deb_verbatim'
+    queryset = models.DebVerbatimPublisher.objects.all()
+    serializer_class = serializers.DebVerbatimPublisherSerializer
+
+    # This decorator is necessary since a publish operation is asyncrounous and returns
+    # the id and href of the publish task.
+    @swagger_auto_schema(
+        operation_description="Trigger an asynchronous task to publish content",
+        responses={202: AsyncOperationResponseSerializer}
+    )
+    @detail_route(methods=('post',), serializer_class=RepositoryPublishURLSerializer)
+    def publish(self, request, pk):
+        """
+        Publishes a repository.
+
+        Either the ``repository`` or the ``repository_version`` fields can
+        be provided but not both at the same time.
+        """
+        publisher = self.get_object()
+        serializer = RepositoryPublishURLSerializer(
+            data=request.data,
+            context={'request': request},
+        )
+        serializer.is_valid(raise_exception=True)
+        repository_version = serializer.validated_data.get(
+            'repository_version')
+
+        result = enqueue_with_reservation(
+            tasks.publish_verbatim,
+            [repository_version.repository, publisher],
+            kwargs={
+                'publisher_pk': str(publisher.pk),
+                'repository_version_pk': str(repository_version.pk)
+            }
+        )
+        return OperationPostponedResponse(result, request)
+
+
 class DebPublisherViewSet(PublisherViewSet):
     """
     A ViewSet for DebPublisher.

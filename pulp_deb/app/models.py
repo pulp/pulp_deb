@@ -250,16 +250,25 @@ class Package(Content):
         )
 
 
-class DebPublisher(Publisher):
+class DebVerbatimPublisher(Publisher):
     """
     A verbatim Publisher for DebContent.
+
+    This publisher publishes the obtained metadata unchanged.
+    """
+
+    TYPE = 'deb'
+
+
+class DebPublisher(Publisher):
+    """
+    A Publisher for DebContent.
 
     This publisher recreates all metadata.
     """
 
     TYPE = 'deb'
 
-    verbatim = models.BooleanField(default=False)
     simple = models.BooleanField(default=False)
     structured = models.BooleanField(default=False)
 
