@@ -115,7 +115,7 @@ class DebDeclarativeVersion(DeclarativeVersion):
             ArtifactDownloader(),
             DebArtifactWithoutDigest(),
             ArtifactSaver(),
-            DebParseRelease(),
+            DebParseRelease(self.first_stage.components, self.first_stage.architectures),
             DebParsePackage(),
             QueryExistingContentUnits(),
             ContentUnitSaver(),
@@ -148,6 +148,14 @@ class DebArtifactWithoutDigest(Stage):
             await out_q.put(declarative_content)
 
 
+def _filter_ssl(values, filter_list):
+    """Filter space separated list and return space separated."""
+    value_set = set(values.split())
+    if filter_list:
+        value_set &= set(filter_list)
+    return ' '.join(sorted(value_set))
+
+
 class DebParseRelease(Stage):
     """
     This stage handles Release content.
@@ -156,6 +164,12 @@ class DebParseRelease(Stage):
     TODO: Update Codename, Suite, ...
     TODO: Verify signature
     """
+
+    def __init__(self, components, architectures):
+        self.components = components
+        self.architectures = architectures
+        super(DebParseRelease, self).__init__()
+
     async def __call__(self, in_q, out_q):
         while True:
             declarative_content = await in_q.get()
@@ -167,8 +181,14 @@ class DebParseRelease(Stage):
                 declarative_content.content.sha256 = release_artifact.sha256
                 with open(release_artifact.storage_path(''), 'rb') as f:
                     release_dict = deb822.Release(f)
-                    declarative_content.content.codename = release_dict['codename']
-                    declarative_content.content.suite = release_dict['suite']
+                    declarative_content.content.codename = release_dict['Codename']
+                    declarative_content.content.suite = release_dict['Suite']
+                    # TODO split of extra stuff e.g. : 'updates/main' -> 'main'
+                    declarative_content.content.components = _filter_ssl(release_dict['Components'], self.components)
+                    declarative_content.content.architectures = _filter_ssl(release_dict['Architectures'], self.architectures)
+                    log.debug('Codename: {}'.format(declarative_content.content.codename))
+                    log.debug('Components: {}'.format(declarative_content.content.components))
+                    log.debug('Architectures: {}'.format(declarative_content.content.architectures))
             await out_q.put(declarative_content)
 
 
@@ -226,6 +246,15 @@ class DebFirstStage(Stage):
 
         """
         self.remote = remote
+        self.distributions = [
+            distribution.strip() for distribution in self.remote.distributions.split()
+        ]
+        self.components = None if self.remote.components is None else [
+            component.strip() for component in self.remote.components.split()
+        ]
+        self.architectures = None if self.remote.architectures is None else [
+            architecture.strip() for architecture in self.remote.architectures.split()
+        ]
 
     async def __call__(self, in_q, out_q):
         """
@@ -236,12 +265,11 @@ class DebFirstStage(Stage):
             out_q (asyncio.Queue): The out_q to send `DeclarativeContent` objects to
 
         """
-        distributions = self.remote.distributions.split(',')
         parsed_url = urlparse(self.remote.url)
         future_releases = []
         future_package_indices = []
-        with ProgressBar(message='Creating download requests for Release files', total=len(distributions)) as pb:
-            for distribution in (distribution.strip() for distribution in distributions):
+        with ProgressBar(message='Creating download requests for Release files', total=len(self.distributions)) as pb:
+            for distribution in self.distributions:
                 log.info(
                     'Downloading Release file for distribution: "{}"'.format(distribution))
                 release_relpath = os.path.join(
@@ -295,13 +323,14 @@ class DebFirstStage(Stage):
         future_package_indices = []
         with open(release.artifacts.get().storage_path(''), 'rb') as f:
             release_dict = deb822.Release(f)
-        file_references = defaultdict(dict)
-        for digest_name in ('sha256', 'sha1', 'md5sum'):
-            for unit in release_dict[digest_name]:
-                file_references[unit['name']].update(unit)
+        file_references = defaultdict(deb822.Deb822Dict)
+        for digest_name in ('SHA512', 'SHA256', 'SHA1', 'MD5sum'):
+            if digest_name in release_dict:
+                for unit in release_dict[digest_name]:
+                    file_references[unit['Name']].update(unit)
         # Find Package Index files for Component Architecture combinations
-        for component in release_dict['components'].split(' '):
-            for architecture in release_dict['architectures'].split(' '):
+        for component in release.components.split():
+            for architecture in release.architectures.split():
                 log.info('Component: "{}" Architecture: "{}"'.format(
                     component, architecture))
                 packages_path = os.path.join(os.path.basename(
@@ -312,46 +341,45 @@ class DebFirstStage(Stage):
                 for path in list(file_references.keys()):
                     if path.startswith(packages_path):
                         packages_files.append(file_references.pop(path))
-                log.info('{}'.format(packages_files))
                 # Sync these files in PackageIndex
                 packages_relpath = os.path.join(os.path.dirname(
-                    release.relative_path), packages_files[0]['name'])
+                    release.relative_path), packages_files[0]['Name'])
                 package_index_unit = PackageIndex(
                     release_pk=release,
                     component=component,
                     architecture=architecture,
-                    sha256=packages_files[0]['sha256'],
+                    sha256=packages_files[0]['SHA256'],
                     relative_path=packages_relpath,
                 )
                 d_artifacts = []
                 for packages_dict in packages_files:
                     packages_relpath = os.path.join(os.path.dirname(
-                        release.relative_path), packages_dict['name'])
+                        release.relative_path), packages_dict['Name'])
                     packages_path = os.path.join(
                         parsed_url.path, packages_relpath)
                     packages_artifact = Artifact(
-                        sha256=packages_dict['sha256'],
-                        sha1=packages_dict['sha1'],
-                        md5=packages_dict['md5sum'])
+                        sha256=packages_dict['SHA256'],
+                        sha1=packages_dict['SHA1'],
+                        md5=packages_dict['MD5sum'])
                     d_artifacts.append(DebDeclarativeArtifact(packages_artifact, urlunparse(
                         parsed_url._replace(path=packages_path)), packages_relpath, self.remote))
-            packages_dc = DebDeclarativeContent(
-                content=package_index_unit, d_artifacts=d_artifacts)
-            future_package_indices.append(packages_dc.get_future())
-            await out_q.put(packages_dc)
+                packages_dc = DebDeclarativeContent(
+                    content=package_index_unit, d_artifacts=d_artifacts)
+                future_package_indices.append(packages_dc.get_future())
+                await out_q.put(packages_dc)
 
         # Everything else shall be synced as GenericContent
         for generic_content_dict in file_references.values():
             generic_content_relpath = os.path.join(os.path.dirname(
-                release.relative_path), generic_content_dict['name'])
+                release.relative_path), generic_content_dict['Name'])
             generic_content_path = os.path.join(
                 parsed_url.path, generic_content_relpath)
             generic_content_unit = GenericContent(
-                sha256=generic_content_dict['sha256'], relative_path=generic_content_relpath)
+                sha256=generic_content_dict['SHA256'], relative_path=generic_content_relpath)
             generic_content_artifact = Artifact(
-                sha256=generic_content_dict['sha256'],
-                sha1=generic_content_dict['sha1'],
-                md5=generic_content_dict['md5sum'])
+                sha256=generic_content_dict['SHA256'],
+                sha1=generic_content_dict['SHA1'],
+                md5=generic_content_dict['MD5sum'])
             generic_content_da = DebDeclarativeArtifact(generic_content_artifact, urlunparse(
                 parsed_url._replace(path=generic_content_path)), generic_content_relpath, self.remote)
             generic_content_dc = DebDeclarativeContent(
@@ -372,17 +400,16 @@ class DebFirstStage(Stage):
 
         """
         with open(package_index.artifacts.first().storage_path(''), 'rb') as f:
-            log.info(package_index.artifacts.first().storage_path(''))
             package_list = deb822.Packages.iter_paragraphs(f)
             for package_dict in package_list:
-                log.info("Downloading package {}".format(
-                    package_dict['package']))
-                package_relpath = package_dict['filename']
+                log.debug("Downloading package {}".format(
+                    package_dict['Package']))
+                package_relpath = package_dict['Filename']
                 package_path = os.path.join(parsed_url.path, package_relpath)
                 package_artifact = Artifact(
-                    sha256=package_dict['sha256'],
-                    sha1=package_dict['sha1'],
-                    md5=package_dict['md5sum'])
+                    sha256=package_dict['SHA256'],
+                    sha1=package_dict['SHA1'],
+                    md5=package_dict['MD5sum'])
                 package_da = DebDeclarativeArtifact(package_artifact, urlunparse(
                     parsed_url._replace(path=package_path)), package_relpath, self.remote)
                 package_dc = DebDeclarativeContent(

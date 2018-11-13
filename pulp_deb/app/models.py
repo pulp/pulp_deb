@@ -63,14 +63,22 @@ class Release(Content):
     codename = models.TextField()
     suite = models.TextField()
     distribution = models.TextField()
-    components = models.TextField()
-    architectures = models.TextField()
+    components = models.TextField(blank=True)
+    architectures = models.TextField(blank=True)
     relative_path = models.TextField()
     sha256 = models.TextField()
 
     class Meta:
         unique_together = (
-            ('relative_path', 'sha256'),
+            (
+                'codename',
+                'suite',
+                'distribution',
+                'components',
+                'architectures',
+                'relative_path',
+                'sha256',
+            ),
         )
 
 

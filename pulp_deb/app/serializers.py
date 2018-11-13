@@ -135,15 +135,15 @@ class DebRemoteSerializer(RemoteSerializer):
     """
 
     distributions = serializers.CharField(
-        help_text='Comma separated list of distributions to sync',
+        help_text='Whitespace separated list of distributions to sync',
         required=True,
     )
     components = serializers.CharField(
-        help_text='Comma separatet list of components to sync',
+        help_text='Whitespace separatet list of components to sync',
         required=False,
     )
     architectures = serializers.CharField(
-        help_text='Comma separated list of architectures to sync',
+        help_text='Whitespace separated list of architectures to sync',
         required=False,
     )
 
