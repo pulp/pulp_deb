@@ -14,14 +14,10 @@ from pulpcore.plugin.models import (
     Publication,
     PublishedArtifact,
     PublishedMetadata,
-    RemoteArtifact,
 )
 from pulpcore.plugin.tasking import WorkingDirectory
 
 from pulp_deb.app.models import (
-    GenericContent,
-    Release,
-    PackageIndex,
     Package,
     DebVerbatimPublisher,
     DebPublisher,
@@ -92,7 +88,9 @@ def publish(publisher_pk, repository_version_pk):
                 release['SHA256'] = []
                 release['SHA512'] = []
                 packages_files = {}
-                for package in Package.objects.filter(pk__in=repository_version.content.filter(Q(type='package'))):
+                for package in Package.objects.filter(
+                    pk__in=repository_version.content.filter(Q(type='package'))
+                ):
                     published_artifact = PublishedArtifact(
                         relative_path=package.filename(),
                         publication=publication,
@@ -101,7 +99,12 @@ def publish(publisher_pk, repository_version_pk):
                     published_artifact.save()
                     if package.architecture not in packages_files:
                         package_index_path = os.path.join(
-                            'dists', 'default', 'all', 'binary-{}'.format(package.architecture), 'Packages')
+                            'dists',
+                            'default',
+                            'all',
+                            'binary-{}'.format(package.architecture),
+                            'Packages',
+                        )
                         os.makedirs(os.path.dirname(
                             package_index_path), exist_ok=True)
                         packages_files[package.architecture] = (
@@ -123,14 +126,27 @@ def publish(publisher_pk, repository_version_pk):
                             sha1_hasher.update(chunk)
                             sha256_hasher.update(chunk)
                             sha512_hasher.update(chunk)
-                        release['MD5sum'].append(
-                            {'md5sum': md5sum_hasher.hexdigest(), 'size': size, 'name': package_index_path})
-                        release['SHA1'].append(
-                            {'sha1': sha1_hasher.hexdigest(), 'size': size, 'name': package_index_path})
-                        release['SHA256'].append(
-                            {'sha256': sha256_hasher.hexdigest(), 'size': size, 'name': package_index_path})
-                        release['SHA512'].append(
-                            {'sha512': sha512_hasher.hexdigest(), 'size': size, 'name': package_index_path})
+
+                        release['MD5sum'].append({
+                            'md5sum': md5sum_hasher.hexdigest(),
+                            'size': size,
+                            'name': package_index_path,
+                        })
+                        release['SHA1'].append({
+                            'sha1': sha1_hasher.hexdigest(),
+                            'size': size,
+                            'name': package_index_path,
+                        })
+                        release['SHA256'].append({
+                            'sha256': sha256_hasher.hexdigest(),
+                            'size': size,
+                            'name': package_index_path,
+                        })
+                        release['SHA512'].append({
+                            'sha512': sha512_hasher.hexdigest(),
+                            'size': size,
+                            'name': package_index_path,
+                        })
 
                     package_index = PublishedMetadata(
                         relative_path=package_index_path,

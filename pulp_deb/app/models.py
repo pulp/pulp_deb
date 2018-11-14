@@ -48,6 +48,7 @@ class GenericContent(Content):
             ('relative_path', 'sha256'),
         )
 
+
 class Release(Content):
     """
     The "Release" content.
@@ -137,7 +138,10 @@ class Package(Content):
     homepage = models.TextField(null=True)
     built_using = models.TextField(null=True)
     auto_built_package = models.TextField(null=True)
-    multi_arch = models.TextField(null=True, choices=[('no', 'no'), ('same', 'same'), ('foreign', 'foreign'), ('allowed', 'allowed')])
+    multi_arch = models.TextField(
+        null=True,
+        choices=[('no', 'no'), ('same', 'same'), ('foreign', 'foreign'), ('allowed', 'allowed')],
+    )
 
     # Depends et al
     breaks = models.TextField(null=True)
@@ -153,6 +157,11 @@ class Package(Content):
     # relative path in the upstream repository
     # deprecated
     relative_path = models.TextField(null=False)
+
+    @property
+    def name(self):
+        """Print a nice name for Packages."""
+        return '{}_{}_{}'.format(self.package_name, self.version, self.architecture)
 
     @property
     def artifact(self):
@@ -173,6 +182,7 @@ class Package(Content):
             ca.save()
 
     def filename(self, component=''):
+        """Assemble filename in pool directory."""
         sourcename = self.source or self.package_name
         if sourcename.startswith('lib'):
             prefix = sourcename[0:4]
@@ -187,6 +197,7 @@ class Package(Content):
         )
 
     def to822(self, component=''):
+        """Create deb822.Package object from model."""
         ret = deb822.Packages()
         ret['Package'] = self.package_name
         if self.source:
@@ -243,7 +254,6 @@ class Package(Content):
         if self.replaces:
             ret['Replaces'] = self.replaces
 
-
         artifact = self.artifacts.get()
         ret['MD5sum'] = artifact.md5
         ret['SHA1'] = artifact.sha1
@@ -253,7 +263,7 @@ class Package(Content):
         return ret
 
     class Meta:
-        unique_together=(
+        unique_together = (
             ('package_name', 'architecture', 'version'),
         )
 

@@ -2,7 +2,6 @@ from rest_framework import serializers
 
 from pulpcore.plugin.serializers import (
     ContentSerializer,
-    RelatedField,
     RemoteSerializer,
     PublisherSerializer
 )
@@ -52,8 +51,8 @@ class ReleaseSerializer(ContentSerializer):
     )
 
     class Meta:
-        fields = tuple(set(ContentSerializer.Meta.fields) -
-                       {'artifacts'}) + ('codename', 'suite', 'distribution', 'relative_path', 'artifact')
+        fields = tuple(set(ContentSerializer.Meta.fields) - {'artifacts'}) \
+            + ('codename', 'suite', 'distribution', 'relative_path', 'artifact')
         model = models.GenericContent
 
 
@@ -61,6 +60,7 @@ class PackageIndexSerializer(ContentSerializer):
     """
     A serializer for PackageIndex.
     """
+
     component = serializers.CharField(
         help_text='Component of the component - architecture combination.',
         required=True,
@@ -182,7 +182,8 @@ class DebPublisherSerializer(PublisherSerializer):
         Check that the publishing modes are compatible.
         """
         if not data['simple'] and not data['structured']:
-            raise serializers.ValidationError("one of simple or structured publishing mode must be selected")
+            raise serializers.ValidationError(
+                "one of simple or structured publishing mode must be selected")
         return data
 
     class Meta:

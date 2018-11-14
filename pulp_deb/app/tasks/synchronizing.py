@@ -59,13 +59,18 @@ class DebDeclarativeArtifact(DeclarativeArtifact):
     """
     This child class adds the digest_present slot to the DeclarativeArtifact.
 
-    This mechanism is meant as a last resort, when there is no way of knowing
+    This mechanism is meant as a catch all, when there is no way of knowing
     whether an artifact is already present in the latest version.
     Consider using ExistingContentNeedsNoNewArtifacts.
     """
+
     __slots__ = DeclarativeArtifact.__slots__ + ('digest_present',)
 
-    def __init__(self, artifact=None, url=None, relative_path=None, remote=None, extra_data=None, digest_present=True):
+    def __init__(self, artifact=None, url=None, relative_path=None,
+                 remote=None, extra_data=None, digest_present=True):
+        """
+        Initialize the declarative content with presence of digests.
+        """
         super(DebDeclarativeArtifact, self).__init__(
             artifact, url, relative_path, remote, extra_data)
         self.digest_present = digest_present
@@ -75,14 +80,21 @@ class DebDeclarativeContent(DeclarativeContent):
     """
     This child class adds the future mechanism.
     """
+
     __slots__ = DeclarativeContent.__slots__ + ('future',)
 
     def __init__(self, content=None, d_artifacts=None, extra_data=None):
+        """
+        Initialize the declarative content with a nonexisting future.
+        """
         super(DebDeclarativeContent, self).__init__(
             content, d_artifacts, extra_data)
         self.future = None
 
     def get_future(self):
+        """
+        Return the existing or a new future.
+        """
         if self.future is None:
             # If on 3.7, we could preferrably use get_running_loop()
             self.future = asyncio.get_event_loop().create_future()
@@ -96,8 +108,7 @@ class DebDeclarativeVersion(DeclarativeVersion):
 
     def pipeline_stages(self, new_version):
         """
-        Build the list of pipeline stages feeding into the
-        ContentUnitAssociation stage.
+        Build the list of pipeline stages feeding into the ContentUnitAssociation stage.
 
         We override this to replace the ContentUnitSaver.
 
@@ -115,7 +126,8 @@ class DebDeclarativeVersion(DeclarativeVersion):
             ArtifactDownloader(),
             DebArtifactWithoutDigest(),
             ArtifactSaver(),
-            DebParseRelease(self.first_stage.components, self.first_stage.architectures),
+            DebParseRelease(self.first_stage.components,
+                            self.first_stage.architectures),
             DebParsePackage(),
             QueryExistingContentUnits(),
             ContentUnitSaver(),
@@ -127,7 +139,11 @@ class DebArtifactWithoutDigest(Stage):
     """
     This stage looks for existing artifacts that had no digets.
     """
+
     async def __call__(self, in_q, out_q):
+        """
+        Perform the pipeline stage.
+        """
         while True:
             declarative_content = await in_q.get()
             if declarative_content is None:
@@ -159,6 +175,7 @@ def _filter_ssl(values, filter_list):
 class DebParseRelease(Stage):
     """
     This stage handles Release content.
+
     It also transfers the sha256 from the artifact to the Release content units.
 
     TODO: Update Codename, Suite, ...
@@ -166,11 +183,21 @@ class DebParseRelease(Stage):
     """
 
     def __init__(self, components, architectures):
+        """
+        Initialize release parser with filters.
+
+        Args:
+            components: list of components
+            architectures: list of architectures
+        """
         self.components = components
         self.architectures = architectures
         super(DebParseRelease, self).__init__()
 
     async def __call__(self, in_q, out_q):
+        """
+        Update release content with information obtained from its artifact.
+        """
         while True:
             declarative_content = await in_q.get()
             if declarative_content is None:
@@ -184,21 +211,30 @@ class DebParseRelease(Stage):
                     declarative_content.content.codename = release_dict['Codename']
                     declarative_content.content.suite = release_dict['Suite']
                     # TODO split of extra stuff e.g. : 'updates/main' -> 'main'
-                    declarative_content.content.components = _filter_ssl(release_dict['Components'], self.components)
-                    declarative_content.content.architectures = _filter_ssl(release_dict['Architectures'], self.architectures)
-                    log.debug('Codename: {}'.format(declarative_content.content.codename))
-                    log.debug('Components: {}'.format(declarative_content.content.components))
-                    log.debug('Architectures: {}'.format(declarative_content.content.architectures))
+                    declarative_content.content.components = _filter_ssl(
+                        release_dict['Components'], self.components)
+                    declarative_content.content.architectures = _filter_ssl(
+                        release_dict['Architectures'], self.architectures)
+                    log.debug('Codename: {}'.format(
+                        declarative_content.content.codename))
+                    log.debug('Components: {}'.format(
+                        declarative_content.content.components))
+                    log.debug('Architectures: {}'.format(
+                        declarative_content.content.architectures))
             await out_q.put(declarative_content)
 
 
 class DebParsePackage(Stage):
     """
     This stage handles Package content.
-    It reads all Package related database fields from the actual file.
 
+    It reads all Package related database fields from the actual file.
     """
+
     async def __call__(self, in_q, out_q):
+        """
+        Update package content with the information obtained from its artifact.
+        """
         while True:
             declarative_content = await in_q.get()
             if declarative_content is None:
@@ -220,7 +256,11 @@ class DebContentFutures(Stage):
     """
     This stage sets results for content futures.
     """
+
     async def __call__(self, in_q, out_q):
+        """
+        Set the result of available futures to the found/created content.
+        """
         while True:
             declarative_content = await in_q.get()
             if declarative_content is None:
@@ -268,7 +308,8 @@ class DebFirstStage(Stage):
         parsed_url = urlparse(self.remote.url)
         future_releases = []
         future_package_indices = []
-        with ProgressBar(message='Creating download requests for Release files', total=len(self.distributions)) as pb:
+        with ProgressBar(message='Creating download requests for Release files',
+                         total=len(self.distributions)) as pb:
             for distribution in self.distributions:
                 log.info(
                     'Downloading Release file for distribution: "{}"'.format(distribution))
@@ -277,8 +318,13 @@ class DebFirstStage(Stage):
                 release_path = os.path.join(parsed_url.path, release_relpath)
                 release_unit = Release(
                     distribution=distribution, relative_path=release_relpath)
-                release_da = DebDeclarativeArtifact(Artifact(), urlunparse(
-                    parsed_url._replace(path=release_path)), release_relpath, self.remote, digest_present=False)
+                release_da = DebDeclarativeArtifact(
+                    Artifact(),
+                    urlunparse(parsed_url._replace(path=release_path)),
+                    release_relpath,
+                    self.remote,
+                    digest_present=False,
+                )
                 release_dc = DebDeclarativeContent(
                     content=release_unit, d_artifacts=[release_da])
                 future_releases.append(release_dc.get_future())
@@ -290,7 +336,9 @@ class DebFirstStage(Stage):
                 release = await release_future
                 log.info('Parsing Release file for release: "{}"'.format(
                     release.codename))
-                future_package_indices.extend(await self.read_release_file(release, parsed_url, out_q))
+                future_package_indices.extend(
+                    await self.read_release_file(release, parsed_url, out_q),
+                )
 
                 pb.increment()
 
@@ -380,8 +428,12 @@ class DebFirstStage(Stage):
                 sha256=generic_content_dict['SHA256'],
                 sha1=generic_content_dict['SHA1'],
                 md5=generic_content_dict['MD5sum'])
-            generic_content_da = DebDeclarativeArtifact(generic_content_artifact, urlunparse(
-                parsed_url._replace(path=generic_content_path)), generic_content_relpath, self.remote)
+            generic_content_da = DebDeclarativeArtifact(
+                generic_content_artifact,
+                urlunparse(parsed_url._replace(path=generic_content_path)),
+                generic_content_relpath,
+                self.remote,
+            )
             generic_content_dc = DebDeclarativeContent(
                 content=generic_content_unit, d_artifacts=[generic_content_da])
             await out_q.put(generic_content_dc)
