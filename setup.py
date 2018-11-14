@@ -9,7 +9,7 @@ requirements = [
 
 setup(
     name='pulp-deb',
-    version='0.0.1a1.dev1',
+    version='2.0.0a1.dev1',
     description='pulp-deb plugin for the Pulp Project',
     license='GPLv2+',
     author='Matthias Dellweg',

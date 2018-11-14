@@ -17,7 +17,7 @@ from pulp_smash.pulp3.utils import (
 from pulp_deb.tests.functional.utils import (
     gen_deb_remote,
     gen_deb_publisher,
-    get_deb_content_paths,
+    get_deb_content_unit_paths,
 )
 from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_URL,
@@ -87,7 +87,7 @@ class DownloadContentTestCase(unittest.TestCase):
         self.addCleanup(client.delete, distribution['_href'])
 
         # Pick a content unit, and download it from both Pulp Fixtures…
-        unit_path = choice(get_deb_content_paths(repo))
+        unit_path = choice(get_deb_content_unit_paths(repo))
         fixtures_hash = hashlib.sha256(
             utils.http_get(urljoin(DEB_FIXTURE_URL, unit_path))
         ).hexdigest()
