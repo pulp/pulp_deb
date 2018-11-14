@@ -3,7 +3,7 @@
 set -veuo pipefail
 
 # Lint code.
-flake8 --config flake8.cfg || exit 1
+flake8 --config flake8.cfg
 
 # Run migrations.
 export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
@@ -29,14 +29,3 @@ show_logs_and_return_non_zero() {
     return "${rc}"
 }
 pytest -v -r sx --color=yes --pyargs pulp_deb.tests.functional || show_logs_and_return_non_zero
-
-# Travis' scripts use unbound variables. This is problematic, because the
-# changes made to this script's environment appear to persist when Travis'
-# scripts execute. Perhaps this script is sourced by Travis? Regardless of why,
-# we need to reset the environment when this script finishes.
-#
-# We can't use `trap cleanup_function EXIT` or similar, because this script is
-# apparently sourced, and such a trap won't execute until the (buggy!) calling
-# script finishes.
-set +euo pipefail
-

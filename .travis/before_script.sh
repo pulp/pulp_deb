@@ -1,5 +1,5 @@
-#!/usr/bin/env sh
-set -v
+#!/usr/bin/env bash
+set -veuo pipefail
 
 psql -U postgres -c 'CREATE USER pulp WITH SUPERUSER LOGIN;'
 psql -U postgres -c 'CREATE DATABASE pulp OWNER pulp;'

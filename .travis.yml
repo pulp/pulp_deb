@@ -3,20 +3,24 @@ sudo: required
 dist: xenial
 language: python
 python:
-    # python versions used in el7 SCL & supported fedora
-    - "3.6"
-    - "3.7"
+  # python versions used in el7 SCL & supported fedora
+  - "3.6"
+  - "3.7"
 env:
   - DB=postgres
 addons:
-    # postgres versions provided by el7 RHSCL (lowest supportable version)
-    postgresql: "9.6"
+  apt:
+    packages:
+      - httpie
+      - jq
+  # postgres versions provided by el7 RHSCL (lowest supportable version)
+  postgresql: "9.6"
 services:
-    - postgresql
-    - redis-server
-install: source .travis/install.sh
-before_script: source .travis/before_script.sh
-script: source .travis/script.sh
+  - postgresql
+  - redis-server
+install: .travis/install.sh
+before_script: .travis/before_script.sh
+script: .travis/script.sh
 after_failure:
   - sh -c "cat ~/django_runserver.log"
   - sh -c "cat ~/resource_manager.log"
