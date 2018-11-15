@@ -72,6 +72,7 @@ class BasicSyncTestCase(unittest.TestCase):
         self.assertEqual(len(get_added_content(repo)), 0)
 
 
+@unittest.skip("FIXME: plugin writer action required")
 class SyncInvalidURLTestCase(unittest.TestCase):
     """Sync a repository with an invalid url on the Remote."""
 

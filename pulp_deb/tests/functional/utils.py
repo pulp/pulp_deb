@@ -32,27 +32,34 @@ def set_up_module():
 
 def gen_deb_remote(**kwargs):
     """Return a semi-random dict for use in creating a deb Remote.
-
-    :param url: The URL of an external content source.
     """
     remote = gen_remote(DEB_FIXTURE_URL)
-    # FIXME: Add any fields specific to a plugin_teplate remote here
     deb_extra_fields = {
-        **kwargs
+        'distributions': 'stable',
+        **kwargs,
     }
     remote.update(**deb_extra_fields)
     return remote
 
 
-def gen_deb_publisher(**kwargs):
-    """Return a semi-random dict for use in creating a Remote.
-
-    :param url: The URL of an external content source.
+def gen_deb_verbatim_publisher(**kwargs):
+    """Return a semi-random dict for use in creating a verbatim Publisher.
     """
     publisher = gen_publisher()
-    # FIXME: Add any fields specific to a plugin_teplate publisher here
     deb_extra_fields = {
-        **kwargs
+        **kwargs,
+    }
+    publisher.update(**deb_extra_fields)
+    return publisher
+
+
+def gen_deb_publisher(**kwargs):
+    """Return a semi-random dict for use in creating a Publisher.
+    """
+    publisher = gen_publisher()
+    deb_extra_fields = {
+        'simple': True,
+        **kwargs,
     }
     publisher.update(**deb_extra_fields)
     return publisher

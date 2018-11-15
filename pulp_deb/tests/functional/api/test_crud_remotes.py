@@ -133,10 +133,12 @@ def _gen_verbose_remote():
 
     Note that 'username' and 'password' are write-only attributes.
     """
-    attrs = gen_deb_remote()
-    attrs.update({
-        'password': utils.uuid4(),
-        'username': utils.uuid4(),
-        'validate': choice((False, True)),
-    })
+    attrs = gen_deb_remote(
+        password=utils.uuid4(),
+        username=utils.uuid4(),
+        validate=choice((False, True)),
+        distributions='{} {}'.format(utils.uuid4(), utils.uuid4()),
+        components='{} {}'.format(utils.uuid4(), utils.uuid4()),
+        architectures='{} {}'.format(utils.uuid4(), utils.uuid4()),
+    )
     return attrs

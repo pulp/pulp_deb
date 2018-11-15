@@ -9,11 +9,12 @@ from pulp_smash.pulp3.constants import (
 )
 
 # FIXME: replace 'unit' with your own content type names, and duplicate as necessary for each type
-DEB_CONTENT_PATH = urljoin(CONTENT_PATH, 'deb/units/')
+DEB_CONTENT_PATH = urljoin(CONTENT_PATH, 'deb/generic_content/')
 
 DEB_REMOTE_PATH = urljoin(BASE_REMOTE_PATH, 'deb/')
 
 DEB_PUBLISHER_PATH = urljoin(BASE_PUBLISHER_PATH, 'deb/')
+DEB_VERBATIM_PUBLISHER_PATH = urljoin(BASE_PUBLISHER_PATH, 'deb_verbatim/')
 
 
 # FIXME: replace this with your own fixture repository URL and metadata
