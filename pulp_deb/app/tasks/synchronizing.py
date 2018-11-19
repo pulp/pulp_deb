@@ -8,8 +8,6 @@ from debian import deb822, debfile
 from gettext import gettext as _
 from urllib.parse import urlparse, urlunparse
 
-from django.db.models import Q
-
 from pulpcore.plugin.models import Artifact, ProgressBar, Repository
 from pulpcore.plugin.stages import (
     DeclarativeArtifact,
@@ -53,27 +51,6 @@ def synchronize(remote_pk, repository_pk, mirror):
 
     first_stage = DebFirstStage(remote)
     DebDeclarativeVersion(first_stage, repository, mirror).create()
-
-
-class DebDeclarativeArtifact(DeclarativeArtifact):
-    """
-    This child class adds the digest_present slot to the DeclarativeArtifact.
-
-    This mechanism is meant as a catch all, when there is no way of knowing
-    whether an artifact is already present in the latest version.
-    Consider using ExistingContentNeedsNoNewArtifacts.
-    """
-
-    __slots__ = DeclarativeArtifact.__slots__ + ('digest_present',)
-
-    def __init__(self, artifact=None, url=None, relative_path=None,
-                 remote=None, extra_data=None, digest_present=True):
-        """
-        Initialize the declarative content with presence of digests.
-        """
-        super(DebDeclarativeArtifact, self).__init__(
-            artifact, url, relative_path, remote, extra_data)
-        self.digest_present = digest_present
 
 
 class DebDeclarativeContent(DeclarativeContent):
@@ -123,7 +100,6 @@ class DebDeclarativeVersion(DeclarativeVersion):
             self.first_stage,
             QueryExistingArtifacts(),
             ArtifactDownloader(),
-            DebArtifactWithoutDigest(),
             ArtifactSaver(),
             DebParseRelease(self.first_stage.components,
                             self.first_stage.architectures),
@@ -132,35 +108,6 @@ class DebDeclarativeVersion(DeclarativeVersion):
             ContentUnitSaver(),
             DebContentFutures(),
         ]
-
-
-class DebArtifactWithoutDigest(Stage):
-    """
-    This stage looks for existing artifacts that had no digets.
-    """
-
-    async def __call__(self, in_q, out_q):
-        """
-        Perform the pipeline stage.
-        """
-        while True:
-            declarative_content = await in_q.get()
-            if declarative_content is None:
-                await out_q.put(None)
-                break
-            for declarative_artifact in declarative_content.d_artifacts:
-                if not declarative_artifact.digest_present:
-                    # Artifact may exist in the database,
-                    # but we did not know the digest before downloading
-                    digest_name = declarative_artifact.artifact.DIGEST_FIELDS[0]
-                    digest_value = getattr(
-                        declarative_artifact.artifact, digest_name)
-                    if digest_value:
-                        existing_artifact = Artifact.objects.filter(
-                            Q(**{digest_name: digest_value}))
-                        if existing_artifact:
-                            declarative_artifact.artifact = existing_artifact[0]
-            await out_q.put(declarative_content)
 
 
 def _filter_ssl(values, filter_list):
@@ -317,12 +264,11 @@ class DebFirstStage(Stage):
                 release_path = os.path.join(parsed_url.path, release_relpath)
                 release_unit = Release(
                     distribution=distribution, relative_path=release_relpath)
-                release_da = DebDeclarativeArtifact(
+                release_da = DeclarativeArtifact(
                     Artifact(),
                     urlunparse(parsed_url._replace(path=release_path)),
                     release_relpath,
                     self.remote,
-                    digest_present=False,
                 )
                 release_dc = DebDeclarativeContent(
                     content=release_unit,
@@ -411,7 +357,7 @@ class DebFirstStage(Stage):
                         sha256=packages_dict['SHA256'],
                         sha1=packages_dict['SHA1'],
                         md5=packages_dict['MD5sum'])
-                    d_artifacts.append(DebDeclarativeArtifact(packages_artifact, urlunparse(
+                    d_artifacts.append(DeclarativeArtifact(packages_artifact, urlunparse(
                         parsed_url._replace(path=packages_path)), packages_relpath, self.remote))
                 packages_dc = DebDeclarativeContent(
                     content=package_index_unit,
@@ -433,7 +379,7 @@ class DebFirstStage(Stage):
                 sha256=generic_content_dict['SHA256'],
                 sha1=generic_content_dict['SHA1'],
                 md5=generic_content_dict['MD5sum'])
-            generic_content_da = DebDeclarativeArtifact(
+            generic_content_da = DeclarativeArtifact(
                 generic_content_artifact,
                 urlunparse(parsed_url._replace(path=generic_content_path)),
                 generic_content_relpath,
@@ -467,7 +413,7 @@ class DebFirstStage(Stage):
                     sha256=package_dict['SHA256'],
                     sha1=package_dict['SHA1'],
                     md5=package_dict['MD5sum'])
-                package_da = DebDeclarativeArtifact(package_artifact, urlunparse(
+                package_da = DeclarativeArtifact(package_artifact, urlunparse(
                     parsed_url._replace(path=package_path)), package_relpath, self.remote)
                 package_dc = DebDeclarativeContent(
                     content=Package(), d_artifacts=[package_da])
