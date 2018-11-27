@@ -81,14 +81,13 @@ class DebDeclarativeContent(DeclarativeContent):
     This child class adds the future mechanism.
     """
 
-    __slots__ = DeclarativeContent.__slots__ + ('future',)
+    __slots__ = DeclarativeContent.__slots__ + ('future', )
 
-    def __init__(self, content=None, d_artifacts=None, extra_data=None):
+    def __init__(self, *args, **kwargs):
         """
         Initialize the declarative content with a nonexisting future.
         """
-        super(DebDeclarativeContent, self).__init__(
-            content, d_artifacts, extra_data)
+        super(DebDeclarativeContent, self).__init__(*args, **kwargs)
         self.future = None
 
     def get_future(self):
@@ -326,7 +325,10 @@ class DebFirstStage(Stage):
                     digest_present=False,
                 )
                 release_dc = DebDeclarativeContent(
-                    content=release_unit, d_artifacts=[release_da])
+                    content=release_unit,
+                    d_artifacts=[release_da],
+                    priority=True,
+                )
                 future_releases.append(release_dc.get_future())
                 await out_q.put(release_dc)
                 pb.increment()
@@ -412,7 +414,10 @@ class DebFirstStage(Stage):
                     d_artifacts.append(DebDeclarativeArtifact(packages_artifact, urlunparse(
                         parsed_url._replace(path=packages_path)), packages_relpath, self.remote))
                 packages_dc = DebDeclarativeContent(
-                    content=package_index_unit, d_artifacts=d_artifacts)
+                    content=package_index_unit,
+                    d_artifacts=d_artifacts,
+                    priority=True,
+                )
                 future_package_indices.append(packages_dc.get_future())
                 await out_q.put(packages_dc)
 
