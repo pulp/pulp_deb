@@ -20,7 +20,6 @@ from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa
 
 
 # Implement sync support before enabling this test.
-@unittest.skip("FIXME: plugin writer action required")
 class BasicSyncTestCase(unittest.TestCase):
     """Sync repositories with the deb plugin."""
 
@@ -72,7 +71,6 @@ class BasicSyncTestCase(unittest.TestCase):
         self.assertEqual(len(get_added_content(repo)), 0)
 
 
-@unittest.skip("FIXME: plugin writer action required")
 class SyncInvalidURLTestCase(unittest.TestCase):
     """Sync a repository with an invalid url on the Remote."""
 

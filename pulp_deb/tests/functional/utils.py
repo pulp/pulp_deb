@@ -20,6 +20,7 @@ from pulp_smash.pulp3.utils import (
 from pulp_deb.tests.functional.constants import (
     DEB_CONTENT_PATH,
     DEB_FIXTURE_URL,
+    DEB_FIXTURE_RELEASE,
     DEB_REMOTE_PATH,
 )
 
@@ -35,7 +36,7 @@ def gen_deb_remote(**kwargs):
     """
     remote = gen_remote(DEB_FIXTURE_URL)
     deb_extra_fields = {
-        'distributions': 'stable',
+        'distributions': DEB_FIXTURE_RELEASE,
         **kwargs,
     }
     remote.update(**deb_extra_fields)

@@ -17,16 +17,15 @@ DEB_PUBLISHER_PATH = urljoin(BASE_PUBLISHER_PATH, 'deb/')
 DEB_VERBATIM_PUBLISHER_PATH = urljoin(BASE_PUBLISHER_PATH, 'deb_verbatim/')
 
 
-# FIXME: replace this with your own fixture repository URL and metadata
-DEB_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, 'deb/')
+DEB_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, 'debian/')
+DEB_FIXTURE_RELEASE = 'ragnarok'
 
-# FIXME: replace this with the actual number of content units in your test fixture
-DEB_FIXTURE_COUNT = 3
+DEB_FIXTURE_COUNT = 13
 
 # FIXME: replace this with the location of one specific content unit of your choosing
 DEB_URL = urljoin(DEB_FIXTURE_URL, '')
 
-# FIXME: replace this iwth your own fixture repository URL and metadata
+# FIXME: replace this with your own fixture repository URL and metadata
 DEB_LARGE_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, 'deb_large/')
 
 # FIXME: replace this with the actual number of content units in your test fixture
