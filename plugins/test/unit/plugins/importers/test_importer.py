@@ -33,20 +33,6 @@ class TestEntryPoint(testbase.TestCase):
 
 
 class ModelMixIn(object):
-    def test__compute_checksum(self):
-        file_path, checksum = self.new_file()
-        self.assertEquals(
-            checksum,
-            self.__class__.Model._compute_checksum(open(file_path)))
-
-    def test_filename_from_unit_key(self):
-        unit_key = dict(name="aaa", version="1", architecture="x86_64",
-                        checksumtype="sha256", checksum="decafbad",
-                        extra="bbb")
-        self.assertEquals(
-            "aaa_1_x86_64.%s" % self.__class__.Model.TYPE_ID,
-            self.__class__.Model.filename_from_unit_key(unit_key))
-
     def test_unit_keys(self):
         type_file = os.path.join(os.path.dirname(__file__),
                                  '..', '..', '..', '..',
@@ -67,6 +53,32 @@ class TestModel_DebPackage(ModelMixIn, testbase.TestCase):
     Model = models.DebPackage
     Sample_Unit = dict()
     UNIT_KEY_FIELDS = ids.UNIT_KEY_DEB
+
+    def test_calculate_deb_checksums(self):
+        file_path, checksum, md5sum, sha1, sha256 = self.new_file()
+        checksums = self.__class__.Model.calculate_deb_checksums(file_path)
+        self.assertEquals(sha256, checksums['sha256'])
+        self.assertEquals(sha1, checksums['sha1'])
+        self.assertEquals(md5sum, checksums['md5sum'])
+
+    def test_filename_from_unit_key(self):
+        unit_key = dict(name="aaa", version="1", architecture="x86_64",
+                        sha256="decafbad", extra="bbb")
+        self.assertEquals(
+            "aaa_1_x86_64.%s" % self.__class__.Model.TYPE_ID,
+            self.__class__.Model.filename_from_unit_key(unit_key))
+
+
+class TestModel_DebComponent(ModelMixIn, testbase.TestCase):
+    Model = models.DebComponent
+    Sample_Unit = dict()
+    UNIT_KEY_FIELDS = ids.UNIT_KEY_DEB_COMP
+
+
+class TestModel_DebRelease(ModelMixIn, testbase.TestCase):
+    Model = models.DebRelease
+    Sample_Unit = dict()
+    UNIT_KEY_FIELDS = ids.UNIT_KEY_DEB_RELEASE
 
 
 class TestDebImporter(testbase.TestCase):
@@ -178,17 +190,20 @@ class TestDebImporter(testbase.TestCase):
         Assert correct operation of upload_unit().
         """
         _plugin_api.get_unit_model_by_id.return_value = models.DebPackage
-        file_path, checksum = self.new_file("foo.deb")
-        deb_file, checksum = self.new_file('foo.deb')
+        file_path, checksum, md5sum, sha1, sha256 = self.new_file("foo.deb")
+        deb_file, checksum, md5sum, sha1, sha256 = self.new_file('foo.deb')
 
         unit_key = dict()
         metadata = dict(
             name="foo", version="1.1",
             filename=os.path.basename(file_path),
             architecture="x86_64",
-            checksumtype="sha256",
+            md5sum='whatever',
+            sha1='whatever',
+            sha256=sha256,
             depends=[{'name': 'glibc'}],
-            checksum=checksum)
+            checksumtype="sha256",
+            checksum=sha256,)
         package = models.DebPackage(**metadata)
         from_file.return_value = package
 

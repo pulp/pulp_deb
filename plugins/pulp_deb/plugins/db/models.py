@@ -21,6 +21,9 @@ class DebPackage(FileContentUnit):
     name = mongoengine.StringField(required=True)
     version = mongoengine.StringField(required=True)
     architecture = mongoengine.StringField(required=True)
+    # Note: checksumtype and checksum should only be used for pulp internals.
+    # Use md5sum, sha1, and sha256 for publishing and similar.
+    # Currently, checksumtype should always be 'sha256'
     checksumtype = mongoengine.StringField(required=True)
     checksum = mongoengine.StringField(required=True)
 
@@ -30,6 +33,11 @@ class DebPackage(FileContentUnit):
     # List of required fields:
     REQUIRED_FIELDS = ['name', 'version', 'architecture', 'checksumtype',
                        'checksum', 'filename']
+
+    # Named checksum fields:
+    md5sum = mongoengine.StringField()
+    sha1 = mongoengine.StringField()
+    sha256 = mongoengine.StringField()
 
     # Other non control file fields:
     # Note: Relativepath does not appear to be meaningfully in use.
@@ -121,13 +129,15 @@ class DebPackage(FileContentUnit):
         initialization_params.update(cls._to_internal_dict_style(control_fields))
         initialization_params = cls._parse_rel_fields(initialization_params)
 
-        with open(filename) as input_file:
-            checksum = cls._compute_checksum(input_file)
+        checksums = cls.calculate_deb_checksums(filename)
 
         initialization_params.update(
             size=getsize(filename),
             checksumtype=util.TYPE_SHA256,
-            checksum=checksum,
+            checksum=checksums['sha256'],
+            md5sum=checksums['md5sum'],
+            sha1=checksums['sha1'],
+            sha256=checksums['sha256'],
             control_fields=control_fields,
         )
 
@@ -164,13 +174,18 @@ class DebPackage(FileContentUnit):
         initialization_params = cls._to_internal_dict_style(packages_paragraph)
         initialization_params = cls._parse_rel_fields(initialization_params)
 
-        # Since 'Size' is not a control file field we need to handle it separately:
+        # Handle non control file fields separately:
         if 'Size' in packages_paragraph:
             initialization_params['size'] = packages_paragraph['Size']
+        if 'MD5sum' in packages_paragraph:
+            initialization_params['md5sum'] = packages_paragraph['MD5sum']
+        if 'SHA1' in packages_paragraph:
+            initialization_params['sha1'] = packages_paragraph['SHA1']
 
         initialization_params.update(
             checksumtype=util.TYPE_SHA256,
             checksum=checksum,
+            sha256=checksum,
             control_fields=control_fields,
         )
 
@@ -220,11 +235,6 @@ class DebPackage(FileContentUnit):
                 missing_fields.append(field)
         if missing_fields:
             raise Error('Required fields are missing: {}'.format(missing_fields))
-
-    @classmethod
-    def _compute_checksum(cls, fobj):
-        cstype = util.TYPE_SHA256
-        return util.calculate_checksums(fobj, [cstype])[cstype]
 
     @staticmethod
     def calculate_deb_checksums(input_file_path):

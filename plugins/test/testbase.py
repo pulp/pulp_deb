@@ -10,7 +10,7 @@ from collections import namedtuple
 from pulp.server import config
 config.check_config_files = lambda *args: None
 
-File = namedtuple("File", "path checksum")
+File = namedtuple("File", "path checksum md5sum sha1 sha256")
 
 
 class TestCase(unittest.TestCase):
@@ -36,7 +36,9 @@ class TestCase(unittest.TestCase):
             contents = str(uuid.uuid4())
         elif isinstance(contents, (dict, list)):
             contents = json.dumps(contents)
-        checksum = hashlib.sha256(contents).hexdigest()
+        sha256 = hashlib.sha256(contents).hexdigest()
+        sha1 = hashlib.sha1(contents).hexdigest()
+        md5sum = hashlib.md5(contents).hexdigest()
         with open(file_path, "w") as fobj:
             fobj.write(contents)
-        return File(file_path, checksum)
+        return File(file_path, sha256, md5sum, sha1, sha256)

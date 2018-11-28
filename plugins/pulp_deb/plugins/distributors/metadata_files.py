@@ -79,14 +79,9 @@ def write_packages_file_paragraph(packages_file, component, package):
         ('sha256', 'SHA256'),
     ]
 
-    # Write all non-checksum fields:
     package_properties = package.all_properties
-    # Manually add monkeypatched fields:
-    # This is a temporary fix!
-    package_properties['md5sum'] = package.md5sum
-    package_properties['sha1'] = package.sha1
-    package_properties['sha256'] = package.sha256
     packages_object = deb822.Packages()
+
     for field in fields:
         if field[0] == 'filename':
             # TODO: A better pool folder structure is desirable.
