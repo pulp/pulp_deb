@@ -30,17 +30,26 @@ class TestModel(testbase.TestCase):
 
     def test_from_file_different_checksumtype(self):
         metadata = dict(checksumtype='sha1',
-                        checksum='fake')
+                        checksum='fake',)
         pkg_path = os.path.join(DATA_DIR, "nscd_2.24-7ubuntu2_amd64.deb")
         pkg = models.DebPackage.from_file(pkg_path, metadata)
         self.assertTrue(isinstance(pkg, models.DebPackage))
         self.assertEquals(pkg.unit_key['name'], 'nscd')
         self.assertEquals(
-            'sha256',
-            pkg.checksumtype)
+            pkg.md5sum,
+            '0574983471a3a2cea6fb5c30ce6864ed',)
         self.assertEquals(
-            '177937795c2ef5b381718aefe2981ada4e8cfe458226348d87a6f5b100a4612b',
-            pkg.checksum)
+            pkg.sha1,
+            '4ca6fcfa6f063cfe38cd1334255b177238441340',)
+        self.assertEquals(
+            pkg.sha256,
+            '177937795c2ef5b381718aefe2981ada4e8cfe458226348d87a6f5b100a4612b',)
+        self.assertEquals(
+            pkg.checksumtype,
+            'sha256',)
+        self.assertEquals(
+            pkg.checksum,
+            '177937795c2ef5b381718aefe2981ada4e8cfe458226348d87a6f5b100a4612b',)
 
     def test_from_file_no_file(self):
         with self.assertRaises(ValueError) as cm:

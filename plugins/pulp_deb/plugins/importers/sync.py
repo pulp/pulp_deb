@@ -317,20 +317,33 @@ class SaveDownloadedUnits(publish_step.PluginStep):
         super(SaveDownloadedUnits, self).__init__(*args, **kwargs)
         self.description = _('Save and associate downloaded units')
 
+    def verify_checksum(self, calculated, from_metadata, path):
+        if calculated != from_metadata:
+            raise PulpCodedTaskFailedException(
+                DEBSYNC002, repo_id=self.get_repo().repo_obj.repo_id,
+                feed_url=self.parent.feed_url,
+                filename=os.path.basename(path),
+                checksum_expected=from_metadata,
+                checksum_actual=calculated)
+
     def process_main(self, item=None):
         path_to_unit = self.parent.step_download_units.path_to_unit
         repo = self.get_repo().repo_obj
         for path, unit in sorted(path_to_unit.items()):
-            # Verify checksum first
-            with open(path, "rb") as fobj:
-                csum = unit._compute_checksum(fobj)
-            if csum != unit.checksum:
-                raise PulpCodedTaskFailedException(
-                    DEBSYNC002, repo_id=self.get_repo().repo_obj.repo_id,
-                    feed_url=self.parent.feed_url,
-                    filename=os.path.basename(path),
-                    checksum_expected=unit.checksum,
-                    checksum_actual=csum)
+            checksums = unit.calculate_deb_checksums(path)
+            if unit.sha1:
+                self.verify_checksum(checksums['sha1'], unit.sha1, path)
+            else:
+                unit.sha1 = checksums['sha1']
+            if unit.md5sum:
+                self.verify_checksum(checksums['md5sum'], unit.md5sum, path)
+            else:
+                unit.md5sum = checksums['md5sum']
+            if unit.sha256:
+                self.verify_checksum(checksums['sha256'], unit.sha256, path)
+            else:
+                unit.sha256 = checksums['sha256']
+            self.verify_checksum(unit.checksum, unit.sha256, path)
             unit.save_and_associate(path, repo)
 
 

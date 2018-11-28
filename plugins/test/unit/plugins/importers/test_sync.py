@@ -110,6 +110,8 @@ SHA256:
 
         pkgs = [
             dict(Package=x, Version="1-1", Architecture="amd64",
+                 MD5sum="00{0}{0}".format(x),
+                 SHA1="00{0}{0}".format(x),
                  SHA256="00{0}{0}".format(x),
                  Filename="pool/main/{0}_1-1_amd64.deb".format(x))
             for x in ["a", "b"]]
@@ -133,6 +135,15 @@ SHA256:
         step.process_lifecycle()
 
         self.assertEquals(
+            set([x['MD5sum'] for x in pkgs]),
+            set([x.md5sum for x in self.step.available_units]))
+        self.assertEquals(
+            set([x['SHA1'] for x in pkgs]),
+            set([x.sha1 for x in self.step.available_units]))
+        self.assertEquals(
+            set([x['SHA256'] for x in pkgs]),
+            set([x.sha256 for x in self.step.available_units]))
+        self.assertEquals(
             set([x['SHA256'] for x in pkgs]),
             set([x.checksum for x in self.step.available_units]))
         self.assertEquals(len(self.step.component_packages['stable']['main']), 2)
@@ -140,7 +151,10 @@ SHA256:
     @mock.patch('pulp_deb.plugins.importers.sync.misc.mkdir')
     def test_CreateRequestsUnitsToDownload(self, _mkdir):
         pkgs = self._mock_repometa()
-        units = [mock.MagicMock(checksum=x['SHA256'])
+        units = [mock.MagicMock(md5sum=x['MD5sum'],
+                                sha1=x['SHA1'],
+                                sha256=x['SHA256'],
+                                checksum=x['SHA256'],)
                  for x in pkgs]
         self.step.step_local_units.units_to_download = units
         self.step.unit_relative_urls = dict((p['SHA256'], p['Filename']) for p in pkgs)
@@ -170,7 +184,10 @@ SHA256:
     def test_SaveDownloadedUnits(self):
         self.repo.repo_obj = mock.MagicMock(repo_id=self.repo.id)
         pkgs = self._mock_repometa()
-        units = [mock.MagicMock(checksum=x['SHA256'])
+        units = [mock.MagicMock(md5sum=x['MD5sum'],
+                                sha1=x['SHA1'],
+                                sha256=x['SHA256'],
+                                checksum=x['SHA256'],)
                  for x in pkgs]
 
         dest_dir = os.path.join(self.pulp_working_dir, 'packages')
@@ -181,7 +198,11 @@ SHA256:
             path = os.path.join(dest_dir, os.path.basename(pkg['Filename']))
             open(path, "wb")
             path_to_unit[path] = unit
-            unit._compute_checksum.return_value = unit.checksum
+            unit.calculate_deb_checksums.return_value = {
+                'md5sum': unit.md5sum,
+                'sha1': unit.sha1,
+                'sha256': unit.sha256,
+            }
 
         self.step.step_download_units.path_to_unit = path_to_unit
 
@@ -193,7 +214,7 @@ SHA256:
         for path, unit in path_to_unit.items():
             unit.save_and_associate.assert_called_once_with(path, repo)
 
-    def test_SaveDownloadedUnits_bad_checksum(self):
+    def test_SaveDownloadedUnits_bad_sha256(self):
         self.repo.repo_obj = mock.MagicMock(repo_id=self.repo.id)
         # Force a checksum mismatch
         dest_dir = os.path.join(self.pulp_working_dir, 'packages')
@@ -202,8 +223,12 @@ SHA256:
         path = os.path.join(dest_dir, "file.deb")
         open(path, "wb")
 
-        unit = mock.MagicMock(checksum="00aa")
-        unit._compute_checksum.return_value = "AABB"
+        unit = mock.MagicMock(sha256='00aa', sha1='bbbb', md5sum='cccc')
+        unit.calculate_deb_checksums.return_value = {
+            'md5sum': unit.md5sum,
+            'sha1': unit.sha1,
+            'sha256': "AABB",
+        }
         path_to_unit = {path: unit}
 
         self.step.step_download_units.path_to_unit = path_to_unit

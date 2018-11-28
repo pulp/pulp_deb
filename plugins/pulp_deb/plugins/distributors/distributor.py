@@ -290,14 +290,6 @@ class MetadataStep(PluginStep):
         config = self.get_config()
         base_path = self.get_working_dir()
 
-        # Add missing checksum fields (this is bad for performance):
-        # This is a temporary fix!
-        for package in unit_dict.itervalues():
-            checksums = models.DebPackage.calculate_deb_checksums(package.storage_path)
-            package.sha1 = checksums['sha1']
-            package.sha256 = checksums['sha256']
-            package.md5sum = checksums['md5sum']
-
         # Do nothing, if the repository is empty (review this behaviour):
         if len(unit_dict) == 0:
             return
