@@ -1,6 +1,7 @@
-
 import mongoengine
-from debian import debfile
+from copy import deepcopy
+from os.path import getsize
+from debian import debfile, deb822
 from debpkgr import debpkg
 from pulp.server import util
 from pulp.server.controllers import repository as repo_controller
@@ -16,13 +17,32 @@ class DebPackage(FileContentUnit):
                 indexes=list(ids.UNIT_KEY_DEB))
     unit_key_fields = ids.UNIT_KEY_DEB
 
-    UNIT_KEY_TO_FIELD_MAP = dict(name="Package",
-                                 version="Version",
-                                 architecture="Architecture",
-                                 installed_size="Installed-Size",
-                                 multi_arch="Multi-Arch",
-                                 original_maintainer="Original-Maintainer",
-                                 )
+    # Should contain all control file fields explicitly supported by pulp_deb:
+    # (Fields not found in control files are handled separately).
+    UNIT_KEY_TO_FIELD_MAP = dict(
+        name="Package",
+        version="Version",
+        architecture="Architecture",
+        breaks="Breaks",
+        conflicts="Conflicts",
+        depends="Depends",
+        enhances="Enhances",
+        pre_depends="Pre-Depends",
+        provides="Provides",
+        recommends="Recommends",
+        replaces="Replaces",
+        suggests="Suggests",
+        source="Source",
+        maintainer="Maintainer",
+        installed_size="Installed-Size",
+        section="Section",
+        priority="Priority",
+        multi_arch="Multi-Arch",
+        homepage="Homepage",
+        description="Description",
+        original_maintainer="Original-Maintainer",
+    )
+
     name = mongoengine.StringField(required=True)
     version = mongoengine.StringField(required=True)
     architecture = mongoengine.StringField(required=True)
@@ -33,8 +53,15 @@ class DebPackage(FileContentUnit):
     filename = mongoengine.StringField(required=True)
     relativepath = mongoengine.StringField()
 
+    REQUIRED_FIELDS = ['name', 'version', 'architecture', 'checksumtype',
+                       'checksum', 'filename']
+
     REL_FIELDS = ['breaks', 'conflicts', 'depends', 'enhances', 'pre_depends',
                   'provides', 'recommends', 'replaces', 'suggests']
+
+    # The REL_FIELDS are intended for structured relationship information.
+    # Raw relationship fields as used in Debian control files and Packages
+    # indices are stored in the control_fields dict instead.
 
     breaks = mongoengine.DynamicField()
     conflicts = mongoengine.DynamicField()
@@ -51,7 +78,6 @@ class DebPackage(FileContentUnit):
     _content_type_id = mongoengine.StringField(required=True, default=TYPE_ID)
 
     # Non-key fields
-
     source = mongoengine.StringField()
     maintainer = mongoengine.StringField()
     installed_size = mongoengine.StringField()
@@ -61,6 +87,125 @@ class DebPackage(FileContentUnit):
     homepage = mongoengine.StringField()
     description = mongoengine.StringField()
     original_maintainer = mongoengine.StringField()
+
+    # Store all Debian control fields in a dict of strings.
+    # This ensures we can retain all control file information even for fields
+    # not explicitly known to pulp_deb.
+    control_fields = mongoengine.DynamicField()
+
+    @classmethod
+    def from_deb_file(cls, input_file_path, user_metadata={}):
+        """
+        Creates a DebPackage object (and by extension a mongodb entry) from a
+        .deb package file.
+        """
+        try:
+            control_fields = debfile.DebFile(input_file_path).debcontrol()
+        except debfile.ArError as invalid_package_error:
+            raise InvalidPackageError(str(invalid_package_error))
+        except IOError as missing_file_error:
+            raise Error(str(missing_file_error))
+
+        initialization_params = user_metadata
+        initialization_params.update(cls._to_internal_dict_style(control_fields))
+        initialization_params = cls._parse_rel_fields(initialization_params)
+
+        with open(input_file_path) as input_file:
+            checksum = cls._compute_checksum(input_file)
+
+        initialization_params.update(
+            size=getsize(input_file_path),
+            checksumtype=util.TYPE_SHA256,
+            checksum=checksum,
+            control_fields=control_fields,
+        )
+
+        cls._check_for_required_fields(initialization_params)
+        filename = cls.filename_from_unit_key(initialization_params)
+        initialization_params['filename'] = filename
+
+        return cls(**initialization_params)
+
+    @classmethod
+    def from_packages_paragraph(cls, packages_paragraph):
+        """
+        Creates a DebPackage object (and by extension a mongodb entry) from a
+        single 'Packages' file paragraph as parsed by python-debian's
+        deb822.Packages.iter_paragraphs function.
+        """
+
+        NON_CONTROL_FIELDS = [
+            'Filename',
+            'Size',
+            'MD5sum',
+            'SHA1',
+            'SHA256',
+            'SHA512',
+            'Description-md5',
+        ]
+
+        checksum = packages_paragraph['SHA256']
+
+        control_fields = deepcopy(packages_paragraph)
+        for field in NON_CONTROL_FIELDS:
+            control_fields.pop(field, None)
+
+        initialization_params = cls._to_internal_dict_style(packages_paragraph)
+        initialization_params = cls._parse_rel_fields(initialization_params)
+
+        # Since 'Size' is not a control file field we need to handle it separately:
+        if 'Size' in packages_paragraph:
+            initialization_params['size'] = packages_paragraph['Size']
+
+        initialization_params.update(
+            checksumtype=util.TYPE_SHA256,
+            checksum=checksum,
+            control_fields=control_fields,
+        )
+
+        cls._check_for_required_fields(initialization_params)
+        filename = cls.filename_from_unit_key(initialization_params)
+        initialization_params['filename'] = filename
+
+        return cls(**initialization_params)
+
+    @classmethod
+    def _to_internal_dict_style(cls, deb822_style_dict):
+        """
+        Converts a dict using deb822 style keys to one using our internal field
+        names. Entries that do not have a corresponding field name are dropped.
+        """
+        return_value = dict()
+        for field_name, deb822_key in cls.UNIT_KEY_TO_FIELD_MAP.iteritems():
+            if deb822_key in deb822_style_dict:
+                return_value[field_name] = deb822_style_dict[deb822_key]
+        return return_value
+
+    @classmethod
+    def _parse_rel_fields(cls, field_dict):
+        """
+        Converts any relatinal fields found in field_dict from plain Debian
+        package relation strings to a parsed dict.
+        """
+        for rel_field in cls.REL_FIELDS:
+            if rel_field in field_dict:
+                parsed_rel_value = DependencyParser.from_string(field_dict[rel_field])
+                field_dict[rel_field] = parsed_rel_value
+
+        return field_dict
+
+    @classmethod
+    def _check_for_required_fields(cls, metadata):
+        """
+        Checks if the dict in metadata contains a value for all required db
+        fields except 'filename', which needs to be generated from the other
+        required fields.
+        """
+        for field in cls.REQUIRED_FIELDS:
+            if field == 'filename':
+                pass
+            elif field not in metadata:
+                raise Error('Required field is missing: {}'.format(field))
 
     @classmethod
     def from_file(cls, filename, user_metadata=None):
@@ -297,6 +442,11 @@ class DependencyParser(object):
             return pdeps[0]
         # Conjunction (dep OR dep)
         return pdeps
+
+    @classmethod
+    def from_string(cls, relationship_string):
+        initial_parse = deb822.PkgRelation.parse_relations(relationship_string)
+        return cls.parse(initial_parse)
 
     @classmethod
     def _dep_simple(cls, dep):
