@@ -76,7 +76,6 @@ def publish(publisher_pk, repository_version_pk):
             if publisher.simple:
                 repository = repository_version.repository
                 release = deb822.Release()
-                release.set_size_field_behavior('dak')
                 # TODO: release['Label']
                 release['Codename'] = 'default'
                 release['Components'] = 'all'
@@ -156,6 +155,7 @@ def publish(publisher_pk, repository_version_pk):
                     package_index.save()
                 release['Architectures'] = ', '.join(packages_files.keys())
                 release_path = os.path.join('dists', 'default', 'Release')
+                os.makedirs(os.path.dirname(release_path), exist_ok=True)
                 with open(release_path, 'wb') as release_file:
                     release.dump(release_file)
                 release_metadata = PublishedMetadata(

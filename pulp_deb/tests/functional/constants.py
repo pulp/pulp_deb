@@ -9,7 +9,9 @@ from pulp_smash.pulp3.constants import (
 )
 
 # FIXME: replace 'unit' with your own content type names, and duplicate as necessary for each type
-DEB_CONTENT_PATH = urljoin(CONTENT_PATH, 'deb/generic_content/')
+# DEB_CONTENT_PATH = urljoin(CONTENT_PATH, 'deb/content/')
+DEB_PACKAGE_PATH = urljoin(CONTENT_PATH, 'deb/packages/')
+DEB_GENERIC_CONTENT_PATH = urljoin(CONTENT_PATH, 'deb/generic_contents/')
 
 DEB_REMOTE_PATH = urljoin(BASE_REMOTE_PATH, 'deb/')
 
@@ -22,8 +24,10 @@ DEB_FIXTURE_RELEASE = 'ragnarok'
 
 DEB_FIXTURE_COUNT = 13
 
-# FIXME: replace this with the location of one specific content unit of your choosing
-DEB_URL = urljoin(DEB_FIXTURE_URL, '')
+DEB_PACKAGE_RELPATH = 'pool/asgard/o/odin/odin_1.0_ppc64.deb'
+DEB_PACKAGE_URL = urljoin(DEB_FIXTURE_URL, DEB_PACKAGE_RELPATH)
+DEB_GENERIC_CONTENT_RELPATH = 'dists/ragnarok/asgard/binary-armeb/Release'
+DEB_GENERIC_CONTENT_URL = urljoin(DEB_FIXTURE_URL, DEB_GENERIC_CONTENT_RELPATH)
 
 # FIXME: replace this with your own fixture repository URL and metadata
 DEB_LARGE_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, 'deb_large/')

@@ -18,7 +18,7 @@ from pulp_smash.pulp3.utils import (
 )
 
 from pulp_deb.tests.functional.constants import (
-    DEB_CONTENT_PATH,
+    DEB_GENERIC_CONTENT_PATH,
     DEB_FIXTURE_URL,
     DEB_FIXTURE_RELEASE,
     DEB_REMOTE_PATH,
@@ -108,7 +108,7 @@ def populate_pulp(cfg, url=DEB_FIXTURE_URL):
             client.delete(remote['_href'])
         if repo:
             client.delete(repo['_href'])
-    return client.get(DEB_CONTENT_PATH)['results']
+    return client.get(DEB_GENERIC_CONTENT_PATH)['results']
 
 
 skip_if = partial(selectors.skip_if, exc=SkipTest)
