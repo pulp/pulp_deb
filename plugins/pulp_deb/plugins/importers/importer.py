@@ -60,7 +60,7 @@ class DebImporter(Importer):
         unit_data.update(unit_key or {})
 
         try:
-            unit = model_class.from_file(file_path, unit_data)
+            unit = model_class.from_deb_file(file_path, unit_data)
         except models.Error as e:
             return self.fail_report(str(e))
 
