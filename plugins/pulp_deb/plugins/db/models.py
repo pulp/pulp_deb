@@ -2,7 +2,6 @@ import mongoengine
 from copy import deepcopy
 from os.path import getsize
 from debian import debfile, deb822
-from debpkgr import debpkg
 from pulp.server import util
 from pulp.server.controllers import repository as repo_controller
 from pulp.server.db.model import ContentUnit, FileContentUnit
@@ -220,43 +219,6 @@ class DebPackage(FileContentUnit):
                 raise Error('Required field is missing: {}'.format(field))
 
     @classmethod
-    def from_file(cls, filename, user_metadata=None):
-        if hasattr(filename, "read"):
-            fobj = filename
-        else:
-            try:
-                fobj = open(filename, "r")
-            except IOError as e:
-                raise Error(str(e))
-        unit_md = cls._read_metadata(filename)
-        unit_md.update(checksumtype=util.TYPE_SHA256,
-                       checksum=cls._compute_checksum(fobj),
-                       size=fobj.tell())
-
-        return cls.from_metadata(unit_md, user_metadata)
-
-    @classmethod
-    def from_metadata(cls, unit_md, user_metadata=None):
-        ignored = set(['filename'])
-
-        metadata = dict()
-        for attr, fdef in cls._fields.items():
-            if attr == 'id' or attr.startswith('_'):
-                continue
-            if user_metadata and attr in user_metadata:
-                # We won't be mapping fields from
-                # user_metadata, if the user wanted to overwrite something
-                # they'd have done it with the properties pulp expects.
-                metadata[attr] = user_metadata[attr]
-            prop_name = cls.TO_DEB822_MAP.get(attr, attr)
-            val = unit_md.get(prop_name)
-            if val is None and fdef.required and attr not in ignored:
-                raise Error('Required field is missing: {}'.format(attr))
-            metadata[attr] = val
-        metadata['filename'] = cls.filename_from_unit_key(metadata)
-        return cls(**metadata)
-
-    @classmethod
     def _compute_checksum(cls, fobj):
         cstype = util.TYPE_SHA256
         return util.calculate_checksums(fobj, [cstype])[cstype]
@@ -302,22 +264,6 @@ class DebPackage(FileContentUnit):
             unit = self.__class__.objects.filter(**unit.unit_key).first()
         unit.associate(repo)
         return unit
-
-    @classmethod
-    def _read_metadata(cls, filename):
-        try:
-            deb = debfile.DebFile(filename)
-        except debfile.ArError as e:
-            raise InvalidPackageError(str(e))
-        ret = dict(deb.debcontrol())
-        deps = debpkg.DebPkgRequires(**ret)
-        # Munge relation fields
-
-        for fname in cls.REL_FIELDS:
-            vals = deps.relations.get(fname, [])
-            vals = DependencyParser.parse(vals)
-            ret[fname] = vals
-        return ret
 
 
 class DebComponent(ContentUnit):
