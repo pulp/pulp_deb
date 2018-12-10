@@ -17,9 +17,71 @@ class DebPackage(FileContentUnit):
                 indexes=list(ids.UNIT_KEY_DEB))
     unit_key_fields = ids.UNIT_KEY_DEB
 
-    # Should contain all control file fields explicitly supported by pulp_deb:
-    # (Fields not found in control files are handled separately).
-    UNIT_KEY_TO_FIELD_MAP = dict(
+    # Fields included in the ids.UNIT_KEY_DEB list:
+    # Note: The first three of these are control file fields.
+    name = mongoengine.StringField(required=True)
+    version = mongoengine.StringField(required=True)
+    architecture = mongoengine.StringField(required=True)
+    checksumtype = mongoengine.StringField(required=True)
+    checksum = mongoengine.StringField(required=True)
+
+    # Other required fields:
+    filename = mongoengine.StringField(required=True)
+
+    # List of required fields:
+    REQUIRED_FIELDS = ['name', 'version', 'architecture', 'checksumtype',
+                       'checksum', 'filename']
+
+    # Other non control file fields:
+    # Note: Relativepath does not appear to be meaningfully in use.
+    size = mongoengine.IntField()
+    relativepath = mongoengine.StringField()
+
+    # Relational fields:
+    # Note: These are intended for structured relationship information. Raw
+    # relationship field strings as used in Debian control files and Packages
+    # indicies are stored in the control_fields dict instead.
+    breaks = mongoengine.DynamicField()
+    conflicts = mongoengine.DynamicField()
+    depends = mongoengine.DynamicField()
+    enhances = mongoengine.DynamicField()
+    pre_depends = mongoengine.DynamicField()
+    provides = mongoengine.DynamicField()
+    recommends = mongoengine.DynamicField()
+    replaces = mongoengine.DynamicField()
+    suggests = mongoengine.DynamicField()
+
+    # List of relational fields:
+    REL_FIELDS = ['breaks', 'conflicts', 'depends', 'enhances', 'pre_depends',
+                  'provides', 'recommends', 'replaces', 'suggests']
+
+    # The control file fields dict:
+    # Note: This stores a dict of strings as used within the python-debian
+    # library. This allows us to retain all control file information, even for
+    # fields not explicitly supported by pulp_deb.
+    control_fields = mongoengine.DynamicField()
+
+    # Remaining control file fields:
+    # Note: With the addition of the control_fields dict, these fields contain
+    # redundant information.
+    source = mongoengine.StringField()
+    maintainer = mongoengine.StringField()
+    installed_size = mongoengine.StringField()
+    section = mongoengine.StringField()
+    priority = mongoengine.StringField()
+    multi_arch = mongoengine.StringField()
+    homepage = mongoengine.StringField()
+    description = mongoengine.StringField()
+    original_maintainer = mongoengine.StringField()
+
+    # Fields retained for backwards compatibility:
+    _ns = mongoengine.StringField(required=True, default=meta['collection'])
+    _content_type_id = mongoengine.StringField(required=True, default=TYPE_ID)
+
+    # A dict translating all control file field names from this class into their
+    # python-debian (deb822) equivalent.
+    # Note: Fields not found in control files are handled separately.
+    TO_DEB822_MAP = dict(
         name="Package",
         version="Version",
         architecture="Architecture",
@@ -42,56 +104,6 @@ class DebPackage(FileContentUnit):
         description="Description",
         original_maintainer="Original-Maintainer",
     )
-
-    name = mongoengine.StringField(required=True)
-    version = mongoengine.StringField(required=True)
-    architecture = mongoengine.StringField(required=True)
-    checksumtype = mongoengine.StringField(required=True)
-    checksum = mongoengine.StringField(required=True)
-    size = mongoengine.IntField()
-
-    filename = mongoengine.StringField(required=True)
-    relativepath = mongoengine.StringField()
-
-    REQUIRED_FIELDS = ['name', 'version', 'architecture', 'checksumtype',
-                       'checksum', 'filename']
-
-    REL_FIELDS = ['breaks', 'conflicts', 'depends', 'enhances', 'pre_depends',
-                  'provides', 'recommends', 'replaces', 'suggests']
-
-    # The REL_FIELDS are intended for structured relationship information.
-    # Raw relationship fields as used in Debian control files and Packages
-    # indices are stored in the control_fields dict instead.
-
-    breaks = mongoengine.DynamicField()
-    conflicts = mongoengine.DynamicField()
-    depends = mongoengine.DynamicField()
-    enhances = mongoengine.DynamicField()
-    pre_depends = mongoengine.DynamicField()
-    provides = mongoengine.DynamicField()
-    recommends = mongoengine.DynamicField()
-    replaces = mongoengine.DynamicField()
-    suggests = mongoengine.DynamicField()
-
-    # For backward compatibility
-    _ns = mongoengine.StringField(required=True, default=meta['collection'])
-    _content_type_id = mongoengine.StringField(required=True, default=TYPE_ID)
-
-    # Non-key fields
-    source = mongoengine.StringField()
-    maintainer = mongoengine.StringField()
-    installed_size = mongoengine.StringField()
-    section = mongoengine.StringField()
-    priority = mongoengine.StringField()
-    multi_arch = mongoengine.StringField()
-    homepage = mongoengine.StringField()
-    description = mongoengine.StringField()
-    original_maintainer = mongoengine.StringField()
-
-    # Store all Debian control fields in a dict of strings.
-    # This ensures we can retain all control file information even for fields
-    # not explicitly known to pulp_deb.
-    control_fields = mongoengine.DynamicField()
 
     @classmethod
     def from_deb_file(cls, input_file_path, user_metadata={}):
@@ -176,7 +188,7 @@ class DebPackage(FileContentUnit):
         names. Entries that do not have a corresponding field name are dropped.
         """
         return_value = dict()
-        for field_name, deb822_key in cls.UNIT_KEY_TO_FIELD_MAP.iteritems():
+        for field_name, deb822_key in cls.TO_DEB822_MAP.iteritems():
             if deb822_key in deb822_style_dict:
                 return_value[field_name] = deb822_style_dict[deb822_key]
         return return_value
@@ -236,7 +248,7 @@ class DebPackage(FileContentUnit):
                 # user_metadata, if the user wanted to overwrite something
                 # they'd have done it with the properties pulp expects.
                 metadata[attr] = user_metadata[attr]
-            prop_name = cls.UNIT_KEY_TO_FIELD_MAP.get(attr, attr)
+            prop_name = cls.TO_DEB822_MAP.get(attr, attr)
             val = unit_md.get(prop_name)
             if val is None and fdef.required and attr not in ignored:
                 raise Error('Required field is missing: {}'.format(attr))
