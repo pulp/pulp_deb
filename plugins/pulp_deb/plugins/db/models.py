@@ -105,13 +105,13 @@ class DebPackage(FileContentUnit):
     )
 
     @classmethod
-    def from_file(cls, input_file_path, user_metadata=None):
+    def from_file(cls, filename, user_metadata=None):
         """
         Creates a DebPackage object (and by extension a mongodb entry) from a
         .deb package file.
         """
         try:
-            control_fields = debfile.DebFile(input_file_path).debcontrol()
+            control_fields = debfile.DebFile(filename).debcontrol()
         except debfile.ArError as invalid_package_error:
             raise InvalidPackageError(str(invalid_package_error))
         except IOError as missing_file_error:
@@ -121,11 +121,11 @@ class DebPackage(FileContentUnit):
         initialization_params.update(cls._to_internal_dict_style(control_fields))
         initialization_params = cls._parse_rel_fields(initialization_params)
 
-        with open(input_file_path) as input_file:
+        with open(filename) as input_file:
             checksum = cls._compute_checksum(input_file)
 
         initialization_params.update(
-            size=getsize(input_file_path),
+            size=getsize(filename),
             checksumtype=util.TYPE_SHA256,
             checksum=checksum,
             control_fields=control_fields,
