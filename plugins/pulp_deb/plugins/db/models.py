@@ -105,7 +105,7 @@ class DebPackage(FileContentUnit):
     )
 
     @classmethod
-    def from_file(cls, input_file_path, user_metadata={}):
+    def from_file(cls, input_file_path, user_metadata=None):
         """
         Creates a DebPackage object (and by extension a mongodb entry) from a
         .deb package file.
@@ -117,7 +117,7 @@ class DebPackage(FileContentUnit):
         except IOError as missing_file_error:
             raise Error(str(missing_file_error))
 
-        initialization_params = user_metadata
+        initialization_params = user_metadata or {}
         initialization_params.update(cls._to_internal_dict_style(control_fields))
         initialization_params = cls._parse_rel_fields(initialization_params)
 
