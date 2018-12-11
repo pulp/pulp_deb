@@ -105,7 +105,7 @@ class DebPackage(FileContentUnit):
     )
 
     @classmethod
-    def from_deb_file(cls, input_file_path, user_metadata={}):
+    def from_file(cls, input_file_path, user_metadata={}):
         """
         Creates a DebPackage object (and by extension a mongodb entry) from a
         .deb package file.
