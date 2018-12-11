@@ -15,9 +15,9 @@ DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__),
 
 
 class TestModel(testbase.TestCase):
-    def test_from_file_no_metadata(self):
+    def test_from_deb_file_no_metadata(self):
         pkg_path = os.path.join(DATA_DIR, "nscd_2.24-7ubuntu2_amd64.deb")
-        pkg = models.DebPackage.from_file(pkg_path)
+        pkg = models.DebPackage.from_deb_file(pkg_path)
         self.assertTrue(isinstance(pkg, models.DebPackage))
         self.assertEquals(pkg.unit_key, {
             'name': 'nscd',
@@ -27,11 +27,11 @@ class TestModel(testbase.TestCase):
             'checksumtype': 'sha256',
             })
 
-    def test_from_file_different_checksumtype(self):
+    def test_from_deb_file_different_checksumtype(self):
         metadata = dict(checksumtype='sha1',
                         checksum='fake')
         pkg_path = os.path.join(DATA_DIR, "nscd_2.24-7ubuntu2_amd64.deb")
-        pkg = models.DebPackage.from_file(pkg_path, metadata)
+        pkg = models.DebPackage.from_deb_file(pkg_path, metadata)
         self.assertTrue(isinstance(pkg, models.DebPackage))
         self.assertEquals(pkg.unit_key['name'], 'nscd')
         self.assertEquals(
@@ -41,16 +41,16 @@ class TestModel(testbase.TestCase):
             '177937795c2ef5b381718aefe2981ada4e8cfe458226348d87a6f5b100a4612b',
             pkg.checksum)
 
-    def test_from_file_no_file(self):
+    def test_from_deb_file_no_file(self):
         with self.assertRaises(ValueError) as cm:
-            models.DebPackage.from_file('/missing-file')
+            models.DebPackage.from_deb_file('/missing-file')
         self.assertEquals(
             "[Errno 2] No such file or directory: u'/missing-file'",
             str(cm.exception))
 
-    def test_from_file_bad(self):
+    def test_from_deb_file_bad(self):
         with self.assertRaises(ValueError):
-            models.DebPackage.from_file(__file__)
+            models.DebPackage.from_deb_file(__file__)
 
     def test_dep_parse(self):
         # Make sure we get the same behavior out of deb822 relationship
