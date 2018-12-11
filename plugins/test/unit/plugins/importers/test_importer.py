@@ -170,9 +170,9 @@ class TestDebImporter(testbase.TestCase):
 
     @mock.patch("pulp_deb.plugins.db.models.repo_controller")
     @mock.patch('pulp_deb.plugins.db.models.DebPackage._get_db')
-    @mock.patch('pulp_deb.plugins.db.models.DebPackage.from_deb_file')
+    @mock.patch('pulp_deb.plugins.db.models.DebPackage.from_file')
     @mock.patch("pulp_deb.plugins.importers.importer.plugin_api")
-    def test_upload_unit_deb(self, _plugin_api, from_deb_file,
+    def test_upload_unit_deb(self, _plugin_api, from_file,
                              _get_db, _repo_controller):
         """
         Assert correct operation of upload_unit().
@@ -190,7 +190,7 @@ class TestDebImporter(testbase.TestCase):
             depends=[{'name': 'glibc'}],
             checksum=checksum)
         package = models.DebPackage(**metadata)
-        from_deb_file.return_value = package
+        from_file.return_value = package
 
         pulpimp = importer.DebImporter()
         repo = mock.MagicMock()
@@ -202,7 +202,7 @@ class TestDebImporter(testbase.TestCase):
         report = pulpimp.upload_unit(repo, type_id, unit_key, metadata,
                                      deb_file, conduit, config)
 
-        from_deb_file.assert_called_once_with(file_path, metadata)
+        from_file.assert_called_once_with(file_path, metadata)
 
         obj_id = _get_db.return_value.__getitem__.return_value.save.return_value.decode.return_value  # noqa
 
