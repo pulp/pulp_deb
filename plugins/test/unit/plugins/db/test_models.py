@@ -163,7 +163,7 @@ class TestModel(testbase.TestCase):
         with self.assertRaises(models.Error) as missing_required_fields_error:
             models.DebPackage.from_packages_paragraph(packages_paragraph)
         self.assertEqual(
-            'Required field is missing: version',
+            "Required fields are missing: ['version']",
             str(missing_required_fields_error.exception))
 
     def test_from_packages_paragraph_non_ascii_field(self):

@@ -212,11 +212,14 @@ class DebPackage(FileContentUnit):
         fields except 'filename', which needs to be generated from the other
         required fields.
         """
+        missing_fields = []
         for field in cls.REQUIRED_FIELDS:
             if field == 'filename':
-                pass
-            elif field not in metadata:
-                raise Error('Required field is missing: {}'.format(field))
+                continue
+            if field not in metadata:
+                missing_fields.append(field)
+        if missing_fields:
+            raise Error('Required fields are missing: {}'.format(missing_fields))
 
     @classmethod
     def _compute_checksum(cls, fobj):
