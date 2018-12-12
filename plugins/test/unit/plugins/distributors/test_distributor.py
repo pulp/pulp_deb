@@ -120,9 +120,11 @@ class PublishRepoMixIn(object):
                 _p = unit._storage_path = os.path.join(
                     storage_dir, unit.filename)
                 open(_p, "wb").write(str(uuid.uuid4()))
+                unit.md5sum = hashlib.md5(open(_p, "rb").read()).hexdigest()
+                unit.sha1 = hashlib.sha1(open(_p, "rb").read()).hexdigest()
+                unit.sha256 = hashlib.sha256(open(_p, "rb").read()).hexdigest()
                 unit.checksumtype = 'sha256'
-                unit.checksum = hashlib.sha256(
-                    open(_p, "rb").read()).hexdigest()
+                unit.checksum = unit.sha256
             except Exception:
                 pass
         return units
@@ -285,10 +287,20 @@ class PublishRepoMixIn(object):
 class TestPublishOldRepoDeb(PublishRepoMixIn, BaseTest):
     Sample_Units = {
         models.DebPackage: [
-            dict(name='burgundy', version='0.1938.0', architecture='amd64',
-                 checksum='abcde', checksumtype='sha3.14', id='bbbb'),
-            dict(name='chablis', version='0.2013.0', architecture='amd64',
-                 checksum='yz', checksumtype='sha3.14', id='cccc'),
+            dict(
+                name='burgundy',
+                version='0.1938.0',
+                architecture='amd64',
+                control_fields=dict(Package='burgundy'),
+                id='bbbb',
+            ),
+            dict(
+                name='chablis',
+                version='0.2013.0',
+                architecture='amd64',
+                control_fields=dict(Package='chablis'),
+                id='cccc',
+            ),
         ],
         models.DebComponent: [
         ],
@@ -302,13 +314,28 @@ class TestPublishOldRepoDeb(PublishRepoMixIn, BaseTest):
 class TestPublishRepoDeb(PublishRepoMixIn, BaseTest):
     Sample_Units = {
         models.DebPackage: [
-            dict(name='burgundy', version='0.1938.0', architecture='amd64',
-                 checksum='abcde', checksumtype='sha3.14', id='bbbb'),
-            dict(name='chablis', version='0.2013.0', architecture='amd64',
-                 checksum='yz', checksumtype='sha3.14', id='cccc'),
+            dict(
+                name='burgundy',
+                version='0.1938.0',
+                architecture='amd64',
+                control_fields=dict(Package='burgundy'),
+                id='bbbb',
+            ),
+            dict(
+                name='chablis',
+                version='0.2013.0',
+                architecture='amd64',
+                control_fields=dict(Package='chablis'),
+                id='cccc',
+            ),
         ],
         models.DebComponent: [
-            dict(name='main', release='stable', id='mainid', packages=['bbbb', 'cccc']),
+            dict(
+                name='main',
+                release='stable',
+                id='mainid',
+                packages=['bbbb', 'cccc']
+            ),
         ],
         models.DebRelease: [
             dict(codename='stable', id='stableid'),
@@ -321,18 +348,42 @@ class TestPublishRepoDeb(PublishRepoMixIn, BaseTest):
 class TestPublishRepoMultiArchDeb(PublishRepoMixIn, BaseTest):
     Sample_Units = {
         models.DebPackage: [
-            dict(name='burgundy', version='0.1938.0', architecture='amd64',
-                 checksum='abcde', checksumtype='sha3.14', id='bbbb'),
-            dict(name='chablis', version='0.2013.0', architecture='amd64',
-                 checksum='yz', checksumtype='sha3.14', id='cccc'),
-            dict(name='dornfelder', version='0.2017.0', architecture='i386',
-                 checksum='wxy', checksumtype='sha3.14', id='dddd'),
-            dict(name='elbling', version='0.2017.0', architecture='all',
-                 checksum='foo', checksumtype='sha3.14', id='eeee'),
+            dict(
+                name='burgundy',
+                version='0.1938.0',
+                architecture='amd64',
+                control_fields=dict(Package='burgundy'),
+                id='bbbb',
+            ),
+            dict(
+                name='chablis',
+                version='0.2013.0',
+                architecture='amd64',
+                control_fields=dict(Package='chablis'),
+                id='cccc',
+            ),
+            dict(
+                name='dornfelder',
+                version='0.2017.0',
+                architecture='i386',
+                control_fields=dict(Package='dornfelder'),
+                id='dddd',
+            ),
+            dict(
+                name='elbling',
+                version='0.2017.0',
+                architecture='all',
+                control_fields=dict(Package='elbling'),
+                id='eeee',
+            ),
         ],
         models.DebComponent: [
-            dict(name='main', release='stable', id='mainid',
-                 packages=['bbbb', 'cccc', 'dddd', 'eeee']),
+            dict(
+                name='main',
+                release='stable',
+                id='mainid',
+                packages=['bbbb', 'cccc', 'dddd', 'eeee'],
+            ),
         ],
         models.DebRelease: [
             dict(codename='stable', id='stableid'),
@@ -345,22 +396,55 @@ class TestPublishRepoMultiArchDeb(PublishRepoMixIn, BaseTest):
 class TestPublishRepoMultiCompArchDeb(PublishRepoMixIn, BaseTest):
     Sample_Units = {
         models.DebPackage: [
-            dict(name='burgundy', version='0.1938.0', architecture='amd64',
-                 checksum='abcde', checksumtype='sha3.14', id='bbbb'),
-            dict(name='chablis', version='0.2013.0', architecture='amd64',
-                 checksum='yz', checksumtype='sha3.14', id='cccc'),
-            dict(name='dornfelder', version='0.2017.0', architecture='i386',
-                 checksum='wxy', checksumtype='sha3.14', id='dddd'),
-            dict(name='elbling', version='0.2017.0', architecture='all',
-                 checksum='foo', checksumtype='sha3.14', id='eeee'),
-            dict(name='federweisser', version='0.2017.0', architecture='ppc',
-                 checksum='foo', checksumtype='sha3.14', id='ffff'),
+            dict(
+                name='burgundy',
+                version='0.1938.0',
+                architecture='amd64',
+                control_fields=dict(Package='burgundy'),
+                id='bbbb',
+            ),
+            dict(
+                name='chablis',
+                version='0.2013.0',
+                architecture='amd64',
+                control_fields=dict(Package='chablis'),
+                id='cccc',
+            ),
+            dict(
+                name='dornfelder',
+                version='0.2017.0',
+                architecture='i386',
+                control_fields=dict(Package='dornfelder'),
+                id='dddd',
+            ),
+            dict(
+                name='elbling',
+                version='0.2017.0',
+                architecture='all',
+                control_fields=dict(Package='elbling'),
+                id='eeee',
+            ),
+            dict(
+                name='federweisser',
+                version='0.2017.0',
+                architecture='ppc',
+                control_fields=dict(Package='federweisser'),
+                id='ffff',
+            ),
         ],
         models.DebComponent: [
-            dict(name='main', release='old-stable', id='mainid',
-                 packages=['bbbb', 'cccc', 'dddd', 'eeee', 'ffff']),
-            dict(name='premature', release='old-stable', id='preid',
-                 packages=['cccc', 'dddd', 'eeee', 'ffff']),
+            dict(
+                name='main',
+                release='old-stable',
+                id='mainid',
+                packages=['bbbb', 'cccc', 'dddd', 'eeee', 'ffff'],
+            ),
+            dict(
+                name='premature',
+                release='old-stable',
+                id='preid',
+                packages=['cccc', 'dddd', 'eeee', 'ffff'],
+            ),
         ],
         models.DebRelease: [
             dict(codename='old-stable', id='oldstableid'),
@@ -379,20 +463,45 @@ class TestPublishAllArchCompDeb(PublishRepoMixIn, BaseTest):
     """
     Sample_Units = {
         models.DebPackage: [
-            dict(name='burgundy', version='0.1938.0', architecture='all',
-                 checksum='abcde', checksumtype='sha3.14', id='bbbb'),
-            dict(name='chablis', version='0.2013.0', architecture='all',
-                 checksum='yz', checksumtype='sha3.14', id='cccc'),
-            dict(name='dornfelder', version='0.2017.0', architecture='all',
-                 checksum='wxy', checksumtype='sha3.14', id='dddd'),
-            dict(name='federweisser', version='0.2017.0', architecture='amd64',
-                 checksum='foo', checksumtype='sha3.14', id='ffff'),
+            dict(
+                name='burgundy',
+                version='0.1938.0',
+                architecture='all',
+                control_fields=dict(Package='burgundy'),
+                id='bbbb',
+            ),
+            dict(
+                name='chablis',
+                version='0.2013.0',
+                architecture='all',
+                control_fields=dict(Package='chablis'),
+                id='cccc',
+            ),
+            dict(
+                name='dornfelder',
+                version='0.2017.0',
+                architecture='all',
+                control_fields=dict(Package='dornfelder'),
+                id='dddd',
+            ),
+            dict(
+                name='federweisser',
+                version='0.2017.0',
+                architecture='amd64',
+                control_fields=dict(Package='federweisser'),
+                id='ffff'),
         ],
         models.DebComponent: [
-            dict(name='main', release='old-stable', id='mainid',
-                 packages=['bbbb', 'cccc', 'dddd', 'ffff']),
-            dict(name='all-only', release='old-stable', id='preid',
-                 packages=['bbbb', 'cccc', 'dddd']),
+            dict(
+                name='main',
+                release='old-stable',
+                id='mainid',
+                packages=['bbbb', 'cccc', 'dddd', 'ffff']),
+            dict(
+                name='all-only',
+                release='old-stable',
+                id='preid',
+                packages=['bbbb', 'cccc', 'dddd']),
         ],
         models.DebRelease: [
             dict(codename='old-stable', id='oldstableid'),
@@ -405,32 +514,45 @@ class TestPublishAllArchCompDeb(PublishRepoMixIn, BaseTest):
 class TestPublishRepoNonAsciiDeb(PublishRepoMixIn, BaseTest):
     Sample_Units = {
         models.DebPackage: [
-            dict(name='gaertner',
-                 source='gärtner',
-                 version='0.1938.0',
-                 installed_size=23,
-                 maintainer='gärtner',
-                 original_maintainer='gärtner',
-                 architecture='amd64',
-                 replaces='gärtner',
-                 provides='gärtner',
-                 depends='gärtner',
-                 pre_depends='gärtner',
-                 recommends='gärtner',
-                 suggests='gärtner',
-                 enhances='gärtner',
-                 conflicts='gärtner',
-                 breaks='gärtner',
-                 description='gärtner',
-                 multi_arch='gärtner',
-                 homepage='gärtner',
-                 section='gärtner',
-                 priority='gärtner',
-                 filename='gärtner',
-                 size=12,
-                 checksum='abcde',
-                 checksumtype='sha3.14',
-                 id='aaaa'),
+            dict(
+                name='gaertner',
+                version='0.1938.0',
+                architecture='amd64',
+                filename='gärtner',
+                size=12,
+                control_fields={
+                    'Source': u'gärtner',
+                    'Version': u'0.1938.0',
+                    'Installed-Size': u'23',
+                    'Maintainer': u'gärtner',
+                    'Original-Maintainer': u'gärtner',
+                    'Architecture': u'amd64',
+                    'Replaces': u'gärtner',
+                    'Provides': u'gärtner',
+                    'Depends': u'gärtner',
+                    'Pre-Depends': u'gärtner',
+                    'Recommends': u'gärtner',
+                    'Suggests': u'gärtner',
+                    'Enhances': u'gärtner',
+                    'Conflicts': u'gärtner',
+                    'Breaks': u'gärtner',
+                    'Description': u'gärtner',
+                    'Multi-Arch': u'gärtner',
+                    'Homepage': u'gärtner',
+                    'Section': u'gärtner',
+                    'Priority': u'gärtner',
+                },
+                source=u'gärtner',
+                maintainer=u'gärtner',
+                installed_size=u'gärtner',
+                section=u'gärtner',
+                priority=u'gärtner',
+                multi_arch=u'gärtner',
+                homepage=u'gärtner',
+                description=u'gärtner',
+                original_maintainer=u'gärtner',
+                id='aaaa',
+            ),
         ],
         models.DebComponent: [
             dict(name='main', release='stable', id='mainid', packages=['aaaa']),
@@ -452,13 +574,27 @@ class TestPublishRepoLayeredComponentDeb(PublishRepoMixIn, BaseTest):
     """
     Sample_Units = {
         models.DebPackage: [
-            dict(name='burgundy', version='0.1938.0', architecture='amd64',
-                 checksum='abcde', checksumtype='sha3.14', id='bbbb'),
-            dict(name='chablis', version='0.2013.0', architecture='all',
-                 checksum='yz', checksumtype='sha3.14', id='cccc'),
+            dict(
+                name='burgundy',
+                version='0.1938.0',
+                architecture='amd64',
+                control_fields=dict(Package='burgundy'),
+                id='bbbb',
+            ),
+            dict(
+                name='chablis',
+                version='0.2013.0',
+                architecture='all',
+                control_fields=dict(Package='chablis'),
+                id='cccc',
+            ),
         ],
         models.DebComponent: [
-            dict(name='updates/main', release='stable', id='mainid', packages=['bbbb', 'cccc']),
+            dict(
+                name='updates/main',
+                release='stable',
+                id='mainid',
+                packages=['bbbb', 'cccc']),
         ],
         models.DebRelease: [
             dict(codename='stable', id='stableid'),

@@ -5,10 +5,11 @@ It also provides functions for compressing and signing these files.
 
 import os
 import gzip
-import shutil
 import bz2
-import time
 
+from shutil import copyfileobj
+from copy import deepcopy
+from time import strftime, gmtime
 from debian import deb822
 from pulp_deb.plugins.db.models import DebPackage
 
@@ -46,51 +47,50 @@ def write_packages_file_paragraph(packages_file, component, package):
                       (this is needed for the 'pool' path of each package)
     :param package: a single DebPackage object
     """
-    # Ordered list of supported fields (tuples):
-    # Known to exist but currently unsupported fields include:
-    # "Description-md5" (after 'homepage')
-    # "Tag" (after "Description-md5")
-    fields = [
-        ('name', 'Package'),
-        ('source', 'Source'),
-        ('version', 'Version'),
-        ('installed_size', 'Installed-Size'),
-        ('maintainer', 'Maintainer'),
-        ('original_maintainer', 'Original-Maintainer'),
-        ('architecture', 'Architecture'),
-        ('replaces', 'Replaces'),
-        ('provides', 'Provides'),
-        ('depends', 'Depends'),
-        ('pre_depends', 'Pre-Depends'),
-        ('recommends', 'Recommends'),
-        ('suggests', 'Suggests'),
-        ('enhances', 'Enhances'),
-        ('conflicts', 'Conflicts'),
-        ('breaks', 'Breaks'),
-        ('description', 'Description'),
-        ('multi_arch', 'Multi-Arch'),
-        ('homepage', 'Homepage'),
-        ('section', 'Section'),
-        ('priority', 'Priority'),
-        ('filename', 'Filename'),
-        ('size', 'Size'),
-        ('md5sum', 'MD5sum'),
-        ('sha1', 'SHA1'),
-        ('sha256', 'SHA256'),
+    # Ordered list of control file fields explicitly known to pulp_deb:
+    known_control_fields = [
+        'Package',
+        'Source',
+        'Version',
+        'Installed-Size',
+        'Maintainer',
+        'Original-Maintainer',
+        'Architecture',
+        'Replaces',
+        'Provides',
+        'Depends',
+        'Pre-Depends',
+        'Recommends',
+        'Suggests',
+        'Enhances',
+        'Conflicts',
+        'Breaks',
+        'Description',
+        'Multi-Arch',
+        'Homepage',
+        'Section',
+        'Priority',
     ]
 
-    package_properties = package.all_properties
     packages_object = deb822.Packages()
+    control_fields = deepcopy(package.control_fields)
 
-    for field in fields:
-        if field[0] == 'filename':
-            # TODO: A better pool folder structure is desirable.
-            relative_pool_path = os.path.join('pool',
-                                              component,
-                                              package.filename,)
-            packages_object['Filename'] = relative_pool_path
-        elif package_properties[field[0]]:
-            packages_object[field[1]] = cast_to_utf8_unicode(package_properties[field[0]])
+    # Add all known control fields (in order):
+    for field in known_control_fields:
+        if field in control_fields:
+            packages_object[field] = control_fields.pop(field).encode('utf8')
+
+    # Also add remaining (unknown) control fields:
+    for field, value in control_fields.iteritems():
+        packages_object[field] = value.encode('utf8')
+
+    # Explicitly add various non control fields:
+    relative_pool_path = os.path.join('pool', component, package.filename,)
+    packages_object['Filename'] = relative_pool_path
+    packages_object['Size'] = str(package.size)
+    packages_object['MD5sum'] = package.md5sum
+    packages_object['SHA1'] = package.sha1
+    packages_object['SHA256'] = package.sha256
 
     packages_object.dump(packages_file)
 
@@ -132,7 +132,7 @@ def write_release_file(path, meta_data, release_meta_files):
     # Amend or add incomplete fields:
     meta_data['architectures'] = " ".join(meta_data['architectures'])
     meta_data['components'] = " ".join(meta_data['components'])
-    meta_data['date'] = time.strftime('%a, %d %b %Y %H:%M:%S +0000', time.gmtime())
+    meta_data['date'] = strftime('%a, %d %b %Y %H:%M:%S +0000', gmtime())
 
     # Initialize deb822 object:
     release = deb822.Release()
@@ -175,7 +175,7 @@ def gzip_compress_file(input_file_path):
 
     with open(input_file_path, 'rb') as input_file:
         with gzip.open(output_file_path, 'wb') as output_file:
-            shutil.copyfileobj(input_file, output_file)
+            copyfileobj(input_file, output_file)
 
     return output_file_path
 
@@ -194,20 +194,3 @@ def bz2_compress_file(input_file_path):
             output_file.write(bz2.compress(input_file.read()))
 
     return output_file_path
-
-
-def cast_to_utf8_unicode(obj):
-    """
-    Will cast input of type 'int' or 'str' to 'unicode' using utf8 and return
-    other types unchanged.
-
-    :param obj: the object to be casted
-    :returns: an unicode string using utf8 encoding or obj
-    """
-    if type(obj) == str:
-        return_value = obj.decode('utf8')
-    elif type(obj) == int:
-        return_value = str(obj).decode('utf8')
-    else:
-        return_value = obj
-    return return_value
