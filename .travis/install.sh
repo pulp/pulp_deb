@@ -4,6 +4,7 @@ set -veuo pipefail
 if [ "$TRAVIS_PULL_REQUEST" = "false" ]
 then
   PULP_PR_NUMBER=
+  PULP_PLUGIN_PR_NUMBER=
 else
   PR_MSG=$(http --json "https://api.github.com/repos/${TRAVIS_REPO_SLUG}/pulls/${TRAVIS_PULL_REQUEST}" "Accept:application/vnd.github.v3.text+json" | jq -r .body | tr -C "[:alnum:]-\n" =)
   PULP_PR_NUMBER=$(echo $PR_MSG | sed -n 's/.*pulp=pulp=[^0-9]*\([0-9]*\).*/\1/p')
@@ -20,7 +21,6 @@ if [ -n "$PULP_PR_NUMBER" ]; then
   git fetch origin +refs/pull/$PULP_PR_NUMBER/merge
   git checkout FETCH_HEAD
 fi
-cd pulpcore/
 pip install -e .
 popd
 
