@@ -1,5 +1,6 @@
 # coding=utf-8
 """Utilities for tests for the deb plugin."""
+import os
 from functools import partial
 from unittest import SkipTest
 
@@ -18,6 +19,9 @@ from pulp_smash.pulp3.utils import (
 )
 
 from pulp_deb.tests.functional.constants import (
+    DEB_RELEASE_NAME,
+    DEB_PACKAGE_INDEX_NAME,
+    DEB_PACKAGE_NAME,
     DEB_GENERIC_CONTENT_NAME,
     DEB_GENERIC_CONTENT_PATH,
     DEB_FIXTURE_URL,
@@ -75,15 +79,67 @@ def get_deb_content_unit_paths(repo):
     """Return the relative path of content units present in a deb repository.
 
     :param repo: A dict of information about the repository.
-    :returns: A list with the paths of units present in a given repository.
+    :returns: A dict of list with the paths of units present in a given repository
+        for different content types. Paths are given as pairs with the remote and the
+        local version.
     """
-    # FIXME: The "relative_path" is actually a file path and name
-    # It's just an example -- this needs to be replaced with an implementation that works
-    # for repositories of this content type.
-    return [
-        content_unit['relative_path']
-        for content_unit in get_content(repo)[DEB_GENERIC_CONTENT_NAME]
-    ]
+    def _rel_path(package, component=''):
+        sourcename = package['source'] or package['package_name']
+        if sourcename.startswith('lib'):
+            prefix = sourcename[0:4]
+        else:
+            prefix = sourcename[0]
+        return os.path.join(
+            'pool',
+            component,
+            prefix,
+            sourcename,
+            '{}_{}_{}.deb'.format(package['package_name'],
+                                  package['version'],
+                                  package['architecture'])
+        )
+        return os.path.join(
+            'pool',
+
+        )
+
+    return {
+        DEB_PACKAGE_NAME: [
+            (content_unit['relative_path'], _rel_path(content_unit))
+            for content_unit in get_content(repo)[DEB_PACKAGE_NAME]
+        ],
+    }
+
+
+def get_deb_verbatim_content_unit_paths(repo):
+    """Return the relative path of content units present in a deb repository.
+
+    :param repo: A dict of information about the repository.
+    :returns: A dict of list with the paths of units present in a given repository
+        for different content types. Paths are given as pairs with the remote and the
+        local version.
+    """
+    return {
+        DEB_RELEASE_NAME: [
+            (content_unit['relative_path'], content_unit['relative_path'])
+            for content_unit in get_content(repo)[DEB_RELEASE_NAME]
+        ],
+
+        DEB_PACKAGE_INDEX_NAME: [
+            (content_unit['relative_path'], content_unit['relative_path'])
+            for content_unit in get_content(repo)[DEB_PACKAGE_INDEX_NAME]
+        ],
+
+        DEB_PACKAGE_NAME: [
+            (content_unit['relative_path'], content_unit['relative_path'])
+            for content_unit in get_content(repo)[DEB_PACKAGE_NAME]
+        ],
+
+        DEB_GENERIC_CONTENT_NAME: [
+            (content_unit['relative_path'], content_unit['relative_path'])
+            for content_unit in get_content(repo)[DEB_GENERIC_CONTENT_NAME]
+        ],
+    }
 
 
 def gen_deb_content_attrs(artifact):
