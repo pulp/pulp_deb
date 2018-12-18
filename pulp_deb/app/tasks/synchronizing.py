@@ -247,10 +247,9 @@ class DebUpdatePackageAttributes(Stage):
             if isinstance(declarative_content.content, Package):
                 package = declarative_content.content
                 package_artifact = declarative_content.d_artifacts[0].artifact
-                package_dict = debfile.DebFile(
+                package_paragraph = debfile.DebFile(
                     package_artifact.storage_path('')).debcontrol()
-                # This line is a workaround until we can call this field `package`
-                package.package_name = package_dict.pop('package')
+                package_dict = _sanitize_package_dict(package_paragraph)
                 for key, value in package_dict.items():
                     setattr(package, key.lower(), value)
             await out_q.put(declarative_content)
@@ -415,17 +414,25 @@ async def _read_package_index(package_index, remote, out_q):
 
     """
     parsed_url = urlparse(remote.url)
-    for package_dict in deb822.Packages.iter_paragraphs(package_index):
+    for package_paragraph in deb822.Packages.iter_paragraphs(package_index):
         log.debug("Downloading package {}".format(
-            package_dict['Package']))
-        package_relpath = package_dict['Filename']
+            package_paragraph['Package']))
+        package_relpath = package_paragraph['Filename']
+        package_dict = _sanitize_package_dict(package_paragraph)
         package_path = os.path.join(parsed_url.path, package_relpath)
+        package_content_unit = Package(relative_path=package_relpath, **package_dict)
         package_artifact = Artifact(
-            sha256=package_dict['SHA256'],
-            sha1=package_dict['SHA1'],
-            md5=package_dict['MD5sum'])
+            sha512=package_dict.get('SHA512'),
+            sha256=package_dict.get('SHA256'),
+            sha1=package_dict.get('SHA1'),
+            md5=package_dict.get('MD5sum'),
+        )
         package_da = DeclarativeArtifact(package_artifact, urlunparse(
             parsed_url._replace(path=package_path)), package_relpath, remote)
         package_dc = DeclarativeContent(
-            content=Package(), d_artifacts=[package_da])
+            content=package_content_unit, d_artifacts=[package_da])
         await out_q.put(package_dc)
+
+
+def _sanitize_package_dict(package_dict):
+    return {k: package_dict[v] for k, v in Package.TRANSLATION_DICT.items() if v in package_dict}

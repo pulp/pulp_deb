@@ -118,6 +118,38 @@ class Package(Content):
 
     TYPE = 'package'
 
+    TRANSLATION_DICT = {
+        'package_name': 'package',  # Workaround (this field should be called 'package')
+        'source': 'source',
+        'version': 'version',
+        'architecture': 'architecture',
+        'section': 'section',
+        'priority': 'priority',
+        'origin': 'origin',
+        'tag': 'tag',
+        'bugs': 'bugs',
+        'essential': 'essential',
+        'build_essential': 'build_essential',
+        'installed_size': 'installed_size',
+        'maintainer': 'maintainer',
+        'original_maintainer': 'original_maintainer',
+        'description': 'description',
+        'description_md5': 'description_md5',
+        'homepage': 'homepage',
+        'built_using': 'built_using',
+        'auto_built_package': 'auto_built_package',
+        'multi_arch': 'multi_arch',
+        'breaks': 'breaks',
+        'conflicts': 'conflicts',
+        'depends': 'depends',
+        'recommends': 'recommends',
+        'suggests': 'suggests',
+        'enhances': 'enhances',
+        'pre_depends': 'pre_depends',
+        'provides': 'provides',
+        'replaces': 'replaces',
+    }
+
     # TODO: Do we have any specification for max_length?
     package_name = models.TextField()  # package name
     source = models.TextField(null=True)  # source package name
