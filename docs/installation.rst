@@ -57,6 +57,7 @@ Run Services
 .. code-block:: bash
 
    pulp-manager runserver
+   gunicorn pulpcore.content:server --bind 'localhost:8080' --worker-class 'aiohttp.GunicornWebWorker' -w 2
    sudo systemctl restart pulp_resource_manager
    sudo systemctl restart pulp_worker@1
    sudo systemctl restart pulp_worker@2

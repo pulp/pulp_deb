@@ -53,4 +53,4 @@ def publish(publisher_pk, repository_version_pk):
             # metadata.save()
             pass
 
-    log.info(_('Publication: {publication} created').format(publication.pk))
+    log.info(_('Publication: {publication} created').format(publication=publication.pk))

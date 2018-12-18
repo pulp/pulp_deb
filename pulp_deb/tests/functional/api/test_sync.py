@@ -2,17 +2,17 @@
 """Tests that sync deb plugin repositories."""
 import unittest
 
-from pulp_smash import api, config, exceptions
-from pulp_smash.pulp3.constants import REPO_PATH
+from pulp_smash import api, cli, config, exceptions
+from pulp_smash.pulp3.constants import MEDIA_PATH, REPO_PATH
 from pulp_smash.pulp3.utils import (
     gen_repo,
-    get_content,
-    get_added_content,
+    get_content_summary,
+    get_added_content_summary,
     sync,
 )
 
 from pulp_deb.tests.functional.constants import (
-    DEB_FIXTURE_COUNT,
+    DEB_FIXTURE_SUMMARY,
     DEB_REMOTE_PATH
 )
 from pulp_deb.tests.functional.utils import gen_deb_remote
@@ -59,8 +59,8 @@ class BasicSyncTestCase(unittest.TestCase):
         repo = self.client.get(repo['_href'])
 
         self.assertIsNotNone(repo['_latest_version_href'])
-        self.assertEqual(len(get_content(repo)), DEB_FIXTURE_COUNT)
-        self.assertEqual(len(get_added_content(repo)), DEB_FIXTURE_COUNT)
+        self.assertDictEqual(get_content_summary(repo), DEB_FIXTURE_SUMMARY)
+        self.assertDictEqual(get_added_content_summary(repo), DEB_FIXTURE_SUMMARY)
 
         # Sync the repository again.
         latest_version_href = repo['_latest_version_href']
@@ -68,8 +68,42 @@ class BasicSyncTestCase(unittest.TestCase):
         repo = self.client.get(repo['_href'])
 
         self.assertNotEqual(latest_version_href, repo['_latest_version_href'])
-        self.assertEqual(len(get_content(repo)), DEB_FIXTURE_COUNT)
-        self.assertEqual(len(get_added_content(repo)), 0)
+        self.assertDictEqual(get_content_summary(repo), DEB_FIXTURE_SUMMARY)
+        self.assertDictEqual(get_added_content_summary(repo), {})
+
+    # This test may not make sense for all plugins, but is likely to be useful
+    # for most. Check that it makes sense for yours before enabling it.
+    @unittest.skip("FIXME: plugin writer action required")
+    def test_file_decriptors(self):
+        """Test whether file descriptors are closed properly.
+
+        This test targets the following issue:
+        `Pulp #4073 <https://pulp.plan.io/issues/4073>`_
+
+        Do the following:
+        1. Check if 'lsof' is installed. If it is not, skip this test.
+        2. Create and sync a repo.
+        3. Run the 'lsof' command to verify that files in the
+           path ``/var/lib/pulp/`` are closed after the sync.
+        4. Assert that issued command returns `0` opened files.
+        """
+        cli_client = cli.Client(self.cfg, cli.echo_handler)
+
+        # check if 'lsof' is available
+        if cli_client.run(('which', 'lsof')).returncode != 0:
+            raise unittest.SkipTest('lsof package is not present')
+
+        repo = self.client.post(REPO_PATH, gen_repo())
+        self.addCleanup(self.client.delete, repo['_href'])
+
+        remote = self.client.post(DEB_REMOTE_PATH, gen_deb_remote())
+        self.addCleanup(self.client.delete, remote['_href'])
+
+        sync(self.cfg, remote, repo)
+
+        cmd = 'lsof -t +D {}'.format(MEDIA_PATH).split()
+        response = cli_client.run(cmd).stdout
+        self.assertEqual(len(response), 0, response)
 
 
 class SyncInvalidURLTestCase(unittest.TestCase):

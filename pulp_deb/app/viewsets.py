@@ -19,6 +19,18 @@ from rest_framework.decorators import detail_route
 from . import models, serializers, tasks
 
 
+class DebContentFilter(core.ContentFilter):
+    """
+    FilterSet for DebContent.
+    """
+
+    class Meta:
+        model = models.DebContent
+        fields = [
+            # ...
+        ]
+
+
 class DebContentViewSet(core.ContentViewSet):
     """
     A ViewSet for DebContent.
@@ -33,6 +45,19 @@ class DebContentViewSet(core.ContentViewSet):
     endpoint_name = 'deb'
     queryset = models.DebContent.objects.all()
     serializer_class = serializers.DebContentSerializer
+    filterset_class = DebContentFilter
+
+
+class DebRemoteFilter(core.RemoteFilter):
+    """
+    A FilterSet for DebRemote.
+    """
+
+    class Meta:
+        model = models.DebRemote
+        fields = [
+            # ...
+        ]
 
 
 class DebRemoteViewSet(core.RemoteViewSet):
@@ -64,12 +89,14 @@ class DebRemoteViewSet(core.RemoteViewSet):
         # Validate synchronously to return 400 errors.
         serializer.is_valid(raise_exception=True)
         repository = serializer.validated_data.get('repository')
+        mirror = serializer.validated_data.get('mirror', True)
         result = enqueue_with_reservation(
             tasks.synchronize,
             [repository, remote],
             kwargs={
                 'remote_pk': remote.pk,
-                'repository_pk': repository.pk
+                'repository_pk': repository.pk,
+                'mirror': mirror
             }
         )
         return core.OperationPostponedResponse(result, request)

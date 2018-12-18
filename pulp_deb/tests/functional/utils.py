@@ -18,6 +18,7 @@ from pulp_smash.pulp3.utils import (
 )
 
 from pulp_deb.tests.functional.constants import (
+    DEB_CONTENT_NAME,
     DEB_CONTENT_PATH,
     DEB_FIXTURE_URL,
     DEB_REMOTE_PATH,
@@ -36,7 +37,7 @@ def gen_deb_remote(**kwargs):
     :param url: The URL of an external content source.
     """
     remote = gen_remote(DEB_FIXTURE_URL)
-    # FIXME: Add any fields specific to a plugin_teplate remote here
+    # FIXME: Add any fields specific to a deb remote here
     deb_extra_fields = {
         **kwargs
     }
@@ -67,7 +68,10 @@ def get_deb_content_unit_paths(repo):
     # FIXME: The "relative_path" is actually a file path and name
     # It's just an example -- this needs to be replaced with an implementation that works
     # for repositories of this content type.
-    return [content_unit['relative_path'] for content_unit in get_content(repo)]
+    return [
+        content_unit['relative_path']
+        for content_unit in get_content(repo)[DEB_CONTENT_NAME]
+    ]
 
 
 def gen_deb_content_attrs(artifact):

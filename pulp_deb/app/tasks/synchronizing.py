@@ -1,7 +1,7 @@
 from gettext import gettext as _
 import logging
 
-from pulpcore.plugin.models import Artifact, ProgressBar, Repository
+from pulpcore.plugin.models import Artifact, ProgressBar, Remote, Repository
 from pulpcore.plugin.stages import (
     DeclarativeArtifact,
     DeclarativeContent,
@@ -15,7 +15,7 @@ from pulp_deb.app.models import DebContent, DebRemote
 log = logging.getLogger(__name__)
 
 
-def synchronize(remote_pk, repository_pk):
+def synchronize(remote_pk, repository_pk, mirror):
     """
     Sync content from the remote repository.
 
@@ -24,6 +24,7 @@ def synchronize(remote_pk, repository_pk):
     Args:
         remote_pk (str): The remote PK.
         repository_pk (str): The repository PK.
+        mirror (bool): True for mirror mode, False for additive.
 
     Raises:
         ValueError: If the remote does not specify a URL to sync
@@ -35,8 +36,13 @@ def synchronize(remote_pk, repository_pk):
     if not remote.url:
         raise ValueError(_('A remote must have a url specified to synchronize.'))
 
+    # Interpret policy to download Artifacts or not
+    download_artifacts = (remote.policy == Remote.IMMEDIATE)
     first_stage = DebFirstStage(remote)
-    DeclarativeVersion(first_stage, repository).create()
+    DeclarativeVersion(
+        first_stage, repository,
+        mirror=mirror, download_artifacts=download_artifacts
+    ).create()
 
 
 class DebFirstStage(Stage):
@@ -63,7 +69,7 @@ class DebFirstStage(Stage):
             out_q (asyncio.Queue): The out_q to send `DeclarativeContent` objects to
 
         """
-        downloader = self.remote.get_downloader(self.remote.url)
+        downloader = self.remote.get_downloader(url=self.remote.url)
         result = await downloader.run()
         # Use ProgressBar to report progress
         for entry in self.read_my_metadata_file_somehow(result.path):
