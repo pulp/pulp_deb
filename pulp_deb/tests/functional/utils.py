@@ -18,6 +18,7 @@ from pulp_smash.pulp3.utils import (
 )
 
 from pulp_deb.tests.functional.constants import (
+    DEB_GENERIC_CONTENT_NAME,
     DEB_GENERIC_CONTENT_PATH,
     DEB_FIXTURE_URL,
     DEB_FIXTURE_RELEASE,
@@ -33,6 +34,8 @@ def set_up_module():
 
 def gen_deb_remote(**kwargs):
     """Return a semi-random dict for use in creating a deb Remote.
+
+    :param url: The URL of an external content source.
     """
     remote = gen_remote(DEB_FIXTURE_URL)
     deb_extra_fields = {
@@ -56,6 +59,8 @@ def gen_deb_verbatim_publisher(**kwargs):
 
 def gen_deb_publisher(**kwargs):
     """Return a semi-random dict for use in creating a Publisher.
+
+    :param url: The URL of an external content source.
     """
     publisher = gen_publisher()
     deb_extra_fields = {
@@ -75,7 +80,10 @@ def get_deb_content_unit_paths(repo):
     # FIXME: The "relative_path" is actually a file path and name
     # It's just an example -- this needs to be replaced with an implementation that works
     # for repositories of this content type.
-    return [content_unit['relative_path'] for content_unit in get_content(repo)]
+    return [
+        content_unit['relative_path']
+        for content_unit in get_content(repo)[DEB_GENERIC_CONTENT_NAME]
+    ]
 
 
 def gen_deb_content_attrs(artifact):

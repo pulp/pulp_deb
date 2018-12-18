@@ -1,10 +1,10 @@
+from gettext import gettext as _
 import logging
 import os
 from collections import defaultdict
 
 from debian import deb822, debfile
 
-from gettext import gettext as _
 from urllib.parse import urlparse, urlunparse
 
 from pulpcore.plugin.models import Artifact, ProgressBar, Repository
@@ -45,8 +45,7 @@ def synchronize(remote_pk, repository_pk, mirror):
     repository = Repository.objects.get(pk=repository_pk)
 
     if not remote.url:
-        raise ValueError(
-            _('A remote must have a url specified to synchronize.'))
+        raise ValueError(_('A remote must have a url specified to synchronize.'))
 
     first_stage = DebFirstStage(remote)
     DebDeclarativeVersion(first_stage, repository, mirror).create()

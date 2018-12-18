@@ -1,15 +1,10 @@
 from rest_framework import serializers
-
-from pulpcore.plugin.serializers import (
-    ContentSerializer,
-    RemoteSerializer,
-    PublisherSerializer
-)
+from pulpcore.plugin import serializers as platform
 
 from . import models
 
 
-class GenericContentSerializer(ContentSerializer):
+class GenericContentSerializer(platform.ContentSerializer):
     """
     A serializer for GenericContent.
     """
@@ -20,12 +15,14 @@ class GenericContentSerializer(ContentSerializer):
     )
 
     class Meta:
-        fields = tuple(set(ContentSerializer.Meta.fields) - {'artifacts'}) + ('relative_path',
-                                                                              'artifact')
+        fields = tuple(set(platform.ContentSerializer.Meta.fields) - {'artifacts'}) + (
+            'relative_path',
+            'artifact',
+        )
         model = models.GenericContent
 
 
-class ReleaseSerializer(ContentSerializer):
+class ReleaseSerializer(platform.ContentSerializer):
     """
     A serializer for Release.
     """
@@ -51,12 +48,12 @@ class ReleaseSerializer(ContentSerializer):
     )
 
     class Meta:
-        fields = tuple(set(ContentSerializer.Meta.fields) - {'artifacts'}) \
+        fields = tuple(set(platform.ContentSerializer.Meta.fields) - {'artifacts'}) \
             + ('codename', 'suite', 'distribution', 'relative_path', 'artifact')
         model = models.GenericContent
 
 
-class PackageIndexSerializer(ContentSerializer):
+class PackageIndexSerializer(platform.ContentSerializer):
     """
     A serializer for PackageIndex.
     """
@@ -77,12 +74,12 @@ class PackageIndexSerializer(ContentSerializer):
     )
 
     class Meta:
-        fields = ContentSerializer.Meta.fields + \
+        fields = platform.ContentSerializer.Meta.fields + \
             ('release', 'component', 'architecture', 'relative_path')
         model = models.PackageIndex
 
 
-class PackageSerializer(ContentSerializer):
+class PackageSerializer(platform.ContentSerializer):
     """
     A Serializer for Package.
     """
@@ -93,7 +90,7 @@ class PackageSerializer(ContentSerializer):
     )
 
     class Meta:
-        fields = tuple(set(ContentSerializer.Meta.fields) - {'artifacts'}) + (
+        fields = tuple(set(platform.ContentSerializer.Meta.fields) - {'artifacts'}) + (
             'relative_path',
             'artifact',
             'package_name',
@@ -129,7 +126,7 @@ class PackageSerializer(ContentSerializer):
         model = models.Package
 
 
-class DebRemoteSerializer(RemoteSerializer):
+class DebRemoteSerializer(platform.RemoteSerializer):
     """
     A Serializer for DebRemote.
     """
@@ -148,22 +145,22 @@ class DebRemoteSerializer(RemoteSerializer):
     )
 
     class Meta:
-        fields = RemoteSerializer.Meta.fields + \
+        fields = platform.RemoteSerializer.Meta.fields + \
             ('distributions', 'components', 'architectures')
         model = models.DebRemote
 
 
-class DebVerbatimPublisherSerializer(PublisherSerializer):
+class DebVerbatimPublisherSerializer(platform.PublisherSerializer):
     """
     A Serializer for DebVerbatimPublisher.
     """
 
     class Meta:
-        fields = PublisherSerializer.Meta.fields
+        fields = platform.PublisherSerializer.Meta.fields
         model = models.DebVerbatimPublisher
 
 
-class DebPublisherSerializer(PublisherSerializer):
+class DebPublisherSerializer(platform.PublisherSerializer):
     """
     A Serializer for DebPublisher.
     """
@@ -187,7 +184,7 @@ class DebPublisherSerializer(PublisherSerializer):
         return data
 
     class Meta:
-        fields = PublisherSerializer.Meta.fields + (
+        fields = platform.PublisherSerializer.Meta.fields + (
             'simple',
             'structured',
         )

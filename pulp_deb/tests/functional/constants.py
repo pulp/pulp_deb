@@ -8,8 +8,13 @@ from pulp_smash.pulp3.constants import (
     CONTENT_PATH
 )
 
-# FIXME: replace 'unit' with your own content type names, and duplicate as necessary for each type
-# DEB_CONTENT_PATH = urljoin(CONTENT_PATH, 'deb/content/')
+DOWNLOAD_POLICIES = ['immediate', 'streamed', 'on_demand']
+
+DEB_RELEASE_NAME = 'release'
+DEB_PACKAGE_INDEX_NAME = 'package_index'
+DEB_PACKAGE_NAME = 'package'
+DEB_GENERIC_CONTENT_NAME = 'generic'
+
 DEB_PACKAGE_PATH = urljoin(CONTENT_PATH, 'deb/packages/')
 DEB_GENERIC_CONTENT_PATH = urljoin(CONTENT_PATH, 'deb/generic_contents/')
 
@@ -22,7 +27,17 @@ DEB_VERBATIM_PUBLISHER_PATH = urljoin(BASE_PUBLISHER_PATH, 'deb_verbatim/')
 DEB_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, 'debian/')
 DEB_FIXTURE_RELEASE = 'ragnarok'
 
-DEB_FIXTURE_COUNT = 13
+DEB_FIXTURE_RELEASE_COUNT = 1
+DEB_FIXTURE_PACKAGE_INDEX_COUNT = 4
+DEB_FIXTURE_PACKAGE_COUNT = 4
+DEB_FIXTURE_GENERIC_CONTENT_COUNT = 4
+
+DEB_FIXTURE_SUMMARY = {
+    DEB_RELEASE_NAME: DEB_FIXTURE_RELEASE_COUNT,
+    DEB_PACKAGE_INDEX_NAME: DEB_FIXTURE_PACKAGE_INDEX_COUNT,
+    DEB_PACKAGE_NAME: DEB_FIXTURE_PACKAGE_COUNT,
+    DEB_GENERIC_CONTENT_NAME: DEB_FIXTURE_GENERIC_CONTENT_COUNT,
+}
 
 DEB_PACKAGE_RELPATH = 'pool/asgard/o/odin/odin_1.0_ppc64.deb'
 DEB_PACKAGE_URL = urljoin(DEB_FIXTURE_URL, DEB_PACKAGE_RELPATH)

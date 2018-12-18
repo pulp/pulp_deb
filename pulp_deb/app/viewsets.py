@@ -1,23 +1,18 @@
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework.decorators import detail_route
 
+from pulpcore.plugin import viewsets as core
 from pulpcore.plugin.serializers import (
     AsyncOperationResponseSerializer,
     RepositoryPublishURLSerializer,
     RepositorySyncURLSerializer,
 )
 from pulpcore.plugin.tasking import enqueue_with_reservation
-from pulpcore.plugin.viewsets import (
-    ContentViewSet,
-    RemoteViewSet,
-    OperationPostponedResponse,
-    PublisherViewSet,
-    BaseFilterSet)
+from rest_framework.decorators import detail_route
 
 from . import models, serializers, tasks
 
 
-class GenericContentFilter(BaseFilterSet):
+class GenericContentFilter(core.ContentFilter):
     """
     FilterSet for GenericContent.
     """
@@ -29,7 +24,7 @@ class GenericContentFilter(BaseFilterSet):
         ]
 
 
-class ReleaseFilter(BaseFilterSet):
+class ReleaseFilter(core.ContentFilter):
     """
     FilterSet for Release.
     """
@@ -43,7 +38,7 @@ class ReleaseFilter(BaseFilterSet):
         ]
 
 
-class PackageFilter(BaseFilterSet):
+class PackageFilter(core.ContentFilter):
     """
     FilterSet for Package.
     """
@@ -55,7 +50,7 @@ class PackageFilter(BaseFilterSet):
         ]
 
 
-class GenericContentViewSet(ContentViewSet):
+class GenericContentViewSet(core.ContentViewSet):
     """
     A ViewSet for GenericContent.
     """
@@ -65,7 +60,7 @@ class GenericContentViewSet(ContentViewSet):
     serializer_class = serializers.GenericContentSerializer
 
 
-class ReleaseViewSet(ContentViewSet):
+class ReleaseViewSet(core.ContentViewSet):
     """
     A ViewSet for Release.
     """
@@ -75,7 +70,7 @@ class ReleaseViewSet(ContentViewSet):
     serializer_class = serializers.ReleaseSerializer
 
 
-class PackageIndexViewSet(ContentViewSet):
+class PackageIndexViewSet(core.ContentViewSet):
     """
     A ViewSet for PackageIndex.
     """
@@ -85,7 +80,7 @@ class PackageIndexViewSet(ContentViewSet):
     serializer_class = serializers.PackageIndexSerializer
 
 
-class PackageViewSet(ContentViewSet):
+class PackageViewSet(core.ContentViewSet):
     """
     A ViewSet for Package.
     """
@@ -95,7 +90,7 @@ class PackageViewSet(ContentViewSet):
     serializer_class = serializers.PackageSerializer
 
 
-class DebRemoteViewSet(RemoteViewSet):
+class DebRemoteViewSet(core.RemoteViewSet):
     """
     A ViewSet for DebRemote.
     """
@@ -118,8 +113,7 @@ class DebRemoteViewSet(RemoteViewSet):
         The ``repository`` field has to be provided.
         """
         remote = self.get_object()
-        serializer = RepositorySyncURLSerializer(
-            data=request.data, context={'request': request})
+        serializer = RepositorySyncURLSerializer(data=request.data, context={'request': request})
 
         # Validate synchronously to return 400 errors.
         serializer.is_valid(raise_exception=True)
@@ -134,10 +128,10 @@ class DebRemoteViewSet(RemoteViewSet):
                 'mirror': mirror,
             }
         )
-        return OperationPostponedResponse(result, request)
+        return core.OperationPostponedResponse(result, request)
 
 
-class DebVerbatimPublisherViewSet(PublisherViewSet):
+class DebVerbatimPublisherViewSet(core.PublisherViewSet):
     """
     A ViewSet for DebVerbatimPublisher.
     """
@@ -177,10 +171,10 @@ class DebVerbatimPublisherViewSet(PublisherViewSet):
                 'repository_version_pk': str(repository_version.pk)
             }
         )
-        return OperationPostponedResponse(result, request)
+        return core.OperationPostponedResponse(result, request)
 
 
-class DebPublisherViewSet(PublisherViewSet):
+class DebPublisherViewSet(core.PublisherViewSet):
     """
     A ViewSet for DebPublisher.
     """
@@ -209,8 +203,7 @@ class DebPublisherViewSet(PublisherViewSet):
             context={'request': request},
         )
         serializer.is_valid(raise_exception=True)
-        repository_version = serializer.validated_data.get(
-            'repository_version')
+        repository_version = serializer.validated_data.get('repository_version')
 
         result = enqueue_with_reservation(
             tasks.publish,
@@ -220,4 +213,4 @@ class DebPublisherViewSet(PublisherViewSet):
                 'repository_version_pk': str(repository_version.pk)
             }
         )
-        return OperationPostponedResponse(result, request)
+        return core.OperationPostponedResponse(result, request)
