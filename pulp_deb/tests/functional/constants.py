@@ -8,24 +8,43 @@ from pulp_smash.pulp3.constants import (
     CONTENT_PATH
 )
 
-# FIXME: replace 'unit' with your own content type names, and duplicate as necessary for each type
-DEB_CONTENT_PATH = urljoin(CONTENT_PATH, 'deb/units/')
+DOWNLOAD_POLICIES = ['immediate', 'streamed', 'on_demand']
+
+DEB_RELEASE_NAME = 'release'
+DEB_PACKAGE_INDEX_NAME = 'package_index'
+DEB_PACKAGE_NAME = 'package'
+DEB_GENERIC_CONTENT_NAME = 'generic'
+
+DEB_PACKAGE_PATH = urljoin(CONTENT_PATH, 'deb/packages/')
+DEB_GENERIC_CONTENT_PATH = urljoin(CONTENT_PATH, 'deb/generic_contents/')
 
 DEB_REMOTE_PATH = urljoin(BASE_REMOTE_PATH, 'deb/')
 
 DEB_PUBLISHER_PATH = urljoin(BASE_PUBLISHER_PATH, 'deb/')
+DEB_VERBATIM_PUBLISHER_PATH = urljoin(BASE_PUBLISHER_PATH, 'deb_verbatim/')
 
+
+DEB_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, 'debian/')
+DEB_FIXTURE_RELEASE = 'ragnarok'
+
+DEB_FIXTURE_RELEASE_COUNT = 1
+DEB_FIXTURE_PACKAGE_INDEX_COUNT = 4
+DEB_FIXTURE_PACKAGE_COUNT = 4
+DEB_FIXTURE_GENERIC_CONTENT_COUNT = 4
+
+DEB_FIXTURE_SUMMARY = {
+    DEB_RELEASE_NAME: DEB_FIXTURE_RELEASE_COUNT,
+    DEB_PACKAGE_INDEX_NAME: DEB_FIXTURE_PACKAGE_INDEX_COUNT,
+    DEB_PACKAGE_NAME: DEB_FIXTURE_PACKAGE_COUNT,
+    DEB_GENERIC_CONTENT_NAME: DEB_FIXTURE_GENERIC_CONTENT_COUNT,
+}
+
+DEB_PACKAGE_RELPATH = 'pool/asgard/o/odin/odin_1.0_ppc64.deb'
+DEB_PACKAGE_URL = urljoin(DEB_FIXTURE_URL, DEB_PACKAGE_RELPATH)
+DEB_GENERIC_CONTENT_RELPATH = 'dists/ragnarok/asgard/binary-armeb/Release'
+DEB_GENERIC_CONTENT_URL = urljoin(DEB_FIXTURE_URL, DEB_GENERIC_CONTENT_RELPATH)
 
 # FIXME: replace this with your own fixture repository URL and metadata
-DEB_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, 'deb/')
-
-# FIXME: replace this with the actual number of content units in your test fixture
-DEB_FIXTURE_COUNT = 3
-
-# FIXME: replace this with the location of one specific content unit of your choosing
-DEB_URL = urljoin(DEB_FIXTURE_URL, '')
-
-# FIXME: replace this iwth your own fixture repository URL and metadata
 DEB_LARGE_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, 'deb_large/')
 
 # FIXME: replace this with the actual number of content units in your test fixture

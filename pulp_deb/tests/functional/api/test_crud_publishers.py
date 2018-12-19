@@ -8,13 +8,24 @@ from pulp_smash import api, config
 from pulp_smash.pulp3.constants import REPO_PATH
 from pulp_smash.pulp3.utils import gen_repo
 
-from pulp_deb.tests.functional.constants import DEB_PUBLISHER_PATH
-from pulp_deb.tests.functional.utils import gen_deb_publisher, skip_if
+from pulp_deb.tests.functional.constants import (
+    DEB_PUBLISHER_PATH,
+    DEB_VERBATIM_PUBLISHER_PATH,
+)
+from pulp_deb.tests.functional.utils import (
+    gen_deb_publisher,
+    gen_deb_verbatim_publisher,
+    skip_if,
+)
 from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 
 
 class CRUDPublishersTestCase(unittest.TestCase):
     """CRUD publishers."""
+
+    class Meta:
+        gen_publisher = gen_deb_publisher
+        publisher_path = DEB_PUBLISHER_PATH
 
     @classmethod
     def setUpClass(cls):
@@ -34,8 +45,8 @@ class CRUDPublishersTestCase(unittest.TestCase):
 
     def test_01_create_publisher(self):
         """Create a publisher."""
-        body = gen_deb_publisher()
-        type(self).publisher = self.client.post(DEB_PUBLISHER_PATH, body)
+        body = self.Meta.gen_publisher()
+        type(self).publisher = self.client.post(self.Meta.publisher_path, body)
         for key, val in body.items():
             with self.subTest(key=key):
                 self.assertEqual(self.publisher[key], val)
@@ -47,10 +58,10 @@ class CRUDPublishersTestCase(unittest.TestCase):
         See: `Pulp Smash #1055
         <https://github.com/PulpQE/pulp-smash/issues/1055>`_.
         """
-        body = gen_deb_publisher()
+        body = self.Meta.gen_publisher()
         body['name'] = self.publisher['name']
         with self.assertRaises(HTTPError):
-            self.client.post(DEB_PUBLISHER_PATH, body)
+            self.client.post(self.Meta.publisher_path, body)
 
     @skip_if(bool, 'publisher', False)
     def test_02_read_publisher(self):
@@ -63,7 +74,7 @@ class CRUDPublishersTestCase(unittest.TestCase):
     @skip_if(bool, 'publisher', False)
     def test_02_read_publishers(self):
         """Read a publisher by its name."""
-        page = self.client.get(DEB_PUBLISHER_PATH, params={
+        page = self.client.get(self.Meta.publisher_path, params={
             'name': self.publisher['name']
         })
         self.assertEqual(len(page['results']), 1)
@@ -74,7 +85,7 @@ class CRUDPublishersTestCase(unittest.TestCase):
     @skip_if(bool, 'publisher', False)
     def test_03_partially_update(self):
         """Update a publisher using HTTP PATCH."""
-        body = gen_deb_publisher()
+        body = self.Meta.gen_publisher()
         self.client.patch(self.publisher['_href'], body)
         type(self).publisher = self.client.get(self.publisher['_href'])
         for key, val in body.items():
@@ -84,7 +95,7 @@ class CRUDPublishersTestCase(unittest.TestCase):
     @skip_if(bool, 'publisher', False)
     def test_04_fully_update(self):
         """Update a publisher using HTTP PUT."""
-        body = gen_deb_publisher()
+        body = self.Meta.gen_publisher()
         self.client.put(self.publisher['_href'], body)
         type(self).publisher = self.client.get(self.publisher['_href'])
         for key, val in body.items():
@@ -97,3 +108,11 @@ class CRUDPublishersTestCase(unittest.TestCase):
         self.client.delete(self.publisher['_href'])
         with self.assertRaises(HTTPError):
             self.client.get(self.publisher['_href'])
+
+
+class CRUDVerbatimPublishersTestCase(CRUDPublishersTestCase):
+    """CRUD publishers."""
+
+    class Meta:
+        gen_publisher = gen_deb_verbatim_publisher
+        publisher_path = DEB_VERBATIM_PUBLISHER_PATH

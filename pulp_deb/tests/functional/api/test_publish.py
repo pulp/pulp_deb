@@ -10,6 +10,7 @@ from pulp_smash import api, config
 from pulp_smash.pulp3.constants import REPO_PATH
 from pulp_smash.pulp3.utils import (
     gen_repo,
+    get_content,
     get_versions,
     publish,
     sync,
@@ -18,17 +19,18 @@ from pulp_smash.pulp3.utils import (
 from pulp_deb.tests.functional.utils import (
     gen_deb_remote,
     gen_deb_publisher,
+    gen_deb_verbatim_publisher,
 )
 from pulp_deb.tests.functional.constants import (
-    DEB_CONTENT_PATH,
+    DEB_PACKAGE_NAME,
+    DEB_GENERIC_CONTENT_NAME,
     DEB_REMOTE_PATH,
     DEB_PUBLISHER_PATH,
+    DEB_VERBATIM_PUBLISHER_PATH,
 )
 from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 
 
-# Implement sync and publish support before enabling this test.
-@unittest.skip("FIXME: plugin writer action required")
 class PublishAnyRepoVersionTestCase(unittest.TestCase):
     """Test whether a particular repository version can be published.
 
@@ -37,6 +39,10 @@ class PublishAnyRepoVersionTestCase(unittest.TestCase):
     * `Pulp #3324 <https://pulp.plan.io/issues/3324>`_
     * `Pulp Smash #897 <https://github.com/PulpQE/pulp-smash/issues/897>`_
     """
+
+    class Meta:
+        publisher_path = DEB_PUBLISHER_PATH
+        gen_publisher = gen_deb_publisher
 
     @classmethod
     def setUpClass(cls):
@@ -66,16 +72,20 @@ class PublishAnyRepoVersionTestCase(unittest.TestCase):
 
         sync(self.cfg, remote, repo)
 
-        publisher = self.client.post(DEB_PUBLISHER_PATH, gen_deb_publisher())
+        publisher = self.client.post(self.Meta.publisher_path, self.Meta.gen_publisher())
         self.addCleanup(self.client.delete, publisher['_href'])
 
         # Step 1
-        repo = self.client.post(REPO_PATH, gen_repo())
-        self.addCleanup(self.client.delete, repo['_href'])
-        for deb_content in self.client.get(DEB_CONTENT_PATH)['results']:
+        repo = self.client.get(repo['_href'])
+        for deb_generic_content in get_content(repo)[DEB_GENERIC_CONTENT_NAME]:
             self.client.post(
                 repo['_versions_href'],
-                {'add_content_units': [deb_content['_href']]}
+                {'add_content_units': [deb_generic_content['_href']]}
+            )
+        for deb_package in get_content(repo)[DEB_PACKAGE_NAME]:
+            self.client.post(
+                repo['_versions_href'],
+                {'add_content_units': [deb_package['_href']]}
             )
         version_hrefs = tuple(ver['_href'] for ver in get_versions(repo))
         non_latest = choice(version_hrefs[:-1])
@@ -99,3 +109,17 @@ class PublishAnyRepoVersionTestCase(unittest.TestCase):
                 'repository_version': non_latest
             }
             self.client.post(urljoin(publisher['_href'], 'publish/'), body)
+
+
+class VerbatimPublishAnyRepoVersionTestCase(PublishAnyRepoVersionTestCase):
+    """Test whether a particular repository version can be published verbatim.
+
+    This test targets the following issues:
+
+    * `Pulp #3324 <https://pulp.plan.io/issues/3324>`_
+    * `Pulp Smash #897 <https://github.com/PulpQE/pulp-smash/issues/897>`_
+    """
+
+    class Meta:
+        publisher_path = DEB_VERBATIM_PUBLISHER_PATH
+        gen_publisher = gen_deb_verbatim_publisher

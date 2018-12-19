@@ -6,10 +6,11 @@ import unittest
 from requests.exceptions import HTTPError
 
 from pulp_smash import api, config, utils
-from pulp_smash.pulp3.constants import REPO_PATH
-from pulp_smash.pulp3.utils import gen_repo
 
-from pulp_deb.tests.functional.constants import DEB_REMOTE_PATH
+from pulp_deb.tests.functional.constants import (
+    DOWNLOAD_POLICIES,
+    DEB_REMOTE_PATH,
+)
 from pulp_deb.tests.functional.utils import skip_if, gen_deb_remote
 from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 
@@ -19,19 +20,9 @@ class CRUDRemotesTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        """Create class-wide variables.
-
-        In order to create a remote a repository has to be created first.
-        """
+        """Create class-wide variables."""
         cls.cfg = config.get_config()
         cls.client = api.Client(cls.cfg, api.json_handler)
-        cls.remote = {}
-        cls.repo = cls.client.post(REPO_PATH, gen_repo())
-
-    @classmethod
-    def tearDownClass(cls):
-        """Clean class-wide variable."""
-        cls.client.delete(cls.repo['_href'])
 
     def test_01_create_remote(self):
         """Create a remote."""
@@ -137,6 +128,10 @@ def _gen_verbose_remote():
     attrs.update({
         'password': utils.uuid4(),
         'username': utils.uuid4(),
+        'policy': choice(DOWNLOAD_POLICIES),
         'validate': choice((False, True)),
+        'distributions': '{} {}'.format(utils.uuid4(), utils.uuid4()),
+        'components': '{} {}'.format(utils.uuid4(), utils.uuid4()),
+        'architectures': '{} {}'.format(utils.uuid4(), utils.uuid4()),
     })
     return attrs

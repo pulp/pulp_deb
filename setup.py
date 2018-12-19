@@ -4,16 +4,17 @@ from setuptools import setup
 
 requirements = [
     'pulpcore-plugin',
+    'python-debian',
 ]
 
 setup(
     name='pulp-deb',
-    version='0.0.1a1.dev1',
+    version='2.0.0a1.dev1',
     description='pulp-deb plugin for the Pulp Project',
     license='GPLv2+',
-    author='AUTHOR',
-    author_email='author@email.here',
-    url='http://example.com/',
+    author='Matthias Dellweg',
+    author_email='dellweg@atix.de',
+    url='https://pulpproject.org/#deb',
     python_requires='>=3.6',
     install_requires=requirements,
     include_package_data=True,
