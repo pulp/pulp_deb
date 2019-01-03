@@ -237,6 +237,7 @@ SHA256:
     @mock.patch('pulp_deb.plugins.importers.sync.gnupg.GPG')
     def test_VerifySignature(self, _GPG, _DebRelease, _DebComponent):
         key_fpr = '0000111122223333444455556666777788889999AAAABBBBCCCCDDDDEEEEFFFF'
+        _GPG.return_value.list_keys.return_value = [dict(fingerprint=key_fpr)]
         step = self.step.children[1]
         self.assertEquals(constants.SYNC_STEP_RELEASE_PARSE, step.step_id)
         step.get_config().repo_plugin_config['require_signature'] = True
