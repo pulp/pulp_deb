@@ -286,7 +286,7 @@ class Package(Content):
         if self.replaces:
             ret['Replaces'] = self.replaces
 
-        artifact = self.artifacts.get()
+        artifact = self._artifacts.get()
         ret['MD5sum'] = artifact.md5
         ret['SHA1'] = artifact.sha1
         ret['SHA256'] = artifact.sha256

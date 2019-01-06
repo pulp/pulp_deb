@@ -9,8 +9,6 @@ from gzip import GzipFile
 
 from django.core.files import File
 
-from django.db.models import Q
-
 from pulpcore.plugin.models import (
     RepositoryVersion,
     Publication,
@@ -86,7 +84,7 @@ def publish(publisher_pk, repository_version_pk):
                 release['SHA512'] = []
                 package_index_files = {}
                 for package in Package.objects.filter(
-                    pk__in=repository_version.content.filter(Q(type='package'))
+                    pk__in=repository_version.content.order_by('-_created')
                 ):
                     published_artifact = PublishedArtifact(
                         relative_path=package.filename(),

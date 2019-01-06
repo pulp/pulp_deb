@@ -10,10 +10,10 @@ from pulp_smash.pulp3.constants import (
 
 DOWNLOAD_POLICIES = ['immediate', 'streamed', 'on_demand']
 
-DEB_RELEASE_NAME = 'release'
-DEB_PACKAGE_INDEX_NAME = 'package_index'
-DEB_PACKAGE_NAME = 'package'
-DEB_GENERIC_CONTENT_NAME = 'generic'
+DEB_RELEASE_NAME = 'pulp_deb.release'
+DEB_PACKAGE_INDEX_NAME = 'pulp_deb.package_index'
+DEB_PACKAGE_NAME = 'pulp_deb.package'
+DEB_GENERIC_CONTENT_NAME = 'pulp_deb.generic'
 
 DEB_PACKAGE_PATH = urljoin(CONTENT_PATH, 'deb/packages/')
 DEB_GENERIC_CONTENT_PATH = urljoin(CONTENT_PATH, 'deb/generic_contents/')

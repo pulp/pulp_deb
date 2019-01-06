@@ -3,7 +3,7 @@
 from setuptools import setup
 
 requirements = [
-    'pulpcore-plugin',
+    'pulpcore-plugin>=0.1.0b16',
     'python-debian',
 ]
 
