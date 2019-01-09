@@ -89,6 +89,13 @@ class PackageIndex(Content):
             ('relative_path', 'sha256'),
         )
 
+    @property
+    def main_artifact(self):
+        """
+        Retrieve the uncompressed PackageIndex artifact.
+        """
+        return self._artifacts.get(sha256=self.sha256)
+
 
 class Package(Content):
     """
