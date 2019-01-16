@@ -16,8 +16,8 @@ from pulpcore.plugin.stages import (
     QueryExistingArtifacts,
     ArtifactDownloader,
     ArtifactSaver,
-    QueryExistingContentUnits,
-    ContentUnitSaver,
+    QueryExistingContents,
+    ContentSaver,
 )
 
 from pulp_deb.app.models import GenericContent, Release, PackageIndex, Package, DebRemote
@@ -58,7 +58,7 @@ class DebDeclarativeVersion(DeclarativeVersion):
 
     def pipeline_stages(self, new_version):
         """
-        Build the list of pipeline stages feeding into the ContentUnitAssociation stage.
+        Build the list of pipeline stages feeding into the ContentAssociation stage.
 
         Args:
             new_version (:class:`~pulpcore.plugin.models.RepositoryVersion`): The
@@ -74,8 +74,8 @@ class DebDeclarativeVersion(DeclarativeVersion):
             ArtifactSaver(),  # Releases
             DebUpdateReleaseAttributes(self.first_stage.components,
                                        self.first_stage.architectures),
-            QueryExistingContentUnits(),  # Releases
-            ContentUnitSaver(),  # Releases
+            QueryExistingContents(),  # Releases
+            ContentSaver(),  # Releases
             DebParseRelease(self.first_stage.remote),
             QueryExistingArtifacts(),
             ArtifactDownloader(),
@@ -90,8 +90,8 @@ class DebDeclarativeVersion(DeclarativeVersion):
                 DebUpdatePackageAttributes(),
             ])
         pipeline.extend([
-            QueryExistingContentUnits(),
-            ContentUnitSaver(),
+            QueryExistingContents(),
+            ContentSaver(),
         ])
         return pipeline
 
@@ -113,7 +113,7 @@ class DebUpdateReleaseAttributes(Stage):
     TODO: Verify signature
     """
 
-    def __init__(self, components, architectures):
+    def __init__(self, components, architectures, *args, **kwargs):
         """
         Initialize release parser with filters.
 
@@ -121,11 +121,11 @@ class DebUpdateReleaseAttributes(Stage):
             components: list of components
             architectures: list of architectures
         """
+        super().__init__(*args, **kwargs)
         self.components = components
         self.architectures = architectures
-        super(DebUpdateReleaseAttributes, self).__init__()
 
-    async def __call__(self, in_q, out_q):
+    async def run(self):
         """
         Parse Release content units.
 
@@ -133,14 +133,10 @@ class DebUpdateReleaseAttributes(Stage):
         Create declarative content units for dependent data.
         """
         with ProgressBar(message='Parsing Release files') as pb:
-            while True:
-                declarative_content = await in_q.get()
-                if declarative_content is None:
-                    await out_q.put(None)
-                    break
-                if isinstance(declarative_content.content, Release):
-                    release = declarative_content.content
-                    release_artifact = declarative_content.d_artifacts[0].artifact
+            async for d_content in self.items():
+                if isinstance(d_content.content, Release):
+                    release = d_content.content
+                    release_artifact = d_content.d_artifacts[0].artifact
                     release.sha256 = release_artifact.sha256
                     with open(release_artifact.storage_path(''), 'rb') as f:
                         release_dict = deb822.Release(f)
@@ -155,7 +151,7 @@ class DebUpdateReleaseAttributes(Stage):
                         log.debug('Components: {}'.format(release.components))
                         log.debug('Architectures: {}'.format(release.architectures))
                     pb.increment()
-                await out_q.put(declarative_content)
+                await self.put(d_content)
 
 
 class DebParseRelease(Stage):
@@ -163,34 +159,30 @@ class DebParseRelease(Stage):
     This stage creates download requests for PackageIndices and other generic content.
     """
 
-    def __init__(self, remote):
+    def __init__(self, remote, *args, **kwargs):
         """
         Initialize release parser 2 with remote.
 
         Args:
             remote: remote to associate content artifacts to
         """
+        super().__init__(*args, **kwargs)
         self.remote = remote
-        super(DebParseRelease, self).__init__()
 
-    async def __call__(self, in_q, out_q):
+    async def run(self):
         """
         Create declarative content units for dependent data.
         """
         with ProgressBar(message='Parsing Release files (second run)') as pb:
-            while True:
-                declarative_content = await in_q.get()
-                if declarative_content is None:
-                    await out_q.put(None)
-                    break
-                if isinstance(declarative_content.content, Release):
-                    release = declarative_content.content
-                    release_artifact = declarative_content.d_artifacts[0].artifact
+            async for d_content in self.items():
+                if isinstance(d_content.content, Release):
+                    release = d_content.content
+                    release_artifact = d_content.d_artifacts[0].artifact
                     with open(release_artifact.storage_path(''), 'rb') as f:
                         release_dict = deb822.Release(f)
-                        await _read_release_file(release, release_dict, self.remote, out_q)
+                        await _read_release_file(release, release_dict, self.remote, self)
                     pb.increment()
-                await out_q.put(declarative_content)
+                await self.put(d_content)
 
 
 class DebParsePackageIndex(Stage):
@@ -198,34 +190,30 @@ class DebParsePackageIndex(Stage):
     This stage handles PackageIndex content.
     """
 
-    def __init__(self, remote):
+    def __init__(self, remote, *args, **kwargs):
         """
         Initialize package index parser.
 
         Args:
             remote: remote to associate content artifacts to
         """
+        super().__init__(*args, **kwargs)
         self.remote = remote
-        super(DebParsePackageIndex, self).__init__()
 
-    async def __call__(self, in_q, out_q):
+    async def run(self):
         """
         Parse PackageIndex content units.
 
         Create declarative content units for found packages.
         """
         with ProgressBar(message='Parsing package index files') as pb:
-            while True:
-                declarative_content = await in_q.get()
-                if declarative_content is None:
-                    await out_q.put(None)
-                    break
-                if isinstance(declarative_content.content, PackageIndex):
-                    package_index_artifact = declarative_content.d_artifacts[0].artifact
+            async for d_content in self.items():
+                if isinstance(d_content.content, PackageIndex):
+                    package_index_artifact = d_content.d_artifacts[0].artifact
                     with open(package_index_artifact.storage_path(''), 'rb') as f:
-                        await _read_package_index(f, self.remote, out_q)
+                        await _read_package_index(f, self.remote, self)
                     pb.increment()
-                await out_q.put(declarative_content)
+                await self.put(d_content)
 
 
 class DebUpdatePackageAttributes(Stage):
@@ -235,24 +223,20 @@ class DebUpdatePackageAttributes(Stage):
     It reads all Package related database fields from the actual file.
     """
 
-    async def __call__(self, in_q, out_q):
+    async def run(self):
         """
         Update package content with the information obtained from its artifact.
         """
-        while True:
-            declarative_content = await in_q.get()
-            if declarative_content is None:
-                await out_q.put(None)
-                break
-            if isinstance(declarative_content.content, Package):
-                package = declarative_content.content
-                package_artifact = declarative_content.d_artifacts[0].artifact
+        async for d_content in self.items():
+            if isinstance(d_content.content, Package):
+                package = d_content.content
+                package_artifact = d_content.d_artifacts[0].artifact
                 package_paragraph = debfile.DebFile(
                     package_artifact.storage_path('')).debcontrol()
                 package_dict = _sanitize_package_dict(package_paragraph)
                 for key, value in package_dict.items():
                     setattr(package, key.lower(), value)
-            await out_q.put(declarative_content)
+            await self.put(d_content)
 
 
 class DebFirstStage(Stage):
@@ -260,7 +244,7 @@ class DebFirstStage(Stage):
     The first stage of a pulp_deb sync pipeline.
     """
 
-    def __init__(self, remote):
+    def __init__(self, remote, *args, **kwargs):
         """
         The first stage of a pulp_deb sync pipeline.
 
@@ -268,6 +252,7 @@ class DebFirstStage(Stage):
             remote (FileRemote): The remote data to be used when syncing
 
         """
+        super().__init__(*args, **kwargs)
         self.remote = remote
         self.distributions = [
             distribution.strip() for distribution in self.remote.distributions.split()
@@ -279,14 +264,9 @@ class DebFirstStage(Stage):
             architecture.strip() for architecture in self.remote.architectures.split()
         ]
 
-    async def __call__(self, in_q, out_q):
+    async def run(self):
         """
         Build and emit `DeclarativeContent` from the Release data.
-
-        Args:
-            in_q (asyncio.Queue): Unused because the first stage doesn't read from an input queue.
-            out_q (asyncio.Queue): The out_q to send `DeclarativeContent` objects to
-
         """
         parsed_url = urlparse(self.remote.url)
         with ProgressBar(message='Creating download requests for Release files',
@@ -309,10 +289,8 @@ class DebFirstStage(Stage):
                     content=release_unit,
                     d_artifacts=[release_da],
                 )
-                await out_q.put(release_dc)
+                await self.put(release_dc)
                 pb.increment()
-
-        await out_q.put(None)
 
 
 async def _read_release_file(release, release_dict, remote, out_q):
