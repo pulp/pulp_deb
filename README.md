@@ -205,6 +205,7 @@ rm -f ${1}.gpg
 
 gpg --homedir /var/lib/pulp/gpg-home \
     --batch \
+    --digest-algo SHA256 \
     --detach-sign --default-key $KEYID \
     --armor --output ${1}.gpg ${1}
 ```
