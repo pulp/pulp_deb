@@ -108,35 +108,35 @@ class Package(Content):
     TYPE = 'package'
 
     TRANSLATION_DICT = {
-        'package_name': 'package',  # Workaround (this field should be called 'package')
-        'source': 'source',
-        'version': 'version',
-        'architecture': 'architecture',
-        'section': 'section',
-        'priority': 'priority',
-        'origin': 'origin',
-        'tag': 'tag',
-        'bugs': 'bugs',
-        'essential': 'essential',
-        'build_essential': 'build_essential',
-        'installed_size': 'installed_size',
-        'maintainer': 'maintainer',
-        'original_maintainer': 'original_maintainer',
-        'description': 'description',
-        'description_md5': 'description_md5',
-        'homepage': 'homepage',
-        'built_using': 'built_using',
-        'auto_built_package': 'auto_built_package',
-        'multi_arch': 'multi_arch',
-        'breaks': 'breaks',
-        'conflicts': 'conflicts',
-        'depends': 'depends',
-        'recommends': 'recommends',
-        'suggests': 'suggests',
-        'enhances': 'enhances',
-        'pre_depends': 'pre_depends',
-        'provides': 'provides',
-        'replaces': 'replaces',
+        'package_name': 'Package',  # Workaround (this field should be called 'package')
+        'source': 'Source',
+        'version': 'Version',
+        'architecture': 'Architecture',
+        'section': 'Section',
+        'priority': 'Priority',
+        'origin': 'Origin',
+        'tag': 'Tag',
+        'bugs': 'Bugs',
+        'essential': 'Essential',
+        'build_essential': 'Build_essential',
+        'installed_size': 'Installed_size',
+        'maintainer': 'Maintainer',
+        'original_maintainer': 'Original_Maintainer',
+        'description': 'Description',
+        'description_md5': 'Description_MD5',
+        'homepage': 'Homepage',
+        'built_using': 'Built_Using',
+        'auto_built_package': 'Auto_Built_Package',
+        'multi_arch': 'Multi_Arch',
+        'breaks': 'Breaks',
+        'conflicts': 'Conflicts',
+        'depends': 'Depends',
+        'recommends': 'Recommends',
+        'suggests': 'Suggests',
+        'enhances': 'Enhances',
+        'pre_depends': 'Pre_Depends',
+        'provides': 'Provides',
+        'replaces': 'Replaces',
     }
 
     # TODO: Do we have any specification for max_length?
@@ -202,60 +202,11 @@ class Package(Content):
     def to822(self, component=''):
         """Create deb822.Package object from model."""
         ret = deb822.Packages()
-        ret['Package'] = self.package_name
-        if self.source:
-            ret['Source'] = self.source
-        ret['Version'] = self.version
-        ret['Architecture'] = self.architecture
-        if self.section:
-            ret['Section'] = self.section
-        if self.priority:
-            ret['Priority'] = self.priority
-        if self.origin:
-            ret['Origin'] = self.origin
-        if self.tag:
-            ret['Tag'] = self.tag
-        if self.bugs:
-            ret['Bugs'] = self.bugs
-        if self.essential:
-            ret['Essential'] = self.essential
-        if self.build_essential:
-            ret['Build-Essential'] = self.build_essential
-        if self.installed_size:
-            ret['Installed-Size'] = self.installed_size
-        ret['Maintainer'] = self.maintainer
-        if self.original_maintainer:
-            ret['Original-Maintainer'] = self.original_maintainer
-        ret['Description'] = self.description
-        if self.description_md5:
-            ret['Description-MD5'] = self.description_md5
-        if self.homepage:
-            ret['Homepage'] = self.homepage
-        if self.built_using:
-            ret['Built-Using'] = self.built_using
-        if self.auto_built_package:
-            ret['Auto-Built-Package'] = self.auto_built_package
-        if self.multi_arch:
-            ret['Multi-Arch'] = self.multi_arch
 
-        if self.breaks:
-            ret['Breaks'] = self.breaks
-        if self.conflicts:
-            ret['Conflicts'] = self.conflicts
-        if self.depends:
-            ret['Depends'] = self.depends
-        if self.recommends:
-            ret['Recommends'] = self.recommends
-        if self.suggests:
-            ret['Suggests'] = self.suggests
-        if self.enhances:
-            ret['Enhances'] = self.enhances
-        if self.pre_depends:
-            ret['Pre-Depends'] = self.pre_depends
-        if self.provides:
-            ret['Provides'] = self.provides
-        if self.replaces:
-            ret['Replaces'] = self.replaces
+        for k, v in self.TRANSLATION_DICT.items():
+            value = getattr(self, k, None)
+            if value is not None:
+                ret[v] = value
 
         artifact = self._artifacts.get()
         ret['MD5sum'] = artifact.md5
