@@ -50,6 +50,18 @@ class PackageFilter(core.ContentFilter):
         ]
 
 
+class InstallerPackageFilter(core.ContentFilter):
+    """
+    FilterSet for InstallerPackage.
+    """
+
+    class Meta:
+        model = models.InstallerPackage
+        fields = [
+            'relative_path',
+        ]
+
+
 class GenericContentViewSet(core.ContentViewSet):
     """
     A ViewSet for GenericContent.
@@ -80,6 +92,16 @@ class PackageIndexViewSet(core.ContentViewSet):
     serializer_class = serializers.PackageIndexSerializer
 
 
+class InstallerFileIndexViewSet(core.ContentViewSet):
+    """
+    A ViewSet for InstallerFileIndex.
+    """
+
+    endpoint_name = 'installer_file_index'
+    queryset = models.InstallerFileIndex.objects.all()
+    serializer_class = serializers.InstallerFileIndexSerializer
+
+
 class PackageViewSet(core.ContentViewSet):
     """
     A ViewSet for Package.
@@ -88,6 +110,16 @@ class PackageViewSet(core.ContentViewSet):
     endpoint_name = 'packages'
     queryset = models.Package.objects.all()
     serializer_class = serializers.PackageSerializer
+
+
+class InstallerPackageViewSet(core.ContentViewSet):
+    """
+    A ViewSet for InstallerPackage.
+    """
+
+    endpoint_name = 'installer_packages'
+    queryset = models.InstallerPackage.objects.all()
+    serializer_class = serializers.InstallerPackageSerializer
 
 
 class DebRemoteViewSet(core.RemoteViewSet):

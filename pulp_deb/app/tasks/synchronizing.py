@@ -12,7 +12,9 @@ from debian import deb822, debfile
 
 from urllib.parse import urlparse, urlunparse
 
-from pulpcore.plugin.models import Artifact, ProgressBar, Repository
+from django.core.exceptions import ObjectDoesNotExist
+
+from pulpcore.plugin.models import Artifact, ProgressBar, Remote, Repository
 from pulpcore.plugin.stages import (
     DeclarativeArtifact,
     DeclarativeContent,
@@ -26,15 +28,29 @@ from pulpcore.plugin.stages import (
     RemoteArtifactSaver,
     ResolveContentFutures,
 )
-from pulpcore.plugin.exceptions import PulpException
 
-from pulp_deb.app.models import GenericContent, Release, PackageIndex, Package, DebRemote
+from pulp_deb.app.models import (
+    GenericContent,
+    Release,
+    PackageIndex,
+    InstallerFileIndex,
+    Package,
+    InstallerPackage,
+    DebRemote,
+)
+from pulp_deb.app.serializers import (
+    # GenericContentSerializer,
+    # ReleaseSerializer,
+    # PackageIndexSerializer,
+    PackageSerializer,
+    InstallerPackageSerializer,
+)
 
 
 log = logging.getLogger(__name__)
 
 
-class NoPackageIndexFile(PulpException):
+class NoPackageIndexFile(Exception):
     """
     Exception to signal, that no file representing a package index is present.
     """
@@ -64,7 +80,11 @@ def synchronize(remote_pk, repository_pk, mirror):
         raise ValueError(_('A remote must have a url specified to synchronize.'))
 
     first_stage = DebFirstStage(remote)
-    DebDeclarativeVersion(first_stage, repository, mirror).create()
+    DebDeclarativeVersion(
+        first_stage,
+        repository,
+        mirror=mirror,
+    ).create()
 
 
 class DeclarativeFailsafeArtifact(DeclarativeArtifact):
@@ -105,16 +125,17 @@ class DebDeclarativeVersion(DeclarativeVersion):
         """
         pipeline = [
             self.first_stage,
-            # ---8<--- This should be specific
-            # Depends on https://pulp.plan.io/issues/4209
             QueryExistingArtifacts(),
             ArtifactDownloader(),
             DebDropEmptyContent(),
             ArtifactSaver(),
-            # ---8<---
-            DebUpdatePackageAttributes(),
-            DebUpdateReleaseAttributes(self.first_stage.components,
-                                       self.first_stage.architectures),
+            # This is dependent on
+            # https://salsa.debian.org/python-debian-team/python-debian/merge_requests/11
+            # DebUpdatePackageAttributes(),
+            DebUpdateReleaseAttributes(
+                self.first_stage.components,
+                self.first_stage.architectures,
+            ),
             DebUpdatePackageIndexAttributes(),
             QueryExistingContents(),
             ContentSaver(),
@@ -165,18 +186,17 @@ class DebUpdateReleaseAttributes(Stage):
                     release = d_content.content
                     release_artifact = d_content.d_artifacts[0].artifact
                     release.sha256 = release_artifact.sha256
-                    with open(release_artifact.storage_path(''), 'rb') as f:
-                        release_dict = deb822.Release(f)
-                        release.codename = release_dict['Codename']
-                        release.suite = release_dict['Suite']
-                        # TODO split of extra stuff e.g. : 'updates/main' -> 'main'
-                        release.components = _filter_ssl(
-                            release_dict['Components'], self.components)
-                        release.architectures = _filter_ssl(
-                            release_dict['Architectures'], self.architectures)
-                        log.debug('Codename: {}'.format(release.codename))
-                        log.debug('Components: {}'.format(release.components))
-                        log.debug('Architectures: {}'.format(release.architectures))
+                    release_dict = deb822.Release(release_artifact.file)
+                    release.codename = release_dict['Codename']
+                    release.suite = release_dict['Suite']
+                    # TODO split of extra stuff e.g. : 'updates/main' -> 'main'
+                    release.components = _filter_ssl(
+                        release_dict['Components'], self.components)
+                    release.architectures = _filter_ssl(
+                        release_dict['Architectures'], self.architectures)
+                    log.debug('Codename: {}'.format(release.codename))
+                    log.debug('Components: {}'.format(release.components))
+                    log.debug('Architectures: {}'.format(release.architectures))
                     pb.increment()
                 await self.put(d_content)
 
@@ -221,7 +241,7 @@ class DebUpdatePackageIndexAttributes(Stage):  # TODO: Needs a new name
 
 def _uncompress_artifact(artifact):
     with NamedTemporaryFile(delete=False) as f_out:
-        with gzip.open(artifact.storage_path(''), 'rb') as f_in:
+        with gzip.open(artifact.file) as f_in:
             shutil.copyfileobj(f_in, f_out)
     return 'file://{}'.format(f_out.name)
 
@@ -242,21 +262,22 @@ class DebUpdatePackageAttributes(Stage):
                 if isinstance(d_content.content, Package):
                     package = d_content.content
                     package_artifact = d_content.d_artifacts[0].artifact
-                    if package_artifact.pk:
+                    if not package_artifact._state.adding:
                         package_paragraph = debfile.DebFile(
-                            package_artifact.storage_path('')).debcontrol()
-                        package_dict = _sanitize_package_dict(package_paragraph)
+                            fileobj=package_artifact.file
+                        ).debcontrol()
+                        package_dict = Package.from822(package_paragraph)
                         for key, value in package_dict.items():
-                            setattr(package, key.lower(), value)
+                            setattr(package, key, value)
                         pb.increment()
                 await self.put(d_content)
 
 
 class DebDropEmptyContent(Stage):
     """
-    This stage removes empty DeclarativeContent objects for GenericContent.
+    This stage removes empty DeclarativeContent objects.
 
-    In case we tried to fetch something generic, but the artifact 404ed, we simply drop it.
+    In case we tried to fetch something, but the artifact 404ed, we simply drop it.
     """
 
     async def run(self):
@@ -265,11 +286,13 @@ class DebDropEmptyContent(Stage):
         """
         async for d_content in self.items():
             d_content.d_artifacts = [
-                da for da in d_content.d_artifacts
-                if da.artifact
+                d_artifact for d_artifact in d_content.d_artifacts
+                if d_artifact.artifact
             ]
             if not d_content.d_artifacts:
                 # No artifacts left -> drop it
+                if d_content.future is not None:
+                    d_content.furture.set_result(None)
                 continue
             await self.put(d_content)
 
@@ -289,6 +312,7 @@ class DebFirstStage(Stage):
         """
         super().__init__(*args, **kwargs)
         self.remote = remote
+        self.parsed_url = urlparse(remote.url)
         self.distributions = [
             distribution.strip() for distribution in self.remote.distributions.split()
         ]
@@ -304,9 +328,10 @@ class DebFirstStage(Stage):
         """
         Build and emit `DeclarativeContent` from the Release data.
         """
-        parsed_url = urlparse(self.remote.url)
+        # TODO Merge into one list of futures
         future_releases = []
         future_package_indices = []
+        future_installer_file_indices = []
         with ProgressBar(message='Creating download requests for Release files',
                          total=self.num_distributions) as pb:
             for distribution in self.distributions:
@@ -314,18 +339,39 @@ class DebFirstStage(Stage):
                     'Downloading Release file for distribution: "{}"'.format(distribution))
                 release_relpath = os.path.join(
                     'dists', distribution, 'Release')
-                release_path = os.path.join(parsed_url.path, release_relpath)
-                release_unit = Release(
-                    distribution=distribution, relative_path=release_relpath)
+                release_path = os.path.join(self.parsed_url.path, release_relpath)
                 release_da = DeclarativeArtifact(
                     Artifact(),
-                    urlunparse(parsed_url._replace(path=release_path)),
+                    urlunparse(self.parsed_url._replace(path=release_path)),
                     release_relpath,
                     self.remote,
+                    deferred_download=False,
                 )
+                release_gpg_relpath = os.path.join(
+                    'dists', distribution, 'Release.gpg')
+                release_gpg_path = os.path.join(self.parsed_url.path, release_gpg_relpath)
+                release_gpg_da = DeclarativeFailsafeArtifact(
+                    Artifact(),
+                    urlunparse(self.parsed_url._replace(path=release_gpg_path)),
+                    release_gpg_relpath,
+                    self.remote,
+                    deferred_download=False,
+                )
+                inrelease_relpath = os.path.join(
+                    'dists', distribution, 'InRelease')
+                inrelease_path = os.path.join(self.parsed_url.path, inrelease_relpath)
+                inrelease_da = DeclarativeFailsafeArtifact(
+                    Artifact(),
+                    urlunparse(self.parsed_url._replace(path=inrelease_path)),
+                    inrelease_relpath,
+                    self.remote,
+                    deferred_download=False,
+                )
+                release_unit = Release(
+                    distribution=distribution, relative_path=release_relpath)
                 release_dc = DeclarativeContent(
                     content=release_unit,
-                    d_artifacts=[release_da],
+                    d_artifacts=[release_da, release_gpg_da, inrelease_da],
                     does_batch=False,
                 )
                 future_releases.append(release_dc.get_or_create_future())
@@ -336,11 +382,13 @@ class DebFirstStage(Stage):
             for release_future in asyncio.as_completed(future_releases):
                 release = await release_future
                 log.info('Parsing Release file for release: "{}"'.format(release.codename))
-                release_artifact = release._artifacts.first()
+                release_artifact = release._artifacts.get(sha256=release.sha256)
                 release_dict = deb822.Release(release_artifact.file)
-                async for d_content in _read_release_file(release, release_dict, self.remote):
+                async for d_content in self._read_release_file(release, release_dict):
                     if isinstance(d_content.content, PackageIndex):
                         future_package_indices.append(d_content.get_or_create_future())
+                    if isinstance(d_content.content, InstallerFileIndex):
+                        future_installer_file_indices.append(d_content.get_or_create_future())
                     await self.put(d_content)
                 pb.increment()
 
@@ -348,10 +396,253 @@ class DebFirstStage(Stage):
             for package_index_future in asyncio.as_completed(future_package_indices):
                 package_index = await package_index_future
                 package_index_artifact = package_index.main_artifact
-                async for package_dc in _read_package_index(package_index_artifact.file,
-                                                            self.remote):
+                async for package_dc in self._read_package_index(package_index_artifact.file):
                     await self.put(package_dc)
                 pb.increment()
+
+        with ProgressBar(message='Parsing installer file index files') as pb:
+            for installer_file_index_future in asyncio.as_completed(future_installer_file_indices):
+                installer_file_index = await installer_file_index_future
+                async for d_content in self._read_installer_file_index(installer_file_index):
+                    await self.put(d_content)
+                pb.increment()
+
+    async def _read_release_file(self, release, release_dict):
+        """
+        Parse a Release file of apt Repositories.
+
+        Yield DeclarativeContent in the queue accordingly.
+
+        Args:
+            release_dict: parsed release dictionary
+
+        Returns:
+            async iterator: Iterator of :class:`asyncio.Future` instances
+
+        """
+        def to_d_artifact(data):
+            nonlocal release
+
+            artifact = Artifact(**_get_checksums(data))
+            relpath = os.path.join(os.path.dirname(release.relative_path), data['Name'])
+            urlpath = os.path.join(self.parsed_url.path, relpath)
+            return DeclarativeFailsafeArtifact(
+                artifact,
+                urlunparse(self.parsed_url._replace(path=urlpath)),
+                relpath,
+                self.remote,
+                deferred_download=False,
+            )
+
+        def generate_source_index(component):
+            raise NotImplementedError('Syncing source repositories is not yet implemented.')
+
+        def generate_package_index(component, architecture, infix=''):
+            nonlocal release
+            nonlocal file_references
+
+            package_index_dir = os.path.join(os.path.basename(
+                component), infix, 'binary-{}'.format(architecture))
+            log.info('Downloading: {}/Packages'.format(package_index_dir))
+            d_artifacts = []
+            for filename in ['Packages', 'Packages.gz', 'Packages.xz', 'Release']:
+                path = os.path.join(package_index_dir, filename)
+                if path in file_references:
+                    d_artifacts.append(to_d_artifact(file_references.pop(path)))
+            if not d_artifacts:
+                return
+            content_unit = PackageIndex(
+                release_pk=release,
+                component=component,
+                architecture=architecture,
+                sha256=d_artifacts[0].artifact.sha256,
+                relative_path=os.path.join(os.path.dirname(
+                    release.relative_path),
+                    package_index_dir,
+                    'Packages',
+                )
+            )
+            d_content = DeclarativeContent(
+                content=content_unit,
+                d_artifacts=d_artifacts,
+                does_batch=False,
+            )
+            yield d_content
+
+        def generate_installer_file_index(component, architecture):
+            nonlocal release
+            nonlocal file_references
+
+            installer_file_index_dir = os.path.join(os.path.basename(
+                component), 'installer-{}'.format(architecture), 'current', 'images')
+            log.info('Downloading installer files from {}'.format(installer_file_index_dir))
+            d_artifacts = []
+            for filename in InstallerFileIndex.FILE_ALGORITHM.keys():
+                path = os.path.join(installer_file_index_dir, filename)
+                if path in file_references:
+                    d_artifacts.append(to_d_artifact(file_references.pop(path)))
+            if not d_artifacts:
+                return
+            content_unit = InstallerFileIndex(
+                release_pk=release,
+                component=component,
+                architecture=architecture,
+                sha256=d_artifacts[0].artifact.sha256,
+                relative_path=os.path.join(
+                    os.path.dirname(release.relative_path),
+                    installer_file_index_dir,
+                )
+            )
+            d_content = DeclarativeContent(
+                content=content_unit,
+                d_artifacts=d_artifacts,
+                does_batch=False,
+            )
+            yield d_content
+
+        def generate_translation_files(component):
+            nonlocal release
+            nonlocal file_references
+
+            translation_dir = os.path.join(os.path.basename(component), 'i18n')
+            paths = [path for path in file_references.keys() if path.startswith(translation_dir)]
+            translations = {}
+            for path in paths:
+                d_artifact = to_d_artifact(file_references.pop(path))
+                key, ext = os.path.splitext(path)
+                if key not in translations:
+                    translations[key] = {'sha256': None, 'd_artifacts': []}
+                if not ext:
+                    translations[key]['sha256'] = d_artifact.artifact.sha256
+                translations[key]['d_artifacts'].append(d_artifact)
+
+            for path, translation in translations.items():
+                content_unit = GenericContent(
+                    sha256=translation['sha256'],
+                    relative_path=os.path.join(
+                        os.path.dirname(release.relative_path),
+                        path,
+                    )
+                )
+                d_content = DeclarativeContent(
+                    content=content_unit,
+                    d_artifacts=translation['d_artifacts'],
+                )
+                yield d_content
+
+        file_references = defaultdict(deb822.Deb822Dict)
+        # collect file references in new dict
+        for digest_name in ['SHA512', 'SHA256', 'SHA1', 'MD5sum']:
+            if digest_name in release_dict:
+                for unit in release_dict[digest_name]:
+                    file_references[unit['Name']].update(unit)
+        # Find Package Index files for Component Architecture combinations
+        for component in release.components.split():
+            for architecture in release.architectures.split():
+                log.info('Component: "{}" Architecture: "{}"'.format(
+                    component, architecture))
+                for d_content in generate_package_index(component, architecture):
+                    yield d_content
+                if self.remote.sync_udebs:
+                    for d_content in generate_package_index(
+                        component,
+                        architecture,
+                        'debian-installer'
+                    ):
+                        yield d_content
+                if self.remote.sync_installer:
+                    for d_content in generate_installer_file_index(component, architecture):
+                        yield d_content
+            for d_content in generate_translation_files(component):
+                yield d_content
+            if self.remote.sync_sources:
+                yield generate_source_index(component)
+
+    async def _read_package_index(self, package_index):
+        """
+        Parse a package index file of apt Repositories.
+
+        Put DeclarativeContent in the queue accordingly.
+
+        Args:
+            package_index: file object containing package paragraphs
+        """
+        # Interpret policy to download Artifacts or not
+        deferred_download = (self.remote.policy != Remote.IMMEDIATE)
+
+        for package_paragraph in deb822.Packages.iter_paragraphs(package_index):
+            package_relpath = package_paragraph['Filename']
+            package_sha256 = package_paragraph['sha256']
+            if package_relpath.endswith('.deb'):
+                package_class = Package
+                package_serializer_class = PackageSerializer
+            elif package_relpath.endswith('.udeb'):
+                package_class = InstallerPackage
+                package_serializer_class = InstallerPackageSerializer
+            try:
+                package_content_unit = package_class.objects.get(sha256=package_sha256)
+            except ObjectDoesNotExist:
+                log.debug("Downloading package {}".format(
+                    package_paragraph['Package']))
+                package_dict = package_class.from822(package_paragraph)
+                package_dict['relative_path'] = package_relpath
+                package_dict['sha256'] = package_sha256
+                package_serializer = package_serializer_class(data=package_dict, partial=True)
+                package_serializer.is_valid(raise_exception=True)
+                package_content_unit = package_class(**package_serializer.validated_data)
+            package_path = os.path.join(self.parsed_url.path, package_relpath)
+            package_artifact = Artifact(**_get_checksums(package_paragraph))
+            package_da = DeclarativeArtifact(
+                artifact=package_artifact,
+                url=urlunparse(self.parsed_url._replace(path=package_path)),
+                relative_path=package_relpath,
+                remote=self.remote,
+                deferred_download=deferred_download,
+            )
+            package_dc = DeclarativeContent(
+                content=package_content_unit, d_artifacts=[package_da])
+            yield package_dc
+
+    async def _read_installer_file_index(self, installer_file_index):
+        """
+        Parse an installer file index file of apt Repositories.
+
+        Put DeclarativeContent in the queue accordingly.
+
+        Args:
+            installer_file_index: object of type :class:`InstallerFileIndex`
+        """
+        # Interpret policy to download Artifacts or not
+        deferred_download = (self.remote.policy != Remote.IMMEDIATE)
+
+        file_list = defaultdict(dict)
+        for content_artifact in installer_file_index.contentartifact_set.all():
+            algorithm = InstallerFileIndex.FILE_ALGORITHM.get(
+                os.path.basename(content_artifact.relative_path)
+            )
+            if not algorithm:
+                continue
+            for line in content_artifact.artifact.file:
+                digest, filename = line.decode().strip().split(maxsplit=1)
+                filename = os.path.normpath(filename)
+                if filename in InstallerFileIndex.FILE_ALGORITHM:  # strangely they may appear here
+                    continue
+                file_list[filename][algorithm] = digest
+
+        for filename, digests in file_list.items():
+            relpath = os.path.join(installer_file_index.relative_path, filename)
+            urlpath = os.path.join(self.parsed_url.path, relpath)
+            content_unit = GenericContent(sha256=digests['sha256'], relative_path=relpath)
+            d_artifact = DeclarativeArtifact(
+                artifact=Artifact(**digests),
+                url=urlunparse(self.parsed_url._replace(path=urlpath)),
+                relative_path=relpath,
+                remote=self.remote,
+                deferred_download=deferred_download,
+            )
+            d_content = DeclarativeContent(
+                content=content_unit, d_artifacts=[d_artifact])
+            yield d_content
 
 
 def _get_checksums(unit_dict):
@@ -363,122 +654,3 @@ def _get_checksums(unit_dict):
             'md5': 'MD5sum',
         }.items() if v in unit_dict
     }
-
-
-async def _read_release_file(release, release_dict, remote):
-    """
-    Parse a Release file of apt Repositories.
-
-    Yield DeclarativeContent in the queue accordingly.
-
-    Args:
-        release_dict: parsed release dictionary
-        remote: remote to associate content artifacts to
-
-    Returns:
-        async iterator: Iterator of :class:`asyncio.Future` instances
-
-    """
-    parsed_url = urlparse(remote.url)
-    file_references = defaultdict(deb822.Deb822Dict)
-    for digest_name in ('SHA512', 'SHA256', 'SHA1', 'MD5sum'):
-        if digest_name in release_dict:
-            for unit in release_dict[digest_name]:
-                file_references[unit['Name']].update(unit)
-    # Find Package Index files for Component Architecture combinations
-    for component in release.components.split():
-        for architecture in release.architectures.split():
-            log.info('Component: "{}" Architecture: "{}"'.format(
-                component, architecture))
-            package_index_path = os.path.join(os.path.basename(
-                component), 'binary-{}'.format(architecture), 'Packages')
-            log.info('Downloading: {}'.format(package_index_path))
-            # Use the plain package_index file as the first entry …
-            package_index_files = [file_references.pop(package_index_path)]
-            # … followed by the compressed versions
-            for suffix in ('.gz', '.xz'):
-                path = package_index_path + suffix
-                if path in file_references:
-                    log.info("Pathmatch: {} ~ {}".format(path, package_index_path))
-                    package_index_files.append(file_references.pop(path))
-            # Sync these files in PackageIndex
-            package_index_relpath = os.path.join(os.path.dirname(
-                release.relative_path), package_index_files[0]['Name'])
-            package_index_unit = PackageIndex(
-                release_pk=release,
-                component=component,
-                architecture=architecture,
-                sha256=package_index_files[0]['SHA256'],
-                relative_path=package_index_relpath,
-            )
-            d_artifacts = []
-            for package_index_dict in package_index_files:
-                package_index_relpath = os.path.join(os.path.dirname(
-                    release.relative_path), package_index_dict['Name'])
-                package_index_path = os.path.join(
-                    parsed_url.path, package_index_relpath)
-                log.info(_get_checksums(package_index_dict))
-                package_index_artifact = Artifact(**_get_checksums(package_index_dict))
-                d_artifacts.append(DeclarativeFailsafeArtifact(
-                    package_index_artifact,
-                    urlunparse(parsed_url._replace(path=package_index_path)),
-                    package_index_relpath,
-                    remote,
-                ))
-            package_index_dc = DeclarativeContent(
-                content=package_index_unit,
-                d_artifacts=d_artifacts,
-                does_batch=False,
-            )
-            yield package_index_dc
-
-    # Everything else shall be synced as GenericContent
-    for generic_content_dict in file_references.values():
-        generic_content_relpath = os.path.join(os.path.dirname(
-            release.relative_path), generic_content_dict['Name'])
-        generic_content_path = os.path.join(
-            parsed_url.path, generic_content_relpath)
-        generic_content_unit = GenericContent(
-            sha256=generic_content_dict['SHA256'], relative_path=generic_content_relpath)
-        generic_content_artifact = Artifact(**_get_checksums(generic_content_dict))
-        generic_content_da = DeclarativeFailsafeArtifact(
-            generic_content_artifact,
-            urlunparse(parsed_url._replace(path=generic_content_path)),
-            generic_content_relpath,
-            remote,
-        )
-        generic_content_dc = DeclarativeContent(
-            content=generic_content_unit, d_artifacts=[generic_content_da])
-        yield generic_content_dc
-
-
-async def _read_package_index(package_index, remote):
-    """
-    Parse a package index file of apt Repositories.
-
-    Put DeclarativeContent in the queue accordingly.
-
-    Args:
-        package_index: file object containing package paragraphs
-        remote: remote to associate content artifacts to
-        out_q: :class:`asyncio.Queue`
-
-    """
-    parsed_url = urlparse(remote.url)
-    for package_paragraph in deb822.Packages.iter_paragraphs(package_index):
-        log.debug("Downloading package {}".format(
-            package_paragraph['Package']))
-        package_relpath = package_paragraph['Filename']
-        package_dict = _sanitize_package_dict(package_paragraph)
-        package_path = os.path.join(parsed_url.path, package_relpath)
-        package_content_unit = Package(relative_path=package_relpath, **package_dict)
-        package_artifact = Artifact(**_get_checksums(package_dict))
-        package_da = DeclarativeArtifact(package_artifact, urlunparse(
-            parsed_url._replace(path=package_path)), package_relpath, remote)
-        package_dc = DeclarativeContent(
-            content=package_content_unit, d_artifacts=[package_da])
-        yield package_dc
-
-
-def _sanitize_package_dict(package_dict):
-    return {k: package_dict[v] for k, v in Package.TRANSLATION_DICT.items() if v in package_dict}

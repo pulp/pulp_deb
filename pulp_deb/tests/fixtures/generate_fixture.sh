@@ -31,4 +31,6 @@ cp -a ${SRCDIR}/conf .
 reprepro -C asgard includedeb ragnarok asgard/*.deb
 reprepro -C jotunheimr includedeb ragnarok jotunheimr/*.deb
 
-tar czf ${SRCDIR}/fixtures.tar.gz dists pool
+rm dists/ragnarok/jotunheimr/binary-armeb/Packages
+
+tar cvzf ${SRCDIR}/fixtures.tar.gz dists pool
