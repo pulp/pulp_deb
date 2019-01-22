@@ -92,7 +92,9 @@ class DownloadContentTestCase(unittest.TestCase):
         self.addCleanup(client.delete, distribution['_href'])
 
         # Pick a content unit (of each type), and download it from both Pulp Fixtures…
-        unit_paths = [choice(paths) for paths in self.Meta.get_content_unit_paths(repo).values()]
+        unit_paths = [
+            choice(paths) for paths in self.Meta.get_content_unit_paths(repo).values() if paths
+        ]
         fixtures_hashes = [hashlib.sha256(
             utils.http_get(urljoin(DEB_FIXTURE_URL, unit_path[0]))
         ).hexdigest() for unit_path in unit_paths]

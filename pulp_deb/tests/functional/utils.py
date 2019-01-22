@@ -125,11 +125,6 @@ def get_deb_verbatim_content_unit_paths(repo):
             for content_unit in get_content(repo)[DEB_RELEASE_NAME]
         ],
 
-        DEB_PACKAGE_INDEX_NAME: [
-            (content_unit['relative_path'], content_unit['relative_path'])
-            for content_unit in get_content(repo)[DEB_PACKAGE_INDEX_NAME]
-        ],
-
         DEB_PACKAGE_NAME: [
             (content_unit['relative_path'], content_unit['relative_path'])
             for content_unit in get_content(repo)[DEB_PACKAGE_NAME]
