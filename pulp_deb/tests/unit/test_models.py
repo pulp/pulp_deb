@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from pulpcore.plugin.models import Artifact
+from pulpcore.plugin.models import Artifact, ContentArtifact
 from pulp_deb.app.models import Package
 
 
@@ -29,7 +29,7 @@ class TestPackage(TestCase):
         self.package1.save()
         self.artifact1 = Artifact(size=42, md5='aabb', sha1='ccdd', sha256='eeff')
         self.artifact1.save()
-        self.package1.artifact = self.artifact1
+        ContentArtifact(artifact=self.artifact1, content=self.package1).save()
 
     def test_str(self):
         """Test package str."""

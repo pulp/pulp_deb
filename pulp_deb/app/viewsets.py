@@ -55,7 +55,7 @@ class GenericContentViewSet(core.ContentViewSet):
     A ViewSet for GenericContent.
     """
 
-    endpoint_name = 'deb/generic_contents'
+    endpoint_name = 'generic_contents'
     queryset = models.GenericContent.objects.all()
     serializer_class = serializers.GenericContentSerializer
 
@@ -65,7 +65,7 @@ class ReleaseViewSet(core.ContentViewSet):
     A ViewSet for Release.
     """
 
-    endpoint_name = 'deb/releases'
+    endpoint_name = 'releases'
     queryset = models.Release.objects.all()
     serializer_class = serializers.ReleaseSerializer
 
@@ -75,7 +75,7 @@ class PackageIndexViewSet(core.ContentViewSet):
     A ViewSet for PackageIndex.
     """
 
-    endpoint_name = 'deb/package_index'
+    endpoint_name = 'package_index'
     queryset = models.PackageIndex.objects.all()
     serializer_class = serializers.PackageIndexSerializer
 
@@ -85,7 +85,7 @@ class PackageViewSet(core.ContentViewSet):
     A ViewSet for Package.
     """
 
-    endpoint_name = 'deb/packages'
+    endpoint_name = 'packages'
     queryset = models.Package.objects.all()
     serializer_class = serializers.PackageSerializer
 
@@ -95,7 +95,7 @@ class DebRemoteViewSet(core.RemoteViewSet):
     A ViewSet for DebRemote.
     """
 
-    endpoint_name = 'deb'
+    endpoint_name = 'apt'
     queryset = models.DebRemote.objects.all()
     serializer_class = serializers.DebRemoteSerializer
 
@@ -136,7 +136,7 @@ class DebVerbatimPublisherViewSet(core.PublisherViewSet):
     A ViewSet for DebVerbatimPublisher.
     """
 
-    endpoint_name = 'deb_verbatim'
+    endpoint_name = 'verbatim'
     queryset = models.DebVerbatimPublisher.objects.all()
     serializer_class = serializers.DebVerbatimPublisherSerializer
 
@@ -179,7 +179,7 @@ class DebPublisherViewSet(core.PublisherViewSet):
     A ViewSet for DebPublisher.
     """
 
-    endpoint_name = 'deb'
+    endpoint_name = 'default'
     queryset = models.DebPublisher.objects.all()
     serializer_class = serializers.DebPublisherSerializer
 

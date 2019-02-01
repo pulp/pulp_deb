@@ -4,7 +4,7 @@ from pulpcore.plugin import serializers as platform
 from . import models
 
 
-class GenericContentSerializer(platform.ContentSerializer):
+class GenericContentSerializer(platform.SingleArtifactContentSerializer):
     """
     A serializer for GenericContent.
     """
@@ -15,14 +15,11 @@ class GenericContentSerializer(platform.ContentSerializer):
     )
 
     class Meta:
-        fields = tuple(set(platform.ContentSerializer.Meta.fields) - {'artifacts'}) + (
-            'relative_path',
-            'artifact',
-        )
+        fields = platform.SingleArtifactContentSerializer.Meta.fields + ('relative_path',)
         model = models.GenericContent
 
 
-class ReleaseSerializer(platform.ContentSerializer):
+class ReleaseSerializer(platform.MultipleArtifactContentSerializer):
     """
     A serializer for Release.
     """
@@ -48,12 +45,12 @@ class ReleaseSerializer(platform.ContentSerializer):
     )
 
     class Meta:
-        fields = tuple(set(platform.ContentSerializer.Meta.fields) - {'artifacts'}) \
-            + ('codename', 'suite', 'distribution', 'relative_path', 'artifact')
+        fields = platform.MultipleArtifactContentSerializer.Meta.fields \
+            + ('codename', 'suite', 'distribution', 'relative_path',)
         model = models.GenericContent
 
 
-class PackageIndexSerializer(platform.ContentSerializer):
+class PackageIndexSerializer(platform.MultipleArtifactContentSerializer):
     """
     A serializer for PackageIndex.
     """
@@ -74,12 +71,12 @@ class PackageIndexSerializer(platform.ContentSerializer):
     )
 
     class Meta:
-        fields = platform.ContentSerializer.Meta.fields + \
+        fields = platform.MultipleArtifactContentSerializer.Meta.fields + \
             ('release', 'component', 'architecture', 'relative_path')
         model = models.PackageIndex
 
 
-class PackageSerializer(platform.ContentSerializer):
+class PackageSerializer(platform.SingleArtifactContentSerializer):
     """
     A Serializer for Package.
     """
@@ -90,9 +87,8 @@ class PackageSerializer(platform.ContentSerializer):
     )
 
     class Meta:
-        fields = tuple(set(platform.ContentSerializer.Meta.fields) - {'artifacts'}) + (
+        fields = platform.SingleArtifactContentSerializer.Meta.fields + (
             'relative_path',
-            'artifact',
             'package_name',
             'source',
             'version',

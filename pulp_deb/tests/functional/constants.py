@@ -10,18 +10,18 @@ from pulp_smash.pulp3.constants import (
 
 DOWNLOAD_POLICIES = ['immediate', 'streamed', 'on_demand']
 
-DEB_RELEASE_NAME = 'pulp_deb.release'
-DEB_PACKAGE_INDEX_NAME = 'pulp_deb.package_index'
-DEB_PACKAGE_NAME = 'pulp_deb.package'
-DEB_GENERIC_CONTENT_NAME = 'pulp_deb.generic'
+DEB_RELEASE_NAME = 'deb.release'
+DEB_PACKAGE_INDEX_NAME = 'deb.package_index'
+DEB_PACKAGE_NAME = 'deb.package'
+DEB_GENERIC_CONTENT_NAME = 'deb.generic'
 
 DEB_PACKAGE_PATH = urljoin(CONTENT_PATH, 'deb/packages/')
 DEB_GENERIC_CONTENT_PATH = urljoin(CONTENT_PATH, 'deb/generic_contents/')
 
-DEB_REMOTE_PATH = urljoin(BASE_REMOTE_PATH, 'deb/')
+DEB_REMOTE_PATH = urljoin(BASE_REMOTE_PATH, 'deb/apt/')
 
-DEB_PUBLISHER_PATH = urljoin(BASE_PUBLISHER_PATH, 'deb/')
-DEB_VERBATIM_PUBLISHER_PATH = urljoin(BASE_PUBLISHER_PATH, 'deb_verbatim/')
+DEB_PUBLISHER_PATH = urljoin(BASE_PUBLISHER_PATH, 'deb/default/')
+DEB_VERBATIM_PUBLISHER_PATH = urljoin(BASE_PUBLISHER_PATH, 'deb/verbatim/')
 
 
 DEB_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, 'debian/')
