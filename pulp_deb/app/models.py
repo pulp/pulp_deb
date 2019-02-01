@@ -6,7 +6,7 @@ from debian import deb822
 
 from django.db import models
 
-from pulpcore.plugin.models import Content, ContentArtifact, Remote, Publisher
+from pulpcore.plugin.models import Content, Remote, Publisher
 
 logger = getLogger(__name__)
 
@@ -24,24 +24,6 @@ class GenericContent(Content):
 
     relative_path = models.TextField(null=False)
     sha256 = models.TextField(null=False)
-
-    @property
-    def artifact(self):
-        """
-        Return the artifact id (there is only one for this content type).
-        """
-        return self.artifacts.get().pk
-
-    @artifact.setter
-    def artifact(self, artifact):
-        """
-        Set the artifact for this FileContent.
-        """
-        if self.pk:
-            ca = ContentArtifact(artifact=artifact,
-                                 content=self,
-                                 relative_path=self.relative_path)
-            ca.save()
 
     class Meta:
         unique_together = (
@@ -194,24 +176,6 @@ class Package(Content):
     def name(self):
         """Print a nice name for Packages."""
         return '{}_{}_{}'.format(self.package_name, self.version, self.architecture)
-
-    @property
-    def artifact(self):
-        """
-        Return the artifact id (there is only one for this content type).
-        """
-        return self.artifacts.get().pk
-
-    @artifact.setter
-    def artifact(self, artifact):
-        """
-        Set the artifact for this FileContent.
-        """
-        if self.pk:
-            ca = ContentArtifact(artifact=artifact,
-                                 content=self,
-                                 relative_path=self.relative_path)
-            ca.save()
 
     def filename(self, component=''):
         """Assemble filename in pool directory."""

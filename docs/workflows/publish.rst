@@ -10,12 +10,12 @@ Create a Publisher
 Publishers contain extra settings for how to publish. You can use a deb publisher on any
 repository that contains deb content::
 
-$ http POST $BASE_ADDR/pulp/api/v3/publishers/deb/ name=bar
+$ http POST $BASE_ADDR/pulp/api/v3/publishers/deb/default/ name=bar
 
 Response::
 
     {
-        "_href": "http://localhost:8000/pulp/api/v3/repositories/foo/publishers/deb/bar/",
+        "_href": "http://localhost:8000/pulp/api/v3/repositories/foo/publishers/deb/default/1/",
         ...
     }
 
@@ -29,7 +29,7 @@ Alternatively, you can specify repository, which will publish the latest version
 The result of a publish is a publication, which contains all the information needed for a external package manager
 like ``pip`` or ``apt-get`` to use. Publications are not consumable until they are hosted by a distribution::
 
-$ http POST $BASE_ADDR/pulp/api/v3/publishers/deb/1/publish/ repository=$BASE_ADDR/pulp/api/v3/repositories/1/
+$ http POST $BASE_ADDR/pulp/api/v3/publishers/deb/default/1/publish/ repository=$BASE_ADDR/pulp/api/v3/repositories/1/
 
 Response::
 
