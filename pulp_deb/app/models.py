@@ -22,8 +22,8 @@ class GenericContent(Content):
 
     TYPE = 'generic'
 
-    relative_path = models.TextField(null=False)
-    sha256 = models.TextField(null=False)
+    relative_path = models.CharField(max_length=255, null=False)
+    sha256 = models.CharField(max_length=255, null=False)
 
     class Meta:
         unique_together = (
@@ -43,13 +43,13 @@ class Release(Content):
 
     TYPE = 'release'
 
-    codename = models.TextField()
-    suite = models.TextField()
-    distribution = models.TextField()
-    components = models.TextField(blank=True)
-    architectures = models.TextField(blank=True)
-    relative_path = models.TextField()
-    sha256 = models.TextField()
+    codename = models.CharField(max_length=255)
+    suite = models.CharField(max_length=255)
+    distribution = models.CharField(max_length=255)
+    components = models.CharField(max_length=255, blank=True)
+    architectures = models.CharField(max_length=255, blank=True)
+    relative_path = models.CharField(max_length=255)
+    sha256 = models.CharField(max_length=255)
 
     class Meta:
         unique_together = (
@@ -78,10 +78,10 @@ class PackageIndex(Content):
     TYPE = 'package_index'
 
     release_pk = models.ForeignKey('Release', on_delete=models.CASCADE)
-    component = models.TextField()
-    architecture = models.TextField()
-    relative_path = models.TextField()
-    sha256 = models.TextField()
+    component = models.CharField(max_length=255)
+    architecture = models.CharField(max_length=255)
+    relative_path = models.CharField(max_length=255)
+    sha256 = models.CharField(max_length=255)
 
     class Meta:
         verbose_name_plural = "PackageIndices"
@@ -139,26 +139,25 @@ class Package(Content):
         'replaces': 'Replaces',
     }
 
-    # TODO: Do we have any specification for max_length?
-    package_name = models.TextField()  # package name
-    source = models.TextField(null=True)  # source package name
-    version = models.TextField()
-    architecture = models.TextField()  # all, i386, ...
-    section = models.TextField(null=True)  # admin, comm, database, ...
-    priority = models.TextField(null=True)  # required, standard, optional, extra, ...
-    origin = models.TextField(null=True)
+    package_name = models.CharField(max_length=255)  # package name
+    source = models.CharField(max_length=255, null=True)  # source package name
+    version = models.CharField(max_length=255)
+    architecture = models.CharField(max_length=255)  # all, i386, ...
+    section = models.CharField(max_length=255, null=True)  # admin, comm, database, ...
+    priority = models.CharField(max_length=255, null=True)  # required, standard, optional, extra
+    origin = models.CharField(max_length=255, null=True)
     tag = models.TextField(null=True)
     bugs = models.TextField(null=True)
     essential = models.BooleanField(null=True)
     build_essential = models.BooleanField(null=True)
     installed_size = models.IntegerField(null=True)
-    maintainer = models.TextField()
-    original_maintainer = models.TextField(null=True)
+    maintainer = models.CharField(max_length=255)
+    original_maintainer = models.CharField(max_length=255, null=True)
     description = models.TextField()
-    description_md5 = models.TextField(null=True)
-    homepage = models.TextField(null=True)
-    built_using = models.TextField(null=True)
-    auto_built_package = models.TextField(null=True)
+    description_md5 = models.CharField(max_length=255, null=True)
+    homepage = models.CharField(max_length=255, null=True)
+    built_using = models.CharField(max_length=255, null=True)
+    auto_built_package = models.CharField(max_length=255, null=True)
     multi_arch = models.TextField(
         null=True,
         choices=[('no', 'no'), ('same', 'same'), ('foreign', 'foreign'), ('allowed', 'allowed')],
@@ -176,8 +175,7 @@ class Package(Content):
     replaces = models.TextField(null=True)
 
     # relative path in the upstream repository
-    # deprecated
-    relative_path = models.TextField(null=False)
+    relative_path = models.CharField(max_length=255, null=False)
 
     @property
     def name(self):
@@ -252,6 +250,6 @@ class DebRemote(Remote):
 
     TYPE = 'deb'
 
-    distributions = models.TextField(null=True)
-    components = models.TextField(null=True)
-    architectures = models.TextField(null=True)
+    distributions = models.CharField(max_length=255, null=True)
+    components = models.CharField(max_length=255, null=True)
+    architectures = models.CharField(max_length=255, null=True)
