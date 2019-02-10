@@ -331,8 +331,9 @@ class DebFirstStage(Stage):
                 release_dc = DeclarativeContent(
                     content=release_unit,
                     d_artifacts=[release_da],
+                    does_batch=False,
                 )
-                future_releases.append(release_dc.get_future())
+                future_releases.append(release_dc.get_or_create_future())
                 await self.put(release_dc)
                 pb.increment()
 
@@ -344,7 +345,7 @@ class DebFirstStage(Stage):
                 release_dict = deb822.Release(release_artifact.file)
                 async for d_content in _read_release_file(release, release_dict, self.remote):
                     if isinstance(d_content.content, PackageIndex):
-                        future_package_indices.append(d_content.get_future())
+                        future_package_indices.append(d_content.get_or_create_future())
                     await self.put(d_content)
                 pb.increment()
 
@@ -432,6 +433,7 @@ async def _read_release_file(release, release_dict, remote):
             package_index_dc = DeclarativeContent(
                 content=package_index_unit,
                 d_artifacts=d_artifacts,
+                does_batch=False,
             )
             yield package_index_dc
 
