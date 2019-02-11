@@ -160,13 +160,13 @@ def create_link(opts, src, dst):
 
 
 def _create_link(opts, src, dst):
-        environment.debug(opts, 'creating link: %s pointing to %s' % (dst, src))
-        try:
-            os.symlink(src, dst)
-        except OSError as e:
-            msg = ("Unable to create symlink for [%s] pointing to [%s], received error: "
-                   "<%s>" % (dst, src, e))
-            return msg
+    environment.debug(opts, 'creating link: %s pointing to %s' % (dst, src))
+    try:
+        os.symlink(src, dst)
+    except OSError as e:
+        msg = ("Unable to create symlink for [%s] pointing to [%s], received error: "
+               "<%s>" % (dst, src, e))
+        return msg
 
 
 if __name__ == '__main__':
