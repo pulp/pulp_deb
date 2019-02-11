@@ -22,8 +22,8 @@ class GenericContent(Content):
 
     TYPE = 'generic'
 
-    relative_path = models.TextField(null=False)
-    sha256 = models.TextField(null=False)
+    relative_path = models.CharField(max_length=255, null=False)
+    sha256 = models.CharField(max_length=255, null=False)
 
     class Meta:
         unique_together = (
@@ -43,13 +43,13 @@ class Release(Content):
 
     TYPE = 'release'
 
-    codename = models.TextField()
-    suite = models.TextField()
-    distribution = models.TextField()
-    components = models.TextField(blank=True)
-    architectures = models.TextField(blank=True)
-    relative_path = models.TextField()
-    sha256 = models.TextField()
+    codename = models.CharField(max_length=255)
+    suite = models.CharField(max_length=255)
+    distribution = models.CharField(max_length=255)
+    components = models.CharField(max_length=255, blank=True)
+    architectures = models.CharField(max_length=255, blank=True)
+    relative_path = models.CharField(max_length=255)
+    sha256 = models.CharField(max_length=255)
 
     class Meta:
         unique_together = (
@@ -78,16 +78,23 @@ class PackageIndex(Content):
     TYPE = 'package_index'
 
     release_pk = models.ForeignKey('Release', on_delete=models.CASCADE)
-    component = models.TextField()
-    architecture = models.TextField()
-    relative_path = models.TextField()
-    sha256 = models.TextField()
+    component = models.CharField(max_length=255)
+    architecture = models.CharField(max_length=255)
+    relative_path = models.CharField(max_length=255)
+    sha256 = models.CharField(max_length=255)
 
     class Meta:
         verbose_name_plural = "PackageIndices"
         unique_together = (
             ('relative_path', 'sha256'),
         )
+
+    @property
+    def main_artifact(self):
+        """
+        Retrieve the uncompressed PackageIndex artifact.
+        """
+        return self._artifacts.get(sha256=self.sha256)
 
 
 class Package(Content):
@@ -101,57 +108,56 @@ class Package(Content):
     TYPE = 'package'
 
     TRANSLATION_DICT = {
-        'package_name': 'package',  # Workaround (this field should be called 'package')
-        'source': 'source',
-        'version': 'version',
-        'architecture': 'architecture',
-        'section': 'section',
-        'priority': 'priority',
-        'origin': 'origin',
-        'tag': 'tag',
-        'bugs': 'bugs',
-        'essential': 'essential',
-        'build_essential': 'build_essential',
-        'installed_size': 'installed_size',
-        'maintainer': 'maintainer',
-        'original_maintainer': 'original_maintainer',
-        'description': 'description',
-        'description_md5': 'description_md5',
-        'homepage': 'homepage',
-        'built_using': 'built_using',
-        'auto_built_package': 'auto_built_package',
-        'multi_arch': 'multi_arch',
-        'breaks': 'breaks',
-        'conflicts': 'conflicts',
-        'depends': 'depends',
-        'recommends': 'recommends',
-        'suggests': 'suggests',
-        'enhances': 'enhances',
-        'pre_depends': 'pre_depends',
-        'provides': 'provides',
-        'replaces': 'replaces',
+        'package_name': 'Package',  # Workaround (this field should be called 'package')
+        'source': 'Source',
+        'version': 'Version',
+        'architecture': 'Architecture',
+        'section': 'Section',
+        'priority': 'Priority',
+        'origin': 'Origin',
+        'tag': 'Tag',
+        'bugs': 'Bugs',
+        'essential': 'Essential',
+        'build_essential': 'Build_essential',
+        'installed_size': 'Installed_size',
+        'maintainer': 'Maintainer',
+        'original_maintainer': 'Original_Maintainer',
+        'description': 'Description',
+        'description_md5': 'Description_MD5',
+        'homepage': 'Homepage',
+        'built_using': 'Built_Using',
+        'auto_built_package': 'Auto_Built_Package',
+        'multi_arch': 'Multi_Arch',
+        'breaks': 'Breaks',
+        'conflicts': 'Conflicts',
+        'depends': 'Depends',
+        'recommends': 'Recommends',
+        'suggests': 'Suggests',
+        'enhances': 'Enhances',
+        'pre_depends': 'Pre_Depends',
+        'provides': 'Provides',
+        'replaces': 'Replaces',
     }
 
-    # TODO: Do we have any specification for max_length?
-    package_name = models.TextField()  # package name
-    source = models.TextField(null=True)  # source package name
-    version = models.TextField()
-    architecture = models.TextField()  # all, i386, ...
-    section = models.TextField(null=True)  # admin, comm, database, ...
-    priority = models.TextField(null=True)  # required, standard, optional, extra, ...
-    origin = models.TextField(null=True)
+    package_name = models.CharField(max_length=255)  # package name
+    source = models.CharField(max_length=255, null=True)  # source package name
+    version = models.CharField(max_length=255)
+    architecture = models.CharField(max_length=255)  # all, i386, ...
+    section = models.CharField(max_length=255, null=True)  # admin, comm, database, ...
+    priority = models.CharField(max_length=255, null=True)  # required, standard, optional, extra
+    origin = models.CharField(max_length=255, null=True)
     tag = models.TextField(null=True)
     bugs = models.TextField(null=True)
     essential = models.BooleanField(null=True)
     build_essential = models.BooleanField(null=True)
     installed_size = models.IntegerField(null=True)
-    maintainer = models.TextField()
-    original_maintainer = models.TextField(null=True)
+    maintainer = models.CharField(max_length=255)
+    original_maintainer = models.CharField(max_length=255, null=True)
     description = models.TextField()
-    description_md5 = models.TextField(null=True)
-    homepage = models.TextField(null=True)
-    built_using = models.TextField(null=True)
-    auto_built_package = models.TextField(null=True)
+    description_md5 = models.CharField(max_length=255, null=True)
+    homepage = models.CharField(max_length=255, null=True)
+    built_using = models.CharField(max_length=255, null=True)
+    auto_built_package = models.CharField(max_length=255, null=True)
     multi_arch = models.TextField(
         null=True,
         choices=[('no', 'no'), ('same', 'same'), ('foreign', 'foreign'), ('allowed', 'allowed')],
@@ -169,8 +175,7 @@ class Package(Content):
     replaces = models.TextField(null=True)
 
     # relative path in the upstream repository
-    # deprecated
-    relative_path = models.TextField(null=False)
+    relative_path = models.CharField(max_length=255, null=False)
 
     @property
     def name(self):
@@ -195,60 +200,11 @@ class Package(Content):
     def to822(self, component=''):
         """Create deb822.Package object from model."""
         ret = deb822.Packages()
-        ret['Package'] = self.package_name
-        if self.source:
-            ret['Source'] = self.source
-        ret['Version'] = self.version
-        ret['Architecture'] = self.architecture
-        if self.section:
-            ret['Section'] = self.section
-        if self.priority:
-            ret['Priority'] = self.priority
-        if self.origin:
-            ret['Origin'] = self.origin
-        if self.tag:
-            ret['Tag'] = self.tag
-        if self.bugs:
-            ret['Bugs'] = self.bugs
-        if self.essential:
-            ret['Essential'] = self.essential
-        if self.build_essential:
-            ret['Build-Essential'] = self.build_essential
-        if self.installed_size:
-            ret['Installed-Size'] = self.installed_size
-        ret['Maintainer'] = self.maintainer
-        if self.original_maintainer:
-            ret['Original-Maintainer'] = self.original_maintainer
-        ret['Description'] = self.description
-        if self.description_md5:
-            ret['Description-MD5'] = self.description_md5
-        if self.homepage:
-            ret['Homepage'] = self.homepage
-        if self.built_using:
-            ret['Built-Using'] = self.built_using
-        if self.auto_built_package:
-            ret['Auto-Built-Package'] = self.auto_built_package
-        if self.multi_arch:
-            ret['Multi-Arch'] = self.multi_arch
 
-        if self.breaks:
-            ret['Breaks'] = self.breaks
-        if self.conflicts:
-            ret['Conflicts'] = self.conflicts
-        if self.depends:
-            ret['Depends'] = self.depends
-        if self.recommends:
-            ret['Recommends'] = self.recommends
-        if self.suggests:
-            ret['Suggests'] = self.suggests
-        if self.enhances:
-            ret['Enhances'] = self.enhances
-        if self.pre_depends:
-            ret['Pre-Depends'] = self.pre_depends
-        if self.provides:
-            ret['Provides'] = self.provides
-        if self.replaces:
-            ret['Replaces'] = self.replaces
+        for k, v in self.TRANSLATION_DICT.items():
+            value = getattr(self, k, None)
+            if value is not None:
+                ret[v] = value
 
         artifact = self._artifacts.get()
         ret['MD5sum'] = artifact.md5
@@ -294,6 +250,6 @@ class DebRemote(Remote):
 
     TYPE = 'deb'
 
-    distributions = models.TextField(null=True)
-    components = models.TextField(null=True)
-    architectures = models.TextField(null=True)
+    distributions = models.CharField(max_length=255, null=True)
+    components = models.CharField(max_length=255, null=True)
+    architectures = models.CharField(max_length=255, null=True)
