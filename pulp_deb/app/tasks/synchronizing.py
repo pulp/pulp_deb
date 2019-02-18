@@ -23,6 +23,7 @@ from pulpcore.plugin.stages import (
     ArtifactSaver,
     QueryExistingContents,
     ContentSaver,
+    RemoteArtifactSaver,
     ResolveContentFutures,
 )
 from pulpcore.plugin.exceptions import PulpException
@@ -125,6 +126,7 @@ class DebDeclarativeVersion(DeclarativeVersion):
             DebUpdatePackageIndexAttributes(),
             QueryExistingContents(),
             ContentSaver(),
+            RemoteArtifactSaver(),
             ResolveContentFutures(),
         ])
         return pipeline
