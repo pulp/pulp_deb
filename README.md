@@ -199,15 +199,19 @@ A minimal sign command using GPG could be:
 ```Shell
 #!/bin/bash -e
 
-KEYID=${GPG_KEY_ID:-45BA0816}
+if [ -z "${GPG_KEY_ID}" ]; then
+  echo "No Key specified for signing."
+  exit 1
+fi
 
-rm -f ${1}.gpg
+rm -f "${1}.gpg"
 
-gpg --homedir /var/lib/pulp/gpg-home \
-    --batch \
-    --digest-algo SHA256 \
-    --detach-sign --default-key $KEYID \
-    --armor --output ${1}.gpg ${1}
+gpg --batch --armor --detach-sign \
+  --digest-algo SHA256 \
+  --homedir /var/lib/pulp/gpg-home \
+  --default-key ${GPG_KEY_ID} \
+  --output "${1}.gpg" \
+  "${1}"
 ```
 
 You could import your password-less GPG keys like this:
@@ -224,3 +228,63 @@ use. Unprotected GPG keys may be easily stolen. You may want to consider
 more secure alternatives for your signing needs, like a dedicated server,
 potentially with a
 [Hardware Security Module](https://en.wikipedia.org/wiki/Hardware_security_module).
+
+
+#### InRelease file signing:
+
+It is also possible to configure the above mechanism in such a way, as to
+produce `InRelease` files, rather than separate `Release` and `Release.gpg`
+files. Assuming you are using the `deb_distributor.json` config file, as well
+as the same `gpg-home` folder, from the previous example, you could modify your
+`/usr/local/bin/sign.sh` script as follows:
+
+```Shell
+#!/bin/bash -e
+
+if [ -z "${GPG_KEY_ID}" ]; then
+  echo "No Key specified for signing."
+  exit 1
+fi
+
+PULP_WORKER_PATH="$(dirname ${1})"
+
+rm -f "${PULP_WORKER_PATH}/InRelease"
+
+gpg --batch --armor --clearsign \
+  --digest-algo SHA256 \
+  --homedir /var/lib/pulp/gpg-home \
+  --default-key ${GPG_KEY_ID}" \
+  --output "${PULP_WORKER_PATH}/InRelease" \
+  "${PULP_WORKER_PATH}/Release"
+```
+
+To have both `InRelease` files and `Release.gpg` files:
+
+```Shell
+#!/bin/bash -e
+
+if [ -z "${GPG_KEY_ID}" ]; then
+  echo "No Key specified for signing."
+  exit 1
+fi
+
+PULP_WORKER_PATH="$(dirname ${1})"
+
+rm -f "${PULP_WORKER_PATH}/Release.gpg"
+rm -f "${PULP_WORKER_PATH}/InRelease"
+
+COMMON_GPG_OPTS="--batch --armor \
+  --digest-algo SHA256 \
+  --homedir /var/lib/pulp/gpg-home \
+  --default-key ${GPG_KEY_ID}"
+
+gpg ${COMMON_GPG_OPTS} \
+  --detach-sign \
+  --output "${PULP_WORKER_PATH}/Release.gpg" \
+  "${PULP_WORKER_PATH}/Release"
+
+gpg ${COMMON_GPG_OPTS} \
+  --clearsign \
+  --output "${PULP_WORKER_PATH}/InRelease" \
+  "${PULP_WORKER_PATH}/Release"
+```
