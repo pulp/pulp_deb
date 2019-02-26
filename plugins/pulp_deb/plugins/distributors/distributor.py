@@ -329,10 +329,11 @@ class MetadataStep(PluginStep):
 
             # Should we add additional subdirectories here (e.g.: /a/; /liba/)?
             for package_id in component.packages:
-                package = unit_dict[package_id]
-                destination_path = os.path.join(component_path, package.filename)
-                if not os.path.exists(destination_path):
-                    os.symlink(package.storage_path, destination_path)
+                package = unit_dict.get(package_id)
+                if package:
+                    destination_path = os.path.join(component_path, package.filename)
+                    if not os.path.exists(destination_path):
+                        os.symlink(package.storage_path, destination_path)
 
         # Create the 'dists' folder:
         dists_path = os.path.join(base_path, 'dists')
