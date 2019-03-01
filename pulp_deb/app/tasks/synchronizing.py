@@ -112,15 +112,7 @@ class DebDeclarativeVersion(DeclarativeVersion):
             DebDropEmptyContent(),
             ArtifactSaver(),
             # ---8<---
-        ]
-        if self.download_artifacts:
-            pipeline.extend([
-                # QueryExistingArtifacts(),
-                # ArtifactDownloader(),
-                # ArtifactSaver(),
-                DebUpdatePackageAttributes(),
-            ])
-        pipeline.extend([
+            DebUpdatePackageAttributes(),
             DebUpdateReleaseAttributes(self.first_stage.components,
                                        self.first_stage.architectures),
             DebUpdatePackageIndexAttributes(),
@@ -128,7 +120,7 @@ class DebDeclarativeVersion(DeclarativeVersion):
             ContentSaver(),
             RemoteArtifactSaver(),
             ResolveContentFutures(),
-        ])
+        ]
         return pipeline
 
 
@@ -250,12 +242,13 @@ class DebUpdatePackageAttributes(Stage):
                 if isinstance(d_content.content, Package):
                     package = d_content.content
                     package_artifact = d_content.d_artifacts[0].artifact
-                    package_paragraph = debfile.DebFile(
-                        package_artifact.storage_path('')).debcontrol()
-                    package_dict = _sanitize_package_dict(package_paragraph)
-                    for key, value in package_dict.items():
-                        setattr(package, key.lower(), value)
-                    pb.increment()
+                    if package_artifact.pk:
+                        package_paragraph = debfile.DebFile(
+                            package_artifact.storage_path('')).debcontrol()
+                        package_dict = _sanitize_package_dict(package_paragraph)
+                        for key, value in package_dict.items():
+                            setattr(package, key.lower(), value)
+                        pb.increment()
                 await self.put(d_content)
 
 
