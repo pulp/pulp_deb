@@ -5,7 +5,7 @@ psql -U postgres -c 'CREATE USER pulp WITH SUPERUSER LOGIN;'
 psql -U postgres -c 'CREATE DATABASE pulp OWNER pulp;'
 
 mkdir -p ~/.config/pulp_smash
-cp ../pulp/.travis/pulp-smash-config.json ~/.config/pulp_smash/settings.json
+cp ../pulpcore/.travis/pulp-smash-config.json ~/.config/pulp_smash/settings.json
 
 sudo mkdir -p /var/lib/pulp/tmp
 sudo mkdir /etc/pulp/
