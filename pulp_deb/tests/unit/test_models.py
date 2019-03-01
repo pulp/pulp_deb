@@ -1,3 +1,4 @@
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
 from pulpcore.plugin.models import Artifact, ContentArtifact
@@ -27,7 +28,13 @@ class TestPackage(TestCase):
             description='A sea jötunn associated with the ocean.',
         )
         self.package1.save()
-        self.artifact1 = Artifact(size=42, md5='aabb', sha1='ccdd', sha256='eeff')
+        self.artifact1 = Artifact(
+            size=42,
+            md5='aabb',
+            sha1='ccdd',
+            sha256='eeff',
+            file=SimpleUploadedFile('test_filename', b'test content'),
+        )
         self.artifact1.save()
         ContentArtifact(artifact=self.artifact1, content=self.package1).save()
 
