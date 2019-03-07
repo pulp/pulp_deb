@@ -20,7 +20,7 @@ DEB_GENERIC_CONTENT_PATH = urljoin(CONTENT_PATH, 'deb/generic_contents/')
 
 DEB_REMOTE_PATH = urljoin(BASE_REMOTE_PATH, 'deb/apt/')
 
-DEB_PUBLISHER_PATH = urljoin(BASE_PUBLISHER_PATH, 'deb/default/')
+DEB_PUBLISHER_PATH = urljoin(BASE_PUBLISHER_PATH, 'deb/apt/')
 DEB_VERBATIM_PUBLISHER_PATH = urljoin(BASE_PUBLISHER_PATH, 'deb/verbatim/')
 
 

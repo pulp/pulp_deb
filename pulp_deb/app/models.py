@@ -227,7 +227,7 @@ class DebVerbatimPublisher(Publisher):
     This publisher publishes the obtained metadata unchanged.
     """
 
-    TYPE = 'deb'
+    TYPE = 'verbatim-publisher'
 
 
 class DebPublisher(Publisher):
@@ -237,7 +237,7 @@ class DebPublisher(Publisher):
     This publisher recreates all metadata.
     """
 
-    TYPE = 'deb'
+    TYPE = 'apt-publisher'
 
     simple = models.BooleanField(default=False)
     structured = models.BooleanField(default=False)
@@ -248,7 +248,7 @@ class DebRemote(Remote):
     A Remote for DebContent.
     """
 
-    TYPE = 'deb'
+    TYPE = 'apt-remote'
 
     distributions = models.CharField(max_length=255, null=True)
     components = models.CharField(max_length=255, null=True)

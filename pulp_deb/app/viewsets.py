@@ -179,7 +179,7 @@ class DebPublisherViewSet(core.PublisherViewSet):
     A ViewSet for DebPublisher.
     """
 
-    endpoint_name = 'default'
+    endpoint_name = 'apt'
     queryset = models.DebPublisher.objects.all()
     serializer_class = serializers.DebPublisherSerializer
 
