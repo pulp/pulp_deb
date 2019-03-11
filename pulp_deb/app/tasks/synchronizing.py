@@ -130,7 +130,7 @@ class DebDeclarativeVersion(DeclarativeVersion):
             ArtifactDownloader(),
             DebDropEmptyContent(),
             ArtifactSaver(),
-            DebUpdatePackageAttributes(),
+            # DebUpdatePackageAttributes(),  # TODO Does not work with lazy ATM
             DebUpdateReleaseAttributes(
                 self.first_stage.components,
                 self.first_stage.architectures,
@@ -379,7 +379,7 @@ class DebFirstStage(Stage):
             for release_future in asyncio.as_completed(future_releases):
                 release = await release_future
                 log.info('Parsing Release file for release: "{}"'.format(release.codename))
-                release_artifact = release._artifacts.first()
+                release_artifact = release._artifacts.get(sha256=release.sha256)
                 release_dict = deb822.Release(release_artifact.file)
                 async for d_content in self._read_release_file(release, release_dict):
                     if isinstance(d_content.content, PackageIndex):
