@@ -88,7 +88,10 @@ class DownloadContentTestCase(unittest.TestCase):
         # Create a distribution.
         body = gen_distribution()
         body['publication'] = publication['_href']
-        distribution = client.post(DISTRIBUTION_PATH, body)
+        response_dict = client.post(DISTRIBUTION_PATH, body)
+        dist_task = client.get(response_dict['task'])
+        distribution_href = dist_task['created_resources'][0]
+        distribution = client.get(distribution_href)
         self.addCleanup(client.delete, distribution['_href'])
 
         # Pick a content unit (of each type), and download it from both Pulp Fixtures…
