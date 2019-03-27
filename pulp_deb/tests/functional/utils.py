@@ -20,7 +20,7 @@ from pulp_smash.pulp3.utils import (
 
 from pulp_deb.tests.functional.constants import (
     DEB_RELEASE_NAME,
-    DEB_PACKAGE_INDEX_NAME,
+    # DEB_PACKAGE_INDEX_NAME,
     DEB_PACKAGE_NAME,
     DEB_GENERIC_CONTENT_NAME,
     DEB_GENERIC_CONTENT_PATH,
@@ -123,11 +123,6 @@ def get_deb_verbatim_content_unit_paths(repo):
         DEB_RELEASE_NAME: [
             (content_unit['relative_path'], content_unit['relative_path'])
             for content_unit in get_content(repo)[DEB_RELEASE_NAME]
-        ],
-
-        DEB_PACKAGE_INDEX_NAME: [
-            (content_unit['relative_path'], content_unit['relative_path'])
-            for content_unit in get_content(repo)[DEB_PACKAGE_INDEX_NAME]
         ],
 
         DEB_PACKAGE_NAME: [
