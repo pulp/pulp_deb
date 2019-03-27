@@ -4,7 +4,9 @@ import asyncio
 import aiohttp
 import os
 import shutil
+import bz2
 import gzip
+import lzma
 from collections import defaultdict
 from tempfile import NamedTemporaryFile
 
@@ -222,7 +224,7 @@ class DebUpdatePackageIndexAttributes(Stage):  # TODO: Needs a new name
                     if not [da for da in d_content.d_artifacts
                             if da.artifact.sha256 == content.sha256]:
                         # No main_artifact found uncompress one
-                        filename = _uncompress_artifact(d_content.d_artifacts[0].artifact)
+                        filename = _uncompress_artifact(d_content.d_artifacts)
                         da = DeclarativeArtifact(
                             Artifact(sha256=content.sha256),
                             filename,
@@ -239,11 +241,25 @@ class DebUpdatePackageIndexAttributes(Stage):  # TODO: Needs a new name
                 await self.put(d_content)
 
 
-def _uncompress_artifact(artifact):
-    with NamedTemporaryFile(delete=False) as f_out:
-        with gzip.open(artifact.file) as f_in:
-            shutil.copyfileobj(f_in, f_out)
-    return 'file://{}'.format(f_out.name)
+def _uncompress_artifact(d_artifacts):
+    for d_artifact in d_artifacts:
+        ext = os.path.splitext(d_artifact.relative_path)[1]
+        if ext == '.gz':
+            compressor = gzip
+        elif ext == '.bz2':
+            compressor = bz2
+        elif ext == '.xz':
+            compressor = lzma
+        else:
+            log.info("Compression algorithm unknown for extension '{}'.".format(ext))
+            continue
+        # At this point we have found a file that can be decompressed
+        with NamedTemporaryFile(delete=False) as f_out:
+            with compressor.open(d_artifact.artifact.file) as f_in:
+                shutil.copyfileobj(f_in, f_out)
+        return 'file://{}'.format(f_out.name)
+    # Not one artifact was suitable
+    raise NoPackageIndexFile()
 
 
 class DebUpdatePackageAttributes(Stage):
@@ -292,7 +308,7 @@ class DebDropEmptyContent(Stage):
             if not d_content.d_artifacts:
                 # No artifacts left -> drop it
                 if d_content.future is not None:
-                    d_content.furture.set_result(None)
+                    d_content.future.set_result(None)
                 continue
             await self.put(d_content)
 
@@ -381,6 +397,8 @@ class DebFirstStage(Stage):
         with ProgressBar(message='Parsing Release files', total=self.num_distributions) as pb:
             for release_future in asyncio.as_completed(future_releases):
                 release = await release_future
+                if release is None:
+                    continue
                 log.info('Parsing Release file for release: "{}"'.format(release.codename))
                 release_artifact = release._artifacts.get(sha256=release.sha256)
                 release_dict = deb822.Release(release_artifact.file)
@@ -395,7 +413,13 @@ class DebFirstStage(Stage):
         with ProgressBar(message='Parsing package index files') as pb:
             for package_index_future in asyncio.as_completed(future_package_indices):
                 package_index = await package_index_future
+                if package_index is None:
+                    continue
                 package_index_artifact = package_index.main_artifact
+                log.debug("Parsing package index for {}:{}.".format(
+                    package_index.component,
+                    package_index.architecture,
+                ))
                 async for package_dc in self._read_package_index(package_index_artifact.file):
                     await self.put(package_dc)
                 pb.increment()
@@ -403,6 +427,12 @@ class DebFirstStage(Stage):
         with ProgressBar(message='Parsing installer file index files') as pb:
             for installer_file_index_future in asyncio.as_completed(future_installer_file_indices):
                 installer_file_index = await installer_file_index_future
+                if installer_file_index is None:
+                    continue
+                log.debug("Parsing installer file index for {}:{}.".format(
+                    installer_file_index.component,
+                    installer_file_index.architecture,
+                ))
                 async for d_content in self._read_installer_file_index(installer_file_index):
                     await self.put(d_content)
                 pb.increment()
@@ -571,37 +601,40 @@ class DebFirstStage(Stage):
         deferred_download = (self.remote.policy != Remote.IMMEDIATE)
 
         for package_paragraph in deb822.Packages.iter_paragraphs(package_index):
-            package_relpath = package_paragraph['Filename']
-            package_sha256 = package_paragraph['sha256']
-            if package_relpath.endswith('.deb'):
-                package_class = Package
-                package_serializer_class = PackageSerializer
-            elif package_relpath.endswith('.udeb'):
-                package_class = InstallerPackage
-                package_serializer_class = InstallerPackageSerializer
             try:
-                package_content_unit = package_class.objects.get(sha256=package_sha256)
-            except ObjectDoesNotExist:
-                log.debug("Downloading package {}".format(
-                    package_paragraph['Package']))
-                package_dict = package_class.from822(package_paragraph)
-                package_dict['relative_path'] = package_relpath
-                package_dict['sha256'] = package_sha256
-                package_serializer = package_serializer_class(data=package_dict, partial=True)
-                package_serializer.is_valid(raise_exception=True)
-                package_content_unit = package_class(**package_serializer.validated_data)
-            package_path = os.path.join(self.parsed_url.path, package_relpath)
-            package_artifact = Artifact(**_get_checksums(package_paragraph))
-            package_da = DeclarativeArtifact(
-                artifact=package_artifact,
-                url=urlunparse(self.parsed_url._replace(path=package_path)),
-                relative_path=package_relpath,
-                remote=self.remote,
-                deferred_download=deferred_download,
-            )
-            package_dc = DeclarativeContent(
-                content=package_content_unit, d_artifacts=[package_da])
-            yield package_dc
+                package_relpath = package_paragraph['Filename']
+                package_sha256 = package_paragraph['sha256']
+                if package_relpath.endswith('.deb'):
+                    package_class = Package
+                    package_serializer_class = PackageSerializer
+                elif package_relpath.endswith('.udeb'):
+                    package_class = InstallerPackage
+                    package_serializer_class = InstallerPackageSerializer
+                try:
+                    package_content_unit = package_class.objects.get(sha256=package_sha256)
+                except ObjectDoesNotExist:
+                    log.debug("Downloading package {}".format(
+                        package_paragraph['Package']))
+                    package_dict = package_class.from822(package_paragraph)
+                    package_dict['relative_path'] = package_relpath
+                    package_dict['sha256'] = package_sha256
+                    package_serializer = package_serializer_class(data=package_dict, partial=True)
+                    package_serializer.is_valid(raise_exception=True)
+                    package_content_unit = package_class(**package_serializer.validated_data)
+                package_path = os.path.join(self.parsed_url.path, package_relpath)
+                package_artifact = Artifact(**_get_checksums(package_paragraph))
+                package_da = DeclarativeArtifact(
+                    artifact=package_artifact,
+                    url=urlunparse(self.parsed_url._replace(path=package_path)),
+                    relative_path=package_relpath,
+                    remote=self.remote,
+                    deferred_download=deferred_download,
+                )
+                package_dc = DeclarativeContent(
+                    content=package_content_unit, d_artifacts=[package_da])
+                yield package_dc
+            except KeyError:
+                log.warning("Ignoring invalid package paragraph. {}".format(package_paragraph))
 
     async def _read_installer_file_index(self, installer_file_index):
         """
