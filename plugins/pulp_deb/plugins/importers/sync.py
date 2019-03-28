@@ -272,13 +272,17 @@ class ParsePackagesStep(publish_step.PluginStep):
                     if dlr.url in self.parent.packages_urls[release]])
             for ca in repometa.iter_component_arch_binaries():
                 for pkg in ca.iter_packages():
-                    checksum = pkg['SHA256']
-                    self.parent.unit_relative_urls[checksum] = pkg['Filename']
-                    if checksum in units:
-                        unit = units[checksum]
-                    else:
-                        unit = models.DebPackage.from_packages_paragraph(pkg)
-                        units[checksum] = unit
+                    try:
+                        checksum = pkg['SHA256']
+                        self.parent.unit_relative_urls[checksum] = pkg['Filename']
+                        if checksum in units:
+                            unit = units[checksum]
+                        else:
+                            unit = models.DebPackage.from_packages_paragraph(pkg)
+                            units[checksum] = unit
+                    except KeyError:
+                        _logger.warning(_("Invalid package record found. {}").format(pkg))
+                        continue
                     self.parent.component_packages[release][ca.component].append(unit.unit_key)
         self.parent.available_units = units.values()
 
