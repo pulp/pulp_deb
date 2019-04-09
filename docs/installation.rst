@@ -40,7 +40,7 @@ From Source
    source ~/pulpvenv/bin/activate
    cd pulp_deb
    pip install -e .
-   django-admin runserver
+   django-admin runserver 24817
 
 Make and Run Migrations
 -----------------------
@@ -56,8 +56,8 @@ Run Services
 
 .. code-block:: bash
 
-   django-admin runserver
-   gunicorn pulpcore.content:server --bind 'localhost:8080' --worker-class 'aiohttp.GunicornWebWorker' -w 2
+   django-admin runserver 24817
+   gunicorn pulpcore.content:server --bind 'localhost:24816' --worker-class 'aiohttp.GunicornWebWorker' -w 2
    sudo systemctl restart pulp-resource-manager
    sudo systemctl restart pulp-worker@1
    sudo systemctl restart pulp-worker@2

@@ -15,7 +15,7 @@ $ http POST $BASE_ADDR/pulp/api/v3/publishers/deb/default/ name=bar
 Response::
 
     {
-        "_href": "http://localhost:8000/pulp/api/v3/repositories/foo/publishers/deb/default/1/",
+        "_href": "http://localhost:24817/pulp/api/v3/repositories/foo/publishers/deb/default/1/",
         ...
     }
 
@@ -35,7 +35,7 @@ Response::
 
     [
         {
-            "_href": "http://localhost:8000/pulp/api/v3/tasks/fd4cbecd-6c6a-4197-9cbe-4e45b0516309/",
+            "_href": "http://localhost:24817/pulp/api/v3/tasks/fd4cbecd-6c6a-4197-9cbe-4e45b0516309/",
             "task_id": "fd4cbecd-6c6a-4197-9cbe-4e45b0516309"
         }
     ]
@@ -51,7 +51,7 @@ $ http POST $BASE_ADDR/pulp/api/v3/distributions/ name='baz' base_path='foo' pub
 Response::
 
     {
-        "_href": "http://localhost:8000/pulp/api/v3/distributions/1/",
+        "_href": "http://localhost:24817/pulp/api/v3/distributions/1/",
        ...
     }
 
