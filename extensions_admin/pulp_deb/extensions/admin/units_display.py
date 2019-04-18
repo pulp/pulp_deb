@@ -47,7 +47,7 @@ def _details_release(release):
     :return: The display string of the release
     :rtype: str
     """
-    return '%s' % (release['codename'])
+    return '%s' % (release['distribution'])
 
 
 def _details_component(component):

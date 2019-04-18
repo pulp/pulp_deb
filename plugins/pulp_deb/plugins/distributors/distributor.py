@@ -296,10 +296,15 @@ class MetadataStep(PluginStep):
 
         # If there are no release_units (old style repo) publish as 'stable/main':
         if len(release_units) == 0:
-            default_release = models.DebRelease(suite='stable')
+            default_release = models.DebRelease(
+                distribution='stable',
+                codename='stable',
+                suite='stable',
+            )
             release_units.append(default_release)
             all_component = models.DebComponent(
                 name='main',
+                distribution='stable',
                 release='stable',
                 packages=[package_id for package_id in unit_dict],
             )
@@ -307,10 +312,15 @@ class MetadataStep(PluginStep):
 
         # If configured to do so, also publish as 'default/all':
         if config.get(constants.PUBLISH_DEFAULT_RELEASE_KEYWORD, False):
-            default_release = models.DebRelease(codename='default', suite='default')
+            default_release = models.DebRelease(
+                distribution='default',
+                codename='default',
+                suite='default',
+            )
             release_units.append(default_release)
             all_component = models.DebComponent(
                 name='all',
+                distribution='default',
                 release='default',
                 packages=[package_id for package_id in unit_dict],
             )
@@ -322,9 +332,9 @@ class MetadataStep(PluginStep):
 
         # Symlink packages for each component in 'pool/<component_name>/':
         for component in comp_units:
-            component_path = os.path.join(pool_path, component.name)
+            component_path = os.path.join(pool_path, component.prefixed_component)
             if not os.path.exists(component_path):
-                # Use makedirs() since component.name may contain '/'!
+                # Use makedirs() since component.prefixed_component may contain '/'!
                 os.makedirs(component_path)
 
             # Should we add additional subdirectories here (e.g.: /a/; /liba/)?
@@ -341,32 +351,25 @@ class MetadataStep(PluginStep):
 
         # Create the 'dists' folder structure for each release:
         for release in release_units:
+            release_meta_files = []
             release_meta_data = {
                 'architectures': set(),
                 'components': set(),
+                'codename': release.codename,
             }
-            release_meta_files = []
-            release_name = None
-            if release.codename:
-                release_name = release.codename
-                release_meta_data['codename'] = release.codename
             if release.suite:
-                if not release_name:
-                    release_name = release.suite
                 release_meta_data['suite'] = release.suite
-            if not release_name:
-                raise RuntimeError('Neither codename nor suite is set!')
-            release_path = os.path.join(dists_path, release_name)
-            os.mkdir(release_path)
+            release_path = os.path.join(dists_path, release.distribution)
+            # Use makedirs() since distribution may contain '/'!
+            os.makedirs(release_path)
 
             # Continue the 'dists' folder structure for each component...
             for component in comp_units:
                 # ...of the current release:
-                if component.release == release_name:
-                    release_meta_data['components'].add(component.name)
-                    component_path = os.path.join(release_path, component.name)
-                    # Use makedirs() since component.name may contain '/'!
-                    os.makedirs(component_path)
+                if component.distribution == release.distribution:
+                    release_meta_data['components'].add(component.prefixed_component)
+                    component_path = os.path.join(release_path, component.plain_component)
+                    os.mkdir(component_path)
 
                     # Create arch_units since there is no corresponding db entry:
                     # Note: This method will not create arches containing no arch
@@ -395,7 +398,7 @@ class MetadataStep(PluginStep):
 
                         # Create 'Packages' files for each arch:
                         packages_file_path = write_packages_file(arch_path,
-                                                                 component.name,
+                                                                 component.prefixed_component,
                                                                  packages,)
 
                         # Compress and record 'Packages' files:

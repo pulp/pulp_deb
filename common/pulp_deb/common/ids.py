@@ -13,12 +13,12 @@ EXTRA_FIELDS_DEB = set([
 
 TYPE_ID_DEB_COMP = 'deb_component'
 UNIT_KEY_DEB_COMP = (
-    'name', 'release', 'repoid')
+    'name', 'distribution', 'repoid')
 EXTRA_FIELDS_DEB_COMP = set([
     'packages'])
 
 TYPE_ID_DEB_RELEASE = 'deb_release'
 UNIT_KEY_DEB_RELEASE = (
-    'codename', 'repoid')
+    'distribution', 'repoid')
 
 SUPPORTED_TYPES = set([TYPE_ID_DEB, TYPE_ID_DEB_COMP, TYPE_ID_DEB_RELEASE])

@@ -204,7 +204,7 @@ class PublishRepoMixIn(object):
 
         # Make sure symlinks got created
         for unit in unit_dict[ids.TYPE_ID_DEB]:
-            units_components = [comp.name for comp in unit_dict[ids.TYPE_ID_DEB_COMP]
+            units_components = [comp.prefixed_component for comp in unit_dict[ids.TYPE_ID_DEB_COMP]
                                 if unit.id in comp.packages]
             for component in units_components:
                 published_path = os.path.join(
@@ -223,27 +223,43 @@ class PublishRepoMixIn(object):
                     unit.filename)
                 self.assertEquals(os.readlink(published_path), unit.storage_path)
 
-        # Make sure the release files exist
+        # Make sure the Release files exist
         release_units = unit_dict[ids.TYPE_ID_DEB_RELEASE]
         component_units = unit_dict[ids.TYPE_ID_DEB_COMP]
         # Old-style repositories do not have release units and should be published as "stable/main"
         if not release_units:
-            release_units.append(models.DebRelease(codename='stable', id='stableid'))
-            component_units.append(models.DebComponent(name='main', id='mainid', release='stable'))
+            release_units.append(models.DebRelease(
+                distribution='stable',
+                codename='stable',
+                id='stableid',
+            ))
+            component_units.append(models.DebComponent(
+                name='main',
+                id='mainid',
+                distribution='stable',
+            ))
         # Test for default/all release
         if self.default_release:
-            release_units.append(models.DebRelease(codename='default', id='defaultid'))
-            component_units.append(models.DebComponent(name='all', id='allid', release='default'))
+            release_units.append(models.DebRelease(
+                distribution='default',
+                codename='default',
+                id='defaultid',
+            ))
+            component_units.append(models.DebComponent(
+                name='all',
+                id='allid',
+                distribution='default',
+            ))
         for release in release_units:
             comp_dir = os.path.join(
                 repo_config['http_publish_dir'],
                 repo_config['relative_url'],
                 'dists',
-                release.codename)
+                release.distribution)
             release_file = os.path.join(comp_dir, 'Release')
             self.assertTrue(os.path.exists(release_file))
             # Make sure the components Packages files exist
-            for comp in [comp.name for comp in component_units
+            for comp in [comp.plain_component for comp in component_units
                          if comp.release == release.codename]:
                 for arch in self.Architectures:
                     self.assertTrue(os.path.exists(
@@ -332,13 +348,17 @@ class TestPublishRepoDeb(PublishRepoMixIn, BaseTest):
         models.DebComponent: [
             dict(
                 name='main',
-                release='stable',
+                distribution='stable',
                 id='mainid',
                 packages=['bbbb', 'cccc']
             ),
         ],
         models.DebRelease: [
-            dict(codename='stable', id='stableid'),
+            dict(
+                distribution='stable',
+                codename='stable',
+                id='stableid',
+            ),
         ],
     }
     Architectures = ['all', 'amd64']
@@ -380,13 +400,17 @@ class TestPublishRepoMultiArchDeb(PublishRepoMixIn, BaseTest):
         models.DebComponent: [
             dict(
                 name='main',
-                release='stable',
+                distribution='stable',
                 id='mainid',
                 packages=['bbbb', 'cccc', 'dddd', 'eeee'],
             ),
         ],
         models.DebRelease: [
-            dict(codename='stable', id='stableid'),
+            dict(
+                distribution='stable',
+                codename='stable',
+                id='stableid',
+            ),
         ],
     }
     Architectures = ['all', 'amd64', 'i386']
@@ -435,19 +459,23 @@ class TestPublishRepoMultiCompArchDeb(PublishRepoMixIn, BaseTest):
         models.DebComponent: [
             dict(
                 name='main',
-                release='old-stable',
+                distribution='old-stable',
                 id='mainid',
                 packages=['bbbb', 'cccc', 'dddd', 'eeee', 'ffff'],
             ),
             dict(
                 name='premature',
-                release='old-stable',
+                distribution='old-stable',
                 id='preid',
                 packages=['cccc', 'dddd', 'eeee', 'ffff'],
             ),
         ],
         models.DebRelease: [
-            dict(codename='old-stable', id='oldstableid'),
+            dict(
+                distribution='old-stable',
+                codename='old-stable',
+                id='oldstableid',
+            ),
         ],
     }
     Architectures = ['all', 'amd64', 'i386', 'ppc']
@@ -494,17 +522,21 @@ class TestPublishAllArchCompDeb(PublishRepoMixIn, BaseTest):
         models.DebComponent: [
             dict(
                 name='main',
-                release='old-stable',
+                distribution='old-stable',
                 id='mainid',
                 packages=['bbbb', 'cccc', 'dddd', 'ffff']),
             dict(
                 name='all-only',
-                release='old-stable',
+                distribution='old-stable',
                 id='preid',
                 packages=['bbbb', 'cccc', 'dddd']),
         ],
         models.DebRelease: [
-            dict(codename='old-stable', id='oldstableid'),
+            dict(
+                distribution='old-stable',
+                codename='old-stable',
+                id='oldstableid',
+            ),
         ],
     }
     Architectures = ['all', 'amd64']
@@ -555,10 +587,19 @@ class TestPublishRepoNonAsciiDeb(PublishRepoMixIn, BaseTest):
             ),
         ],
         models.DebComponent: [
-            dict(name='main', release='stable', id='mainid', packages=['aaaa']),
+            dict(
+                name='main',
+                distribution='stable',
+                id='mainid',
+                packages=['aaaa'],
+            ),
         ],
         models.DebRelease: [
-            dict(codename='stable', id='stableid'),
+            dict(
+                distribution='stable',
+                codename='stable',
+                id='stableid',
+            ),
         ],
     }
     Architectures = ['all', 'amd64']
@@ -592,12 +633,17 @@ class TestPublishRepoLayeredComponentDeb(PublishRepoMixIn, BaseTest):
         models.DebComponent: [
             dict(
                 name='updates/main',
-                release='stable',
+                distribution='stable',
                 id='mainid',
-                packages=['bbbb', 'cccc']),
+                packages=['bbbb', 'cccc'],
+            ),
         ],
         models.DebRelease: [
-            dict(codename='stable', id='stableid'),
+            dict(
+                distribution='stable',
+                codename='stable',
+                id='stableid',
+            ),
         ],
     }
     Architectures = ['all', 'amd64']
