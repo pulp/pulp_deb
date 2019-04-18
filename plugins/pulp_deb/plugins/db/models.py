@@ -300,7 +300,7 @@ class DebPackage(FileContentUnit):
 
 class DebComponent(ContentUnit):
     """
-    This unittype represents a deb release component
+    This unittype represents a deb release/distribution component
     """
     TYPE_ID = ids.TYPE_ID_DEB_COMP
     meta = dict(collection="units_deb_component",
@@ -308,6 +308,7 @@ class DebComponent(ContentUnit):
     unit_key_fields = ids.UNIT_KEY_DEB_COMP
 
     name = mongoengine.StringField(required=True)
+    distribution = mongoengine.StringField(required=True)
     release = mongoengine.StringField(required=True)
     repoid = mongoengine.StringField(required=True)
     packages = mongoengine.ListField()
@@ -316,11 +317,21 @@ class DebComponent(ContentUnit):
     _ns = mongoengine.StringField(required=True, default=meta['collection'])
     _content_type_id = mongoengine.StringField(required=True, default=TYPE_ID)
 
+    @property
+    def plain_component(self):
+        return self.name.strip('/').split('/')[-1]
+
+    @property
+    def prefixed_component(self):
+        prefix = '/'.join(self.distribution.split('/')[1:]).strip('/')
+        return (prefix + '/' + self.plain_component).strip('/')
+
     @classmethod
     def get_or_create_and_associate(cls, repo, release_unit, name):
         unit = cls()
         unit.name = name
         unit.repoid = repo.id
+        unit.distribution = release_unit.distribution
         unit.release = release_unit.codename
         try:
             unit.save()
@@ -338,12 +349,14 @@ class DebComponent(ContentUnit):
             # find the corresponding unit
             unit = self.__class__.objects.filter(repoid=repo.repo_id,
                                                  name=self.name,
-                                                 release=self.release).first()
+                                                 distribution=self.distribution).first()
             if unit is None:
                 # create a new one
                 unit = self.__class__()
+                # set the key fields
                 unit.repoid = repo.repo_id
                 unit.name = self.name
+                unit.distribution = self.distribution
                 unit.release = self.release
 
             # update data
@@ -356,7 +369,7 @@ class DebComponent(ContentUnit):
 
 class DebRelease(ContentUnit):
     """
-    This unittype represents a deb release
+    This unittype represents a deb release (also referred to as a "distribution")
     """
     TYPE_ID = ids.TYPE_ID_DEB_RELEASE
     meta = dict(collection="units_deb_release",
@@ -364,6 +377,7 @@ class DebRelease(ContentUnit):
     unit_key_fields = ids.UNIT_KEY_DEB_RELEASE
 
     repoid = mongoengine.StringField(required=True)
+    distribution = mongoengine.StringField(required=True)
     codename = mongoengine.StringField(required=True)
     suite = mongoengine.StringField()
 
@@ -372,9 +386,10 @@ class DebRelease(ContentUnit):
     _content_type_id = mongoengine.StringField(required=True, default=TYPE_ID)
 
     @classmethod
-    def get_or_create_and_associate(cls, repo, codename, suite):
+    def get_or_create_and_associate(cls, repo, distribution, codename, suite):
         unit = cls()
         unit.repoid = repo.id
+        unit.distribution = distribution
         unit.codename = codename
         unit.suite = suite
         try:
@@ -394,11 +409,13 @@ class DebRelease(ContentUnit):
         if unit.repoid != repo.repo_id:
             # find the corresponding unit
             unit = self.__class__.objects.filter(repoid=repo.repo_id,
-                                                 codename=self.codename).first()
+                                                 distribution=self.distribution).first()
             if unit is None:
                 # create a new one
                 unit = self.__class__()
+                # set the key fields
                 unit.repoid = repo.repo_id
+                unit.distribution = self.distribution
                 unit.codename = self.codename
 
             # update data

@@ -54,7 +54,7 @@ class RepoSync(publish_step.PluginStep):
         self.description = _('Syncing Repository')
 
         self.feed_url = self.get_config().get('feed').strip('/')
-        self.releases = self.get_config().get('releases', 'stable').split(',')
+        self.distributions = self.get_config().get('releases', 'stable').split(',')
         self.architectures = split_or_none(self.get_config().get('architectures'))
         self.components = split_or_none(self.get_config().get('components'))
         self.remove_missing = self.get_config().get_boolean(
@@ -62,39 +62,42 @@ class RepoSync(publish_step.PluginStep):
 
         self.unit_relative_urls = {}
         self.available_units = None
-        # dicts with release names as keys to multiplex variables
+        # dicts with the distribution as keys to multiplex variables
         self.apt_repo_meta = {}
         self.release_units = {}
         self.release_files = {
-            release: os.path.join(self.get_working_dir(), release, 'Release')
-            for release in self.releases}
+            distribution: os.path.join(self.get_working_dir(), distribution, 'Release')
+            for distribution in self.distributions
+        }
         self.feed_urls = {
-            release: urlparse.urljoin(self.feed_url + '/', '/'.join(['dists', release]))
-            for release in self.releases}
+            distribution: urlparse.urljoin(self.feed_url + '/', '/'.join(['dists', distribution]))
+            for distribution in self.distributions
+        }
         self.release_urls = {
-            release: urlparse.urljoin(self.feed_urls[release] + '/', 'Release')
-            for release in self.releases}
+            distribution: urlparse.urljoin(self.feed_urls[distribution] + '/', 'Release')
+            for distribution in self.distributions
+        }
         self.packages_urls = {}
-        # double dicts with release/component as keys
+        # double dicts with distribution/component as keys
         self.component_units = defaultdict(dict)
         self.component_packages = defaultdict(dict)
 
-        for release in self.releases:
-            misc.mkdir(os.path.dirname(self.release_files[release]))
-            _logger.info("Downloading %s", self.release_urls[release])
+        for distribution in self.distributions:
+            misc.mkdir(os.path.dirname(self.release_files[distribution]))
+            _logger.info("Downloading %s", self.release_urls[distribution])
 
         # defining lifecycle
         #  metadata
         self.add_child(publish_step.DownloadStep(
             constants.SYNC_STEP_RELEASE_DOWNLOAD,
             plugin_type=ids.TYPE_ID_IMPORTER,
-            description=_('Retrieving metadata: release file(s)'),
+            description=_('Retrieving metadata: Release file(s)'),
             downloads=[
-                DownloadRequest(self.release_urls[release], self.release_files[release])
-                for release in self.releases] + [
-                DownloadRequest(self.release_urls[release] + '.gpg',
-                                self.release_files[release] + '.gpg')
-                for release in self.releases]
+                DownloadRequest(self.release_urls[distribution], self.release_files[distribution])
+                for distribution in self.distributions] + [
+                DownloadRequest(self.release_urls[distribution] + '.gpg',
+                                self.release_files[distribution] + '.gpg')
+                for distribution in self.distributions]
         ))
 
         self.add_child(ParseReleaseStep(constants.SYNC_STEP_RELEASE_PARSE))
@@ -155,8 +158,8 @@ class ParseReleaseStep(publish_step.PluginStep):
                 del(kwargs['homedir'])
         return gnupg.GPG(*args, **kwargs)
 
-    def verify_release(self, release):
-        rel_file = self.parent.release_files[release]
+    def verify_release_file(self, distribution):
+        rel_file = self.parent.release_files[distribution]
         # check if Release file exists
         if not os.path.isfile(rel_file):
             raise Exception("Release file not found. Check the feed option.")
@@ -190,48 +193,55 @@ class ParseReleaseStep(publish_step.PluginStep):
             raise Exception("No GPG-keys in keyring, did the import fail?")
 
         if not os.path.isfile(rel_file + '.gpg'):
-            raise Exception("Release.gpg not found. Could not verify release integrity.")
+            raise Exception("Release.gpg not found. Could not verify Release file integrity.")
 
         if LooseVersion(gnupg.__version__) < LooseVersion('1.0.0'):
             with open(rel_file + '.gpg') as f:
                 verified = gpg.verify_file(f, rel_file)
                 if not verified.valid:
-                    raise Exception("Verification of Release failed! {}".format(verified.stderr))
+                    raise Exception("Release file verification failed! {}".format(verified.stderr))
         else:
             with open(rel_file) as f:
                 verified = gpg.verify_file(f, rel_file + '.gpg')
                 if not verified.valid:
-                    raise Exception("Verification of Release failed! {}".format(verified.stderr))
+                    raise Exception("Release file verification failed! {}".format(verified.stderr))
 
     def process_main(self, item=None):
-        releases = self.parent.releases
+        distributions = self.parent.distributions
         components = self.parent.components
         architectures = self.parent.architectures
         dl_reqs = []
-        for release in releases:
-            self.verify_release(release)
-            # generate repo_metas for Releases
-            self.parent.apt_repo_meta[release] = repometa = aptrepo.AptRepoMeta(
-                release=open(self.parent.release_files[release], "rb"),
-                upstream_url=self.parent.feed_urls[release])
+        for distribution in distributions:
+            self.verify_release_file(distribution)
+            # generate repo_metas for each distribution
+            self.parent.apt_repo_meta[distribution] = repometa = aptrepo.AptRepoMeta(
+                release=open(self.parent.release_files[distribution], "rb"),
+                upstream_url=self.parent.feed_urls[distribution])
             # get release unit
             codename = repometa.codename
             suite = repometa.release.get('suite')
-            rel_unit = self.parent.release_units[release] = models.DebRelease.\
-                get_or_create_and_associate(self.parent.repo, codename, suite)
+            release_unit = models.DebRelease.get_or_create_and_associate(
+                repo=self.parent.repo,
+                distribution=distribution,
+                codename=codename,
+                suite=suite,
+            )
+            self.parent.release_units[distribution] = release_unit
+
             # Prevent this unit from being cleaned up
             try:
-                self.parent.deb_releases_to_check.remove(rel_unit)
+                self.parent.deb_releases_to_check.remove(release_unit)
             except ValueError:
                 pass
             # get release component units
-            for component in repometa.components:
-                if components is None or component.split('/')[-1] in components:
-                    comp_unit = self.parent.component_units[release][component] = \
+            for release_file_component in repometa.components:
+                component = release_file_component.split('/')[-1]
+                if components is None or component in components:
+                    comp_unit = self.parent.component_units[distribution][component] = \
                         models.DebComponent.get_or_create_and_associate(self.parent.repo,
-                                                                        rel_unit,
+                                                                        release_unit,
                                                                         component)
-                    self.parent.component_packages[release][component] = []
+                    self.parent.component_packages[distribution][component] = []
                     # Prevent this unit from being cleaned up
                     try:
                         self.parent.deb_comps_to_check.remove(comp_unit)
@@ -249,7 +259,7 @@ class ParseReleaseStep(publish_step.PluginStep):
                 rel_dl_reqs = [
                     dlr for dlr in rel_dl_reqs
                     if dlr.data['architecture'] in architectures]
-            self.parent.packages_urls[release] = set([dlr.url for dlr in rel_dl_reqs])
+            self.parent.packages_urls[distribution] = set([dlr.url for dlr in rel_dl_reqs])
             dl_reqs.extend(rel_dl_reqs)
         self.parent.step_download_Packages._downloads = [
             DownloadRequest(dlr.url, dlr.destination, data=dlr.data)
@@ -262,14 +272,14 @@ class ParsePackagesStep(publish_step.PluginStep):
         self.description = _('Parse Packages Files')
 
     def process_main(self, item=None):
-        releases = self.parent.releases
+        distributions = self.parent.distributions
         dl_reqs = self.parent.step_download_Packages.downloads
         units = {}
-        for release in releases:
-            repometa = self.parent.apt_repo_meta[release]
+        for distribution in distributions:
+            repometa = self.parent.apt_repo_meta[distribution]
             repometa.validate_component_arch_packages_downloads(
                 [dlr for dlr in dl_reqs
-                    if dlr.url in self.parent.packages_urls[release]])
+                    if dlr.url in self.parent.packages_urls[distribution]])
             for ca in repometa.iter_component_arch_binaries():
                 for pkg in ca.iter_packages():
                     try:
@@ -283,7 +293,8 @@ class ParsePackagesStep(publish_step.PluginStep):
                     except (KeyError, ValueError):
                         _logger.warning(_("Invalid package record found. {}").format(pkg))
                         continue
-                    self.parent.component_packages[release][ca.component].append(unit.unit_key)
+                    component = ca.component.split('/')[-1]
+                    self.parent.component_packages[distribution][component].append(unit.unit_key)
         self.parent.available_units = units.values()
 
 
@@ -357,15 +368,15 @@ class SaveMetadataStep(publish_step.PluginStep):
         self.description = _('Save metadata')
 
     def process_main(self, item=None):
-        for release in self.parent.releases:
-            for comp, comp_unit in self.parent.component_units[release].iteritems():
+        for distribution in self.parent.distributions:
+            for comp, comp_unit in self.parent.component_units[distribution].iteritems():
                 # Start with an empty set if we want to delete old entries
                 if self.parent.remove_missing:
                     comp_unit_packages_set = set()
                 else:
                     comp_unit_packages_set = set(comp_unit.packages)
                 for unit in [unit_key_to_unit(unit_key)
-                             for unit_key in self.parent.component_packages[release][comp]]:
+                             for unit_key in self.parent.component_packages[distribution][comp]]:
                     comp_unit_packages_set.add(unit.id)
                     # Prevent this unit from being cleaned up
                     try:

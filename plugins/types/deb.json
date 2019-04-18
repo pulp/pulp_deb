@@ -11,14 +11,14 @@
         "id": "deb_component",
         "display_name": "DEB_COMP",
         "description": "Deb Release Component",
-        "unit_key": ["name", "release", "repoid"],
+        "unit_key": ["name", "distribution", "repoid"],
         "search_indexes": []
     },
     {
         "id": "deb_release",
         "display_name": "DEB_RELEASE",
         "description": "Deb Release",
-        "unit_key": ["codename", "repoid"],
+        "unit_key": ["distribution", "repoid"],
         "search_indexes": []
     }
 ]}
