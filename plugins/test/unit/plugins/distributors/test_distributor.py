@@ -290,7 +290,7 @@ class PublishRepoMixIn(object):
 
         for release in unit_dict[ids.TYPE_ID_DEB_RELEASE]:
             work_release_file = os.path.join(self.pulp_working_dir, worker_name,
-                                             "aabb", "dists", release.codename, "Release")
+                                             "aabb", "dists", release.distribution, "Release")
             _sign.assert_any_call(work_release_file)
 
     @classmethod
@@ -356,6 +356,45 @@ class TestPublishRepoDeb(PublishRepoMixIn, BaseTest):
         models.DebRelease: [
             dict(
                 distribution='stable',
+                codename='stable',
+                id='stableid',
+            ),
+        ],
+    }
+    Architectures = ['all', 'amd64']
+    default_release = False
+
+
+class TestPublishRepoDebNestedDistribution(PublishRepoMixIn, BaseTest):
+    Sample_Units = {
+        models.DebPackage: [
+            dict(
+                name='burgundy',
+                version='0.1938.0',
+                architecture='amd64',
+                control_fields=dict(Package='burgundy'),
+                id='bbbb',
+            ),
+            dict(
+                name='chablis',
+                version='0.2013.0',
+                architecture='amd64',
+                control_fields=dict(Package='chablis'),
+                id='cccc',
+            ),
+        ],
+        models.DebComponent: [
+            dict(
+                name='main',
+                distribution='stable/updates',
+                release='stable',
+                id='mainid',
+                packages=['bbbb', 'cccc']
+            ),
+        ],
+        models.DebRelease: [
+            dict(
+                distribution='stable/updates',
                 codename='stable',
                 id='stableid',
             ),

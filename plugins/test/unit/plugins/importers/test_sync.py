@@ -16,6 +16,9 @@ from pulp_deb.plugins.importers import sync
 
 
 class _TestSyncBase(testbase.TestCase):
+    remove_missing = False
+    release = None
+
     def setUp(self):
         super(_TestSyncBase, self).setUp()
 
@@ -31,6 +34,10 @@ class _TestSyncBase(testbase.TestCase):
             constants.CONFIG_REQUIRE_SIGNATURE: False,
             importer_constants.KEY_UNITS_REMOVE_MISSING: self.remove_missing,
         }
+        if self.release:
+            plugin_config['releases'] = self.release
+        else:
+            self.release = 'stable'
         self.config = PluginCallConfiguration({}, plugin_config)
         self._task_current = mock.patch("pulp.server.managers.repo._common.task.current")
         obj = self._task_current.__enter__()
@@ -41,7 +48,7 @@ class _TestSyncBase(testbase.TestCase):
         self.step = sync.RepoSync(repo=self.repo,
                                   conduit=self.conduit,
                                   config=self.config)
-        with open(self.step.release_files['stable'], "wb") as f:
+        with open(self.step.release_files[self.release], "wb") as f:
             f.write("""\
 Architectures: amd64
 Components: main
@@ -50,7 +57,7 @@ SHA256:
  0000000000000000000000000000000000000000000000000000000000000003             9144 main/binary-amd64/Packages.bz2
  0000000000000000000000000000000000000000000000000000000000000002            14457 main/binary-amd64/Packages.gz
 """)  # noqa
-        with open(self.step.release_files['stable'] + '.gpg', "wb") as f:
+        with open(self.step.release_files[self.release] + '.gpg', "wb") as f:
             f.write("")
 
     def tearDown(self):
@@ -88,7 +95,7 @@ SHA256:
 
         # Make sure we got a request for the best compression
         self.assertEquals(
-            ['http://example.com/deb/dists/stable/main/binary-amd64/Packages.bz2'],
+            ['http://example.com/deb/dists/%s/main/binary-amd64/Packages.bz2' % self.release],
             [x.url for x in self.step.step_download_Packages.downloads])
         self.assertEquals(
             [os.path.join(
@@ -98,15 +105,15 @@ SHA256:
         # apt_repo_meta is set as a side-effect
         self.assertEquals(
             ['amd64'],
-            self.step.apt_repo_meta['stable'].architectures)
+            self.step.apt_repo_meta[self.release].architectures)
         _DebRelease.get_or_create_and_associate.assert_called_once()
         _DebComponent.get_or_create_and_associate.assert_called_once()
         self.step.deb_releases_to_check.remove.assert_called_once()
         self.step.deb_comps_to_check.remove.assert_called_once()
 
     def _mock_repometa(self):
-        repometa = self.step.apt_repo_meta['stable'] = mock.MagicMock(
-            upstream_url="http://example.com/deb/dists/stable/")
+        repometa = self.step.apt_repo_meta[self.release] = mock.MagicMock(
+            upstream_url="http://example.com/deb/dists/%s/" % self.release)
 
         pkgs = [
             dict(Package=x, Version="1-1", Architecture="amd64",
@@ -137,10 +144,10 @@ SHA256:
         pkgs = self._mock_repometa()
         dl1 = mock.MagicMock(destination="dest1")
         dl2 = mock.MagicMock(destination="dest2")
-        self.step.packages_urls['stable'] = set(
-            [u'http://example.com/deb/dists/stable/main/binary-amd64/Packages.bz2'])
+        self.step.packages_urls[self.release] = set(
+            [u'http://example.com/deb/dists/%s/main/binary-amd64/Packages.bz2' % self.release])
         self.step.step_download_Packages._downloads = [dl1, dl2]
-        self.step.component_packages['stable']['main'] = []
+        self.step.component_packages[self.release]['main'] = []
         step = self.step.children[3]
         self.assertEquals(constants.SYNC_STEP_PACKAGES_PARSE, step.step_id)
         step.process_lifecycle()
@@ -157,7 +164,7 @@ SHA256:
         self.assertEquals(
             set([x['SHA256'] for x in pkgs]),
             set([x.checksum for x in self.step.available_units]))
-        self.assertEquals(len(self.step.component_packages['stable']['main']), 2)
+        self.assertEquals(len(self.step.component_packages[self.release]['main']), 2)
 
     @mock.patch('pulp_deb.plugins.importers.sync.misc.mkdir')
     def test_CreateRequestsUnitsToDownload(self, _mkdir):
@@ -255,8 +262,8 @@ SHA256:
 
     @mock.patch('pulp_deb.plugins.importers.sync.unit_key_to_unit')
     def test_SaveMetadata(self, _UnitKeyToUnit):
-        self.step.component_units['stable']['main'] = mock.MagicMock()
-        self.step.component_packages['stable']['main'] = [
+        self.step.component_units[self.release]['main'] = mock.MagicMock()
+        self.step.component_packages[self.release]['main'] = [
             {'name': 'ape', 'version': '1.2a-4~exp', 'architecture': 'DNA'}]
         self.step.debs_to_check = mock.MagicMock()
         _UnitKeyToUnit.return_value = mock.MagicMock()
@@ -297,8 +304,12 @@ SHA256:
 
 
 class TestSyncKeepMissing(_TestSyncBase):
-    remove_missing = False
+    pass
 
 
 class TestSyncRemoveMissing(_TestSyncBase):
     remove_missing = True
+
+
+class TestSyncNestedDistribution(_TestSyncBase):
+    release = 'stable/updates'
