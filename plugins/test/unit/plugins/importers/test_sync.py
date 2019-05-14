@@ -114,10 +114,21 @@ SHA256:
                  SHA1="00{0}{0}".format(x),
                  SHA256="00{0}{0}".format(x),
                  Filename="pool/main/{0}_1-1_amd64.deb".format(x))
-            for x in ["a", "b"]]
+            for x in ["a", "b"]
+        ]
+
+        # Add a few invalid entries that should be ignored.
+        invalid_pkgs = [
+            dict(Homepage="http://1234"),
+            dict(Package="c", Version="1.2-3", Architecture="amd64",
+                 MD5sum="00cc", SHA1="00cc", SHA256="00cc"),
+            dict(Package="c", Version="1.2-3",
+                 MD5sum="00cc", SHA1="00cc", SHA256="00cc",
+                 Filename="pool/main/c_1.2-3_amd64.deb"),
+        ]
 
         comp_arch = mock.MagicMock(component='main', arch="amd64")
-        comp_arch.iter_packages.return_value = pkgs
+        comp_arch.iter_packages.return_value = pkgs + invalid_pkgs
 
         repometa.iter_component_arch_binaries.return_value = [comp_arch]
         return pkgs
