@@ -280,7 +280,7 @@ class ParsePackagesStep(publish_step.PluginStep):
                         else:
                             unit = models.DebPackage.from_packages_paragraph(pkg)
                             units[checksum] = unit
-                    except KeyError:
+                    except (KeyError, ValueError):
                         _logger.warning(_("Invalid package record found. {}").format(pkg))
                         continue
                     self.parent.component_packages[release][ca.component].append(unit.unit_key)
