@@ -6,7 +6,12 @@ from debian import deb822
 
 from django.db import models
 
-from pulpcore.plugin.models import Content, Remote, Publisher
+from pulpcore.plugin.models import (
+    Content,
+    Publication,
+    PublicationDistribution,
+    Remote,
+)
 
 logger = getLogger(__name__)
 
@@ -370,27 +375,35 @@ class InstallerPackage(BasePackage):
         )
 
 
-class DebVerbatimPublisher(Publisher):
+class VerbatimPublication(Publication):
     """
-    A verbatim Publisher for DebContent.
+    A verbatim Publication for Content.
 
-    This publisher publishes the obtained metadata unchanged.
-    """
-
-    TYPE = 'verbatim-publisher'
-
-
-class DebPublisher(Publisher):
-    """
-    A Publisher for DebContent.
-
-    This publisher recreates all metadata.
+    This publication publishes the obtained metadata unchanged.
     """
 
-    TYPE = 'apt-publisher'
+    TYPE = 'verbatim-publication'
+
+
+class DebPublication(Publication):
+    """
+    A Publication for DebContent.
+
+    This publication recreates all metadata.
+    """
+
+    TYPE = 'apt-publication'
 
     simple = models.BooleanField(default=False)
     structured = models.BooleanField(default=False)
+
+
+class DebDistribution(PublicationDistribution):
+    """
+    A Distribution for DebContent.
+    """
+
+    TYPE = 'apt-distribution'
 
 
 class DebRemote(Remote):

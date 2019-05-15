@@ -3,9 +3,11 @@ from urllib.parse import urljoin
 
 from pulp_smash.constants import PULP_FIXTURES_BASE_URL
 from pulp_smash.pulp3.constants import (
-    BASE_PUBLISHER_PATH,
+    # API_DOCS_PATH,
+    BASE_DISTRIBUTION_PATH,
+    BASE_PUBLICATION_PATH,
     BASE_REMOTE_PATH,
-    CONTENT_PATH
+    CONTENT_PATH,
 )
 
 DOWNLOAD_POLICIES = ['immediate', 'streamed', 'on_demand']
@@ -18,10 +20,12 @@ DEB_GENERIC_CONTENT_NAME = 'deb.generic'
 DEB_PACKAGE_PATH = urljoin(CONTENT_PATH, 'deb/packages/')
 DEB_GENERIC_CONTENT_PATH = urljoin(CONTENT_PATH, 'deb/generic_contents/')
 
+DEB_DISTRIBUTION_PATH = urljoin(BASE_DISTRIBUTION_PATH, 'deb/apt/')
+
 DEB_REMOTE_PATH = urljoin(BASE_REMOTE_PATH, 'deb/apt/')
 
-DEB_PUBLISHER_PATH = urljoin(BASE_PUBLISHER_PATH, 'deb/apt/')
-DEB_VERBATIM_PUBLISHER_PATH = urljoin(BASE_PUBLISHER_PATH, 'deb/verbatim/')
+DEB_PUBLICATION_PATH = urljoin(BASE_PUBLICATION_PATH, 'deb/apt/')
+VERBATIM_PUBLICATION_PATH = urljoin(BASE_PUBLICATION_PATH, 'deb/verbatim/')
 
 
 DEB_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, 'debian/')

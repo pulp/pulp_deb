@@ -6,26 +6,28 @@ from random import choice
 from urllib.parse import urljoin
 
 from pulp_smash import api, config, utils
-from pulp_smash.pulp3.constants import DISTRIBUTION_PATH, REPO_PATH
+from pulp_smash.pulp3.constants import (
+    REPO_PATH,
+)
 from pulp_smash.pulp3.utils import (
+    download_content_unit,
     gen_distribution,
     gen_repo,
-    publish,
     sync,
 )
 
-from pulp_deb.tests.functional.utils import (
-    gen_deb_remote,
-    gen_deb_publisher,
-    gen_deb_verbatim_publisher,
-    get_deb_content_unit_paths,
-    get_deb_verbatim_content_unit_paths,
-)
 from pulp_deb.tests.functional.constants import (
+    DEB_DISTRIBUTION_PATH,
     DEB_FIXTURE_URL,
     DEB_REMOTE_PATH,
-    DEB_PUBLISHER_PATH,
-    DEB_VERBATIM_PUBLISHER_PATH,
+    DOWNLOAD_POLICIES,
+)
+from pulp_deb.tests.functional.utils import (
+    create_deb_publication,
+    create_verbatim_publication,
+    gen_deb_remote,
+    get_deb_content_unit_paths,
+    get_deb_verbatim_content_unit_paths,
 )
 from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 
@@ -34,11 +36,20 @@ class DownloadContentTestCase(unittest.TestCase):
     """Verify whether content served by pulp can be downloaded."""
 
     class Meta:
-        gen_publisher = gen_deb_publisher
-        publisher_path = DEB_PUBLISHER_PATH
+        create_publication = create_deb_publication
+        DISTRIBUTION_PATH = DEB_DISTRIBUTION_PATH
         get_content_unit_paths = get_deb_content_unit_paths
 
     def test_all(self):
+        """Download content from Pulp. Content is synced with different policies.
+
+        See :meth:`do_test`.
+        """
+        for policy in DOWNLOAD_POLICIES:
+            with self.subTest(policy):
+                self.do_test(policy)
+
+    def do_test(self, policy):
         """Verify whether content served by pulp can be downloaded.
 
         The process of publishing content is more involved in Pulp 3 than it
@@ -77,21 +88,17 @@ class DownloadContentTestCase(unittest.TestCase):
         sync(cfg, remote, repo)
         repo = client.get(repo['_href'])
 
-        # Create a publisher.
-        publisher = client.post(self.Meta.publisher_path, self.Meta.gen_publisher())
-        self.addCleanup(client.delete, publisher['_href'])
-
         # Create a publication.
-        publication = publish(cfg, publisher, repo)
+        publication = self.Meta.create_publication(cfg, repo)
         self.addCleanup(client.delete, publication['_href'])
 
         # Create a distribution.
         body = gen_distribution()
         body['publication'] = publication['_href']
-        response_dict = client.post(DISTRIBUTION_PATH, body)
-        dist_task = client.get(response_dict['task'])
-        distribution_href = dist_task['created_resources'][0]
-        distribution = client.get(distribution_href)
+        distribution = client.using_handler(api.task_handler).post(
+            self.Meta.DISTRIBUTION_PATH,
+            body
+        )
         self.addCleanup(client.delete, distribution['_href'])
 
         # Pick a content unit (of each type), and download it from both Pulp Fixtures…
@@ -103,14 +110,10 @@ class DownloadContentTestCase(unittest.TestCase):
         ).hexdigest() for unit_path in unit_paths]
 
         # …and Pulp.
-        client.response_handler = api.safe_handler
-
-        unit_base_url = cfg.get_hosts('api')[0].roles['api']['scheme']
-        unit_base_url += '://' + distribution['base_url'] + '/'
-        unit_urls = [urljoin(unit_base_url, unit_path[1]) for unit_path in unit_paths]
-
-        pulp_hashes = [hashlib.sha256(client.get(unit_url).content).hexdigest()
-                       for unit_url in unit_urls]
+        contents = [download_content_unit(cfg, distribution, unit_path[1])
+                    for unit_path in unit_paths]
+        pulp_hashes = [hashlib.sha256(content).hexdigest()
+                       for content in contents]
         self.assertEqual(fixtures_hashes, pulp_hashes)
 
 
@@ -118,6 +121,6 @@ class VerbatimDownloadContentTestCase(DownloadContentTestCase):
     """Verify whether content served by pulp can be downloaded."""
 
     class Meta:
-        gen_publisher = gen_deb_verbatim_publisher
-        publisher_path = DEB_VERBATIM_PUBLISHER_PATH
+        create_publication = create_verbatim_publication
+        DISTRIBUTION_PATH = DEB_DISTRIBUTION_PATH
         get_content_unit_paths = get_deb_verbatim_content_unit_paths
