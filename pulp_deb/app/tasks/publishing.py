@@ -10,67 +10,67 @@ from gzip import GzipFile
 from django.core.files import File
 
 from pulpcore.plugin.models import (
-    RepositoryVersion,
-    Publication,
     PublishedArtifact,
     PublishedMetadata,
+    RepositoryVersion,
 )
 from pulpcore.plugin.tasking import WorkingDirectory
 
 from pulp_deb.app.models import (
+    DebPublication,
     Package,
-    DebVerbatimPublisher,
-    DebPublisher,
+    VerbatimPublication,
 )
 
 
 log = logging.getLogger(__name__)
 
 
-def publish_verbatim(publisher_pk, repository_version_pk):
+def publish_verbatim(repository_version_pk):
     """
-    Use provided publisher to create a verbatim Publication based on a RepositoryVersion.
+    Create a VerbatimPublication based on a RepositoryVersion.
 
     Args:
-        publisher_pk (str): Use the publish settings provided by this publisher.
         repository_version_pk (str): Create a publication from this repository version.
-    """
-    publisher = DebVerbatimPublisher.objects.get(pk=publisher_pk)
-    repository_version = RepositoryVersion.objects.get(
-        pk=repository_version_pk)
 
-    log.info(_('Publishing (verbatim): repository={repo}, version={ver}, publisher={pub}').format(
-        repo=repository_version.repository.name,
-        ver=repository_version.number,
-        pub=publisher.name,
+    """
+    repo_version = RepositoryVersion.objects.get(pk=repository_version_pk)
+
+    log.info(_('Publishing (verbatim): repository={repo}, version={ver}').format(
+        repo=repo_version.repository.name,
+        ver=repo_version.number,
     ))
     with WorkingDirectory():
-        with Publication.create(repository_version, publisher, pass_through=True) as publication:
+        with VerbatimPublication.create(repo_version, pass_through=True) as publication:
             pass
 
     log.info(_('Publication (verbatim): {publication} created').format(publication=publication.pk))
 
 
-def publish(publisher_pk, repository_version_pk):
+def publish(repository_version_pk, simple=False, structured=False):
     """
     Use provided publisher to create a Publication based on a RepositoryVersion.
 
     Args:
-        publisher_pk (str): Use the publish settings provided by this publisher.
         repository_version_pk (str): Create a publication from this repository version.
+        simple (bool): Create a simple publication with all packages contained in default/all.
+        structured (bool): Create a structured publication with releases and components.
+            (Not yet implemented)
     """
-    publisher = DebPublisher.objects.get(pk=publisher_pk)
-    repository_version = RepositoryVersion.objects.get(pk=repository_version_pk)
+    repo_version = RepositoryVersion.objects.get(pk=repository_version_pk)
 
-    log.info(_('Publishing: repository={repo}, version={ver}, publisher={pub}').format(
-        repo=repository_version.repository.name,
-        ver=repository_version.number,
-        pub=publisher.name
+    log.info(_('Publishing: repository={repo}, version={ver}, simple={simple}, structured={structured}').format(  # noqa
+        repo=repo_version.repository.name,
+        ver=repo_version.number,
+        simple=simple,
+        structured=structured,
     ))
     with WorkingDirectory():
-        with Publication.create(repository_version, publisher, pass_through=False) as publication:
-            if publisher.simple:
-                repository = repository_version.repository
+        with DebPublication.create(repo_version, pass_through=False) as publication:
+            publication.simple = simple
+            publication.structured = structured
+            if simple:
+                repository = repo_version.repository
                 release = deb822.Release()
                 # TODO: release['Label']
                 release['Codename'] = 'default'
@@ -84,7 +84,7 @@ def publish(publisher_pk, repository_version_pk):
                 release['SHA512'] = []
                 package_index_files = {}
                 for package in Package.objects.filter(
-                    pk__in=repository_version.content.order_by('-_created')
+                    pk__in=repo_version.content.order_by('-_created')
                 ):
                     published_artifact = PublishedArtifact(
                         relative_path=package.filename(),
@@ -137,7 +137,7 @@ def publish(publisher_pk, repository_version_pk):
                 )
                 release_metadata.save()
 
-            if publisher.structured:
+            if structured:
                 raise NotImplementedError(
                     "Structured publishing is not yet implemented.")
 

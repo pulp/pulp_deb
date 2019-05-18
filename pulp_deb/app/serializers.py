@@ -286,19 +286,19 @@ class DebRemoteSerializer(platform.RemoteSerializer):
         model = models.DebRemote
 
 
-class DebVerbatimPublisherSerializer(platform.PublisherSerializer):
+class VerbatimPublicationSerializer(platform.PublicationSerializer):
     """
-    A Serializer for DebVerbatimPublisher.
+    A Serializer for VerbatimPublication.
     """
 
     class Meta:
-        fields = platform.PublisherSerializer.Meta.fields
-        model = models.DebVerbatimPublisher
+        fields = platform.PublicationSerializer.Meta.fields
+        model = models.VerbatimPublication
 
 
-class DebPublisherSerializer(platform.PublisherSerializer):
+class DebPublicationSerializer(platform.PublicationSerializer):
     """
-    A Serializer for DebPublisher.
+    A Serializer for DebPublication.
     """
 
     simple = serializers.BooleanField(
@@ -314,14 +314,25 @@ class DebPublisherSerializer(platform.PublisherSerializer):
         """
         Check that the publishing modes are compatible.
         """
+        data = super().validate(data)
         if not data['simple'] and not data['structured']:
             raise serializers.ValidationError(
                 "one of simple or structured publishing mode must be selected")
         return data
 
     class Meta:
-        fields = platform.PublisherSerializer.Meta.fields + (
+        fields = platform.PublicationSerializer.Meta.fields + (
             'simple',
             'structured',
         )
-        model = models.DebPublisher
+        model = models.DebPublication
+
+
+class DebDistributionSerializer(platform.PublicationDistributionSerializer):
+    """
+    Serializer for DebDistributions.
+    """
+
+    class Meta:
+        fields = platform.PublicationDistributionSerializer.Meta.fields
+        model = models.DebDistribution

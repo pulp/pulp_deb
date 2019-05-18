@@ -11,7 +11,6 @@ from pulp_smash.pulp3.constants import (
 from pulp_smash.pulp3.utils import (
     gen_remote,
     gen_repo,
-    gen_publisher,
     get_content,
     require_pulp_3,
     require_pulp_plugins,
@@ -19,14 +18,16 @@ from pulp_smash.pulp3.utils import (
 )
 
 from pulp_deb.tests.functional.constants import (
-    DEB_RELEASE_NAME,
-    # DEB_PACKAGE_INDEX_NAME,
-    DEB_PACKAGE_NAME,
+    DEB_FIXTURE_RELEASE,
+    DEB_FIXTURE_URL,
     DEB_GENERIC_CONTENT_NAME,
     DEB_GENERIC_CONTENT_PATH,
-    DEB_FIXTURE_URL,
-    DEB_FIXTURE_RELEASE,
+    # DEB_PACKAGE_INDEX_NAME,
+    DEB_PACKAGE_NAME,
+    DEB_PUBLICATION_PATH,
+    DEB_RELEASE_NAME,
     DEB_REMOTE_PATH,
+    VERBATIM_PUBLICATION_PATH,
 )
 
 
@@ -36,49 +37,19 @@ def set_up_module():
     require_pulp_plugins({'pulp_deb'}, SkipTest)
 
 
-def gen_deb_remote(**kwargs):
+def gen_deb_remote(url=DEB_FIXTURE_URL, **kwargs):
     """Return a semi-random dict for use in creating a deb Remote.
 
     :param url: The URL of an external content source.
     """
-    remote = gen_remote(DEB_FIXTURE_URL)
-    deb_extra_fields = {
-        'distributions': DEB_FIXTURE_RELEASE,
-        **kwargs,
-    }
-    remote.update(**deb_extra_fields)
-    return remote
+    return gen_remote(url, distributions=DEB_FIXTURE_RELEASE, **kwargs)
 
 
-def gen_deb_verbatim_publisher(**kwargs):
-    """Return a semi-random dict for use in creating a verbatim Publisher.
-    """
-    publisher = gen_publisher()
-    deb_extra_fields = {
-        **kwargs,
-    }
-    publisher.update(**deb_extra_fields)
-    return publisher
-
-
-def gen_deb_publisher(**kwargs):
-    """Return a semi-random dict for use in creating a Publisher.
-
-    :param url: The URL of an external content source.
-    """
-    publisher = gen_publisher()
-    deb_extra_fields = {
-        'simple': True,
-        **kwargs,
-    }
-    publisher.update(**deb_extra_fields)
-    return publisher
-
-
-def get_deb_content_unit_paths(repo):
+def get_deb_content_unit_paths(repo, version_href=None):
     """Return the relative path of content units present in a deb repository.
 
     :param repo: A dict of information about the repository.
+    :param version_href: The repository version to read.
     :returns: A dict of list with the paths of units present in a given repository
         for different content types. Paths are given as pairs with the remote and the
         local version.
@@ -98,23 +69,20 @@ def get_deb_content_unit_paths(repo):
                                   package['version'],
                                   package['architecture'])
         )
-        return os.path.join(
-            'pool',
-
-        )
 
     return {
         DEB_PACKAGE_NAME: [
             (content_unit['relative_path'], _rel_path(content_unit))
-            for content_unit in get_content(repo)[DEB_PACKAGE_NAME]
+            for content_unit in get_content(repo, version_href)[DEB_PACKAGE_NAME]
         ],
     }
 
 
-def get_deb_verbatim_content_unit_paths(repo):
+def get_deb_verbatim_content_unit_paths(repo, version_href=None):
     """Return the relative path of content units present in a deb repository.
 
     :param repo: A dict of information about the repository.
+    :param version_href: The repository version to read.
     :returns: A dict of list with the paths of units present in a given repository
         for different content types. Paths are given as pairs with the remote and the
         local version.
@@ -122,17 +90,17 @@ def get_deb_verbatim_content_unit_paths(repo):
     return {
         DEB_RELEASE_NAME: [
             (content_unit['relative_path'], content_unit['relative_path'])
-            for content_unit in get_content(repo)[DEB_RELEASE_NAME]
+            for content_unit in get_content(repo, version_href)[DEB_RELEASE_NAME]
         ],
 
         DEB_PACKAGE_NAME: [
             (content_unit['relative_path'], content_unit['relative_path'])
-            for content_unit in get_content(repo)[DEB_PACKAGE_NAME]
+            for content_unit in get_content(repo, version_href)[DEB_PACKAGE_NAME]
         ],
 
         DEB_GENERIC_CONTENT_NAME: [
             (content_unit['relative_path'], content_unit['relative_path'])
-            for content_unit in get_content(repo)[DEB_GENERIC_CONTENT_NAME]
+            for content_unit in get_content(repo, version_href)[DEB_GENERIC_CONTENT_NAME]
         ],
     }
 
@@ -168,6 +136,49 @@ def populate_pulp(cfg, url=DEB_FIXTURE_URL):
         if repo:
             client.delete(repo['_href'])
     return client.get(DEB_GENERIC_CONTENT_PATH)['results']
+
+
+def create_deb_publication(cfg, repo, version_href=None):
+    """Create a deb publication.
+
+    :param pulp_smash.config.PulpSmashConfig cfg: Information about the Pulp
+        host.
+    :param repo: A dict of information about the repository.
+    :param version_href: A href for the repo version to be published.
+    :returns: A publication. A dict of information about the just created
+        publication.
+    """
+    if version_href:
+        body = {"repository_version": version_href}
+    else:
+        body = {"repository": repo["_href"]}
+    body['simple'] = True
+
+    client = api.Client(cfg, api.json_handler)
+    call_report = client.post(DEB_PUBLICATION_PATH, body)
+    tasks = tuple(api.poll_spawned_tasks(cfg, call_report))
+    return client.get(tasks[-1]["created_resources"][0])
+
+
+def create_verbatim_publication(cfg, repo, version_href=None):
+    """Create a verbatim publication.
+
+    :param pulp_smash.config.PulpSmashConfig cfg: Information about the Pulp
+        host.
+    :param repo: A dict of information about the repository.
+    :param version_href: A href for the repo version to be published.
+    :returns: A publication. A dict of information about the just created
+        publication.
+    """
+    if version_href:
+        body = {"repository_version": version_href}
+    else:
+        body = {"repository": repo["_href"]}
+
+    client = api.Client(cfg, api.json_handler)
+    call_report = client.post(VERBATIM_PUBLICATION_PATH, body)
+    tasks = tuple(api.poll_spawned_tasks(cfg, call_report))
+    return client.get(tasks[-1]["created_resources"][0])
 
 
 skip_if = partial(selectors.skip_if, exc=SkipTest)

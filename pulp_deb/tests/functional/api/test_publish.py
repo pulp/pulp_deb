@@ -2,7 +2,6 @@
 """Tests that publish deb plugin repositories."""
 import unittest
 from random import choice
-from urllib.parse import urljoin
 
 from requests.exceptions import HTTPError
 
@@ -12,21 +11,20 @@ from pulp_smash.pulp3.utils import (
     gen_repo,
     get_content,
     get_versions,
-    publish,
     sync,
 )
 
-from pulp_deb.tests.functional.utils import (
-    gen_deb_remote,
-    gen_deb_publisher,
-    gen_deb_verbatim_publisher,
-)
 from pulp_deb.tests.functional.constants import (
-    DEB_PACKAGE_NAME,
     DEB_GENERIC_CONTENT_NAME,
+    DEB_PACKAGE_NAME,
+    DEB_PUBLICATION_PATH,
     DEB_REMOTE_PATH,
-    DEB_PUBLISHER_PATH,
-    DEB_VERBATIM_PUBLISHER_PATH,
+    VERBATIM_PUBLICATION_PATH,
+)
+from pulp_deb.tests.functional.utils import (
+    create_deb_publication,
+    create_verbatim_publication,
+    gen_deb_remote,
 )
 from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 
@@ -41,8 +39,8 @@ class PublishAnyRepoVersionTestCase(unittest.TestCase):
     """
 
     class Meta:
-        publisher_path = DEB_PUBLISHER_PATH
-        gen_publisher = gen_deb_publisher
+        PUBLICATION_PATH = DEB_PUBLICATION_PATH
+        create_publication = create_deb_publication
 
     def test_all(self):
         """Test whether a particular repository version can be published.
@@ -69,9 +67,6 @@ class PublishAnyRepoVersionTestCase(unittest.TestCase):
 
         sync(cfg, remote, repo)
 
-        publisher = client.post(self.Meta.publisher_path, self.Meta.gen_publisher())
-        self.addCleanup(client.delete, publisher['_href'])
-
         # Step 1
         repo = client.get(repo['_href'])
         for deb_generic_content in get_content(repo)[DEB_GENERIC_CONTENT_NAME]:
@@ -88,13 +83,13 @@ class PublishAnyRepoVersionTestCase(unittest.TestCase):
         non_latest = choice(version_hrefs[:-1])
 
         # Step 2
-        publication = publish(cfg, publisher, repo)
+        publication = self.Meta.create_publication(cfg, repo)
 
         # Step 3
         self.assertEqual(publication['repository_version'], version_hrefs[-1])
 
         # Step 4
-        publication = publish(cfg, publisher, repo, non_latest)
+        publication = self.Meta.create_publication(cfg, repo, non_latest)
 
         # Step 5
         self.assertEqual(publication['repository_version'], non_latest)
@@ -105,7 +100,7 @@ class PublishAnyRepoVersionTestCase(unittest.TestCase):
                 'repository': repo['_href'],
                 'repository_version': non_latest
             }
-            client.post(urljoin(publisher['_href'], 'publish/'), body)
+            client.post(self.Meta.PUBLICATION_PATH, body)
 
 
 class VerbatimPublishAnyRepoVersionTestCase(PublishAnyRepoVersionTestCase):
@@ -118,5 +113,5 @@ class VerbatimPublishAnyRepoVersionTestCase(PublishAnyRepoVersionTestCase):
     """
 
     class Meta:
-        publisher_path = DEB_VERBATIM_PUBLISHER_PATH
-        gen_publisher = gen_deb_verbatim_publisher
+        PUBLICATION_PATH = VERBATIM_PUBLICATION_PATH
+        create_publication = create_verbatim_publication

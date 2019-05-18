@@ -3,13 +3,13 @@
 from setuptools import setup
 
 requirements = [
-    'pulpcore-plugin>=0.1.0b20',
+    'pulpcore-plugin>=0.1.0rc2',
     'python-debian',
 ]
 
 setup(
     name='pulp-deb',
-    version='2.0.0a1.dev1',
+    version='2.0.0a2.dev1',
     description='pulp-deb plugin for the Pulp Project',
     license='GPLv2+',
     author='Matthias Dellweg',
