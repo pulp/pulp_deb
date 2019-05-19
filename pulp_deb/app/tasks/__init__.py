@@ -1,2 +1,3 @@
-from .publishing import publish, publish_verbatim  # noqa
-from .synchronizing import synchronize  # noqa
+# flake8: noqa
+from .publishing import publish, publish_verbatim
+from .synchronizing import synchronize
