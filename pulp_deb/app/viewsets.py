@@ -1,8 +1,12 @@
 from gettext import gettext as _  # noqa
 
+from django.db.utils import IntegrityError
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.decorators import action
+from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.viewsets import ViewSet
 
+from pulpcore.plugin.models import Artifact
 from pulpcore.plugin.serializers import (
     AsyncOperationResponseSerializer,
     RepositorySyncURLSerializer,
@@ -118,6 +122,61 @@ class InstallerPackageViewSet(ContentViewSet):
     endpoint_name = "installer_packages"
     queryset = models.InstallerPackage.objects.all()
     serializer_class = serializers.InstallerPackageSerializer
+
+
+class OneShotUploadViewSet(ViewSet):
+    """
+    ViewSet for One Shot Deb Upload.
+
+    Args:
+        file@: package to upload
+    Optional:
+        repository: repository to update
+
+    """
+
+    serializer_class = serializers.OneShotUploadSerializer
+    parser_classes = (MultiPartParser, FormParser)
+
+    @swagger_auto_schema(
+        operation_description="Create an artifact and trigger an asynchronous"
+        "task to create Deb content from it, optionally"
+        "create new repository version.",
+        operation_summary="Upload a package",
+        operation_id="upload_deb_package",
+        request_body=serializers.OneShotUploadSerializer,
+        responses={202: AsyncOperationResponseSerializer},
+    )
+    def create(self, request):
+        """
+        Upload a Deb package.
+        """
+        serializer = serializers.OneShotUploadSerializer(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        artifact = serializer.validated_data["artifact"]
+        repository = serializer.validated_data.get("repository")
+
+        try:
+            artifact.save()
+        except IntegrityError:
+            # if artifact already exists, let's use it
+            artifact = Artifact.objects.get(sha256=artifact.sha256)
+
+        shared_resources = [artifact]
+        if repository:
+            shared_resources.append(repository)
+
+        async_result = enqueue_with_reservation(
+            tasks.one_shot_upload,
+            shared_resources,
+            kwargs={
+                "artifact_pk": artifact.pk,
+                "repository_pk": repository.pk if repository else None,
+            },
+        )
+        return OperationPostponedResponse(async_result, request)
 
 
 class DebRemoteViewSet(RemoteViewSet):
