@@ -406,7 +406,7 @@ class MetadataStep(PluginStep):
                         release_meta_files.append(bz2_file_path)
 
             # Create the 'Release' file (for each release):
-            release_meta_data['architectures'].remove('all')
+            release_meta_data['architectures'].discard('all')
             if repo.description:
                 release_meta_data['description'] = repo.description
             release_meta_data['label'] = repo.id
