@@ -270,7 +270,7 @@ class Package(BasePackage):
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
-        unique_together = (("sha256",),)
+        unique_together = (("relative_path", "sha256"),)
 
 
 class InstallerPackage(BasePackage):
@@ -355,7 +355,7 @@ class InstallerPackage(BasePackage):
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
-        unique_together = (("sha256",),)
+        unique_together = (("relative_path", "sha256"),)
 
 
 class VerbatimPublication(Publication):
