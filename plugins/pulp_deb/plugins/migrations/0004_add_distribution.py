@@ -52,9 +52,15 @@ def migrate(*args, **kwargs):
     # If they exist, drop the old uniqueness constraints:
     try:
         release_collection.drop_index("codename_1_repoid_1")
+    except OperationFailure as exception:
+        _logger.info("Ignoring expected OperationFailure exception:")
+        _logger.info(str(exception))
+
+    try:
         component_collection.drop_index("name_1_release_1_repoid_1")
     except OperationFailure as exception:
-        _logger.log(str(exception))
+        _logger.info("Ignoring expected OperationFailure exception:")
+        _logger.info(str(exception))
 
     deb_importer_filter = {'importer_type_id': ids.TYPE_ID_IMPORTER}
 
