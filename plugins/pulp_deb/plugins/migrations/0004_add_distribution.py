@@ -1,4 +1,5 @@
 import logging
+from six import string_types
 from pulp.server.db import connection
 from pulp_deb.common import ids
 from pymongo.errors import OperationFailure
@@ -62,24 +63,36 @@ def migrate(*args, **kwargs):
         _logger.info("Ignoring expected OperationFailure exception:")
         _logger.info(str(exception))
 
-    deb_importer_filter = {'importer_type_id': ids.TYPE_ID_IMPORTER}
+    deb_importer_filter = {
+        'importer_type_id': ids.TYPE_ID_IMPORTER,
+        'config.releases': {'$exists': True},
+    }
 
     # Perform a best effort to recreate the upstream distribution:
     for repo_importer in importer_collection.find(deb_importer_filter).batch_size(100):
-        distributions = repo_importer['config']['releases'].split(',')
+        importer_releases = repo_importer['config']['releases']
+        if isinstance(importer_releases, string_types) and importer_releases:
+            distributions = importer_releases.split(',')
+        else:
+            continue
 
         release_filter = {'repoid': repo_importer['repo_id']}
 
         for release in release_collection.find(release_filter).batch_size(100):
             original_distribution = None
-            if release['codename'] in distributions:
+            suite = ''
+            codename = release['codename']
+            if 'suite' in release:
+                suite = release['suite']
+
+            if codename in distributions:
                 continue
-            elif release['suite'] in distributions:
-                original_distribution = release['suite']
+            elif suite in distributions:
+                original_distribution = suite
 
             component_filter = {
                 'repoid': repo_importer['repo_id'],
-                'release': release['codename'],
+                'release': codename,
             }
 
             prefix = None
@@ -114,10 +127,10 @@ def migrate(*args, **kwargs):
                     plain_component = component['name'].strip('/').split('/')[-1]
                     prefix = '/'.join(component['name'].strip('/').split('/')[:-1])
 
-                    if release['codename'] + '/' + prefix in distributions:
-                        original_distribution = release['codename'] + '/' + prefix
-                    elif release['suite'] + '/' + prefix in distributions:
-                        original_distribution = release['suite'] + '/' + prefix
+                    if codename + '/' + prefix in distributions:
+                        original_distribution = codename + '/' + prefix
+                    elif suite + '/' + prefix in distributions:
+                        original_distribution = suite + '/' + prefix
                     else:
                         # The approach did not work, out of ideas!
                         break
