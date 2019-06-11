@@ -2,7 +2,6 @@
 Contains tests for pulp_deb.plugins.importers.importer.
 """
 from gettext import gettext as _
-import json
 import os
 
 import mock
@@ -33,16 +32,6 @@ class TestEntryPoint(testbase.TestCase):
 
 
 class ModelMixIn(object):
-    def test_unit_keys(self):
-        type_file = os.path.join(os.path.dirname(__file__),
-                                 '..', '..', '..', '..',
-                                 'types', 'deb.json')
-        contents = json.load(open(type_file))
-        types = dict((x['id'], x) for x in contents['types'])
-        tlist = types[self.__class__.Model.TYPE_ID]['unit_key']
-        self.assertEquals(
-            sorted(self.__class__.Model.unit_key_fields),
-            sorted(tlist))
 
     def test_ids(self):
         self.assertEquals(self.UNIT_KEY_FIELDS,
