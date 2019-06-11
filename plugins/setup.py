@@ -28,7 +28,6 @@ setup(
     include_package_data=True,
     data_files=[
         ('/etc/httpd/conf.d', ['etc/httpd/conf.d/pulp_deb.conf']),
-        ('/usr/lib/pulp/plugins/types', ['types/deb.json']),
     ],
     install_requires=[
         'python-gnupg',
