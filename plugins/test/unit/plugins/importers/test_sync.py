@@ -25,9 +25,9 @@ class _TestSyncBase(testbase.TestCase):
         self.repo = RepositoryModel('repo1')
         self.conduit = mock.MagicMock()
         self.conduit.get_units.return_value = [
-            Namespace(type_id=ids.TYPE_ID_DEB_RELEASE),
-            Namespace(type_id=ids.TYPE_ID_DEB_COMP),
-            Namespace(type_id=ids.TYPE_ID_DEB),
+            Namespace(type_id=ids.TYPE_ID_DEB_RELEASE, id="AAAA"),
+            Namespace(type_id=ids.TYPE_ID_DEB_COMP, id="BBBB"),
+            Namespace(type_id=ids.TYPE_ID_DEB, id="CCCC"),
         ]
         plugin_config = {
             importer_constants.KEY_FEED: 'http://example.com/deb',
@@ -270,8 +270,8 @@ SHA256:
         step = self.step.children[8]
         self.assertEquals(constants.SYNC_STEP_SAVE_META, step.step_id)
         step.process_lifecycle()
-        self.step.debs_to_check.remove.assert_called_once_with(
-            _UnitKeyToUnit.return_value)
+        self.step.debs_to_check.pop.assert_called_once_with(
+            _UnitKeyToUnit.return_value.id, None)
         _UnitKeyToUnit.assert_called_once_with(
             {'name': 'ape', 'version': '1.2a-4~exp', 'architecture': 'DNA'})
 

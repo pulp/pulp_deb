@@ -129,18 +129,18 @@ class RepoSync(publish_step.PluginStep):
         #  metadata
         self.add_child(SaveMetadataStep(constants.SYNC_STEP_SAVE_META))
 
-        self.debs_to_check = []
-        self.deb_comps_to_check = []
-        self.deb_releases_to_check = []
+        self.debs_to_check = {}
+        self.deb_comps_to_check = {}
+        self.deb_releases_to_check = {}
         # cleanup
         if self.remove_missing:
             units_to_check = self.conduit.get_units()
-            self.debs_to_check = [unit for unit in units_to_check
-                                  if unit.type_id == ids.TYPE_ID_DEB]
-            self.deb_comps_to_check = [unit for unit in units_to_check
-                                       if unit.type_id == ids.TYPE_ID_DEB_COMP]
-            self.deb_releases_to_check = [unit for unit in units_to_check
-                                          if unit.type_id == ids.TYPE_ID_DEB_RELEASE]
+            self.debs_to_check = {unit.id: unit for unit in units_to_check
+                                  if unit.type_id == ids.TYPE_ID_DEB}
+            self.deb_comps_to_check = {unit.id: unit for unit in units_to_check
+                                       if unit.type_id == ids.TYPE_ID_DEB_COMP}
+            self.deb_releases_to_check = {unit.id: unit for unit in units_to_check
+                                          if unit.type_id == ids.TYPE_ID_DEB_RELEASE}
             del units_to_check
             self.add_child(OrphanRemovedUnits(constants.SYNC_STEP_ORPHAN_REMOVED_UNITS))
 
@@ -229,10 +229,7 @@ class ParseReleaseStep(publish_step.PluginStep):
             self.parent.release_units[distribution] = release_unit
 
             # Prevent this unit from being cleaned up
-            try:
-                self.parent.deb_releases_to_check.remove(release_unit)
-            except ValueError:
-                pass
+            self.parent.deb_releases_to_check.pop(release_unit.id, None)
             # get release component units
             for release_file_component in repometa.components:
                 component = release_file_component.split('/')[-1]
@@ -243,10 +240,7 @@ class ParseReleaseStep(publish_step.PluginStep):
                                                                         component)
                     self.parent.component_packages[distribution][component] = []
                     # Prevent this unit from being cleaned up
-                    try:
-                        self.parent.deb_comps_to_check.remove(comp_unit)
-                    except ValueError:
-                        pass
+                    self.parent.deb_comps_to_check.pop(comp_unit.id, None)
             # generate download requests for all relevant packages files
             rel_dl_reqs = repometa.create_Packages_download_requests(
                 self.get_working_dir())
@@ -379,10 +373,7 @@ class SaveMetadataStep(publish_step.PluginStep):
                              for unit_key in self.parent.component_packages[distribution][comp]]:
                     comp_unit_packages_set.add(unit.id)
                     # Prevent this unit from being cleaned up
-                    try:
-                        self.parent.debs_to_check.remove(unit)
-                    except ValueError:
-                        pass
+                    self.parent.debs_to_check.pop(unit.id, None)
                 comp_unit.packages = list(comp_unit_packages_set)
                 comp_unit.save()
 
@@ -393,11 +384,11 @@ class OrphanRemovedUnits(publish_step.PluginStep):
         self.description = _('Orphan removed units')
 
     def process_main(self, item=None):
-        for unit in self.parent.deb_releases_to_check:
+        for unit in self.parent.deb_releases_to_check.values():
             self.parent.conduit.remove_unit(unit)
-        for unit in self.parent.deb_comps_to_check:
+        for unit in self.parent.deb_comps_to_check.values():
             self.parent.conduit.remove_unit(unit)
-        for unit in self.parent.debs_to_check:
+        for unit in self.parent.debs_to_check.values():
             self.parent.conduit.remove_unit(unit)
 
 
