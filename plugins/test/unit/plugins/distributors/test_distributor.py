@@ -250,6 +250,8 @@ class PublishRepoMixIn(object):
                 id='allid',
                 distribution='default',
             ))
+        release_file_counter = 0
+        packages_file_counter = 0
         for release in release_units:
             comp_dir = os.path.join(
                 repo_config['http_publish_dir'],
@@ -258,16 +260,21 @@ class PublishRepoMixIn(object):
                 release.distribution)
             release_file = os.path.join(comp_dir, 'Release')
             self.assertTrue(os.path.exists(release_file))
+            release_file_counter += 1
             # Make sure the components Packages files exist
             for comp in [comp.plain_component for comp in component_units
-                         if comp.release == release.codename]:
+                         if comp.distribution == release.distribution]:
                 for arch in self.Architectures:
                     self.assertTrue(os.path.exists(
                         os.path.join(comp_dir, comp, 'binary-' + arch, 'Packages')))
+                    packages_file_counter += 1
             # #3917: make sure Description and Label are properly set
             rel_file_contents = deb822.Deb822(sequence=open(release_file))
             self.assertEqual(repo.id, rel_file_contents['Label'])
             self.assertEqual(repo.description, rel_file_contents['Description'])
+
+        self.assertEqual(self.release_file_count, release_file_counter)
+        self.assertEqual(self.packages_file_count, packages_file_counter)
 
         exp = [
             mock.call(repo.id, models.DebRelease, None),
@@ -325,6 +332,8 @@ class TestPublishOldRepoDeb(PublishRepoMixIn, BaseTest):
     }
     Architectures = ['all', 'amd64']
     default_release = False
+    release_file_count = 1
+    packages_file_count = 2
 
 
 class TestPublishRepoDeb(PublishRepoMixIn, BaseTest):
@@ -363,6 +372,8 @@ class TestPublishRepoDeb(PublishRepoMixIn, BaseTest):
     }
     Architectures = ['all', 'amd64']
     default_release = False
+    release_file_count = 1
+    packages_file_count = 2
 
 
 class TestPublishRepoDebNestedDistribution(PublishRepoMixIn, BaseTest):
@@ -402,6 +413,8 @@ class TestPublishRepoDebNestedDistribution(PublishRepoMixIn, BaseTest):
     }
     Architectures = ['all', 'amd64']
     default_release = False
+    release_file_count = 1
+    packages_file_count = 2
 
 
 class TestPublishRepoMultiArchDeb(PublishRepoMixIn, BaseTest):
@@ -454,6 +467,8 @@ class TestPublishRepoMultiArchDeb(PublishRepoMixIn, BaseTest):
     }
     Architectures = ['all', 'amd64', 'i386']
     default_release = False
+    release_file_count = 1
+    packages_file_count = 3
 
 
 class TestPublishRepoMultiCompArchDeb(PublishRepoMixIn, BaseTest):
@@ -519,6 +534,8 @@ class TestPublishRepoMultiCompArchDeb(PublishRepoMixIn, BaseTest):
     }
     Architectures = ['all', 'amd64', 'i386', 'ppc']
     default_release = True
+    release_file_count = 2
+    packages_file_count = 12
 
 
 @unittest.skip("Skip until https://pulp.plan.io/issues/4094 is fixed!")
@@ -580,6 +597,8 @@ class TestPublishAllArchCompDeb(PublishRepoMixIn, BaseTest):
     }
     Architectures = ['all', 'amd64']
     default_release = True
+    release_file_count = 2
+    packages_file_count = 6
 
 
 class TestPublishRepoNonAsciiDeb(PublishRepoMixIn, BaseTest):
@@ -643,6 +662,8 @@ class TestPublishRepoNonAsciiDeb(PublishRepoMixIn, BaseTest):
     }
     Architectures = ['all', 'amd64']
     default_release = False
+    release_file_count = 1
+    packages_file_count = 2
 
 
 class TestPublishRepoLayeredComponentDeb(PublishRepoMixIn, BaseTest):
@@ -687,6 +708,8 @@ class TestPublishRepoLayeredComponentDeb(PublishRepoMixIn, BaseTest):
     }
     Architectures = ['all', 'amd64']
     default_release = True
+    release_file_count = 2
+    packages_file_count = 4
 
 
 class TestDistributorRemoved(BaseTest):
