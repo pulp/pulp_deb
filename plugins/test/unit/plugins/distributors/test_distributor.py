@@ -538,6 +538,34 @@ class TestPublishRepoMultiCompArchDeb(PublishRepoMixIn, BaseTest):
     packages_file_count = 12
 
 
+class TestPublishEmptyRepo(PublishRepoMixIn, BaseTest):
+    """
+    Empty repositories (no packages) should still publish a valid Release file
+    allong with empty Packages files.
+    """
+    Sample_Units = {
+        models.DebPackage: [],
+        models.DebComponent: [
+            dict(
+                name='main',
+                distribution='stable',
+                id='mainid',
+            ),
+        ],
+        models.DebRelease: [
+            dict(
+                distribution='stable',
+                codename='stable',
+                id='stableid',
+            ),
+        ],
+    }
+    Architectures = ['all']
+    default_release = False
+    release_file_count = 1
+    packages_file_count = 1
+
+
 @unittest.skip("Skip until https://pulp.plan.io/issues/4094 is fixed!")
 class TestPublishAllArchCompDeb(PublishRepoMixIn, BaseTest):
     """
