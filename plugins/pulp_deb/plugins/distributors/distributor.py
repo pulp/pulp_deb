@@ -290,10 +290,6 @@ class MetadataStep(PluginStep):
         config = self.get_config()
         base_path = self.get_working_dir()
 
-        # Do nothing, if the repository is empty (review this behaviour):
-        if len(unit_dict) == 0:
-            return
-
         # If there are no release_units (old style repo) publish as 'stable/main':
         if len(release_units) == 0:
             default_release = models.DebRelease(
