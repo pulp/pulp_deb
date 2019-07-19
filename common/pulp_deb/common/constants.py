@@ -25,6 +25,7 @@ CONFIG_GPG_KEYS = 'gpg_keys'
 CONFIG_ALLOWED_KEYS = 'allowed_keys'
 CONFIG_KEYSERVER = 'keyserver'
 CONFIG_KEYSERVER_DEFAULT = 'hkp://wwwkeys.pgp.net'
+CONFIG_REPAIR_SYNC = 'repair_sync'
 
 # Distributor configuration key names
 CONFIG_SERVE_HTTP = 'serve_http'

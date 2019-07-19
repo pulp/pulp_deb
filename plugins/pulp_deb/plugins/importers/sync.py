@@ -33,6 +33,19 @@ DEBSYNC002 = Error(
     ["repo_id", "feed_url", "filename", "checksum_expected", "checksum_actual"])
 
 
+def verify_unit_callback(unit):
+    if not os.path.isfile(unit.storage_path):
+        return False
+    checksums = unit.calculate_deb_checksums(unit.storage_path)
+    if unit.sha1 and unit.sha1 != checksums['sha1']:
+        return False
+    if unit.md5sum and unit.md5sum != checksums['md5sum']:
+        return False
+    if unit.sha256 and unit.sha256 != checksums['sha256']:
+        return False
+    return True
+
+
 class RepoSync(publish_step.PluginStep):
     Type_Class_Map = {
         models.DebPackage.TYPE_ID: models.DebPackage,
@@ -59,6 +72,7 @@ class RepoSync(publish_step.PluginStep):
         self.components = split_or_none(self.get_config().get('components'))
         self.remove_missing = self.get_config().get_boolean(
             constants.CONFIG_REMOVE_MISSING_UNITS, constants.CONFIG_REMOVE_MISSING_UNITS_DEFAULT)
+        self.repair_sync = self.get_config().get_boolean(constants.CONFIG_REPAIR_SYNC, False)
 
         self.unit_relative_urls = {}
         self.available_units = None
@@ -111,8 +125,12 @@ class RepoSync(publish_step.PluginStep):
         self.add_child(ParsePackagesStep(constants.SYNC_STEP_PACKAGES_PARSE))
 
         #  packages
+        if self.repair_sync:
+            verify_unit = verify_unit_callback
+        else:
+            verify_unit = None
         self.step_local_units = publish_step.GetLocalUnitsStep(
-            importer_type=ids.TYPE_ID_IMPORTER)
+            importer_type=ids.TYPE_ID_IMPORTER, verify_unit=verify_unit)
         self.add_child(self.step_local_units)
 
         self.add_child(CreateRequestsUnitsToDownload(
@@ -344,7 +362,7 @@ class SaveDownloadedUnits(publish_step.PluginStep):
     def process_main(self, item=None):
         path_to_unit = self.parent.step_download_units.path_to_unit
         repo = self.get_repo().repo_obj
-        for path, unit in sorted(path_to_unit.items()):
+        for path, unit in path_to_unit.items():
             checksums = unit.calculate_deb_checksums(path)
             if unit.sha1:
                 self.verify_checksum(checksums['sha1'], unit.sha1, path)
@@ -359,7 +377,7 @@ class SaveDownloadedUnits(publish_step.PluginStep):
             else:
                 unit.sha256 = checksums['sha256']
             self.verify_checksum(unit.checksum, unit.sha256, path)
-            unit.save_and_associate(path, repo)
+            unit.save_and_associate(path, repo, force=self.parent.repair_sync)
 
 
 class SaveMetadataStep(publish_step.PluginStep):
