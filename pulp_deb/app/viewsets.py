@@ -1,7 +1,7 @@
 from gettext import gettext as _  # noqa
 
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import action
 
 from pulpcore.plugin.serializers import (
     AsyncOperationResponseSerializer,
@@ -143,7 +143,7 @@ class DebRemoteViewSet(RemoteViewSet):
         operation_description="Trigger an asynchronous task to sync content",
         responses={202: AsyncOperationResponseSerializer}
     )
-    @detail_route(methods=('post',), serializer_class=RepositorySyncURLSerializer)
+    @action(detail=True, methods=["post"], serializer_class=RepositorySyncURLSerializer)
     def sync(self, request, pk):
         """
         Synchronizes a repository.
