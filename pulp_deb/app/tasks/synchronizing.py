@@ -171,6 +171,7 @@ class DebUpdateReleaseAttributes(Stage):
         Args:
             components: list of components
             architectures: list of architectures
+
         """
         super().__init__(*args, **kwargs)
         self.components = components
@@ -596,6 +597,7 @@ class DebFirstStage(Stage):
 
         Args:
             package_index: file object containing package paragraphs
+
         """
         # Interpret policy to download Artifacts or not
         deferred_download = (self.remote.policy != Remote.IMMEDIATE)
@@ -644,6 +646,7 @@ class DebFirstStage(Stage):
 
         Args:
             installer_file_index: object of type :class:`InstallerFileIndex`
+
         """
         # Interpret policy to download Artifacts or not
         deferred_download = (self.remote.policy != Remote.IMMEDIATE)

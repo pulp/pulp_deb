@@ -56,6 +56,7 @@ def publish(repository_version_pk, simple=False, structured=False):
         simple (bool): Create a simple publication with all packages contained in default/all.
         structured (bool): Create a structured publication with releases and components.
             (Not yet implemented)
+
     """
     repo_version = RepositoryVersion.objects.get(pk=repository_version_pk)
 
