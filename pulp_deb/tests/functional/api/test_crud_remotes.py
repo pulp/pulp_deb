@@ -129,7 +129,6 @@ def _gen_verbose_remote():
         'password': utils.uuid4(),
         'username': utils.uuid4(),
         'policy': choice(DOWNLOAD_POLICIES),
-        'validate': choice((False, True)),
         'distributions': '{} {}'.format(utils.uuid4(), utils.uuid4()),
         'components': '{} {}'.format(utils.uuid4(), utils.uuid4()),
         'architectures': '{} {}'.format(utils.uuid4(), utils.uuid4()),
