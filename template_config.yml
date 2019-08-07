@@ -1,0 +1,27 @@
+# This config represents the latest values used when running the plugin-template. Any settings that
+# were not present before running plugin-template have been added with their default values.
+
+plugin_name: pulp_deb
+plugin_app_label: deb
+plugin_snake: pulp_deb
+plugin_caps: PULP_DEB
+plugin_caps_short: DEB
+plugin_camel: PulpDeb
+plugin_camel_short: Deb
+plugin_dash: pulp-deb
+plugin_dash_short: deb
+black: False
+check_commit_message: True
+coverage: False
+deploy_client_to_pypi: True
+deploy_client_to_rubygems: False
+deploy_daily_client_to_pypi: False
+deploy_daily_client_to_rubygems: False
+deploy_to_pypi: True
+docs_test: False
+pydocstyle: True
+test_bindings: False
+pypi_username: pulp
+travis_notifications: None
+
+
