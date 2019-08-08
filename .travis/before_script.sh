@@ -7,7 +7,7 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
-set -v
+set -euv
 
 export PRE_BEFORE_SCRIPT=$TRAVIS_BUILD_DIR/.travis/pre_before_script.sh
 export POST_BEFORE_SCRIPT=$TRAVIS_BUILD_DIR/.travis/post_before_script.sh

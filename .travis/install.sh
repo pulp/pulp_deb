@@ -7,7 +7,7 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
-set -v
+set -euv
 
 if [ "$TEST" = 'docs' ]; then
   pip3 install -r doc_requirements.txt
