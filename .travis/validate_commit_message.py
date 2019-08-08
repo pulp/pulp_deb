@@ -16,7 +16,9 @@ NO_ISSUE = "[noissue]"
 STATUSES = ["NEW", "ASSIGNED", "POST"]
 
 sha = sys.argv[1]
-message = subprocess.check_output(["git", "log", "--format=%B", "-n 1", sha]).decode("utf-8")
+message = subprocess.check_output(["git", "log", "--format=%B", "-n 1", sha]).decode(
+    "utf-8"
+)
 
 
 def __check_status(issue):
@@ -27,7 +29,9 @@ def __check_status(issue):
     if status not in STATUSES:
         sys.exit(
             "Error: issue #{issue} has invalid status of {status}. Status must be one of "
-            "{statuses}.".format(issue=issue, status=status, statuses=", ".join(STATUSES))
+            "{statuses}.".format(
+                issue=issue, status=status, statuses=", ".join(STATUSES)
+            )
         )
 
 
@@ -40,7 +44,9 @@ print("Checking commit message for {sha}.".format(sha=sha[0:7]))
 
 # validate the issue attached to the commit
 if NO_ISSUE in message:
-    print("Commit {sha} has no issue attached. Skipping issue check".format(sha=sha[0:7]))
+    print(
+        "Commit {sha} has no issue attached. Skipping issue check".format(sha=sha[0:7])
+    )
 else:
     regex = r"(?:{keywords})[\s:]+#(\d+)".format(keywords=("|").join(KEYWORDS))
     pattern = re.compile(regex)

@@ -31,7 +31,8 @@ pip install -r test_requirements.txt
 # check the commit message
 ./.travis/check_commit.sh
 
-
+# run black separately from flake8 to get a diff
+black --check --diff .
 
 # Lint code.
 flake8 --config flake8.cfg

@@ -10,7 +10,7 @@ plugin_camel: PulpDeb
 plugin_camel_short: Deb
 plugin_dash: pulp-deb
 plugin_dash_short: deb
-black: False
+black: True
 check_commit_message: True
 coverage: False
 deploy_client_to_pypi: True

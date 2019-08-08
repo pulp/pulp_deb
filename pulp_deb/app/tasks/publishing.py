@@ -16,11 +16,7 @@ from pulpcore.plugin.models import (
 )
 from pulpcore.plugin.tasking import WorkingDirectory
 
-from pulp_deb.app.models import (
-    DebPublication,
-    Package,
-    VerbatimPublication,
-)
+from pulp_deb.app.models import DebPublication, Package, VerbatimPublication
 
 
 log = logging.getLogger(__name__)
@@ -36,15 +32,20 @@ def publish_verbatim(repository_version_pk):
     """
     repo_version = RepositoryVersion.objects.get(pk=repository_version_pk)
 
-    log.info(_('Publishing (verbatim): repository={repo}, version={ver}').format(
-        repo=repo_version.repository.name,
-        ver=repo_version.number,
-    ))
+    log.info(
+        _("Publishing (verbatim): repository={repo}, version={ver}").format(
+            repo=repo_version.repository.name, ver=repo_version.number
+        )
+    )
     with WorkingDirectory():
         with VerbatimPublication.create(repo_version, pass_through=True) as publication:
             pass
 
-    log.info(_('Publication (verbatim): {publication} created').format(publication=publication.pk))
+    log.info(
+        _("Publication (verbatim): {publication} created").format(
+            publication=publication.pk
+        )
+    )
 
 
 def publish(repository_version_pk, simple=False, structured=False):
@@ -60,12 +61,16 @@ def publish(repository_version_pk, simple=False, structured=False):
     """
     repo_version = RepositoryVersion.objects.get(pk=repository_version_pk)
 
-    log.info(_('Publishing: repository={repo}, version={ver}, simple={simple}, structured={structured}').format(  # noqa
-        repo=repo_version.repository.name,
-        ver=repo_version.number,
-        simple=simple,
-        structured=structured,
-    ))
+    log.info(
+        _(
+            "Publishing: repository={repo}, version={ver}, simple={simple}, structured={structured}"
+        ).format(  # noqa
+            repo=repo_version.repository.name,
+            ver=repo_version.number,
+            simple=simple,
+            structured=structured,
+        )
+    )
     with WorkingDirectory():
         with DebPublication.create(repo_version, pass_through=False) as publication:
             publication.simple = simple
@@ -74,18 +79,18 @@ def publish(repository_version_pk, simple=False, structured=False):
                 repository = repo_version.repository
                 release = deb822.Release()
                 # TODO: release['Label']
-                release['Codename'] = 'default'
-                release['Components'] = 'all'
-                release['Architectures'] = ''
+                release["Codename"] = "default"
+                release["Components"] = "all"
+                release["Architectures"] = ""
                 if repository.description:
-                    release['Description'] = repository.description
-                release['MD5sum'] = []
-                release['SHA1'] = []
-                release['SHA256'] = []
-                release['SHA512'] = []
+                    release["Description"] = repository.description
+                release["MD5sum"] = []
+                release["SHA1"] = []
+                release["SHA256"] = []
+                release["SHA512"] = []
                 package_index_files = {}
                 for package in Package.objects.filter(
-                    pk__in=repo_version.content.order_by('-_created')
+                    pk__in=repo_version.content.order_by("-_created")
                 ):
                     published_artifact = PublishedArtifact(
                         relative_path=package.filename(),
@@ -95,20 +100,25 @@ def publish(repository_version_pk, simple=False, structured=False):
                     published_artifact.save()
                     if package.architecture not in package_index_files:
                         package_index_path = os.path.join(
-                            'dists',
-                            'default',
-                            'all',
-                            'binary-{}'.format(package.architecture),
-                            'Packages',
+                            "dists",
+                            "default",
+                            "all",
+                            "binary-{}".format(package.architecture),
+                            "Packages",
                         )
-                        os.makedirs(os.path.dirname(
-                            package_index_path), exist_ok=True)
+                        os.makedirs(os.path.dirname(package_index_path), exist_ok=True)
                         package_index_files[package.architecture] = (
-                            open(package_index_path, 'wb'), package_index_path)
-                    package.to822('all').dump(
-                        package_index_files[package.architecture][0])
-                    package_index_files[package.architecture][0].write(b'\n')
-                for package_index_file, package_index_path in package_index_files.values():
+                            open(package_index_path, "wb"),
+                            package_index_path,
+                        )
+                    package.to822("all").dump(
+                        package_index_files[package.architecture][0]
+                    )
+                    package_index_files[package.architecture][0].write(b"\n")
+                for (
+                    package_index_file,
+                    package_index_path,
+                ) in package_index_files.values():
                     package_index_file.close()
                     gz_package_index_path = _zip_file(package_index_path)
                     _add_to_release(release, package_index_path)
@@ -117,73 +127,66 @@ def publish(repository_version_pk, simple=False, structured=False):
                     package_index = PublishedMetadata(
                         relative_path=package_index_path,
                         publication=publication,
-                        file=File(open(package_index_path, 'rb')),
+                        file=File(open(package_index_path, "rb")),
                     )
                     package_index.save()
                     gz_package_index = PublishedMetadata(
                         relative_path=gz_package_index_path,
                         publication=publication,
-                        file=File(open(gz_package_index_path, 'rb')),
+                        file=File(open(gz_package_index_path, "rb")),
                     )
                     gz_package_index.save()
-                release['Architectures'] = ', '.join(package_index_files.keys())
-                release_path = os.path.join('dists', 'default', 'Release')
+                release["Architectures"] = ", ".join(package_index_files.keys())
+                release_path = os.path.join("dists", "default", "Release")
                 os.makedirs(os.path.dirname(release_path), exist_ok=True)
-                with open(release_path, 'wb') as release_file:
+                with open(release_path, "wb") as release_file:
                     release.dump(release_file)
                 release_metadata = PublishedMetadata(
                     relative_path=release_path,
                     publication=publication,
-                    file=File(open(release_path, 'rb')),
+                    file=File(open(release_path, "rb")),
                 )
                 release_metadata.save()
 
             if structured:
                 raise NotImplementedError(
-                    "Structured publishing is not yet implemented.")
+                    "Structured publishing is not yet implemented."
+                )
 
-    log.info(_('Publication: {publication} created').format(publication=publication.pk))
+    log.info(_("Publication: {publication} created").format(publication=publication.pk))
 
 
 def _add_to_release(release, file_path):
-    with open(file_path, 'rb') as infile:
+    with open(file_path, "rb") as infile:
         size = 0
         md5sum_hasher = hashlib.md5()
         sha1_hasher = hashlib.sha1()
         sha256_hasher = hashlib.sha256()
         sha512_hasher = hashlib.sha512()
-        for chunk in iter(lambda: infile.read(4096), b''):
+        for chunk in iter(lambda: infile.read(4096), b""):
             size += len(chunk)
             md5sum_hasher.update(chunk)
             sha1_hasher.update(chunk)
             sha256_hasher.update(chunk)
             sha512_hasher.update(chunk)
 
-        release['MD5sum'].append({
-            'md5sum': md5sum_hasher.hexdigest(),
-            'size': size,
-            'name': file_path,
-        })
-        release['SHA1'].append({
-            'sha1': sha1_hasher.hexdigest(),
-            'size': size,
-            'name': file_path,
-        })
-        release['SHA256'].append({
-            'sha256': sha256_hasher.hexdigest(),
-            'size': size,
-            'name': file_path,
-        })
-        release['SHA512'].append({
-            'sha512': sha512_hasher.hexdigest(),
-            'size': size,
-            'name': file_path,
-        })
+        release["MD5sum"].append(
+            {"md5sum": md5sum_hasher.hexdigest(), "size": size, "name": file_path}
+        )
+        release["SHA1"].append(
+            {"sha1": sha1_hasher.hexdigest(), "size": size, "name": file_path}
+        )
+        release["SHA256"].append(
+            {"sha256": sha256_hasher.hexdigest(), "size": size, "name": file_path}
+        )
+        release["SHA512"].append(
+            {"sha512": sha512_hasher.hexdigest(), "size": size, "name": file_path}
+        )
 
 
 def _zip_file(file_path):
-    gz_file_path = file_path + '.gz'
-    with open(file_path, 'rb') as f_in:
-        with GzipFile(gz_file_path, 'wb') as f_out:
+    gz_file_path = file_path + ".gz"
+    with open(file_path, "rb") as f_in:
+        with GzipFile(gz_file_path, "wb") as f_out:
             shutil.copyfileobj(f_in, f_out)
     return gz_file_path
