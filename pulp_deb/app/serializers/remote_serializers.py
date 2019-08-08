@@ -1,7 +1,10 @@
 from rest_framework.serializers import (
     BooleanField,
     CharField,
+    ChoiceField
 )
+
+from pulpcore.plugin.models import Remote
 from pulpcore.plugin.serializers import (
     RemoteSerializer,
 )
@@ -44,6 +47,13 @@ class DebRemoteSerializer(RemoteSerializer):
     sync_installer = BooleanField(
         help_text='Sync installer files',
         required=False,
+    )
+
+    policy = ChoiceField(
+        help_text="The policy to use when downloading content. The possible values include: "
+        "'immediate', 'on_demand', and 'streamed'. 'immediate' is the default.",
+        choices=Remote.POLICY_CHOICES,
+        default=Remote.IMMEDIATE,
     )
 
     class Meta:
