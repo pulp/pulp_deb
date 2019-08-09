@@ -28,6 +28,7 @@ class GenericContent(Content):
     sha256 = models.CharField(max_length=255, null=False)
 
     class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
         unique_together = (("relative_path", "sha256"),)
 
 
@@ -52,6 +53,7 @@ class Release(Content):
     sha256 = models.CharField(max_length=255)
 
     class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
         unique_together = (
             (
                 "codename",
@@ -84,6 +86,7 @@ class PackageIndex(Content):
     sha256 = models.CharField(max_length=255)
 
     class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
         verbose_name_plural = "PackageIndices"
         unique_together = (("relative_path", "sha256"),)
 
@@ -116,6 +119,7 @@ class InstallerFileIndex(Content):
     sha256 = models.CharField(max_length=255)
 
     class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
         verbose_name_plural = "InstallerFileIndices"
         unique_together = (("relative_path", "sha256"),)
 
@@ -188,6 +192,7 @@ class BasePackage(Content):
         }
 
     class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
         abstract = True
 
 
@@ -276,6 +281,7 @@ class Package(BasePackage):
     sha256 = models.CharField(max_length=255, null=False)
 
     class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
         unique_together = (("sha256",),)
 
 
@@ -364,6 +370,7 @@ class InstallerPackage(BasePackage):
     sha256 = models.CharField(max_length=255, null=False)
 
     class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
         unique_together = (("sha256",),)
 
 
@@ -375,6 +382,9 @@ class VerbatimPublication(Publication):
     """
 
     TYPE = "verbatim-publication"
+
+    class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
 
 
 class DebPublication(Publication):
@@ -389,6 +399,9 @@ class DebPublication(Publication):
     simple = models.BooleanField(default=False)
     structured = models.BooleanField(default=False)
 
+    class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
+
 
 class DebDistribution(PublicationDistribution):
     """
@@ -396,6 +409,9 @@ class DebDistribution(PublicationDistribution):
     """
 
     TYPE = "apt-distribution"
+
+    class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
 
 
 class DebRemote(Remote):
@@ -411,3 +427,6 @@ class DebRemote(Remote):
     sync_sources = models.BooleanField(default=False)
     sync_udebs = models.BooleanField(default=False)
     sync_installer = models.BooleanField(default=False)
+
+    class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
