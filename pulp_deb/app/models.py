@@ -6,16 +6,11 @@ from debian import deb822
 
 from django.db import models
 
-from pulpcore.plugin.models import (
-    Content,
-    Publication,
-    PublicationDistribution,
-    Remote,
-)
+from pulpcore.plugin.models import Content, Publication, PublicationDistribution, Remote
 
 logger = getLogger(__name__)
 
-BOOL_CHOICES = [(True, 'yes'), (False, 'no')]
+BOOL_CHOICES = [(True, "yes"), (False, "no")]
 
 
 class GenericContent(Content):
@@ -27,15 +22,13 @@ class GenericContent(Content):
     Those units are used for the verbatim publish method.
     """
 
-    TYPE = 'generic'
+    TYPE = "generic"
 
     relative_path = models.CharField(max_length=255, null=False)
     sha256 = models.CharField(max_length=255, null=False)
 
     class Meta:
-        unique_together = (
-            ('relative_path', 'sha256'),
-        )
+        unique_together = (("relative_path", "sha256"),)
 
 
 class Release(Content):
@@ -48,7 +41,7 @@ class Release(Content):
     TODO This Content should include the Artifacts InRelease and Release.gpg
     """
 
-    TYPE = 'release'
+    TYPE = "release"
 
     codename = models.CharField(max_length=255)
     suite = models.CharField(max_length=255)
@@ -61,13 +54,13 @@ class Release(Content):
     class Meta:
         unique_together = (
             (
-                'codename',
-                'suite',
-                'distribution',
-                'components',
-                'architectures',
-                'relative_path',
-                'sha256',
+                "codename",
+                "suite",
+                "distribution",
+                "components",
+                "architectures",
+                "relative_path",
+                "sha256",
             ),
         )
 
@@ -82,9 +75,9 @@ class PackageIndex(Content):
     of the upstream Packages file.
     """
 
-    TYPE = 'package_index'
+    TYPE = "package_index"
 
-    release_pk = models.ForeignKey('Release', on_delete=models.CASCADE)
+    release_pk = models.ForeignKey("Release", on_delete=models.CASCADE)
     component = models.CharField(max_length=255)
     architecture = models.CharField(max_length=255)
     relative_path = models.CharField(max_length=255)
@@ -92,9 +85,7 @@ class PackageIndex(Content):
 
     class Meta:
         verbose_name_plural = "PackageIndices"
-        unique_together = (
-            ('relative_path', 'sha256'),
-        )
+        unique_together = (("relative_path", "sha256"),)
 
     @property
     def main_artifact(self):
@@ -114,14 +105,11 @@ class InstallerFileIndex(Content):
     with the sha256-field pointing to the one with the strongest algorithm.
     """
 
-    TYPE = 'installer_file_index'
+    TYPE = "installer_file_index"
 
-    FILE_ALGORITHM = {  # Are there more?
-        'SHA256SUMS': 'sha256',
-        'MD5SUMS': 'md5',
-    }
+    FILE_ALGORITHM = {"SHA256SUMS": "sha256", "MD5SUMS": "md5"}  # Are there more?
 
-    release_pk = models.ForeignKey('Release', on_delete=models.CASCADE)
+    release_pk = models.ForeignKey("Release", on_delete=models.CASCADE)
     component = models.CharField(max_length=255)
     architecture = models.CharField(max_length=255)
     relative_path = models.CharField(max_length=255)
@@ -129,9 +117,7 @@ class InstallerFileIndex(Content):
 
     class Meta:
         verbose_name_plural = "InstallerFileIndices"
-        unique_together = (
-            ('relative_path', 'sha256'),
-        )
+        unique_together = (("relative_path", "sha256"),)
 
     @property
     def main_artifact(self):
@@ -147,33 +133,33 @@ class BasePackage(Content):
     """
 
     MULTIARCH_CHOICES = [
-        ('no', 'no'),
-        ('same', 'same'),
-        ('foreign', 'foreign'),
-        ('allowed', 'allowed'),
+        ("no", "no"),
+        ("same", "same"),
+        ("foreign", "foreign"),
+        ("allowed", "allowed"),
     ]
 
     @property
     def name(self):
         """Print a nice name for Packages."""
-        return '{}_{}_{}'.format(self.package_name, self.version, self.architecture)
+        return "{}_{}_{}".format(self.package_name, self.version, self.architecture)
 
-    def filename(self, component=''):
+    def filename(self, component=""):
         """Assemble filename in pool directory."""
         sourcename = self.source or self.package_name
-        if sourcename.startswith('lib'):
+        if sourcename.startswith("lib"):
             prefix = sourcename[0:4]
         else:
             prefix = sourcename[0]
         return os.path.join(
-            'pool',
+            "pool",
             component,
             prefix,
             sourcename,
-            '{}.{}'.format(self.name, self.SUFFIX)
+            "{}.{}".format(self.name, self.SUFFIX),
         )
 
-    def to822(self, component=''):
+    def to822(self, component=""):
         """Create deb822.Package object from model."""
         ret = deb822.Packages()
 
@@ -183,10 +169,10 @@ class BasePackage(Content):
                 ret[v] = value
 
         artifact = self._artifacts.get()
-        ret['MD5sum'] = artifact.md5
-        ret['SHA1'] = artifact.sha1
-        ret['SHA256'] = artifact.sha256
-        ret['Filename'] = self.filename(component)
+        ret["MD5sum"] = artifact.md5
+        ret["SHA1"] = artifact.sha1
+        ret["SHA256"] = artifact.sha256
+        ret["Filename"] = self.filename(component)
 
         return ret
 
@@ -196,7 +182,9 @@ class BasePackage(Content):
         Translate deb822.Package to a dictionary for class instatiation.
         """
         return {
-            k: package_dict[v] for k, v in cls.TRANSLATION_DICT.items() if v in package_dict
+            k: package_dict[v]
+            for k, v in cls.TRANSLATION_DICT.items()
+            if v in package_dict
         }
 
     class Meta:
@@ -211,39 +199,39 @@ class Package(BasePackage):
     generate the corresponding paragraph in "Packages" files.
     """
 
-    TYPE = 'package'
+    TYPE = "package"
 
-    SUFFIX = 'deb'
+    SUFFIX = "deb"
     TRANSLATION_DICT = {
-        'package_name': 'Package',  # Workaround (this field should be called 'package')
-        'source': 'Source',
-        'version': 'Version',
-        'architecture': 'Architecture',
-        'section': 'Section',
-        'priority': 'Priority',
-        'origin': 'Origin',
-        'tag': 'Tag',
-        'bugs': 'Bugs',
-        'essential': 'Essential',
-        'build_essential': 'Build_essential',
-        'installed_size': 'Installed_size',
-        'maintainer': 'Maintainer',
-        'original_maintainer': 'Original_Maintainer',
-        'description': 'Description',
-        'description_md5': 'Description_MD5',
-        'homepage': 'Homepage',
-        'built_using': 'Built_Using',
-        'auto_built_package': 'Auto_Built_Package',
-        'multi_arch': 'Multi_Arch',
-        'breaks': 'Breaks',
-        'conflicts': 'Conflicts',
-        'depends': 'Depends',
-        'recommends': 'Recommends',
-        'suggests': 'Suggests',
-        'enhances': 'Enhances',
-        'pre_depends': 'Pre_Depends',
-        'provides': 'Provides',
-        'replaces': 'Replaces',
+        "package_name": "Package",  # Workaround (this field should be called 'package')
+        "source": "Source",
+        "version": "Version",
+        "architecture": "Architecture",
+        "section": "Section",
+        "priority": "Priority",
+        "origin": "Origin",
+        "tag": "Tag",
+        "bugs": "Bugs",
+        "essential": "Essential",
+        "build_essential": "Build_essential",
+        "installed_size": "Installed_size",
+        "maintainer": "Maintainer",
+        "original_maintainer": "Original_Maintainer",
+        "description": "Description",
+        "description_md5": "Description_MD5",
+        "homepage": "Homepage",
+        "built_using": "Built_Using",
+        "auto_built_package": "Auto_Built_Package",
+        "multi_arch": "Multi_Arch",
+        "breaks": "Breaks",
+        "conflicts": "Conflicts",
+        "depends": "Depends",
+        "recommends": "Recommends",
+        "suggests": "Suggests",
+        "enhances": "Enhances",
+        "pre_depends": "Pre_Depends",
+        "provides": "Provides",
+        "replaces": "Replaces",
     }
 
     package_name = models.CharField(max_length=255)  # package name
@@ -251,7 +239,9 @@ class Package(BasePackage):
     version = models.CharField(max_length=255)
     architecture = models.CharField(max_length=255)  # all, i386, ...
     section = models.CharField(max_length=255, null=True)  # admin, comm, database, ...
-    priority = models.CharField(max_length=255, null=True)  # required, standard, optional, extra
+    priority = models.CharField(
+        max_length=255, null=True
+    )  # required, standard, optional, extra
     origin = models.CharField(max_length=255, null=True)
     tag = models.TextField(null=True)
     bugs = models.TextField(null=True)
@@ -265,7 +255,9 @@ class Package(BasePackage):
     homepage = models.CharField(max_length=255, null=True)
     built_using = models.CharField(max_length=255, null=True)
     auto_built_package = models.CharField(max_length=255, null=True)
-    multi_arch = models.CharField(max_length=255, null=True, choices=BasePackage.MULTIARCH_CHOICES)
+    multi_arch = models.CharField(
+        max_length=255, null=True, choices=BasePackage.MULTIARCH_CHOICES
+    )
 
     # Depends et al
     breaks = models.TextField(null=True)
@@ -284,9 +276,7 @@ class Package(BasePackage):
     sha256 = models.CharField(max_length=255, null=False)
 
     class Meta:
-        unique_together = (
-            ('sha256',),
-        )
+        unique_together = (("sha256",),)
 
 
 class InstallerPackage(BasePackage):
@@ -297,39 +287,39 @@ class InstallerPackage(BasePackage):
     generate the corresponding paragraph in "Packages" files.
     """
 
-    TYPE = 'installer_package'
+    TYPE = "installer_package"
 
-    SUFFIX = 'udeb'
+    SUFFIX = "udeb"
     TRANSLATION_DICT = {
-        'package_name': 'Package',  # Workaround (this field should be called 'package')
-        'source': 'Source',
-        'version': 'Version',
-        'architecture': 'Architecture',
-        'section': 'Section',
-        'priority': 'Priority',
-        'origin': 'Origin',
-        'tag': 'Tag',
-        'bugs': 'Bugs',
-        'essential': 'Essential',
-        'build_essential': 'Build_essential',
-        'installed_size': 'Installed_size',
-        'maintainer': 'Maintainer',
-        'original_maintainer': 'Original_Maintainer',
-        'description': 'Description',
-        'description_md5': 'Description_MD5',
-        'homepage': 'Homepage',
-        'built_using': 'Built_Using',
-        'auto_built_package': 'Auto_Built_Package',
-        'multi_arch': 'Multi_Arch',
-        'breaks': 'Breaks',
-        'conflicts': 'Conflicts',
-        'depends': 'Depends',
-        'recommends': 'Recommends',
-        'suggests': 'Suggests',
-        'enhances': 'Enhances',
-        'pre_depends': 'Pre_Depends',
-        'provides': 'Provides',
-        'replaces': 'Replaces',
+        "package_name": "Package",  # Workaround (this field should be called 'package')
+        "source": "Source",
+        "version": "Version",
+        "architecture": "Architecture",
+        "section": "Section",
+        "priority": "Priority",
+        "origin": "Origin",
+        "tag": "Tag",
+        "bugs": "Bugs",
+        "essential": "Essential",
+        "build_essential": "Build_essential",
+        "installed_size": "Installed_size",
+        "maintainer": "Maintainer",
+        "original_maintainer": "Original_Maintainer",
+        "description": "Description",
+        "description_md5": "Description_MD5",
+        "homepage": "Homepage",
+        "built_using": "Built_Using",
+        "auto_built_package": "Auto_Built_Package",
+        "multi_arch": "Multi_Arch",
+        "breaks": "Breaks",
+        "conflicts": "Conflicts",
+        "depends": "Depends",
+        "recommends": "Recommends",
+        "suggests": "Suggests",
+        "enhances": "Enhances",
+        "pre_depends": "Pre_Depends",
+        "provides": "Provides",
+        "replaces": "Replaces",
     }
 
     package_name = models.CharField(max_length=255)  # package name
@@ -337,7 +327,9 @@ class InstallerPackage(BasePackage):
     version = models.CharField(max_length=255)
     architecture = models.CharField(max_length=255)  # all, i386, ...
     section = models.CharField(max_length=255, null=True)  # admin, comm, database, ...
-    priority = models.CharField(max_length=255, null=True)  # required, standard, optional, extra
+    priority = models.CharField(
+        max_length=255, null=True
+    )  # required, standard, optional, extra
     origin = models.CharField(max_length=255, null=True)
     tag = models.TextField(null=True)
     bugs = models.TextField(null=True)
@@ -351,7 +343,9 @@ class InstallerPackage(BasePackage):
     homepage = models.CharField(max_length=255, null=True)
     built_using = models.CharField(max_length=255, null=True)
     auto_built_package = models.CharField(max_length=255, null=True)
-    multi_arch = models.CharField(max_length=255, null=True, choices=BasePackage.MULTIARCH_CHOICES)
+    multi_arch = models.CharField(
+        max_length=255, null=True, choices=BasePackage.MULTIARCH_CHOICES
+    )
 
     # Depends et al
     breaks = models.TextField(null=True)
@@ -370,9 +364,7 @@ class InstallerPackage(BasePackage):
     sha256 = models.CharField(max_length=255, null=False)
 
     class Meta:
-        unique_together = (
-            ('sha256',),
-        )
+        unique_together = (("sha256",),)
 
 
 class VerbatimPublication(Publication):
@@ -382,7 +374,7 @@ class VerbatimPublication(Publication):
     This publication publishes the obtained metadata unchanged.
     """
 
-    TYPE = 'verbatim-publication'
+    TYPE = "verbatim-publication"
 
 
 class DebPublication(Publication):
@@ -392,7 +384,7 @@ class DebPublication(Publication):
     This publication recreates all metadata.
     """
 
-    TYPE = 'apt-publication'
+    TYPE = "apt-publication"
 
     simple = models.BooleanField(default=False)
     structured = models.BooleanField(default=False)
@@ -403,7 +395,7 @@ class DebDistribution(PublicationDistribution):
     A Distribution for DebContent.
     """
 
-    TYPE = 'apt-distribution'
+    TYPE = "apt-distribution"
 
 
 class DebRemote(Remote):
@@ -411,7 +403,7 @@ class DebRemote(Remote):
     A Remote for DebContent.
     """
 
-    TYPE = 'apt-remote'
+    TYPE = "apt-remote"
 
     distributions = models.CharField(max_length=255, null=True)
     components = models.CharField(max_length=255, null=True)

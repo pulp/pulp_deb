@@ -1,1 +1,1 @@
-default_app_config = 'pulp_deb.app.PulpDebPluginAppConfig'
+default_app_config = "pulp_deb.app.PulpDebPluginAppConfig"

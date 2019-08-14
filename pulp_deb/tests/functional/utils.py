@@ -5,16 +5,14 @@ from functools import partial
 from unittest import SkipTest
 
 from pulp_smash import api, selectors
-from pulp_smash.pulp3.constants import (
-    REPO_PATH
-)
+from pulp_smash.pulp3.constants import REPO_PATH
 from pulp_smash.pulp3.utils import (
     gen_remote,
     gen_repo,
     get_content,
     require_pulp_3,
     require_pulp_plugins,
-    sync
+    sync,
 )
 
 from pulp_deb.tests.functional.constants import (
@@ -34,7 +32,7 @@ from pulp_deb.tests.functional.constants import (
 def set_up_module():
     """Skip tests Pulp 3 isn't under test or if pulp_deb isn't installed."""
     require_pulp_3(SkipTest)
-    require_pulp_plugins({'pulp_deb'}, SkipTest)
+    require_pulp_plugins({"pulp_deb"}, SkipTest)
 
 
 def gen_deb_remote(url=DEB_FIXTURE_URL, **kwargs):
@@ -54,27 +52,28 @@ def get_deb_content_unit_paths(repo, version_href=None):
         for different content types. Paths are given as pairs with the remote and the
         local version.
     """
-    def _rel_path(package, component=''):
-        sourcename = package['source'] or package['package_name']
-        if sourcename.startswith('lib'):
+
+    def _rel_path(package, component=""):
+        sourcename = package["source"] or package["package_name"]
+        if sourcename.startswith("lib"):
             prefix = sourcename[0:4]
         else:
             prefix = sourcename[0]
         return os.path.join(
-            'pool',
+            "pool",
             component,
             prefix,
             sourcename,
-            '{}_{}_{}.deb'.format(package['package_name'],
-                                  package['version'],
-                                  package['architecture'])
+            "{}_{}_{}.deb".format(
+                package["package_name"], package["version"], package["architecture"]
+            ),
         )
 
     return {
         DEB_PACKAGE_NAME: [
-            (content_unit['relative_path'], _rel_path(content_unit))
+            (content_unit["relative_path"], _rel_path(content_unit))
             for content_unit in get_content(repo, version_href)[DEB_PACKAGE_NAME]
-        ],
+        ]
     }
 
 
@@ -89,18 +88,18 @@ def get_deb_verbatim_content_unit_paths(repo, version_href=None):
     """
     return {
         DEB_RELEASE_NAME: [
-            (content_unit['relative_path'], content_unit['relative_path'])
+            (content_unit["relative_path"], content_unit["relative_path"])
             for content_unit in get_content(repo, version_href)[DEB_RELEASE_NAME]
         ],
-
         DEB_PACKAGE_NAME: [
-            (content_unit['relative_path'], content_unit['relative_path'])
+            (content_unit["relative_path"], content_unit["relative_path"])
             for content_unit in get_content(repo, version_href)[DEB_PACKAGE_NAME]
         ],
-
         DEB_GENERIC_CONTENT_NAME: [
-            (content_unit['relative_path'], content_unit['relative_path'])
-            for content_unit in get_content(repo, version_href)[DEB_GENERIC_CONTENT_NAME]
+            (content_unit["relative_path"], content_unit["relative_path"])
+            for content_unit in get_content(repo, version_href)[
+                DEB_GENERIC_CONTENT_NAME
+            ]
         ],
     }
 
@@ -112,7 +111,7 @@ def gen_deb_content_attrs(artifact):
     :returns: A semi-random dict for use in creating a content unit.
     """
     # FIXME: Add content specific metadata here.
-    return {'artifact': artifact['_href']}
+    return {"artifact": artifact["_href"]}
 
 
 def populate_pulp(cfg, url=DEB_FIXTURE_URL):
@@ -132,10 +131,10 @@ def populate_pulp(cfg, url=DEB_FIXTURE_URL):
         sync(cfg, remote, repo)
     finally:
         if remote:
-            client.delete(remote['_href'])
+            client.delete(remote["_href"])
         if repo:
-            client.delete(repo['_href'])
-    return client.get(DEB_GENERIC_CONTENT_PATH)['results']
+            client.delete(repo["_href"])
+    return client.get(DEB_GENERIC_CONTENT_PATH)["results"]
 
 
 def create_deb_publication(cfg, repo, version_href=None):
@@ -152,7 +151,7 @@ def create_deb_publication(cfg, repo, version_href=None):
         body = {"repository_version": version_href}
     else:
         body = {"repository": repo["_href"]}
-    body['simple'] = True
+    body["simple"] = True
 
     client = api.Client(cfg, api.json_handler)
     call_report = client.post(DEB_PUBLICATION_PATH, body)

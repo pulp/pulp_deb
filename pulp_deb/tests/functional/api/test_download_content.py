@@ -6,9 +6,7 @@ from random import choice
 from urllib.parse import urljoin
 
 from pulp_smash import api, config, utils
-from pulp_smash.pulp3.constants import (
-    REPO_PATH,
-)
+from pulp_smash.pulp3.constants import REPO_PATH
 from pulp_smash.pulp3.utils import (
     download_content_unit,
     gen_distribution,
@@ -79,41 +77,46 @@ class DownloadContentTestCase(unittest.TestCase):
         client = api.Client(cfg, api.json_handler)
 
         repo = client.post(REPO_PATH, gen_repo())
-        self.addCleanup(client.delete, repo['_href'])
+        self.addCleanup(client.delete, repo["_href"])
 
         body = gen_deb_remote()
         remote = client.post(DEB_REMOTE_PATH, body)
-        self.addCleanup(client.delete, remote['_href'])
+        self.addCleanup(client.delete, remote["_href"])
 
         sync(cfg, remote, repo)
-        repo = client.get(repo['_href'])
+        repo = client.get(repo["_href"])
 
         # Create a publication.
         publication = self.Meta.create_publication(cfg, repo)
-        self.addCleanup(client.delete, publication['_href'])
+        self.addCleanup(client.delete, publication["_href"])
 
         # Create a distribution.
         body = gen_distribution()
-        body['publication'] = publication['_href']
+        body["publication"] = publication["_href"]
         distribution = client.using_handler(api.task_handler).post(
-            self.Meta.DISTRIBUTION_PATH,
-            body
+            self.Meta.DISTRIBUTION_PATH, body
         )
-        self.addCleanup(client.delete, distribution['_href'])
+        self.addCleanup(client.delete, distribution["_href"])
 
         # Pick a content unit (of each type), and download it from both Pulp Fixtures…
         unit_paths = [
-            choice(paths) for paths in self.Meta.get_content_unit_paths(repo).values() if paths
+            choice(paths)
+            for paths in self.Meta.get_content_unit_paths(repo).values()
+            if paths
         ]
-        fixtures_hashes = [hashlib.sha256(
-            utils.http_get(urljoin(DEB_FIXTURE_URL, unit_path[0]))
-        ).hexdigest() for unit_path in unit_paths]
+        fixtures_hashes = [
+            hashlib.sha256(
+                utils.http_get(urljoin(DEB_FIXTURE_URL, unit_path[0]))
+            ).hexdigest()
+            for unit_path in unit_paths
+        ]
 
         # …and Pulp.
-        contents = [download_content_unit(cfg, distribution, unit_path[1])
-                    for unit_path in unit_paths]
-        pulp_hashes = [hashlib.sha256(content).hexdigest()
-                       for content in contents]
+        contents = [
+            download_content_unit(cfg, distribution, unit_path[1])
+            for unit_path in unit_paths
+        ]
+        pulp_hashes = [hashlib.sha256(content).hexdigest() for content in contents]
         self.assertEqual(fixtures_hashes, pulp_hashes)
 
 

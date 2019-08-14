@@ -79,14 +79,10 @@ def synchronize(remote_pk, repository_pk, mirror):
     repository = Repository.objects.get(pk=repository_pk)
 
     if not remote.url:
-        raise ValueError(_('A remote must have a url specified to synchronize.'))
+        raise ValueError(_("A remote must have a url specified to synchronize."))
 
     first_stage = DebFirstStage(remote)
-    DebDeclarativeVersion(
-        first_stage,
-        repository,
-        mirror=mirror,
-    ).create()
+    DebDeclarativeVersion(first_stage, repository, mirror=mirror).create()
 
 
 class DeclarativeFailsafeArtifact(DeclarativeArtifact):
@@ -103,7 +99,7 @@ class DeclarativeFailsafeArtifact(DeclarativeArtifact):
         except aiohttp.client_exceptions.ClientResponseError as e:
             if e.code == 404:
                 self.artifact = None
-                log.info('Artifact not found. Ignored')
+                log.info("Artifact not found. Ignored")
             else:
                 raise
 
@@ -135,8 +131,7 @@ class DebDeclarativeVersion(DeclarativeVersion):
             # https://salsa.debian.org/python-debian-team/python-debian/merge_requests/11
             # DebUpdatePackageAttributes(),
             DebUpdateReleaseAttributes(
-                self.first_stage.components,
-                self.first_stage.architectures,
+                self.first_stage.components, self.first_stage.architectures
             ),
             DebUpdatePackageIndexAttributes(),
             QueryExistingContents(),
@@ -152,7 +147,7 @@ def _filter_ssl(values, filter_list):
     value_set = set(values.split())
     if filter_list:
         value_set &= set(filter_list)
-    return ' '.join(sorted(value_set))
+    return " ".join(sorted(value_set))
 
 
 class DebUpdateReleaseAttributes(Stage):
@@ -171,6 +166,7 @@ class DebUpdateReleaseAttributes(Stage):
         Args:
             components: list of components
             architectures: list of architectures
+
         """
         super().__init__(*args, **kwargs)
         self.components = components
@@ -182,23 +178,25 @@ class DebUpdateReleaseAttributes(Stage):
 
         Update release content with information obtained from its artifact.
         """
-        with ProgressBar(message='Update Release units') as pb:
+        with ProgressBar(message="Update Release units") as pb:
             async for d_content in self.items():
                 if isinstance(d_content.content, Release):
                     release = d_content.content
                     release_artifact = d_content.d_artifacts[0].artifact
                     release.sha256 = release_artifact.sha256
                     release_dict = deb822.Release(release_artifact.file)
-                    release.codename = release_dict['Codename']
-                    release.suite = release_dict['Suite']
+                    release.codename = release_dict["Codename"]
+                    release.suite = release_dict["Suite"]
                     # TODO split of extra stuff e.g. : 'updates/main' -> 'main'
                     release.components = _filter_ssl(
-                        release_dict['Components'], self.components)
+                        release_dict["Components"], self.components
+                    )
                     release.architectures = _filter_ssl(
-                        release_dict['Architectures'], self.architectures)
-                    log.debug('Codename: {}'.format(release.codename))
-                    log.debug('Components: {}'.format(release.components))
-                    log.debug('Architectures: {}'.format(release.architectures))
+                        release_dict["Architectures"], self.architectures
+                    )
+                    log.debug("Codename: {}".format(release.codename))
+                    log.debug("Components: {}".format(release.components))
+                    log.debug("Architectures: {}".format(release.architectures))
                     pb.increment()
                 await self.put(d_content)
 
@@ -214,15 +212,18 @@ class DebUpdatePackageIndexAttributes(Stage):  # TODO: Needs a new name
 
         Ensure, that an uncompressed artifact is available.
         """
-        with ProgressBar(message='Update PackageIndex units') as pb:
+        with ProgressBar(message="Update PackageIndex units") as pb:
             async for d_content in self.items():
                 if isinstance(d_content.content, PackageIndex):
                     if not d_content.d_artifacts:
                         raise NoPackageIndexFile()
 
                     content = d_content.content
-                    if not [da for da in d_content.d_artifacts
-                            if da.artifact.sha256 == content.sha256]:
+                    if not [
+                        da
+                        for da in d_content.d_artifacts
+                        if da.artifact.sha256 == content.sha256
+                    ]:
                         # No main_artifact found uncompress one
                         filename = _uncompress_artifact(d_content.d_artifacts)
                         da = DeclarativeArtifact(
@@ -234,8 +235,11 @@ class DebUpdatePackageIndexAttributes(Stage):  # TODO: Needs a new name
                         d_content.d_artifacts.append(da)
                         await da.download()
                         da.artifact.save()
-                        log.info("*** Expected: {} *** Uncompressed: {} ***".format(
-                            content.sha256, da.artifact.sha256))
+                        log.info(
+                            "*** Expected: {} *** Uncompressed: {} ***".format(
+                                content.sha256, da.artifact.sha256
+                            )
+                        )
 
                     pb.increment()
                 await self.put(d_content)
@@ -244,11 +248,11 @@ class DebUpdatePackageIndexAttributes(Stage):  # TODO: Needs a new name
 def _uncompress_artifact(d_artifacts):
     for d_artifact in d_artifacts:
         ext = os.path.splitext(d_artifact.relative_path)[1]
-        if ext == '.gz':
+        if ext == ".gz":
             compressor = gzip
-        elif ext == '.bz2':
+        elif ext == ".bz2":
             compressor = bz2
-        elif ext == '.xz':
+        elif ext == ".xz":
             compressor = lzma
         else:
             log.info("Compression algorithm unknown for extension '{}'.".format(ext))
@@ -257,7 +261,7 @@ def _uncompress_artifact(d_artifacts):
         with NamedTemporaryFile(delete=False) as f_out:
             with compressor.open(d_artifact.artifact.file) as f_in:
                 shutil.copyfileobj(f_in, f_out)
-        return 'file://{}'.format(f_out.name)
+        return "file://{}".format(f_out.name)
     # Not one artifact was suitable
     raise NoPackageIndexFile()
 
@@ -273,7 +277,7 @@ class DebUpdatePackageAttributes(Stage):
         """
         Update package content with the information obtained from its artifact.
         """
-        with ProgressBar(message='Update Package units') as pb:
+        with ProgressBar(message="Update Package units") as pb:
             async for d_content in self.items():
                 if isinstance(d_content.content, Package):
                     package = d_content.content
@@ -302,7 +306,8 @@ class DebDropEmptyContent(Stage):
         """
         async for d_content in self.items():
             d_content.d_artifacts = [
-                d_artifact for d_artifact in d_content.d_artifacts
+                d_artifact
+                for d_artifact in d_content.d_artifacts
                 if d_artifact.artifact
             ]
             if not d_content.d_artifacts:
@@ -333,12 +338,19 @@ class DebFirstStage(Stage):
             distribution.strip() for distribution in self.remote.distributions.split()
         ]
         self.num_distributions = len(self.distributions)
-        self.components = None if self.remote.components is None else [
-            component.strip() for component in self.remote.components.split()
-        ]
-        self.architectures = None if self.remote.architectures is None else [
-            architecture.strip() for architecture in self.remote.architectures.split()
-        ]
+        self.components = (
+            None
+            if self.remote.components is None
+            else [component.strip() for component in self.remote.components.split()]
+        )
+        self.architectures = (
+            None
+            if self.remote.architectures is None
+            else [
+                architecture.strip()
+                for architecture in self.remote.architectures.split()
+            ]
+        )
 
     async def run(self):
         """
@@ -348,13 +360,17 @@ class DebFirstStage(Stage):
         future_releases = []
         future_package_indices = []
         future_installer_file_indices = []
-        with ProgressBar(message='Creating download requests for Release files',
-                         total=self.num_distributions) as pb:
+        with ProgressBar(
+            message="Creating download requests for Release files",
+            total=self.num_distributions,
+        ) as pb:
             for distribution in self.distributions:
                 log.info(
-                    'Downloading Release file for distribution: "{}"'.format(distribution))
-                release_relpath = os.path.join(
-                    'dists', distribution, 'Release')
+                    'Downloading Release file for distribution: "{}"'.format(
+                        distribution
+                    )
+                )
+                release_relpath = os.path.join("dists", distribution, "Release")
                 release_path = os.path.join(self.parsed_url.path, release_relpath)
                 release_da = DeclarativeArtifact(
                     Artifact(),
@@ -363,9 +379,10 @@ class DebFirstStage(Stage):
                     self.remote,
                     deferred_download=False,
                 )
-                release_gpg_relpath = os.path.join(
-                    'dists', distribution, 'Release.gpg')
-                release_gpg_path = os.path.join(self.parsed_url.path, release_gpg_relpath)
+                release_gpg_relpath = os.path.join("dists", distribution, "Release.gpg")
+                release_gpg_path = os.path.join(
+                    self.parsed_url.path, release_gpg_relpath
+                )
                 release_gpg_da = DeclarativeFailsafeArtifact(
                     Artifact(),
                     urlunparse(self.parsed_url._replace(path=release_gpg_path)),
@@ -373,8 +390,7 @@ class DebFirstStage(Stage):
                     self.remote,
                     deferred_download=False,
                 )
-                inrelease_relpath = os.path.join(
-                    'dists', distribution, 'InRelease')
+                inrelease_relpath = os.path.join("dists", distribution, "InRelease")
                 inrelease_path = os.path.join(self.parsed_url.path, inrelease_relpath)
                 inrelease_da = DeclarativeFailsafeArtifact(
                     Artifact(),
@@ -384,7 +400,8 @@ class DebFirstStage(Stage):
                     deferred_download=False,
                 )
                 release_unit = Release(
-                    distribution=distribution, relative_path=release_relpath)
+                    distribution=distribution, relative_path=release_relpath
+                )
                 release_dc = DeclarativeContent(
                     content=release_unit,
                     d_artifacts=[release_da, release_gpg_da, inrelease_da],
@@ -394,46 +411,61 @@ class DebFirstStage(Stage):
                 await self.put(release_dc)
                 pb.increment()
 
-        with ProgressBar(message='Parsing Release files', total=self.num_distributions) as pb:
+        with ProgressBar(
+            message="Parsing Release files", total=self.num_distributions
+        ) as pb:
             for release_future in asyncio.as_completed(future_releases):
                 release = await release_future
                 if release is None:
                     continue
-                log.info('Parsing Release file for release: "{}"'.format(release.codename))
+                log.info(
+                    'Parsing Release file for release: "{}"'.format(release.codename)
+                )
                 release_artifact = release._artifacts.get(sha256=release.sha256)
                 release_dict = deb822.Release(release_artifact.file)
                 async for d_content in self._read_release_file(release, release_dict):
                     if isinstance(d_content.content, PackageIndex):
                         future_package_indices.append(d_content.get_or_create_future())
                     if isinstance(d_content.content, InstallerFileIndex):
-                        future_installer_file_indices.append(d_content.get_or_create_future())
+                        future_installer_file_indices.append(
+                            d_content.get_or_create_future()
+                        )
                     await self.put(d_content)
                 pb.increment()
 
-        with ProgressBar(message='Parsing package index files') as pb:
+        with ProgressBar(message="Parsing package index files") as pb:
             for package_index_future in asyncio.as_completed(future_package_indices):
                 package_index = await package_index_future
                 if package_index is None:
                     continue
                 package_index_artifact = package_index.main_artifact
-                log.debug("Parsing package index for {}:{}.".format(
-                    package_index.component,
-                    package_index.architecture,
-                ))
-                async for package_dc in self._read_package_index(package_index_artifact.file):
+                log.debug(
+                    "Parsing package index for {}:{}.".format(
+                        package_index.component, package_index.architecture
+                    )
+                )
+                async for package_dc in self._read_package_index(
+                    package_index_artifact.file
+                ):
                     await self.put(package_dc)
                 pb.increment()
 
-        with ProgressBar(message='Parsing installer file index files') as pb:
-            for installer_file_index_future in asyncio.as_completed(future_installer_file_indices):
+        with ProgressBar(message="Parsing installer file index files") as pb:
+            for installer_file_index_future in asyncio.as_completed(
+                future_installer_file_indices
+            ):
                 installer_file_index = await installer_file_index_future
                 if installer_file_index is None:
                     continue
-                log.debug("Parsing installer file index for {}:{}.".format(
-                    installer_file_index.component,
-                    installer_file_index.architecture,
-                ))
-                async for d_content in self._read_installer_file_index(installer_file_index):
+                log.debug(
+                    "Parsing installer file index for {}:{}.".format(
+                        installer_file_index.component,
+                        installer_file_index.architecture,
+                    )
+                )
+                async for d_content in self._read_installer_file_index(
+                    installer_file_index
+                ):
                     await self.put(d_content)
                 pb.increment()
 
@@ -450,11 +482,12 @@ class DebFirstStage(Stage):
             async iterator: Iterator of :class:`asyncio.Future` instances
 
         """
+
         def to_d_artifact(data):
             nonlocal release
 
             artifact = Artifact(**_get_checksums(data))
-            relpath = os.path.join(os.path.dirname(release.relative_path), data['Name'])
+            relpath = os.path.join(os.path.dirname(release.relative_path), data["Name"])
             urlpath = os.path.join(self.parsed_url.path, relpath)
             return DeclarativeFailsafeArtifact(
                 artifact,
@@ -465,17 +498,20 @@ class DebFirstStage(Stage):
             )
 
         def generate_source_index(component):
-            raise NotImplementedError('Syncing source repositories is not yet implemented.')
+            raise NotImplementedError(
+                "Syncing source repositories is not yet implemented."
+            )
 
-        def generate_package_index(component, architecture, infix=''):
+        def generate_package_index(component, architecture, infix=""):
             nonlocal release
             nonlocal file_references
 
-            package_index_dir = os.path.join(os.path.basename(
-                component), infix, 'binary-{}'.format(architecture))
-            log.info('Downloading: {}/Packages'.format(package_index_dir))
+            package_index_dir = os.path.join(
+                os.path.basename(component), infix, "binary-{}".format(architecture)
+            )
+            log.info("Downloading: {}/Packages".format(package_index_dir))
             d_artifacts = []
-            for filename in ['Packages', 'Packages.gz', 'Packages.xz', 'Release']:
+            for filename in ["Packages", "Packages.gz", "Packages.xz", "Release"]:
                 path = os.path.join(package_index_dir, filename)
                 if path in file_references:
                     d_artifacts.append(to_d_artifact(file_references.pop(path)))
@@ -486,16 +522,14 @@ class DebFirstStage(Stage):
                 component=component,
                 architecture=architecture,
                 sha256=d_artifacts[0].artifact.sha256,
-                relative_path=os.path.join(os.path.dirname(
-                    release.relative_path),
+                relative_path=os.path.join(
+                    os.path.dirname(release.relative_path),
                     package_index_dir,
-                    'Packages',
-                )
+                    "Packages",
+                ),
             )
             d_content = DeclarativeContent(
-                content=content_unit,
-                d_artifacts=d_artifacts,
-                does_batch=False,
+                content=content_unit, d_artifacts=d_artifacts, does_batch=False
             )
             yield d_content
 
@@ -503,9 +537,15 @@ class DebFirstStage(Stage):
             nonlocal release
             nonlocal file_references
 
-            installer_file_index_dir = os.path.join(os.path.basename(
-                component), 'installer-{}'.format(architecture), 'current', 'images')
-            log.info('Downloading installer files from {}'.format(installer_file_index_dir))
+            installer_file_index_dir = os.path.join(
+                os.path.basename(component),
+                "installer-{}".format(architecture),
+                "current",
+                "images",
+            )
+            log.info(
+                "Downloading installer files from {}".format(installer_file_index_dir)
+            )
             d_artifacts = []
             for filename in InstallerFileIndex.FILE_ALGORITHM.keys():
                 path = os.path.join(installer_file_index_dir, filename)
@@ -519,14 +559,11 @@ class DebFirstStage(Stage):
                 architecture=architecture,
                 sha256=d_artifacts[0].artifact.sha256,
                 relative_path=os.path.join(
-                    os.path.dirname(release.relative_path),
-                    installer_file_index_dir,
-                )
+                    os.path.dirname(release.relative_path), installer_file_index_dir
+                ),
             )
             d_content = DeclarativeContent(
-                content=content_unit,
-                d_artifacts=d_artifacts,
-                does_batch=False,
+                content=content_unit, d_artifacts=d_artifacts, does_batch=False
             )
             yield d_content
 
@@ -534,54 +571,57 @@ class DebFirstStage(Stage):
             nonlocal release
             nonlocal file_references
 
-            translation_dir = os.path.join(os.path.basename(component), 'i18n')
-            paths = [path for path in file_references.keys() if path.startswith(translation_dir)]
+            translation_dir = os.path.join(os.path.basename(component), "i18n")
+            paths = [
+                path
+                for path in file_references.keys()
+                if path.startswith(translation_dir)
+            ]
             translations = {}
             for path in paths:
                 d_artifact = to_d_artifact(file_references.pop(path))
                 key, ext = os.path.splitext(path)
                 if key not in translations:
-                    translations[key] = {'sha256': None, 'd_artifacts': []}
+                    translations[key] = {"sha256": None, "d_artifacts": []}
                 if not ext:
-                    translations[key]['sha256'] = d_artifact.artifact.sha256
-                translations[key]['d_artifacts'].append(d_artifact)
+                    translations[key]["sha256"] = d_artifact.artifact.sha256
+                translations[key]["d_artifacts"].append(d_artifact)
 
             for path, translation in translations.items():
                 content_unit = GenericContent(
-                    sha256=translation['sha256'],
+                    sha256=translation["sha256"],
                     relative_path=os.path.join(
-                        os.path.dirname(release.relative_path),
-                        path,
-                    )
+                        os.path.dirname(release.relative_path), path
+                    ),
                 )
                 d_content = DeclarativeContent(
-                    content=content_unit,
-                    d_artifacts=translation['d_artifacts'],
+                    content=content_unit, d_artifacts=translation["d_artifacts"]
                 )
                 yield d_content
 
         file_references = defaultdict(deb822.Deb822Dict)
         # collect file references in new dict
-        for digest_name in ['SHA512', 'SHA256', 'SHA1', 'MD5sum']:
+        for digest_name in ["SHA512", "SHA256", "SHA1", "MD5sum"]:
             if digest_name in release_dict:
                 for unit in release_dict[digest_name]:
-                    file_references[unit['Name']].update(unit)
+                    file_references[unit["Name"]].update(unit)
         # Find Package Index files for Component Architecture combinations
         for component in release.components.split():
             for architecture in release.architectures.split():
-                log.info('Component: "{}" Architecture: "{}"'.format(
-                    component, architecture))
+                log.info(
+                    'Component: "{}" Architecture: "{}"'.format(component, architecture)
+                )
                 for d_content in generate_package_index(component, architecture):
                     yield d_content
                 if self.remote.sync_udebs:
                     for d_content in generate_package_index(
-                        component,
-                        architecture,
-                        'debian-installer'
+                        component, architecture, "debian-installer"
                     ):
                         yield d_content
                 if self.remote.sync_installer:
-                    for d_content in generate_installer_file_index(component, architecture):
+                    for d_content in generate_installer_file_index(
+                        component, architecture
+                    ):
                         yield d_content
             for d_content in generate_translation_files(component):
                 yield d_content
@@ -596,31 +636,39 @@ class DebFirstStage(Stage):
 
         Args:
             package_index: file object containing package paragraphs
+
         """
         # Interpret policy to download Artifacts or not
-        deferred_download = (self.remote.policy != Remote.IMMEDIATE)
+        deferred_download = self.remote.policy != Remote.IMMEDIATE
 
         for package_paragraph in deb822.Packages.iter_paragraphs(package_index):
             try:
-                package_relpath = package_paragraph['Filename']
-                package_sha256 = package_paragraph['sha256']
-                if package_relpath.endswith('.deb'):
+                package_relpath = package_paragraph["Filename"]
+                package_sha256 = package_paragraph["sha256"]
+                if package_relpath.endswith(".deb"):
                     package_class = Package
                     package_serializer_class = PackageSerializer
-                elif package_relpath.endswith('.udeb'):
+                elif package_relpath.endswith(".udeb"):
                     package_class = InstallerPackage
                     package_serializer_class = InstallerPackageSerializer
                 try:
-                    package_content_unit = package_class.objects.get(sha256=package_sha256)
+                    package_content_unit = package_class.objects.get(
+                        sha256=package_sha256
+                    )
                 except ObjectDoesNotExist:
-                    log.debug("Downloading package {}".format(
-                        package_paragraph['Package']))
+                    log.debug(
+                        "Downloading package {}".format(package_paragraph["Package"])
+                    )
                     package_dict = package_class.from822(package_paragraph)
-                    package_dict['relative_path'] = package_relpath
-                    package_dict['sha256'] = package_sha256
-                    package_serializer = package_serializer_class(data=package_dict, partial=True)
+                    package_dict["relative_path"] = package_relpath
+                    package_dict["sha256"] = package_sha256
+                    package_serializer = package_serializer_class(
+                        data=package_dict, partial=True
+                    )
                     package_serializer.is_valid(raise_exception=True)
-                    package_content_unit = package_class(**package_serializer.validated_data)
+                    package_content_unit = package_class(
+                        **package_serializer.validated_data
+                    )
                 package_path = os.path.join(self.parsed_url.path, package_relpath)
                 package_artifact = Artifact(**_get_checksums(package_paragraph))
                 package_da = DeclarativeArtifact(
@@ -631,10 +679,13 @@ class DebFirstStage(Stage):
                     deferred_download=deferred_download,
                 )
                 package_dc = DeclarativeContent(
-                    content=package_content_unit, d_artifacts=[package_da])
+                    content=package_content_unit, d_artifacts=[package_da]
+                )
                 yield package_dc
             except KeyError:
-                log.warning("Ignoring invalid package paragraph. {}".format(package_paragraph))
+                log.warning(
+                    "Ignoring invalid package paragraph. {}".format(package_paragraph)
+                )
 
     async def _read_installer_file_index(self, installer_file_index):
         """
@@ -644,9 +695,10 @@ class DebFirstStage(Stage):
 
         Args:
             installer_file_index: object of type :class:`InstallerFileIndex`
+
         """
         # Interpret policy to download Artifacts or not
-        deferred_download = (self.remote.policy != Remote.IMMEDIATE)
+        deferred_download = self.remote.policy != Remote.IMMEDIATE
 
         file_list = defaultdict(dict)
         for content_artifact in installer_file_index.contentartifact_set.all():
@@ -658,14 +710,18 @@ class DebFirstStage(Stage):
             for line in content_artifact.artifact.file:
                 digest, filename = line.decode().strip().split(maxsplit=1)
                 filename = os.path.normpath(filename)
-                if filename in InstallerFileIndex.FILE_ALGORITHM:  # strangely they may appear here
+                if (
+                    filename in InstallerFileIndex.FILE_ALGORITHM
+                ):  # strangely they may appear here
                     continue
                 file_list[filename][algorithm] = digest
 
         for filename, digests in file_list.items():
             relpath = os.path.join(installer_file_index.relative_path, filename)
             urlpath = os.path.join(self.parsed_url.path, relpath)
-            content_unit = GenericContent(sha256=digests['sha256'], relative_path=relpath)
+            content_unit = GenericContent(
+                sha256=digests["sha256"], relative_path=relpath
+            )
             d_artifact = DeclarativeArtifact(
                 artifact=Artifact(**digests),
                 url=urlunparse(self.parsed_url._replace(path=urlpath)),
@@ -674,16 +730,19 @@ class DebFirstStage(Stage):
                 deferred_download=deferred_download,
             )
             d_content = DeclarativeContent(
-                content=content_unit, d_artifacts=[d_artifact])
+                content=content_unit, d_artifacts=[d_artifact]
+            )
             yield d_content
 
 
 def _get_checksums(unit_dict):
     return {
-        k: unit_dict[v] for k, v in {
-            'sha512': 'SHA512',
-            'sha256': 'SHA256',
-            'sha1': 'SHA1',
-            'md5': 'MD5sum',
-        }.items() if v in unit_dict
+        k: unit_dict[v]
+        for k, v in {
+            "sha512": "SHA512",
+            "sha256": "SHA256",
+            "sha1": "SHA1",
+            "md5": "MD5sum",
+        }.items()
+        if v in unit_dict
     }

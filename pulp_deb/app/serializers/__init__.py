@@ -15,6 +15,4 @@ from .publication_serializers import (
     VerbatimPublicationSerializer,
 )
 
-from .remote_serializers import (
-    DebRemoteSerializer,
-)
+from .remote_serializers import DebRemoteSerializer
