@@ -79,7 +79,7 @@ class PackageIndex(Content):
 
     TYPE = "package_index"
 
-    release_pk = models.ForeignKey("Release", on_delete=models.CASCADE)
+    release = models.ForeignKey(Release, on_delete=models.CASCADE)
     component = models.CharField(max_length=255)
     architecture = models.CharField(max_length=255)
     relative_path = models.CharField(max_length=255)
@@ -112,7 +112,7 @@ class InstallerFileIndex(Content):
 
     FILE_ALGORITHM = {"SHA256SUMS": "sha256", "MD5SUMS": "md5"}  # Are there more?
 
-    release_pk = models.ForeignKey("Release", on_delete=models.CASCADE)
+    release = models.ForeignKey(Release, on_delete=models.CASCADE)
     component = models.CharField(max_length=255)
     architecture = models.CharField(max_length=255)
     relative_path = models.CharField(max_length=255)

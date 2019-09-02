@@ -518,7 +518,7 @@ class DebFirstStage(Stage):
             if not d_artifacts:
                 return
             content_unit = PackageIndex(
-                release_pk=release,
+                release=release,
                 component=component,
                 architecture=architecture,
                 sha256=d_artifacts[0].artifact.sha256,
@@ -554,7 +554,7 @@ class DebFirstStage(Stage):
             if not d_artifacts:
                 return
             content_unit = InstallerFileIndex(
-                release_pk=release,
+                release=release,
                 component=component,
                 architecture=architecture,
                 sha256=d_artifacts[0].artifact.sha256,
