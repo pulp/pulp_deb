@@ -24,8 +24,10 @@ export PULP_PLUGIN_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https
 export PULP_SMASH_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/PulpQE\/pulp-smash\/pull\/(\d+)' | awk -F'/' '{print $7}')
 export PULP_ROLES_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/ansible-pulp\/pull\/(\d+)' | awk -F'/' '{print $7}')
 export PULP_BINDINGS_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp-openapi-generator\/pull\/(\d+)' | awk -F'/' '{print $7}')
+export PULP_OPERATOR_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp-operator\/pull\/(\d+)' | awk -F'/' '{print $7}')
 
-# dev_requirements should not be needed for testing; don't install them to make sure
+# test_requirements contains tools needed for flake8, etc.
+# So install them here rather than in install.sh
 pip install -r test_requirements.txt
 
 # check the commit message
@@ -45,6 +47,16 @@ if [ -n "$PULP_ROLES_PR_NUMBER" ]; then
   git checkout FETCH_HEAD
   cd ..
 fi
+
+
+git clone --depth=1 https://github.com/pulp/pulp-operator.git
+if [ -n "$PULP_OPERATOR_PR_NUMBER" ]; then
+  cd pulp-operator
+  git fetch --depth=1 origin +refs/pull/$PULP_OPERATOR_PR_NUMBER/merge
+  git checkout FETCH_HEAD
+  cd ..
+fi
+
 
 git clone --depth=1 https://github.com/pulp/pulpcore.git
 
@@ -66,19 +78,19 @@ if [ -n "$PULP_PLUGIN_PR_NUMBER" ]; then
 fi
 
 
+git clone --depth=1 https://github.com/PulpQE/pulp-smash.git
+
 if [ -n "$PULP_SMASH_PR_NUMBER" ]; then
-  git clone --depth=1 https://github.com/PulpQE/pulp-smash.git
   cd pulp-smash
   git fetch --depth=1 origin +refs/pull/$PULP_SMASH_PR_NUMBER/merge
   git checkout FETCH_HEAD
   cd ..
 fi
 
-psql -c 'CREATE DATABASE pulp OWNER travis;'
+# pulp-smash already got installed via test_requirements.txt
+pip install --upgrade --force-reinstall ./pulp-smash
 
 pip install ansible
-cp pulp_deb/.travis/playbook.yml ansible-pulp/playbook.yml
-cp pulp_deb/.travis/postgres.yml ansible-pulp/postgres.yml
 
 cd pulp_deb
 
