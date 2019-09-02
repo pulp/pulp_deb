@@ -46,15 +46,12 @@ class TestPackage(TestCase):
 
     def test_filename(self):
         """Test that the pool filename of a package is correct."""
-        self.assertEqual(
-            self.package1.filename(), "pool/a/aegir/aegir_0.1-edda0_sea.deb"
-        )
+        self.assertEqual(self.package1.filename(), "pool/a/aegir/aegir_0.1-edda0_sea.deb")
 
     def test_filename_with_component(self):
         """Test that the pool filename of a package with component is correct."""
         self.assertEqual(
-            self.package1.filename("joetunn"),
-            "pool/joetunn/a/aegir/aegir_0.1-edda0_sea.deb",
+            self.package1.filename("joetunn"), "pool/joetunn/a/aegir/aegir_0.1-edda0_sea.deb"
         )
 
     def test_to822(self):

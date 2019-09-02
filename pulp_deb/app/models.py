@@ -156,11 +156,7 @@ class BasePackage(Content):
         else:
             prefix = sourcename[0]
         return os.path.join(
-            "pool",
-            component,
-            prefix,
-            sourcename,
-            "{}.{}".format(self.name, self.SUFFIX),
+            "pool", component, prefix, sourcename, "{}.{}".format(self.name, self.SUFFIX)
         )
 
     def to822(self, component=""):
@@ -185,11 +181,7 @@ class BasePackage(Content):
         """
         Translate deb822.Package to a dictionary for class instatiation.
         """
-        return {
-            k: package_dict[v]
-            for k, v in cls.TRANSLATION_DICT.items()
-            if v in package_dict
-        }
+        return {k: package_dict[v] for k, v in cls.TRANSLATION_DICT.items() if v in package_dict}
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
@@ -244,9 +236,7 @@ class Package(BasePackage):
     version = models.CharField(max_length=255)
     architecture = models.CharField(max_length=255)  # all, i386, ...
     section = models.CharField(max_length=255, null=True)  # admin, comm, database, ...
-    priority = models.CharField(
-        max_length=255, null=True
-    )  # required, standard, optional, extra
+    priority = models.CharField(max_length=255, null=True)  # required, standard, optional, extra
     origin = models.CharField(max_length=255, null=True)
     tag = models.TextField(null=True)
     bugs = models.TextField(null=True)
@@ -260,9 +250,7 @@ class Package(BasePackage):
     homepage = models.CharField(max_length=255, null=True)
     built_using = models.CharField(max_length=255, null=True)
     auto_built_package = models.CharField(max_length=255, null=True)
-    multi_arch = models.CharField(
-        max_length=255, null=True, choices=BasePackage.MULTIARCH_CHOICES
-    )
+    multi_arch = models.CharField(max_length=255, null=True, choices=BasePackage.MULTIARCH_CHOICES)
 
     # Depends et al
     breaks = models.TextField(null=True)
@@ -333,9 +321,7 @@ class InstallerPackage(BasePackage):
     version = models.CharField(max_length=255)
     architecture = models.CharField(max_length=255)  # all, i386, ...
     section = models.CharField(max_length=255, null=True)  # admin, comm, database, ...
-    priority = models.CharField(
-        max_length=255, null=True
-    )  # required, standard, optional, extra
+    priority = models.CharField(max_length=255, null=True)  # required, standard, optional, extra
     origin = models.CharField(max_length=255, null=True)
     tag = models.TextField(null=True)
     bugs = models.TextField(null=True)
@@ -349,9 +335,7 @@ class InstallerPackage(BasePackage):
     homepage = models.CharField(max_length=255, null=True)
     built_using = models.CharField(max_length=255, null=True)
     auto_built_package = models.CharField(max_length=255, null=True)
-    multi_arch = models.CharField(
-        max_length=255, null=True, choices=BasePackage.MULTIARCH_CHOICES
-    )
+    multi_arch = models.CharField(max_length=255, null=True, choices=BasePackage.MULTIARCH_CHOICES)
 
     # Depends et al
     breaks = models.TextField(null=True)

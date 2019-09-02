@@ -4,24 +4,23 @@
 # bootstrap.py to update this file.
 #
 # For more info visit https://github.com/pulp/plugin_template
-
+---
 sudo: required
 # https://docs.travis-ci.com/user/trusty-ci-environment/
 dist: xenial
 language: python
 python:
-    # python versions used in el7 SCL & supported fedora
-    - "3.6"
-    - "3.7"
+  # Fedora has 3.6 available (python36.x86_64), but pulp container images
+  # with it are not being built or published yet.
+  # - "3.6"
+  - "3.7"
 env:
   matrix:
     - DB=postgres TEST=pulp
-
-
-
 services:
-    - postgresql
-    - redis-server
+  - postgresql
+  - redis-server
+  - docker
 addons:
   apt:
     packages:
@@ -29,30 +28,30 @@ addons:
       - jq
   # postgres versions provided by el7 RHSCL (lowest supportable version)
   postgresql: '9.6'
-before_install: .travis/before_install.sh
-install: .travis/install.sh
-before_script: .travis/before_script.sh
-script: .travis/script.sh
-after_failure:
-  - sh -c "cat ~/django_runserver.log"
-  - sh -c "cat ~/resource_manager.log"
-  - sh -c "cat ~/reserved_workers-1.log"
 jobs:
   include:
-  - stage: deploy-plugin-to-pypi
-    script:  bash .travis/publish_plugin_pypi.sh
-    if: tag IS present
-
-
-
-
-  - stage: publish-client-pypi
-    script: bash .travis/publish_client_pypi.sh
-    env:
-      - DB=postgres
-      - TEST=bindings
-    if: tag IS present
-
+    - stage: test
+      before_install: .travis/before_install.sh
+      install: .travis/install.sh
+      before_script: .travis/before_script.sh
+      script: .travis/script.sh
+      after_failure:
+        - http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
+        - sudo docker images
+        - sudo kubectl logs -l name=pulp-operator -c ansible --tail=10000
+        - sudo kubectl logs -l name=pulp-operator -c operator --tail=10000
+        - sudo kubectl logs -l app=pulp-api --tail=10000
+        - sudo kubectl logs -l app=pulp-content --tail=10000
+        - sudo kubectl logs -l app=pulp-resource-manager --tail=10000
+        - sudo kubectl logs -l app=pulp-worker --tail=10000
+    - stage: deploy-plugin-to-pypi
+      script: bash .travis/publish_plugin_pypi.sh
+      if: tag IS present
+    - stage: publish-client-pypi
+      script: bash .travis/publish_client_pypi.sh
+      env:
+        - DB=postgres
+        - TEST=bindings
+      if: tag IS present
 notifications: None
-
-
+...

@@ -7,12 +7,7 @@ from urllib.parse import urljoin
 
 from pulp_smash import api, config, utils
 from pulp_smash.pulp3.constants import REPO_PATH
-from pulp_smash.pulp3.utils import (
-    download_content_unit,
-    gen_distribution,
-    gen_repo,
-    sync,
-)
+from pulp_smash.pulp3.utils import download_content_unit, gen_distribution, gen_repo, sync
 
 from pulp_deb.tests.functional.constants import (
     DEB_DISTRIBUTION_PATH,
@@ -100,21 +95,16 @@ class DownloadContentTestCase(unittest.TestCase):
 
         # Pick a content unit (of each type), and download it from both Pulp Fixtures…
         unit_paths = [
-            choice(paths)
-            for paths in self.Meta.get_content_unit_paths(repo).values()
-            if paths
+            choice(paths) for paths in self.Meta.get_content_unit_paths(repo).values() if paths
         ]
         fixtures_hashes = [
-            hashlib.sha256(
-                utils.http_get(urljoin(DEB_FIXTURE_URL, unit_path[0]))
-            ).hexdigest()
+            hashlib.sha256(utils.http_get(urljoin(DEB_FIXTURE_URL, unit_path[0]))).hexdigest()
             for unit_path in unit_paths
         ]
 
         # …and Pulp.
         contents = [
-            download_content_unit(cfg, distribution, unit_path[1])
-            for unit_path in unit_paths
+            download_content_unit(cfg, distribution, unit_path[1]) for unit_path in unit_paths
         ]
         pulp_hashes = [hashlib.sha256(content).hexdigest() for content in contents]
         self.assertEqual(fixtures_hashes, pulp_hashes)

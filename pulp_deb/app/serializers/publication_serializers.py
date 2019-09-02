@@ -1,8 +1,5 @@
 from rest_framework.serializers import BooleanField, ValidationError
-from pulpcore.plugin.serializers import (
-    PublicationDistributionSerializer,
-    PublicationSerializer,
-)
+from pulpcore.plugin.serializers import PublicationDistributionSerializer, PublicationSerializer
 
 from pulp_deb.app.models import DebDistribution, DebPublication, VerbatimPublication
 
@@ -26,9 +23,7 @@ class DebPublicationSerializer(PublicationSerializer):
         help_text="Activate simple publishing mode (all packages in one release component).",
         default=False,
     )
-    structured = BooleanField(
-        help_text="Activate structured publishing mode.", default=False
-    )
+    structured = BooleanField(help_text="Activate structured publishing mode.", default=False)
 
     def validate(self, data):
         """
@@ -36,9 +31,7 @@ class DebPublicationSerializer(PublicationSerializer):
         """
         data = super().validate(data)
         if not data["simple"] and not data["structured"]:
-            raise ValidationError(
-                "one of simple or structured publishing mode must be selected"
-            )
+            raise ValidationError("one of simple or structured publishing mode must be selected")
         return data
 
     class Meta:

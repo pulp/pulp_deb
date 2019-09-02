@@ -4,12 +4,7 @@ import unittest
 
 from pulp_smash import api, cli, config, exceptions
 from pulp_smash.pulp3.constants import MEDIA_PATH, REPO_PATH
-from pulp_smash.pulp3.utils import (
-    gen_repo,
-    get_content_summary,
-    get_added_content_summary,
-    sync,
-)
+from pulp_smash.pulp3.utils import gen_repo, get_content_summary, get_added_content_summary, sync
 
 from pulp_deb.tests.functional.constants import DEB_FIXTURE_SUMMARY, DEB_REMOTE_PATH
 from pulp_deb.tests.functional.utils import gen_deb_remote

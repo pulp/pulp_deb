@@ -141,9 +141,7 @@ class DebRemoteViewSet(RemoteViewSet):
         The ``repository`` field has to be provided.
         """
         remote = self.get_object()
-        serializer = RepositorySyncURLSerializer(
-            data=request.data, context={"request": request}
-        )
+        serializer = RepositorySyncURLSerializer(data=request.data, context={"request": request})
 
         # Validate synchronously to return 400 errors.
         serializer.is_valid(raise_exception=True)
@@ -152,11 +150,7 @@ class DebRemoteViewSet(RemoteViewSet):
         result = enqueue_with_reservation(
             tasks.synchronize,
             [repository, remote],
-            kwargs={
-                "remote_pk": remote.pk,
-                "repository_pk": repository.pk,
-                "mirror": mirror,
-            },
+            kwargs={"remote_pk": remote.pk, "repository_pk": repository.pk, "mirror": mirror},
         )
         return OperationPostponedResponse(result, request)
 

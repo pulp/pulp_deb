@@ -59,9 +59,7 @@ class ReleaseSerializer(MultipleArtifactContentSerializer):
     A serializer for Release.
     """
 
-    codename = CharField(
-        help_text='Codename of the release, i.e. "buster".', required=True
-    )
+    codename = CharField(help_text='Codename of the release, i.e. "buster".', required=True)
 
     suite = CharField(help_text='Suite of the release, i.e. "stable".', required=False)
 
@@ -87,13 +85,11 @@ class PackageIndexSerializer(MultipleArtifactContentSerializer):
     """
 
     component = CharField(
-        help_text="Component of the component - architecture combination.",
-        required=True,
+        help_text="Component of the component - architecture combination.", required=True
     )
 
     architecture = CharField(
-        help_text="Architecture of the component - architecture combination.",
-        required=True,
+        help_text="Architecture of the component - architecture combination.", required=True
     )
 
     relative_path = CharField(help_text="Path of file relative to url.", required=False)
@@ -121,13 +117,11 @@ class InstallerFileIndexSerializer(MultipleArtifactContentSerializer):
     """
 
     component = CharField(
-        help_text="Component of the component - architecture combination.",
-        required=True,
+        help_text="Component of the component - architecture combination.", required=True
     )
 
     architecture = CharField(
-        help_text="Architecture of the component - architecture combination.",
-        required=True,
+        help_text="Architecture of the component - architecture combination.", required=True
     )
 
     relative_path = CharField(

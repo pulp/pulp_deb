@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 requirements = ["pulpcore-plugin>=0.1.0rc2", "python-debian"]
 
@@ -15,10 +15,11 @@ setup(
     python_requires=">=3.6",
     install_requires=requirements,
     include_package_data=True,
-    packages=["pulp_deb", "pulp_deb.app"],
+    packages=find_packages(exclude=["test"]),
     classifiers=(
         "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
         "Operating System :: POSIX :: Linux",
+        "Development Status :: 3 - Alpha",
         "Framework :: Django",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
