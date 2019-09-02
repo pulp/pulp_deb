@@ -5,7 +5,6 @@ import unittest
 
 from pulp_smash import api, config, utils
 from pulp_smash.pulp3.constants import ARTIFACTS_PATH, REPO_PATH
-from pulp_smash.pulp3.utils import delete_orphans, gen_repo
 from pulp_smash.pulp3.utils import delete_orphans, gen_repo, sync
 
 from pulp_deb.tests.functional.constants import (
