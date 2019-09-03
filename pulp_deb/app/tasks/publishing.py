@@ -9,11 +9,7 @@ from gzip import GzipFile
 
 from django.core.files import File
 
-from pulpcore.plugin.models import (
-    PublishedArtifact,
-    PublishedMetadata,
-    RepositoryVersion,
-)
+from pulpcore.plugin.models import PublishedArtifact, PublishedMetadata, RepositoryVersion
 from pulpcore.plugin.tasking import WorkingDirectory
 
 from pulp_deb.app.models import DebPublication, Package, VerbatimPublication
@@ -41,11 +37,7 @@ def publish_verbatim(repository_version_pk):
         with VerbatimPublication.create(repo_version, pass_through=True) as publication:
             pass
 
-    log.info(
-        _("Publication (verbatim): {publication} created").format(
-            publication=publication.pk
-        )
-    )
+    log.info(_("Publication (verbatim): {publication} created").format(publication=publication.pk))
 
 
 def publish(repository_version_pk, simple=False, structured=False):
@@ -111,14 +103,9 @@ def publish(repository_version_pk, simple=False, structured=False):
                             open(package_index_path, "wb"),
                             package_index_path,
                         )
-                    package.to822("all").dump(
-                        package_index_files[package.architecture][0]
-                    )
+                    package.to822("all").dump(package_index_files[package.architecture][0])
                     package_index_files[package.architecture][0].write(b"\n")
-                for (
-                    package_index_file,
-                    package_index_path,
-                ) in package_index_files.values():
+                for (package_index_file, package_index_path) in package_index_files.values():
                     package_index_file.close()
                     gz_package_index_path = _zip_file(package_index_path)
                     _add_to_release(release, package_index_path)
@@ -149,9 +136,7 @@ def publish(repository_version_pk, simple=False, structured=False):
                 release_metadata.save()
 
             if structured:
-                raise NotImplementedError(
-                    "Structured publishing is not yet implemented."
-                )
+                raise NotImplementedError("Structured publishing is not yet implemented.")
 
     log.info(_("Publication: {publication} created").format(publication=publication.pk))
 
@@ -173,9 +158,7 @@ def _add_to_release(release, file_path):
         release["MD5sum"].append(
             {"md5sum": md5sum_hasher.hexdigest(), "size": size, "name": file_path}
         )
-        release["SHA1"].append(
-            {"sha1": sha1_hasher.hexdigest(), "size": size, "name": file_path}
-        )
+        release["SHA1"].append({"sha1": sha1_hasher.hexdigest(), "size": size, "name": file_path})
         release["SHA256"].append(
             {"sha256": sha256_hasher.hexdigest(), "size": size, "name": file_path}
         )

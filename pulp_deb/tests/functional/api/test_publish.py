@@ -66,13 +66,10 @@ class PublishAnyRepoVersionTestCase(unittest.TestCase):
         repo = client.get(repo["_href"])
         for deb_generic_content in get_content(repo)[DEB_GENERIC_CONTENT_NAME]:
             client.post(
-                repo["_versions_href"],
-                {"add_content_units": [deb_generic_content["_href"]]},
+                repo["_versions_href"], {"add_content_units": [deb_generic_content["_href"]]}
             )
         for deb_package in get_content(repo)[DEB_PACKAGE_NAME]:
-            client.post(
-                repo["_versions_href"], {"add_content_units": [deb_package["_href"]]}
-            )
+            client.post(repo["_versions_href"], {"add_content_units": [deb_package["_href"]]})
         version_hrefs = tuple(ver["_href"] for ver in get_versions(repo))
         non_latest = choice(version_hrefs[:-1])
 

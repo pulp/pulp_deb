@@ -26,7 +26,9 @@ wait_for_pulp() {
     echo -n .
     sleep 1
     TIMEOUT=$(($TIMEOUT - 1))
-    if [ "$(http :24817/pulp/api/v3/status/ 2>/dev/null | jq '.database_connection.connected and .redis_connection.connected')" = "true" ]
+    STATUS=$(http :24817/pulp/api/v3/status/ 2>/dev/null)
+    if [ "$(echo $STATUS | jq '.database_connection.connected and .redis_connection.connected')" = "true"\
+      -a "$(echo $STATUS | jq '.online_content_apps[0]')" != "null" ]
     then
       echo
       return
@@ -36,8 +38,11 @@ wait_for_pulp() {
   return 1
 }
 
+# Containers may take a long time to download & start.
+# See pulp-operator/.travis/pulp-operator-check-and-wait.sh
+wait_for_pulp 600
+
 if [ "$TEST" = 'docs' ]; then
-  sleep 5
   cd docs
   make html
   cd ..
@@ -94,41 +99,41 @@ if [ "$TEST" = 'bindings' ]; then
   exit
 fi
 
+
+PULP_API_POD=$(sudo kubectl get pods | grep -E -o "pulp-api-(\w+)-(\w+)")
+export CMD_PREFIX="sudo kubectl exec $PULP_API_POD --"
+# Many tests require pytest/mock, but users do not need them at runtime
+# (or to add plugins on top of pulpcore or pulp container images.)
+# So install it here, rather than in the image Dockerfile.
+# This has to be done after wait_for_pulp (although not at the very end of it.)
+$CMD_PREFIX pip3 install pytest mock
+# Many functional tests require these
+$CMD_PREFIX dnf install -yq lsof which dnf-plugins-core
+# The alias does not seem to work in Travis / the scripting framework
+#alias pytest="$CMD_PREFIX pytest"
+
 # Run unit tests.
-coverage run $(which django-admin) test ./pulp_deb/tests/unit/
+$CMD_PREFIX bash -c "sed \"s/'USER': 'pulp'/'USER': 'postgres'/g\" /etc/pulp/settings.py > unit-test.py"
+$CMD_PREFIX bash -c "PULP_SETTINGS=/unit-test.py django-admin test  --noinput /usr/local/lib/python${TRAVIS_PYTHON_VERSION}/site-packages/pulp_deb/tests/unit/"
 
-# Run functional tests, and upload coverage report to codecov.
+# Note: This function is in the process of being merged into after_failure
 show_logs_and_return_non_zero() {
-    readonly local rc="$?"
-
-    for logfile in "~/django_runserver.log" "~/content_app.log" "~/resource_manager.log" "~/reserved_worker-1.log"
-    do
-      echo -en "travis_fold:start:$logfile"'\\r'
-      cat $logfile
-      echo -en "travis_fold:end:$logfile"'\\r'
-    done
-
-    return "${rc}"
+  readonly local rc="$?"
+  return "${rc}"
 }
-
-# Stop services started by ansible roles
-sudo systemctl stop pulp-worker* pulp-resource-manager pulp-content-app pulp-api
-
-# Start services with logs and coverage
-export PULP_CONTENT_HOST=localhost:24816
-rq worker -n 'resource-manager@%h' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig' >> ~/resource_manager.log 2>&1 &
-rq worker -n 'reserved-resource-worker-1@%h' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig' >> ~/reserved_worker-1.log 2>&1 &
-gunicorn pulpcore.tests.functional.content_with_coverage:server --bind 'localhost:24816' --worker-class 'aiohttp.GunicornWebWorker' -w 2 >> ~/content_app.log 2>&1 &
-coverage run $(which django-admin) runserver 24817 --noreload >> ~/django_runserver.log 2>&1 &
-wait_for_pulp 20
+export -f show_logs_and_return_non_zero
 
 # Run functional tests
+set +u
+
+export PYTHONPATH=$TRAVIS_BUILD_DIR:$TRAVIS_BUILD_DIR/../pulpcore:${PYTHONPATH}
+
+set -u
 if [ -f $FUNC_TEST_SCRIPT ]; then
     $FUNC_TEST_SCRIPT
 else
     pytest -v -r sx --color=yes --pyargs pulp_deb.tests.functional || show_logs_and_return_non_zero
 fi
-
 
 if [ -f $POST_SCRIPT ]; then
     $POST_SCRIPT

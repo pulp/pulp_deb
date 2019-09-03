@@ -130,9 +130,7 @@ class DebDeclarativeVersion(DeclarativeVersion):
             # This is dependent on
             # https://salsa.debian.org/python-debian-team/python-debian/merge_requests/11
             # DebUpdatePackageAttributes(),
-            DebUpdateReleaseAttributes(
-                self.first_stage.components, self.first_stage.architectures
-            ),
+            DebUpdateReleaseAttributes(self.first_stage.components, self.first_stage.architectures),
             DebUpdatePackageIndexAttributes(),
             QueryExistingContents(),
             ContentSaver(),
@@ -188,9 +186,7 @@ class DebUpdateReleaseAttributes(Stage):
                     release.codename = release_dict["Codename"]
                     release.suite = release_dict["Suite"]
                     # TODO split of extra stuff e.g. : 'updates/main' -> 'main'
-                    release.components = _filter_ssl(
-                        release_dict["Components"], self.components
-                    )
+                    release.components = _filter_ssl(release_dict["Components"], self.components)
                     release.architectures = _filter_ssl(
                         release_dict["Architectures"], self.architectures
                     )
@@ -220,9 +216,7 @@ class DebUpdatePackageIndexAttributes(Stage):  # TODO: Needs a new name
 
                     content = d_content.content
                     if not [
-                        da
-                        for da in d_content.d_artifacts
-                        if da.artifact.sha256 == content.sha256
+                        da for da in d_content.d_artifacts if da.artifact.sha256 == content.sha256
                     ]:
                         # No main_artifact found uncompress one
                         filename = _uncompress_artifact(d_content.d_artifacts)
@@ -306,9 +300,7 @@ class DebDropEmptyContent(Stage):
         """
         async for d_content in self.items():
             d_content.d_artifacts = [
-                d_artifact
-                for d_artifact in d_content.d_artifacts
-                if d_artifact.artifact
+                d_artifact for d_artifact in d_content.d_artifacts if d_artifact.artifact
             ]
             if not d_content.d_artifacts:
                 # No artifacts left -> drop it
@@ -346,10 +338,7 @@ class DebFirstStage(Stage):
         self.architectures = (
             None
             if self.remote.architectures is None
-            else [
-                architecture.strip()
-                for architecture in self.remote.architectures.split()
-            ]
+            else [architecture.strip() for architecture in self.remote.architectures.split()]
         )
 
     async def run(self):
@@ -361,15 +350,10 @@ class DebFirstStage(Stage):
         future_package_indices = []
         future_installer_file_indices = []
         with ProgressBar(
-            message="Creating download requests for Release files",
-            total=self.num_distributions,
+            message="Creating download requests for Release files", total=self.num_distributions
         ) as pb:
             for distribution in self.distributions:
-                log.info(
-                    'Downloading Release file for distribution: "{}"'.format(
-                        distribution
-                    )
-                )
+                log.info('Downloading Release file for distribution: "{}"'.format(distribution))
                 release_relpath = os.path.join("dists", distribution, "Release")
                 release_path = os.path.join(self.parsed_url.path, release_relpath)
                 release_da = DeclarativeArtifact(
@@ -380,9 +364,7 @@ class DebFirstStage(Stage):
                     deferred_download=False,
                 )
                 release_gpg_relpath = os.path.join("dists", distribution, "Release.gpg")
-                release_gpg_path = os.path.join(
-                    self.parsed_url.path, release_gpg_relpath
-                )
+                release_gpg_path = os.path.join(self.parsed_url.path, release_gpg_relpath)
                 release_gpg_da = DeclarativeFailsafeArtifact(
                     Artifact(),
                     urlunparse(self.parsed_url._replace(path=release_gpg_path)),
@@ -399,9 +381,7 @@ class DebFirstStage(Stage):
                     self.remote,
                     deferred_download=False,
                 )
-                release_unit = Release(
-                    distribution=distribution, relative_path=release_relpath
-                )
+                release_unit = Release(distribution=distribution, relative_path=release_relpath)
                 release_dc = DeclarativeContent(
                     content=release_unit,
                     d_artifacts=[release_da, release_gpg_da, inrelease_da],
@@ -411,25 +391,19 @@ class DebFirstStage(Stage):
                 await self.put(release_dc)
                 pb.increment()
 
-        with ProgressBar(
-            message="Parsing Release files", total=self.num_distributions
-        ) as pb:
+        with ProgressBar(message="Parsing Release files", total=self.num_distributions) as pb:
             for release_future in asyncio.as_completed(future_releases):
                 release = await release_future
                 if release is None:
                     continue
-                log.info(
-                    'Parsing Release file for release: "{}"'.format(release.codename)
-                )
+                log.info('Parsing Release file for release: "{}"'.format(release.codename))
                 release_artifact = release._artifacts.get(sha256=release.sha256)
                 release_dict = deb822.Release(release_artifact.file)
                 async for d_content in self._read_release_file(release, release_dict):
                     if isinstance(d_content.content, PackageIndex):
                         future_package_indices.append(d_content.get_or_create_future())
                     if isinstance(d_content.content, InstallerFileIndex):
-                        future_installer_file_indices.append(
-                            d_content.get_or_create_future()
-                        )
+                        future_installer_file_indices.append(d_content.get_or_create_future())
                     await self.put(d_content)
                 pb.increment()
 
@@ -444,28 +418,21 @@ class DebFirstStage(Stage):
                         package_index.component, package_index.architecture
                     )
                 )
-                async for package_dc in self._read_package_index(
-                    package_index_artifact.file
-                ):
+                async for package_dc in self._read_package_index(package_index_artifact.file):
                     await self.put(package_dc)
                 pb.increment()
 
         with ProgressBar(message="Parsing installer file index files") as pb:
-            for installer_file_index_future in asyncio.as_completed(
-                future_installer_file_indices
-            ):
+            for installer_file_index_future in asyncio.as_completed(future_installer_file_indices):
                 installer_file_index = await installer_file_index_future
                 if installer_file_index is None:
                     continue
                 log.debug(
                     "Parsing installer file index for {}:{}.".format(
-                        installer_file_index.component,
-                        installer_file_index.architecture,
+                        installer_file_index.component, installer_file_index.architecture
                     )
                 )
-                async for d_content in self._read_installer_file_index(
-                    installer_file_index
-                ):
+                async for d_content in self._read_installer_file_index(installer_file_index):
                     await self.put(d_content)
                 pb.increment()
 
@@ -498,9 +465,7 @@ class DebFirstStage(Stage):
             )
 
         def generate_source_index(component):
-            raise NotImplementedError(
-                "Syncing source repositories is not yet implemented."
-            )
+            raise NotImplementedError("Syncing source repositories is not yet implemented.")
 
         def generate_package_index(component, architecture, infix=""):
             nonlocal release
@@ -518,14 +483,12 @@ class DebFirstStage(Stage):
             if not d_artifacts:
                 return
             content_unit = PackageIndex(
-                release_pk=release,
+                release=release,
                 component=component,
                 architecture=architecture,
                 sha256=d_artifacts[0].artifact.sha256,
                 relative_path=os.path.join(
-                    os.path.dirname(release.relative_path),
-                    package_index_dir,
-                    "Packages",
+                    os.path.dirname(release.relative_path), package_index_dir, "Packages"
                 ),
             )
             d_content = DeclarativeContent(
@@ -543,9 +506,7 @@ class DebFirstStage(Stage):
                 "current",
                 "images",
             )
-            log.info(
-                "Downloading installer files from {}".format(installer_file_index_dir)
-            )
+            log.info("Downloading installer files from {}".format(installer_file_index_dir))
             d_artifacts = []
             for filename in InstallerFileIndex.FILE_ALGORITHM.keys():
                 path = os.path.join(installer_file_index_dir, filename)
@@ -554,7 +515,7 @@ class DebFirstStage(Stage):
             if not d_artifacts:
                 return
             content_unit = InstallerFileIndex(
-                release_pk=release,
+                release=release,
                 component=component,
                 architecture=architecture,
                 sha256=d_artifacts[0].artifact.sha256,
@@ -572,11 +533,7 @@ class DebFirstStage(Stage):
             nonlocal file_references
 
             translation_dir = os.path.join(os.path.basename(component), "i18n")
-            paths = [
-                path
-                for path in file_references.keys()
-                if path.startswith(translation_dir)
-            ]
+            paths = [path for path in file_references.keys() if path.startswith(translation_dir)]
             translations = {}
             for path in paths:
                 d_artifact = to_d_artifact(file_references.pop(path))
@@ -590,9 +547,7 @@ class DebFirstStage(Stage):
             for path, translation in translations.items():
                 content_unit = GenericContent(
                     sha256=translation["sha256"],
-                    relative_path=os.path.join(
-                        os.path.dirname(release.relative_path), path
-                    ),
+                    relative_path=os.path.join(os.path.dirname(release.relative_path), path),
                 )
                 d_content = DeclarativeContent(
                     content=content_unit, d_artifacts=translation["d_artifacts"]
@@ -608,9 +563,7 @@ class DebFirstStage(Stage):
         # Find Package Index files for Component Architecture combinations
         for component in release.components.split():
             for architecture in release.architectures.split():
-                log.info(
-                    'Component: "{}" Architecture: "{}"'.format(component, architecture)
-                )
+                log.info('Component: "{}" Architecture: "{}"'.format(component, architecture))
                 for d_content in generate_package_index(component, architecture):
                     yield d_content
                 if self.remote.sync_udebs:
@@ -619,9 +572,7 @@ class DebFirstStage(Stage):
                     ):
                         yield d_content
                 if self.remote.sync_installer:
-                    for d_content in generate_installer_file_index(
-                        component, architecture
-                    ):
+                    for d_content in generate_installer_file_index(component, architecture):
                         yield d_content
             for d_content in generate_translation_files(component):
                 yield d_content
@@ -652,23 +603,15 @@ class DebFirstStage(Stage):
                     package_class = InstallerPackage
                     package_serializer_class = InstallerPackageSerializer
                 try:
-                    package_content_unit = package_class.objects.get(
-                        sha256=package_sha256
-                    )
+                    package_content_unit = package_class.objects.get(sha256=package_sha256)
                 except ObjectDoesNotExist:
-                    log.debug(
-                        "Downloading package {}".format(package_paragraph["Package"])
-                    )
+                    log.debug("Downloading package {}".format(package_paragraph["Package"]))
                     package_dict = package_class.from822(package_paragraph)
                     package_dict["relative_path"] = package_relpath
                     package_dict["sha256"] = package_sha256
-                    package_serializer = package_serializer_class(
-                        data=package_dict, partial=True
-                    )
+                    package_serializer = package_serializer_class(data=package_dict, partial=True)
                     package_serializer.is_valid(raise_exception=True)
-                    package_content_unit = package_class(
-                        **package_serializer.validated_data
-                    )
+                    package_content_unit = package_class(**package_serializer.validated_data)
                 package_path = os.path.join(self.parsed_url.path, package_relpath)
                 package_artifact = Artifact(**_get_checksums(package_paragraph))
                 package_da = DeclarativeArtifact(
@@ -683,9 +626,7 @@ class DebFirstStage(Stage):
                 )
                 yield package_dc
             except KeyError:
-                log.warning(
-                    "Ignoring invalid package paragraph. {}".format(package_paragraph)
-                )
+                log.warning("Ignoring invalid package paragraph. {}".format(package_paragraph))
 
     async def _read_installer_file_index(self, installer_file_index):
         """
@@ -710,18 +651,14 @@ class DebFirstStage(Stage):
             for line in content_artifact.artifact.file:
                 digest, filename = line.decode().strip().split(maxsplit=1)
                 filename = os.path.normpath(filename)
-                if (
-                    filename in InstallerFileIndex.FILE_ALGORITHM
-                ):  # strangely they may appear here
+                if filename in InstallerFileIndex.FILE_ALGORITHM:  # strangely they may appear here
                     continue
                 file_list[filename][algorithm] = digest
 
         for filename, digests in file_list.items():
             relpath = os.path.join(installer_file_index.relative_path, filename)
             urlpath = os.path.join(self.parsed_url.path, relpath)
-            content_unit = GenericContent(
-                sha256=digests["sha256"], relative_path=relpath
-            )
+            content_unit = GenericContent(sha256=digests["sha256"], relative_path=relpath)
             d_artifact = DeclarativeArtifact(
                 artifact=Artifact(**digests),
                 url=urlunparse(self.parsed_url._replace(path=urlpath)),
@@ -729,9 +666,7 @@ class DebFirstStage(Stage):
                 remote=self.remote,
                 deferred_download=deferred_download,
             )
-            d_content = DeclarativeContent(
-                content=content_unit, d_artifacts=[d_artifact]
-            )
+            d_content = DeclarativeContent(content=content_unit, d_artifacts=[d_artifact])
             yield d_content
 
 

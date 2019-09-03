@@ -2,6 +2,7 @@ from rest_framework.serializers import CharField, Field, ValidationError
 from pulpcore.plugin.serializers import (
     MultipleArtifactContentSerializer,
     SingleArtifactContentSerializer,
+    DetailRelatedField,
 )
 
 from pulp_deb.app.models import (
@@ -58,9 +59,7 @@ class ReleaseSerializer(MultipleArtifactContentSerializer):
     A serializer for Release.
     """
 
-    codename = CharField(
-        help_text='Codename of the release, i.e. "buster".', required=True
-    )
+    codename = CharField(help_text='Codename of the release, i.e. "buster".', required=True)
 
     suite = CharField(help_text='Suite of the release, i.e. "stable".', required=False)
 
@@ -86,16 +85,21 @@ class PackageIndexSerializer(MultipleArtifactContentSerializer):
     """
 
     component = CharField(
-        help_text="Component of the component - architecture combination.",
-        required=True,
+        help_text="Component of the component - architecture combination.", required=True
     )
 
     architecture = CharField(
-        help_text="Architecture of the component - architecture combination.",
-        required=True,
+        help_text="Architecture of the component - architecture combination.", required=True
     )
 
     relative_path = CharField(help_text="Path of file relative to url.", required=False)
+
+    release = DetailRelatedField(
+        help_text="Release this index file belongs to.",
+        many=False,
+        queryset=Release.objects.all(),
+        view_name="deb-release-detail",
+    )
 
     class Meta:
         fields = MultipleArtifactContentSerializer.Meta.fields + (
@@ -113,18 +117,23 @@ class InstallerFileIndexSerializer(MultipleArtifactContentSerializer):
     """
 
     component = CharField(
-        help_text="Component of the component - architecture combination.",
-        required=True,
+        help_text="Component of the component - architecture combination.", required=True
     )
 
     architecture = CharField(
-        help_text="Architecture of the component - architecture combination.",
-        required=True,
+        help_text="Architecture of the component - architecture combination.", required=True
     )
 
     relative_path = CharField(
         help_text="Path of directory containing MD5SUMS and SHA256SUMS relative to url.",
         required=False,
+    )
+
+    release = DetailRelatedField(
+        help_text="Release this index file belongs to.",
+        many=False,
+        queryset=Release.objects.all(),
+        view_name="deb-release-detail",
     )
 
     class Meta:

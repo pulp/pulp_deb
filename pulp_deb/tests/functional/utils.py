@@ -97,9 +97,7 @@ def get_deb_verbatim_content_unit_paths(repo, version_href=None):
         ],
         DEB_GENERIC_CONTENT_NAME: [
             (content_unit["relative_path"], content_unit["relative_path"])
-            for content_unit in get_content(repo, version_href)[
-                DEB_GENERIC_CONTENT_NAME
-            ]
+            for content_unit in get_content(repo, version_href)[DEB_GENERIC_CONTENT_NAME]
         ],
     }
 

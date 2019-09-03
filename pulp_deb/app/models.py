@@ -28,6 +28,7 @@ class GenericContent(Content):
     sha256 = models.CharField(max_length=255, null=False)
 
     class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
         unique_together = (("relative_path", "sha256"),)
 
 
@@ -52,6 +53,7 @@ class Release(Content):
     sha256 = models.CharField(max_length=255)
 
     class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
         unique_together = (
             (
                 "codename",
@@ -77,13 +79,14 @@ class PackageIndex(Content):
 
     TYPE = "package_index"
 
-    release_pk = models.ForeignKey("Release", on_delete=models.CASCADE)
+    release = models.ForeignKey(Release, on_delete=models.CASCADE)
     component = models.CharField(max_length=255)
     architecture = models.CharField(max_length=255)
     relative_path = models.CharField(max_length=255)
     sha256 = models.CharField(max_length=255)
 
     class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
         verbose_name_plural = "PackageIndices"
         unique_together = (("relative_path", "sha256"),)
 
@@ -109,13 +112,14 @@ class InstallerFileIndex(Content):
 
     FILE_ALGORITHM = {"SHA256SUMS": "sha256", "MD5SUMS": "md5"}  # Are there more?
 
-    release_pk = models.ForeignKey("Release", on_delete=models.CASCADE)
+    release = models.ForeignKey(Release, on_delete=models.CASCADE)
     component = models.CharField(max_length=255)
     architecture = models.CharField(max_length=255)
     relative_path = models.CharField(max_length=255)
     sha256 = models.CharField(max_length=255)
 
     class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
         verbose_name_plural = "InstallerFileIndices"
         unique_together = (("relative_path", "sha256"),)
 
@@ -152,11 +156,7 @@ class BasePackage(Content):
         else:
             prefix = sourcename[0]
         return os.path.join(
-            "pool",
-            component,
-            prefix,
-            sourcename,
-            "{}.{}".format(self.name, self.SUFFIX),
+            "pool", component, prefix, sourcename, "{}.{}".format(self.name, self.SUFFIX)
         )
 
     def to822(self, component=""):
@@ -181,13 +181,10 @@ class BasePackage(Content):
         """
         Translate deb822.Package to a dictionary for class instatiation.
         """
-        return {
-            k: package_dict[v]
-            for k, v in cls.TRANSLATION_DICT.items()
-            if v in package_dict
-        }
+        return {k: package_dict[v] for k, v in cls.TRANSLATION_DICT.items() if v in package_dict}
 
     class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
         abstract = True
 
 
@@ -239,9 +236,7 @@ class Package(BasePackage):
     version = models.CharField(max_length=255)
     architecture = models.CharField(max_length=255)  # all, i386, ...
     section = models.CharField(max_length=255, null=True)  # admin, comm, database, ...
-    priority = models.CharField(
-        max_length=255, null=True
-    )  # required, standard, optional, extra
+    priority = models.CharField(max_length=255, null=True)  # required, standard, optional, extra
     origin = models.CharField(max_length=255, null=True)
     tag = models.TextField(null=True)
     bugs = models.TextField(null=True)
@@ -255,9 +250,7 @@ class Package(BasePackage):
     homepage = models.CharField(max_length=255, null=True)
     built_using = models.CharField(max_length=255, null=True)
     auto_built_package = models.CharField(max_length=255, null=True)
-    multi_arch = models.CharField(
-        max_length=255, null=True, choices=BasePackage.MULTIARCH_CHOICES
-    )
+    multi_arch = models.CharField(max_length=255, null=True, choices=BasePackage.MULTIARCH_CHOICES)
 
     # Depends et al
     breaks = models.TextField(null=True)
@@ -276,6 +269,7 @@ class Package(BasePackage):
     sha256 = models.CharField(max_length=255, null=False)
 
     class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
         unique_together = (("sha256",),)
 
 
@@ -327,9 +321,7 @@ class InstallerPackage(BasePackage):
     version = models.CharField(max_length=255)
     architecture = models.CharField(max_length=255)  # all, i386, ...
     section = models.CharField(max_length=255, null=True)  # admin, comm, database, ...
-    priority = models.CharField(
-        max_length=255, null=True
-    )  # required, standard, optional, extra
+    priority = models.CharField(max_length=255, null=True)  # required, standard, optional, extra
     origin = models.CharField(max_length=255, null=True)
     tag = models.TextField(null=True)
     bugs = models.TextField(null=True)
@@ -343,9 +335,7 @@ class InstallerPackage(BasePackage):
     homepage = models.CharField(max_length=255, null=True)
     built_using = models.CharField(max_length=255, null=True)
     auto_built_package = models.CharField(max_length=255, null=True)
-    multi_arch = models.CharField(
-        max_length=255, null=True, choices=BasePackage.MULTIARCH_CHOICES
-    )
+    multi_arch = models.CharField(max_length=255, null=True, choices=BasePackage.MULTIARCH_CHOICES)
 
     # Depends et al
     breaks = models.TextField(null=True)
@@ -364,6 +354,7 @@ class InstallerPackage(BasePackage):
     sha256 = models.CharField(max_length=255, null=False)
 
     class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
         unique_together = (("sha256",),)
 
 
@@ -375,6 +366,9 @@ class VerbatimPublication(Publication):
     """
 
     TYPE = "verbatim-publication"
+
+    class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
 
 
 class DebPublication(Publication):
@@ -389,6 +383,9 @@ class DebPublication(Publication):
     simple = models.BooleanField(default=False)
     structured = models.BooleanField(default=False)
 
+    class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
+
 
 class DebDistribution(PublicationDistribution):
     """
@@ -396,6 +393,9 @@ class DebDistribution(PublicationDistribution):
     """
 
     TYPE = "apt-distribution"
+
+    class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
 
 
 class DebRemote(Remote):
@@ -411,3 +411,6 @@ class DebRemote(Remote):
     sync_sources = models.BooleanField(default=False)
     sync_udebs = models.BooleanField(default=False)
     sync_installer = models.BooleanField(default=False)
+
+    class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"

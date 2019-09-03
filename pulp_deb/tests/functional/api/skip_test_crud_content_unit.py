@@ -9,16 +9,8 @@ from pulp_smash import api, config, utils
 from pulp_smash.pulp3.constants import ARTIFACTS_PATH, REPO_PATH
 from pulp_smash.pulp3.utils import delete_orphans, gen_repo, get_content, sync
 
-from pulp_deb.tests.functional.constants import (
-    DEB_URL,
-    DEB_CONTENT_PATH,
-    DEB_REMOTE_PATH,
-)
-from pulp_deb.tests.functional.utils import (
-    gen_deb_content_attrs,
-    gen_deb_remote,
-    skip_if,
-)
+from pulp_deb.tests.functional.constants import DEB_URL, DEB_CONTENT_PATH, DEB_REMOTE_PATH
+from pulp_deb.tests.functional.utils import gen_deb_content_attrs, gen_deb_remote, skip_if
 from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 
 
@@ -70,8 +62,7 @@ class ContentUnitTestCase(unittest.TestCase):
         # FIXME: 'relative_path' is an attribute specific to the File plugin. It is only an
         # example. You should replace this with some other field specific to your content type.
         page = self.client.get(
-            DEB_CONTENT_PATH,
-            params={"relative_path": self.content_unit["relative_path"]},
+            DEB_CONTENT_PATH, params={"relative_path": self.content_unit["relative_path"]}
         )
         self.assertEqual(len(page["results"]), 1)
         for key, val in self.content_unit.items():
