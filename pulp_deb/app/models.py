@@ -6,7 +6,14 @@ from debian import deb822
 
 from django.db import models
 
-from pulpcore.plugin.models import Content, Publication, PublicationDistribution, Remote
+from pulpcore.plugin.models import (
+    Artifact,
+    Content,
+    Publication,
+    PublicationDistribution,
+    Remote,
+    RemoteArtifact,
+)
 
 logger = getLogger(__name__)
 
@@ -168,10 +175,17 @@ class BasePackage(Content):
             if value is not None:
                 ret[v] = value
 
-        artifact = self._artifacts.get()
-        ret["MD5sum"] = artifact.md5
-        ret["SHA1"] = artifact.sha1
-        ret["SHA256"] = artifact.sha256
+        try:
+            artifact = self._artifacts.get()
+            ret["MD5sum"] = artifact.md5
+            ret["SHA1"] = artifact.sha1
+            ret["SHA256"] = artifact.sha256
+        except Artifact.DoesNotExist:
+            remote_artifact = RemoteArtifact.objects.filter(sha256=self.sha256).first()
+            ret["MD5sum"] = remote_artifact.md5
+            ret["SHA1"] = remote_artifact.sha1
+            ret["SHA256"] = remote_artifact.sha256
+
         ret["Filename"] = self.filename(component)
 
         return ret
