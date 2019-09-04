@@ -70,8 +70,9 @@ class GenericContentViewSet(ContentViewSet):
     """
 
     endpoint_name = "generic_contents"
-    queryset = models.GenericContent.objects.all()
+    queryset = models.GenericContent.objects.prefetch_related("_artifacts")
     serializer_class = serializers.GenericContentSerializer
+    filter_set_class = GenericContentFilter
 
 
 class ReleaseViewSet(ContentViewSet):
