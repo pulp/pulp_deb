@@ -1,7 +1,7 @@
 Contributing
 ============
 
-To contribute to the ``plup-deb`` package follow this process:
+To contribute to the ``pulp-deb`` package follow this process:
 
 1. Clone the GitHub repo
 2. Make a change
