@@ -603,7 +603,9 @@ class DebFirstStage(Stage):
                     package_class = InstallerPackage
                     package_serializer_class = InstallerPackageSerializer
                 try:
-                    package_content_unit = package_class.objects.get(sha256=package_sha256)
+                    package_content_unit = package_class.objects.get(
+                        relative_path=package_relpath, sha256=package_sha256
+                    )
                 except ObjectDoesNotExist:
                     log.debug("Downloading package {}".format(package_paragraph["Package"]))
                     package_dict = package_class.from822(package_paragraph)

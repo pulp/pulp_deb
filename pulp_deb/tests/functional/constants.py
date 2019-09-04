@@ -5,6 +5,7 @@ from pulp_smash.constants import PULP_FIXTURES_BASE_URL
 from pulp_smash.pulp3.constants import (
     # API_DOCS_PATH,
     BASE_DISTRIBUTION_PATH,
+    BASE_PATH,
     BASE_PUBLICATION_PATH,
     BASE_REMOTE_PATH,
     CONTENT_PATH,
@@ -27,6 +28,7 @@ DEB_REMOTE_PATH = urljoin(BASE_REMOTE_PATH, "deb/apt/")
 DEB_PUBLICATION_PATH = urljoin(BASE_PUBLICATION_PATH, "deb/apt/")
 VERBATIM_PUBLICATION_PATH = urljoin(BASE_PUBLICATION_PATH, "deb/verbatim/")
 
+DEB_SINGLE_REQUEST_UPLOAD_PATH = urljoin(BASE_PATH, "deb/upload/")
 
 DEB_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, "debian/")
 DEB_FIXTURE_RELEASE = "ragnarok"
