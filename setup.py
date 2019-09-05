@@ -2,11 +2,11 @@
 
 from setuptools import find_packages, setup
 
-requirements = ["pulpcore-plugin>=0.1.0rc3", "python-debian>=0.1.36"]
+requirements = ["pulpcore-plugin~=0.1rc4", "python-debian>=0.1.36"]
 
 setup(
     name="pulp-deb",
-    version="2.0.0a2.dev1",
+    version="2.0.0b1",
     description="pulp-deb plugin for the Pulp Project",
     license="GPLv2+",
     author="Matthias Dellweg",
@@ -19,7 +19,7 @@ setup(
     classifiers=(
         "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
         "Operating System :: POSIX :: Linux",
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Framework :: Django",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
