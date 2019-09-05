@@ -103,13 +103,21 @@ def get_deb_verbatim_content_unit_paths(repo, version_href=None):
     }
 
 
-def gen_deb_generic_content_attrs(artifact):
+def gen_deb_content_attrs(artifact):
     """Generate a dict with content unit attributes.
 
     :param: artifact: A dict of info about the artifact.
     :returns: A semi-random dict for use in creating a content unit.
     """
     return {"artifact": artifact["_href"], "relative_path": DEB_GENERIC_CONTENT_RELPATH}
+
+
+def gen_deb_content_upload_attrs():
+    """Generate a dict with content unit attributes for upload.
+
+    :returns: A semi-random dict for use in creating a content unit.
+    """
+    return {"relative_path": DEB_GENERIC_CONTENT_RELPATH}
 
 
 def populate_pulp(cfg, url=DEB_FIXTURE_URL):

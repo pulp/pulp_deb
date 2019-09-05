@@ -40,13 +40,6 @@ from pulp_deb.app.models import (
     InstallerPackage,
     DebRemote,
 )
-from pulp_deb.app.serializers import (
-    # GenericContentSerializer,
-    # ReleaseSerializer,
-    # PackageIndexSerializer,
-    PackageSerializer,
-    InstallerPackageSerializer,
-)
 
 
 log = logging.getLogger(__name__)
@@ -606,10 +599,8 @@ class DebFirstStage(Stage):
                 package_sha256 = package_paragraph["sha256"]
                 if package_relpath.endswith(".deb"):
                     package_class = Package
-                    package_serializer_class = PackageSerializer
                 elif package_relpath.endswith(".udeb"):
                     package_class = InstallerPackage
-                    package_serializer_class = InstallerPackageSerializer
                 try:
                     package_content_unit = package_class.objects.get(
                         relative_path=package_relpath, sha256=package_sha256
@@ -619,9 +610,7 @@ class DebFirstStage(Stage):
                     package_dict = package_class.from822(package_paragraph)
                     package_dict["relative_path"] = package_relpath
                     package_dict["sha256"] = package_sha256
-                    package_serializer = package_serializer_class(data=package_dict, partial=True)
-                    package_serializer.is_valid(raise_exception=True)
-                    package_content_unit = package_class(**package_serializer.validated_data)
+                    package_content_unit = package_class(**package_dict)
                 package_path = os.path.join(self.parsed_url.path, package_relpath)
                 package_artifact = Artifact(**_get_checksums(package_paragraph))
                 package_da = DeclarativeArtifact(

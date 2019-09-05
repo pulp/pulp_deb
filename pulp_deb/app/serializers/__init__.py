@@ -16,4 +16,3 @@ from .publication_serializers import (
 )
 
 from .remote_serializers import DebRemoteSerializer
-from .upload_serializers import OneShotUploadSerializer
