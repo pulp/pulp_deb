@@ -38,7 +38,7 @@ def one_shot_upload(artifact_pk, repository_pk=None):
     package_dict = Package.from822(package_paragraph)
     package_dict["sha256"] = artifact.sha256
     package = Package(**package_dict)
-    package.relative_path = package.filename
+    package.relative_path = package.filename()
     try:
         package = Package.objects.get(sha256=artifact.sha256, relative_path=package.relative_path)
     except ObjectDoesNotExist:
