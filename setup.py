@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
-requirements = ["pulpcore-plugin>=0.1.0rc2", "python-debian>=0.1.36"]
+requirements = ["pulpcore-plugin>=0.1.0rc3", "python-debian>=0.1.36"]
 
 setup(
     name="pulp-deb",
