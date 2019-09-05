@@ -18,7 +18,7 @@ deploy_client_to_rubygems: False
 deploy_daily_client_to_pypi: False
 deploy_daily_client_to_rubygems: False
 deploy_to_pypi: True
-docs_test: False
+docs_test: True
 pydocstyle: True
 test_bindings: False
 pypi_username: pulp
