@@ -20,6 +20,7 @@ from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_URL,
     DEB_GENERIC_CONTENT_NAME,
     DEB_GENERIC_CONTENT_PATH,
+    DEB_GENERIC_CONTENT_RELPATH,
     # DEB_PACKAGE_INDEX_NAME,
     DEB_PACKAGE_NAME,
     DEB_PUBLICATION_PATH,
@@ -102,14 +103,13 @@ def get_deb_verbatim_content_unit_paths(repo, version_href=None):
     }
 
 
-def gen_deb_content_attrs(artifact):
+def gen_deb_generic_content_attrs(artifact):
     """Generate a dict with content unit attributes.
 
     :param: artifact: A dict of info about the artifact.
     :returns: A semi-random dict for use in creating a content unit.
     """
-    # FIXME: Add content specific metadata here.
-    return {"artifact": artifact["_href"]}
+    return {"_artifact": artifact["_href"], "relative_path": DEB_GENERIC_CONTENT_RELPATH}
 
 
 def populate_pulp(cfg, url=DEB_FIXTURE_URL):

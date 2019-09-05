@@ -1,8 +1,12 @@
+from gettext import gettext as _
+
 from rest_framework.serializers import CharField, Field, ValidationError
 from pulpcore.plugin.serializers import (
+    ContentChecksumSerializer,
     MultipleArtifactContentSerializer,
     SingleArtifactContentSerializer,
     DetailRelatedField,
+    relative_path_validator,
 )
 
 from pulp_deb.app.models import (
@@ -42,15 +46,46 @@ class YesNoField(Field):
             raise ValidationError('Value must be "yes" or "no".')
 
 
-class GenericContentSerializer(SingleArtifactContentSerializer):
+class GenericContentSerializer(SingleArtifactContentSerializer, ContentChecksumSerializer):
     """
     A serializer for GenericContent.
     """
 
-    relative_path = CharField(help_text="Path of file relative to url.", required=False)
+    relative_path = CharField(
+        help_text=_(
+            "Relative location of the file within the repository. " "Example: `path/to/file.txt`"
+        ),
+        validators=[relative_path_validator],
+        required=True,
+    )
+
+    def validate(self, data):
+        """Validate the GenericContent data."""
+        data = super().validate(data)
+
+        data["sha256"] = data["_artifact"].sha256
+        data["_relative_path"] = data["relative_path"]
+
+        content = GenericContent.objects.filter(
+            sha256=data["sha256"], relative_path=data["relative_path"]
+        )
+
+        if content.exists():
+            raise ValidationError(
+                _(
+                    "There is already a generic content with relative path '{path}' and sha256 "
+                    "'{sha256}'."
+                ).format(path=data["relative_path"], sha256=data["sha256"])
+            )
+
+        return data
 
     class Meta:
-        fields = SingleArtifactContentSerializer.Meta.fields + ("relative_path",)
+        fields = (
+            tuple(set(SingleArtifactContentSerializer.Meta.fields) - {"_relative_path"})
+            + ContentChecksumSerializer.Meta.fields
+            + ("relative_path",)
+        )
         model = GenericContent
 
 
