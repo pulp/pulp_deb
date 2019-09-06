@@ -4,7 +4,7 @@ User Setup
 All REST API examples below use `httpie <https://httpie.org/doc>`__ to
 perform the requests.
 
-.. code-block::
+.. code-block:: bash
 
     machine localhost
     login admin

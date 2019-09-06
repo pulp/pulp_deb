@@ -26,7 +26,7 @@ Creating a remote object informs Pulp about an external content source.
 
 ``$ http POST $BASE_ADDR/pulp/pulp/api/v3/remotes/deb/apt/ name='bar' url='http://some.url/somewhere/'``
 
-.. code:: json
+Response::
 
     {
         "_href": "http://localhost:24817/pulp/pulp/api/v3/remotes/deb/apt/1/",
