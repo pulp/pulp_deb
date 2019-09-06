@@ -52,6 +52,24 @@ jobs:
     - stage: deploy-plugin-to-pypi
       script: bash .travis/publish_plugin_pypi.sh
       if: tag IS present
+    - stage: publish-daily-client-gem
+      script: bash .travis/publish_client_gem.sh
+      env:
+        - DB=postgres
+        - TEST=bindings
+      if: type = cron
+    - stage: publish-daily-client-pypi
+      script: bash .travis/publish_client_pypi.sh
+      env:
+        - DB=postgres
+        - TEST=bindings
+      if: type = cron
+    - stage: publish-client-gem
+      script: bash .travis/publish_client_gem.sh
+      env:
+        - DB=postgres
+        - TEST=bindings
+      if: tag IS present
     - stage: publish-client-pypi
       script: bash .travis/publish_client_pypi.sh
       env:
