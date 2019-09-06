@@ -115,6 +115,8 @@ html_theme = "sphinx_rtd_theme" if sphinx_rtd_theme else "default"
 # of the sidebar.
 # html_logo = None
 
+html_static_path = ['_static']
+
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
@@ -138,7 +140,7 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()] if sphinx_rtd_theme e
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
-# html_additional_pages = {}
+html_additional_pages = {'restapi': 'restapi.html'}
 
 # If false, no module index is generated.
 # html_domain_indices = True
