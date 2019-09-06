@@ -1,10 +1,33 @@
 [tool.towncrier]
-package = "pulp_deb"
-filename = "CHANGES.rst"
-directory = "CHANGES/"
-title_format = "{version} ({project_date})"
-template = "CHANGES/.TEMPLATE.rst"
-issue_format = "`#{issue} <https://pulp.plan.io/issues/{issue}>`_"
+    package = "pulp_deb"
+    filename = "CHANGES.rst"
+    directory = "CHANGES/"
+    title_format = "{version} ({project_date})"
+    template = "CHANGES/.TEMPLATE.rst"
+    issue_format = "`#{issue} <https://pulp.plan.io/issues/{issue}>`_"
+
+    [[tool.towncrier.section]]
+        path = ""
+
+    [[tool.towncrier.type]]
+        directory = "feature"
+        name = "Features"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "bugfix"
+        name = "Bugfixes"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "doc"
+        name = "Improved Documentation"
+        showcontent = true
+
+    [[tool.towncrier.type]]
+        directory = "misc"
+        name = "Misc"
+        showcontent = true
 
 [tool.black]
 line-length = 100
