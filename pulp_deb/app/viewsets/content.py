@@ -1,5 +1,7 @@
 from gettext import gettext as _  # noqa
 
+from django_filters import rest_framework as filters
+
 from pulpcore.plugin.viewsets import (
     ContentViewSet,
     ContentFilter,
@@ -41,12 +43,18 @@ class PackageFilter(ContentFilter):
     FilterSet for Package.
     """
 
+    version = filters.CharFilter(field_name="version")
+    version__lt = filters.CharFilter(field_name="version", lookup_expr="lt")
+    version__lte = filters.CharFilter(field_name="version", lookup_expr="lte")
+    version__gt = filters.CharFilter(field_name="version", lookup_expr="gt")
+    version__gte = filters.CharFilter(field_name="version", lookup_expr="gte")
+
     class Meta:
         model = models.Package
         fields = [
             "package",
             "source",
-            "version",
+            # "version",
             "architecture",
             "section",
             "priority",
@@ -84,12 +92,18 @@ class InstallerPackageFilter(ContentFilter):
     FilterSet for InstallerPackage.
     """
 
+    version = filters.CharFilter(field_name="version")
+    version__lt = filters.CharFilter(field_name="version", lookup_expr="lt")
+    version__lte = filters.CharFilter(field_name="version", lookup_expr="lte")
+    version__gt = filters.CharFilter(field_name="version", lookup_expr="gt")
+    version__gte = filters.CharFilter(field_name="version", lookup_expr="gte")
+
     class Meta:
         model = models.InstallerPackage
         fields = [
             "package",
             "source",
-            "version",
+            # "version",
             "architecture",
             "section",
             "priority",
