@@ -63,8 +63,7 @@ class GenericContentSerializer(SingleArtifactContentSerializer, ContentChecksumS
         """Validate the GenericContent data."""
         data = super().validate(data)
 
-        data["sha256"] = data["_artifact"].sha256
-        data["_relative_path"] = data["relative_path"]
+        data["sha256"] = data["artifact"].sha256
 
         content = GenericContent.objects.filter(
             sha256=data["sha256"], relative_path=data["relative_path"]
@@ -81,11 +80,7 @@ class GenericContentSerializer(SingleArtifactContentSerializer, ContentChecksumS
         return data
 
     class Meta:
-        fields = (
-            tuple(set(SingleArtifactContentSerializer.Meta.fields) - {"_relative_path"})
-            + ContentChecksumSerializer.Meta.fields
-            + ("relative_path",)
-        )
+        fields = SingleArtifactContentSerializer.Meta.fields + ContentChecksumSerializer.Meta.fields
         model = GenericContent
 
 
@@ -190,8 +185,6 @@ class PackageSerializer(SingleArtifactContentSerializer):
 
     build_essential = YesNoField(required=False)
 
-    relative_path = CharField(help_text="Path of file relative to url.", required=False)
-
     class Meta:
         fields = SingleArtifactContentSerializer.Meta.fields + (
             "package_name",
@@ -223,7 +216,6 @@ class PackageSerializer(SingleArtifactContentSerializer):
             "pre_depends",
             "provides",
             "replaces",
-            "relative_path",
             "sha256",
         )
         model = Package
@@ -238,8 +230,6 @@ class InstallerPackageSerializer(SingleArtifactContentSerializer):
 
     build_essential = YesNoField(required=False)
 
-    relative_path = CharField(help_text="Path of file relative to url.", required=False)
-
     class Meta:
         fields = SingleArtifactContentSerializer.Meta.fields + (
             "package_name",
@@ -271,7 +261,6 @@ class InstallerPackageSerializer(SingleArtifactContentSerializer):
             "pre_depends",
             "provides",
             "replaces",
-            "relative_path",
             "sha256",
         )
         model = InstallerPackage

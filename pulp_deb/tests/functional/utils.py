@@ -109,7 +109,7 @@ def gen_deb_generic_content_attrs(artifact):
     :param: artifact: A dict of info about the artifact.
     :returns: A semi-random dict for use in creating a content unit.
     """
-    return {"_artifact": artifact["_href"], "relative_path": DEB_GENERIC_CONTENT_RELPATH}
+    return {"artifact": artifact["_href"], "relative_path": DEB_GENERIC_CONTENT_RELPATH}
 
 
 def populate_pulp(cfg, url=DEB_FIXTURE_URL):
