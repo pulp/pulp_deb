@@ -16,7 +16,7 @@ from urllib.parse import urlparse, urlunparse
 
 from django.core.exceptions import ObjectDoesNotExist
 
-from pulpcore.plugin.models import Artifact, ProgressBar, Remote, Repository
+from pulpcore.plugin.models import Artifact, ProgressReport, Remote, Repository
 from pulpcore.plugin.stages import (
     DeclarativeArtifact,
     DeclarativeContent,
@@ -176,7 +176,7 @@ class DebUpdateReleaseAttributes(Stage):
 
         Update release content with information obtained from its artifact.
         """
-        with ProgressBar(message="Update Release units") as pb:
+        with ProgressReport(message="Update Release units", code="update.release") as pb:
             async for d_content in self.items():
                 if isinstance(d_content.content, Release):
                     release = d_content.content
@@ -208,7 +208,7 @@ class DebUpdatePackageIndexAttributes(Stage):  # TODO: Needs a new name
 
         Ensure, that an uncompressed artifact is available.
         """
-        with ProgressBar(message="Update PackageIndex units") as pb:
+        with ProgressReport(message="Update PackageIndex units", code="update.packageindex") as pb:
             async for d_content in self.items():
                 if isinstance(d_content.content, PackageIndex):
                     if not d_content.d_artifacts:
@@ -271,7 +271,7 @@ class DebUpdatePackageAttributes(Stage):
         """
         Update package content with the information obtained from its artifact.
         """
-        with ProgressBar(message="Update Package units") as pb:
+        with ProgressReport(message="Update Package units", code="update.package") as pb:
             async for d_content in self.items():
                 if isinstance(d_content.content, Package):
                     package = d_content.content
@@ -349,8 +349,10 @@ class DebFirstStage(Stage):
         future_releases = []
         future_package_indices = []
         future_installer_file_indices = []
-        with ProgressBar(
-            message="Creating download requests for Release files", total=self.num_distributions
+        with ProgressReport(
+            message="Creating download requests for Release files",
+            code="download.release",
+            total=self.num_distributions,
         ) as pb:
             for distribution in self.distributions:
                 log.info('Downloading Release file for distribution: "{}"'.format(distribution))
@@ -391,7 +393,9 @@ class DebFirstStage(Stage):
                 await self.put(release_dc)
                 pb.increment()
 
-        with ProgressBar(message="Parsing Release files", total=self.num_distributions) as pb:
+        with ProgressReport(
+            message="Parsing Release files", code="parsing.release", total=self.num_distributions
+        ) as pb:
             for release_future in asyncio.as_completed(future_releases):
                 release = await release_future
                 if release is None:
@@ -407,7 +411,9 @@ class DebFirstStage(Stage):
                     await self.put(d_content)
                 pb.increment()
 
-        with ProgressBar(message="Parsing package index files") as pb:
+        with ProgressReport(
+            message="Parsing package index files", code="parsing.packageindex"
+        ) as pb:
             for package_index_future in asyncio.as_completed(future_package_indices):
                 package_index = await package_index_future
                 if package_index is None:
@@ -422,7 +428,9 @@ class DebFirstStage(Stage):
                     await self.put(package_dc)
                 pb.increment()
 
-        with ProgressBar(message="Parsing installer file index files") as pb:
+        with ProgressReport(
+            message="Parsing installer file index files", code="parsing.installer"
+        ) as pb:
             for installer_file_index_future in asyncio.as_completed(future_installer_file_indices):
                 installer_file_index = await installer_file_index_future
                 if installer_file_index is None:
