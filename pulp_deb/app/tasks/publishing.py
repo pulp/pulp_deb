@@ -111,16 +111,12 @@ def publish(repository_version_pk, simple=False, structured=False):
                     _add_to_release(release, package_index_path)
                     _add_to_release(release, gz_package_index_path)
 
-                    package_index = PublishedMetadata(
-                        relative_path=package_index_path,
-                        publication=publication,
-                        file=File(open(package_index_path, "rb")),
+                    package_index = PublishedMetadata.create_from_file(
+                        publication=publication, file=File(open(package_index_path, "rb"))
                     )
                     package_index.save()
-                    gz_package_index = PublishedMetadata(
-                        relative_path=gz_package_index_path,
-                        publication=publication,
-                        file=File(open(gz_package_index_path, "rb")),
+                    gz_package_index = PublishedMetadata.create_from_file(
+                        publication=publication, file=File(open(gz_package_index_path, "rb"))
                     )
                     gz_package_index.save()
                 release["Architectures"] = ", ".join(package_index_files.keys())
@@ -128,10 +124,8 @@ def publish(repository_version_pk, simple=False, structured=False):
                 os.makedirs(os.path.dirname(release_path), exist_ok=True)
                 with open(release_path, "wb") as release_file:
                     release.dump(release_file)
-                release_metadata = PublishedMetadata(
-                    relative_path=release_path,
-                    publication=publication,
-                    file=File(open(release_path, "rb")),
+                release_metadata = PublishedMetadata.create_from_file(
+                    publication=publication, file=File(open(release_path, "rb"))
                 )
                 release_metadata.save()
 
