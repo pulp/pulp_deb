@@ -55,7 +55,7 @@ def get_deb_content_unit_paths(repo, version_href=None):
     """
 
     def _rel_path(package, component=""):
-        sourcename = package["source"] or package["package_name"]
+        sourcename = package["source"] or package["package"]
         if sourcename.startswith("lib"):
             prefix = sourcename[0:4]
         else:
@@ -65,9 +65,7 @@ def get_deb_content_unit_paths(repo, version_href=None):
             component,
             prefix,
             sourcename,
-            "{}_{}_{}.deb".format(
-                package["package_name"], package["version"], package["architecture"]
-            ),
+            "{}_{}_{}.deb".format(package["package"], package["version"], package["architecture"]),
         )
 
     return {
