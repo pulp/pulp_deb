@@ -1,15 +1,18 @@
 from gettext import gettext as _
+from logging import getLogger
+
+from debian import debfile
 
 from rest_framework.serializers import CharField, Field, ValidationError
 from pulpcore.plugin.serializers import (
     ContentChecksumSerializer,
     MultipleArtifactContentSerializer,
-    SingleArtifactContentSerializer,
+    SingleArtifactContentUploadSerializer,
     DetailRelatedField,
-    relative_path_validator,
 )
 
 from pulp_deb.app.models import (
+    BasePackage,
     GenericContent,
     InstallerFileIndex,
     InstallerPackage,
@@ -17,6 +20,9 @@ from pulp_deb.app.models import (
     PackageIndex,
     Release,
 )
+
+
+log = getLogger(__name__)
 
 
 class YesNoField(Field):
@@ -46,29 +52,21 @@ class YesNoField(Field):
             raise ValidationError('Value must be "yes" or "no".')
 
 
-class GenericContentSerializer(SingleArtifactContentSerializer, ContentChecksumSerializer):
+class GenericContentSerializer(SingleArtifactContentUploadSerializer, ContentChecksumSerializer):
     """
     A serializer for GenericContent.
     """
 
-    relative_path = CharField(
-        help_text=_(
-            "Relative location of the file within the repository. " "Example: `path/to/file.txt`"
-        ),
-        validators=[relative_path_validator],
-        required=True,
-    )
-
-    def validate(self, data):
+    def deferred_validate(self, data):
         """Validate the GenericContent data."""
-        data = super().validate(data)
+
+        data = super().deferred_validate(data)
 
         data["sha256"] = data["artifact"].sha256
 
         content = GenericContent.objects.filter(
             sha256=data["sha256"], relative_path=data["relative_path"]
         )
-
         if content.exists():
             raise ValidationError(
                 _(
@@ -79,8 +77,11 @@ class GenericContentSerializer(SingleArtifactContentSerializer, ContentChecksumS
 
         return data
 
-    class Meta:
-        fields = SingleArtifactContentSerializer.Meta.fields + ContentChecksumSerializer.Meta.fields
+    class Meta(SingleArtifactContentUploadSerializer.Meta):
+        fields = (
+            SingleArtifactContentUploadSerializer.Meta.fields
+            + ContentChecksumSerializer.Meta.fields
+        )
         model = GenericContent
 
 
@@ -176,91 +177,131 @@ class InstallerFileIndexSerializer(MultipleArtifactContentSerializer):
         model = InstallerFileIndex
 
 
-class PackageSerializer(SingleArtifactContentSerializer):
+class BasePackageSerializer(SingleArtifactContentUploadSerializer, ContentChecksumSerializer):
+    """
+    A Serializer for abstract BasePackage.
+    """
+
+    package_name = CharField(read_only=True)
+    source = CharField(read_only=True)
+    version = CharField(read_only=True)
+    architecture = CharField(read_only=True)
+    section = CharField(read_only=True)
+    priority = CharField(read_only=True)
+    origin = CharField(read_only=True)
+    tag = CharField(read_only=True)
+    bugs = CharField(read_only=True)
+    essential = YesNoField(read_only=True)
+    build_essential = YesNoField(read_only=True)
+    installed_size = CharField(read_only=True)
+    maintainer = CharField(read_only=True)
+    original_maintainer = CharField(read_only=True)
+    description = CharField(read_only=True)
+    description_md5 = CharField(read_only=True)
+    homepage = CharField(read_only=True)
+    built_using = CharField(read_only=True)
+    auto_built_package = CharField(read_only=True)
+    multi_arch = CharField(read_only=True)
+    breaks = CharField(read_only=True)
+    conflicts = CharField(read_only=True)
+    depends = CharField(read_only=True)
+    recommends = CharField(read_only=True)
+    suggests = CharField(read_only=True)
+    enhances = CharField(read_only=True)
+    pre_depends = CharField(read_only=True)
+    provides = CharField(read_only=True)
+    replaces = CharField(read_only=True)
+
+    def __init__(self, *args, **kwargs):
+        """Initializer for BasePackageSerializer."""
+        super().__init__(*args, **kwargs)
+        self.fields["relative_path"].required = False
+
+    def deferred_validate(self, data):
+        """Validate that the artifact is a package and extract it's values."""
+
+        data = super().deferred_validate(data)
+
+        try:
+            package_paragraph = debfile.DebFile(fileobj=data["artifact"].file).debcontrol()
+        except Exception:  # TODO: Be more specific
+            raise ValidationError(_("Not a valid Deb Package"))
+
+        package_dict = self.Meta.model.from822(package_paragraph)
+        data.update(package_dict)
+        data["sha256"] = data["artifact"].sha256
+        if "relative_path" not in data:
+            data["relative_path"] = self.Meta.model(**package_dict).filename()
+
+        content = self.Meta.model.objects.filter(
+            sha256=data["sha256"], relative_path=data["relative_path"]
+        )
+        if content.exists():
+            raise ValidationError(
+                _(
+                    "There is already a deb package with relative path '{path}' and sha256 "
+                    "'{sha256}'."
+                ).format(path=data["relative_path"], sha256=data["sha256"])
+            )
+
+        return data
+
+    class Meta(SingleArtifactContentUploadSerializer.Meta):
+        fields = (
+            SingleArtifactContentUploadSerializer.Meta.fields
+            + ContentChecksumSerializer.Meta.fields
+            + (
+                "package_name",
+                "source",
+                "version",
+                "architecture",
+                "section",
+                "priority",
+                "origin",
+                "tag",
+                "bugs",
+                "essential",
+                "build_essential",
+                "installed_size",
+                "maintainer",
+                "original_maintainer",
+                "description",
+                "description_md5",
+                "homepage",
+                "built_using",
+                "auto_built_package",
+                "multi_arch",
+                "breaks",
+                "conflicts",
+                "depends",
+                "recommends",
+                "suggests",
+                "enhances",
+                "pre_depends",
+                "provides",
+                "replaces",
+            )
+        )
+        model = BasePackage
+
+
+class PackageSerializer(BasePackageSerializer):
     """
     A Serializer for Package.
     """
 
-    essential = YesNoField(required=False)
+    # TODO validate for 'normal' Package
 
-    build_essential = YesNoField(required=False)
-
-    class Meta:
-        fields = SingleArtifactContentSerializer.Meta.fields + (
-            "package_name",
-            "source",
-            "version",
-            "architecture",
-            "section",
-            "priority",
-            "origin",
-            "tag",
-            "bugs",
-            "essential",
-            "build_essential",
-            "installed_size",
-            "maintainer",
-            "original_maintainer",
-            "description",
-            "description_md5",
-            "homepage",
-            "built_using",
-            "auto_built_package",
-            "multi_arch",
-            "breaks",
-            "conflicts",
-            "depends",
-            "recommends",
-            "suggests",
-            "enhances",
-            "pre_depends",
-            "provides",
-            "replaces",
-            "sha256",
-        )
+    class Meta(BasePackageSerializer.Meta):
         model = Package
 
 
-class InstallerPackageSerializer(SingleArtifactContentSerializer):
+class InstallerPackageSerializer(BasePackageSerializer):
     """
     A Serializer for InstallerPackage.
     """
 
-    essential = YesNoField(required=False)
+    # TODO validate for InstallerPackage
 
-    build_essential = YesNoField(required=False)
-
-    class Meta:
-        fields = SingleArtifactContentSerializer.Meta.fields + (
-            "package_name",
-            "source",
-            "version",
-            "architecture",
-            "section",
-            "priority",
-            "origin",
-            "tag",
-            "bugs",
-            "essential",
-            "build_essential",
-            "installed_size",
-            "maintainer",
-            "original_maintainer",
-            "description",
-            "description_md5",
-            "homepage",
-            "built_using",
-            "auto_built_package",
-            "multi_arch",
-            "breaks",
-            "conflicts",
-            "depends",
-            "recommends",
-            "suggests",
-            "enhances",
-            "pre_depends",
-            "provides",
-            "replaces",
-            "sha256",
-        )
+    class Meta(BasePackageSerializer.Meta):
         model = InstallerPackage
