@@ -143,6 +143,38 @@ class BasePackage(Content):
     Abstract base class for package like content.
     """
 
+    TRANSLATION_DICT = {
+        "package": "Package",
+        "source": "Source",
+        "version": "Version",
+        "architecture": "Architecture",
+        "section": "Section",
+        "priority": "Priority",
+        "origin": "Origin",
+        "tag": "Tag",
+        "bugs": "Bugs",
+        "essential": "Essential",
+        "build_essential": "Build_essential",
+        "installed_size": "Installed_size",
+        "maintainer": "Maintainer",
+        "original_maintainer": "Original_Maintainer",
+        "description": "Description",
+        "description_md5": "Description_MD5",
+        "homepage": "Homepage",
+        "built_using": "Built_Using",
+        "auto_built_package": "Auto_Built_Package",
+        "multi_arch": "Multi_Arch",
+        "breaks": "Breaks",
+        "conflicts": "Conflicts",
+        "depends": "Depends",
+        "recommends": "Recommends",
+        "suggests": "Suggests",
+        "enhances": "Enhances",
+        "pre_depends": "Pre_Depends",
+        "provides": "Provides",
+        "replaces": "Replaces",
+    }
+
     MULTIARCH_CHOICES = [
         ("no", "no"),
         ("same", "same"),
@@ -150,14 +182,51 @@ class BasePackage(Content):
         ("allowed", "allowed"),
     ]
 
+    package = models.CharField(max_length=255)  # package name
+    source = models.CharField(max_length=255, null=True)  # source package name
+    version = models.CharField(max_length=255)
+    architecture = models.CharField(max_length=255)  # all, i386, ...
+    section = models.CharField(max_length=255, null=True)  # admin, comm, database, ...
+    priority = models.CharField(max_length=255, null=True)  # required, standard, optional, extra
+    origin = models.CharField(max_length=255, null=True)
+    tag = models.TextField(null=True)
+    bugs = models.TextField(null=True)
+    essential = models.BooleanField(null=True, choices=BOOL_CHOICES)
+    build_essential = models.BooleanField(null=True, choices=BOOL_CHOICES)
+    installed_size = models.IntegerField(null=True)
+    maintainer = models.CharField(max_length=255)
+    original_maintainer = models.CharField(max_length=255, null=True)
+    description = models.TextField()
+    description_md5 = models.CharField(max_length=255, null=True)
+    homepage = models.CharField(max_length=255, null=True)
+    built_using = models.CharField(max_length=255, null=True)
+    auto_built_package = models.CharField(max_length=255, null=True)
+    multi_arch = models.CharField(max_length=255, null=True, choices=MULTIARCH_CHOICES)
+
+    # Depends et al
+    breaks = models.TextField(null=True)
+    conflicts = models.TextField(null=True)
+    depends = models.TextField(null=True)
+    recommends = models.TextField(null=True)
+    suggests = models.TextField(null=True)
+    enhances = models.TextField(null=True)
+    pre_depends = models.TextField(null=True)
+    provides = models.TextField(null=True)
+    replaces = models.TextField(null=True)
+
+    # relative path in the upstream repository
+    relative_path = models.CharField(max_length=255, null=False)
+    # this digest is transferred to the content as a natural_key
+    sha256 = models.CharField(max_length=255, null=False)
+
     @property
     def name(self):
         """Print a nice name for Packages."""
-        return "{}_{}_{}".format(self.package_name, self.version, self.architecture)
+        return "{}_{}_{}".format(self.package, self.version, self.architecture)
 
     def filename(self, component=""):
         """Assemble filename in pool directory."""
-        sourcename = self.source or self.package_name
+        sourcename = self.source or self.package
         if sourcename.startswith("lib"):
             prefix = sourcename[0:4]
         else:
@@ -199,6 +268,7 @@ class BasePackage(Content):
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
+        unique_together = (("relative_path", "sha256"),)
         abstract = True
 
 
@@ -213,78 +283,9 @@ class Package(BasePackage):
     TYPE = "package"
 
     SUFFIX = "deb"
-    TRANSLATION_DICT = {
-        "package_name": "Package",  # Workaround (this field should be called 'package')
-        "source": "Source",
-        "version": "Version",
-        "architecture": "Architecture",
-        "section": "Section",
-        "priority": "Priority",
-        "origin": "Origin",
-        "tag": "Tag",
-        "bugs": "Bugs",
-        "essential": "Essential",
-        "build_essential": "Build_essential",
-        "installed_size": "Installed_size",
-        "maintainer": "Maintainer",
-        "original_maintainer": "Original_Maintainer",
-        "description": "Description",
-        "description_md5": "Description_MD5",
-        "homepage": "Homepage",
-        "built_using": "Built_Using",
-        "auto_built_package": "Auto_Built_Package",
-        "multi_arch": "Multi_Arch",
-        "breaks": "Breaks",
-        "conflicts": "Conflicts",
-        "depends": "Depends",
-        "recommends": "Recommends",
-        "suggests": "Suggests",
-        "enhances": "Enhances",
-        "pre_depends": "Pre_Depends",
-        "provides": "Provides",
-        "replaces": "Replaces",
-    }
 
-    package_name = models.CharField(max_length=255)  # package name
-    source = models.CharField(max_length=255, null=True)  # source package name
-    version = models.CharField(max_length=255)
-    architecture = models.CharField(max_length=255)  # all, i386, ...
-    section = models.CharField(max_length=255, null=True)  # admin, comm, database, ...
-    priority = models.CharField(max_length=255, null=True)  # required, standard, optional, extra
-    origin = models.CharField(max_length=255, null=True)
-    tag = models.TextField(null=True)
-    bugs = models.TextField(null=True)
-    essential = models.BooleanField(null=True, choices=BOOL_CHOICES)
-    build_essential = models.BooleanField(null=True, choices=BOOL_CHOICES)
-    installed_size = models.IntegerField(null=True)
-    maintainer = models.CharField(max_length=255)
-    original_maintainer = models.CharField(max_length=255, null=True)
-    description = models.TextField()
-    description_md5 = models.CharField(max_length=255, null=True)
-    homepage = models.CharField(max_length=255, null=True)
-    built_using = models.CharField(max_length=255, null=True)
-    auto_built_package = models.CharField(max_length=255, null=True)
-    multi_arch = models.CharField(max_length=255, null=True, choices=BasePackage.MULTIARCH_CHOICES)
-
-    # Depends et al
-    breaks = models.TextField(null=True)
-    conflicts = models.TextField(null=True)
-    depends = models.TextField(null=True)
-    recommends = models.TextField(null=True)
-    suggests = models.TextField(null=True)
-    enhances = models.TextField(null=True)
-    pre_depends = models.TextField(null=True)
-    provides = models.TextField(null=True)
-    replaces = models.TextField(null=True)
-
-    # relative path in the upstream repository
-    relative_path = models.CharField(max_length=255, null=False)
-    # this digest is transferred to the content as a natural_key
-    sha256 = models.CharField(max_length=255, null=False)
-
-    class Meta:
-        default_related_name = "%(app_label)s_%(model_name)s"
-        unique_together = (("relative_path", "sha256"),)
+    class Meta(BasePackage.Meta):
+        pass
 
 
 class InstallerPackage(BasePackage):
@@ -298,78 +299,9 @@ class InstallerPackage(BasePackage):
     TYPE = "installer_package"
 
     SUFFIX = "udeb"
-    TRANSLATION_DICT = {
-        "package_name": "Package",  # Workaround (this field should be called 'package')
-        "source": "Source",
-        "version": "Version",
-        "architecture": "Architecture",
-        "section": "Section",
-        "priority": "Priority",
-        "origin": "Origin",
-        "tag": "Tag",
-        "bugs": "Bugs",
-        "essential": "Essential",
-        "build_essential": "Build_essential",
-        "installed_size": "Installed_size",
-        "maintainer": "Maintainer",
-        "original_maintainer": "Original_Maintainer",
-        "description": "Description",
-        "description_md5": "Description_MD5",
-        "homepage": "Homepage",
-        "built_using": "Built_Using",
-        "auto_built_package": "Auto_Built_Package",
-        "multi_arch": "Multi_Arch",
-        "breaks": "Breaks",
-        "conflicts": "Conflicts",
-        "depends": "Depends",
-        "recommends": "Recommends",
-        "suggests": "Suggests",
-        "enhances": "Enhances",
-        "pre_depends": "Pre_Depends",
-        "provides": "Provides",
-        "replaces": "Replaces",
-    }
 
-    package_name = models.CharField(max_length=255)  # package name
-    source = models.CharField(max_length=255, null=True)  # source package name
-    version = models.CharField(max_length=255)
-    architecture = models.CharField(max_length=255)  # all, i386, ...
-    section = models.CharField(max_length=255, null=True)  # admin, comm, database, ...
-    priority = models.CharField(max_length=255, null=True)  # required, standard, optional, extra
-    origin = models.CharField(max_length=255, null=True)
-    tag = models.TextField(null=True)
-    bugs = models.TextField(null=True)
-    essential = models.BooleanField(null=True, choices=BOOL_CHOICES)
-    build_essential = models.BooleanField(null=True, choices=BOOL_CHOICES)
-    installed_size = models.IntegerField(null=True)
-    maintainer = models.CharField(max_length=255)
-    original_maintainer = models.CharField(max_length=255, null=True)
-    description = models.TextField()
-    description_md5 = models.CharField(max_length=255, null=True)
-    homepage = models.CharField(max_length=255, null=True)
-    built_using = models.CharField(max_length=255, null=True)
-    auto_built_package = models.CharField(max_length=255, null=True)
-    multi_arch = models.CharField(max_length=255, null=True, choices=BasePackage.MULTIARCH_CHOICES)
-
-    # Depends et al
-    breaks = models.TextField(null=True)
-    conflicts = models.TextField(null=True)
-    depends = models.TextField(null=True)
-    recommends = models.TextField(null=True)
-    suggests = models.TextField(null=True)
-    enhances = models.TextField(null=True)
-    pre_depends = models.TextField(null=True)
-    provides = models.TextField(null=True)
-    replaces = models.TextField(null=True)
-
-    # relative path in the upstream repository
-    relative_path = models.CharField(max_length=255, null=False)
-    # this digest is transferred to the content as a natural_key
-    sha256 = models.CharField(max_length=255, null=False)
-
-    class Meta:
-        default_related_name = "%(app_label)s_%(model_name)s"
-        unique_together = (("relative_path", "sha256"),)
+    class Meta(BasePackage.Meta):
+        pass
 
 
 class VerbatimPublication(Publication):

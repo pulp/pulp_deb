@@ -182,7 +182,7 @@ class BasePackageSerializer(SingleArtifactContentUploadSerializer, ContentChecks
     A Serializer for abstract BasePackage.
     """
 
-    package_name = CharField(read_only=True)
+    package = CharField(read_only=True)
     source = CharField(read_only=True)
     version = CharField(read_only=True)
     architecture = CharField(read_only=True)
@@ -251,7 +251,7 @@ class BasePackageSerializer(SingleArtifactContentUploadSerializer, ContentChecks
             SingleArtifactContentUploadSerializer.Meta.fields
             + ContentChecksumSerializer.Meta.fields
             + (
-                "package_name",
+                "package",
                 "source",
                 "version",
                 "architecture",
