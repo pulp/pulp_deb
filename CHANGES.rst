@@ -13,6 +13,64 @@ Changelog
 
 .. towncrier release notes start
 
+2.0.0b2 (2019-10-02)
+====================
+
+Features
+--------
+
+
+- Rework Package and InstallerPackage serializers to allow creation from artifact or uploaded file with specifying any metadata.
+  `#5379 <https://pulp.plan.io/issues/5379>`_
+- Change generic content serializer to create content units by either specifying an artifact or uploading a file.
+  `#5403 <https://pulp.plan.io/issues/5403>`_,
+  `#5487 <https://pulp.plan.io/issues/5487>`_
+
+
+
+Deprecations and Removals
+-------------------------
+
+
+- Remove one shot uploader in favor of the combined create endpoint.
+  `#5403 <https://pulp.plan.io/issues/5403>`_
+
+
+
+Bugfixes
+--------
+
+
+- Change content serializers to use relative_path instead of _relative_path.
+  `#5376 <https://pulp.plan.io/issues/5376>`_
+
+
+
+Improved Documentation
+----------------------
+
+
+- Change the prefix of Pulp services from pulp-* to pulpcore-*
+  `#4554 <https://pulp.plan.io/issues/4554>`_
+- Reflect artifact and upload functionality in the content create endpoint documentation.
+  `#5371 <https://pulp.plan.io/issues/5371>`_
+
+
+
+Misc
+----
+
+
+- PublishedMetadata is now a type of Content.
+  `#5304 <https://pulp.plan.io/issues/5304>`_
+- Replace `ProgressBar` with `ProgressReport`.
+  `#5477 <https://pulp.plan.io/issues/5477>`_
+
+
+
+----
+
+
 2.0.0b1 (2019-09-06)
 ====================
 

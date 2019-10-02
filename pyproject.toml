@@ -15,6 +15,11 @@
         showcontent = true
 
     [[tool.towncrier.type]]
+        directory = "removal"
+        name = "Deprecations and Removals"
+        showcontent = true
+
+    [[tool.towncrier.type]]
         directory = "bugfix"
         name = "Bugfixes"
         showcontent = true
