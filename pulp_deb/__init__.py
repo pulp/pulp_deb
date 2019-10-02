@@ -1,3 +1,3 @@
-__version__ = "2.0.0b2"
+__version__ = "2.0.0b3.dev"
 
 default_app_config = "pulp_deb.app.PulpDebPluginAppConfig"
