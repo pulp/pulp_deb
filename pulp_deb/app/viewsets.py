@@ -21,6 +21,9 @@ from pulpcore.plugin.viewsets import (
 from . import models, serializers, tasks
 
 
+# Content
+
+
 class GenericContentFilter(ContentFilter):
     """
     FilterSet for GenericContent.
@@ -28,37 +31,7 @@ class GenericContentFilter(ContentFilter):
 
     class Meta:
         model = models.GenericContent
-        fields = ["relative_path"]
-
-
-class ReleaseFilter(ContentFilter):
-    """
-    FilterSet for Release.
-    """
-
-    class Meta:
-        model = models.Release
-        fields = ["codename", "suite", "relative_path"]
-
-
-class PackageFilter(ContentFilter):
-    """
-    FilterSet for Package.
-    """
-
-    class Meta:
-        model = models.Package
-        fields = ["relative_path"]
-
-
-class InstallerPackageFilter(ContentFilter):
-    """
-    FilterSet for InstallerPackage.
-    """
-
-    class Meta:
-        model = models.InstallerPackage
-        fields = ["relative_path"]
+        fields = ["relative_path", "sha256"]
 
 
 class GenericContentViewSet(SingleArtifactContentUploadViewSet):
@@ -69,37 +42,35 @@ class GenericContentViewSet(SingleArtifactContentUploadViewSet):
     endpoint_name = "generic_contents"
     queryset = models.GenericContent.objects.prefetch_related("_artifacts")
     serializer_class = serializers.GenericContentSerializer
-    filter_set_class = GenericContentFilter
+    filterset_class = GenericContentFilter
 
 
-class ReleaseViewSet(ContentViewSet):
+class PackageFilter(ContentFilter):
     """
-    A ViewSet for Release.
-    """
-
-    endpoint_name = "releases"
-    queryset = models.Release.objects.all()
-    serializer_class = serializers.ReleaseSerializer
-
-
-class PackageIndexViewSet(ContentViewSet):
-    """
-    A ViewSet for PackageIndex.
+    FilterSet for Package.
     """
 
-    endpoint_name = "package_index"
-    queryset = models.PackageIndex.objects.all()
-    serializer_class = serializers.PackageIndexSerializer
-
-
-class InstallerFileIndexViewSet(ContentViewSet):
-    """
-    A ViewSet for InstallerFileIndex.
-    """
-
-    endpoint_name = "installer_file_index"
-    queryset = models.InstallerFileIndex.objects.all()
-    serializer_class = serializers.InstallerFileIndexSerializer
+    class Meta:
+        model = models.Package
+        fields = [
+            "package",
+            "source",
+            "version",
+            "architecture",
+            "section",
+            "priority",
+            "origin",
+            "tag",
+            "essential",
+            "build_essential",
+            "installed_size",
+            "maintainer",
+            "original_maintainer",
+            "built_using",
+            "auto_built_package",
+            "multi_arch",
+            "sha256",
+        ]
 
 
 class PackageViewSet(SingleArtifactContentUploadViewSet):
@@ -110,7 +81,35 @@ class PackageViewSet(SingleArtifactContentUploadViewSet):
     endpoint_name = "packages"
     queryset = models.Package.objects.prefetch_related("_artifacts")
     serializer_class = serializers.PackageSerializer
-    filter_set_class = PackageFilter
+    filterset_class = PackageFilter
+
+
+class InstallerPackageFilter(ContentFilter):
+    """
+    FilterSet for InstallerPackage.
+    """
+
+    class Meta:
+        model = models.InstallerPackage
+        fields = [
+            "package",
+            "source",
+            "version",
+            "architecture",
+            "section",
+            "priority",
+            "origin",
+            "tag",
+            "essential",
+            "build_essential",
+            "installed_size",
+            "maintainer",
+            "original_maintainer",
+            "built_using",
+            "auto_built_package",
+            "multi_arch",
+            "sha256",
+        ]
 
 
 class InstallerPackageViewSet(SingleArtifactContentUploadViewSet):
@@ -121,7 +120,76 @@ class InstallerPackageViewSet(SingleArtifactContentUploadViewSet):
     endpoint_name = "installer_packages"
     queryset = models.InstallerPackage.objects.prefetch_related("_artifacts")
     serializer_class = serializers.InstallerPackageSerializer
-    filter_set_class = InstallerPackageFilter
+    filterset_class = InstallerPackageFilter
+
+
+# Metadata
+
+
+class ReleaseFilter(ContentFilter):
+    """
+    FilterSet for Release.
+    """
+
+    class Meta:
+        model = models.Release
+        fields = ["codename", "suite", "relative_path", "sha256"]
+
+
+class ReleaseViewSet(ContentViewSet):
+    """
+    A ViewSet for Release.
+    """
+
+    endpoint_name = "releases"
+    queryset = models.Release.objects.all()
+    serializer_class = serializers.ReleaseSerializer
+    filterset_class = ReleaseFilter
+
+
+class PackageIndexFilter(ContentFilter):
+    """
+    FilterSet for PackageIndex.
+    """
+
+    class Meta:
+        model = models.PackageIndex
+        fields = ["component", "architecture", "relative_path", "sha256"]
+
+
+class PackageIndexViewSet(ContentViewSet):
+    """
+    A ViewSet for PackageIndex.
+    """
+
+    endpoint_name = "package_index"
+    queryset = models.PackageIndex.objects.all()
+    serializer_class = serializers.PackageIndexSerializer
+    filterset_class = PackageIndexFilter
+
+
+class InstallerFileIndexFilter(ContentFilter):
+    """
+    FilterSet for InstallerFileIndex.
+    """
+
+    class Meta:
+        model = models.InstallerFileIndex
+        fields = ["component", "architecture", "relative_path", "sha256"]
+
+
+class InstallerFileIndexViewSet(ContentViewSet):
+    """
+    A ViewSet for InstallerFileIndex.
+    """
+
+    endpoint_name = "installer_file_index"
+    queryset = models.InstallerFileIndex.objects.all()
+    serializer_class = serializers.InstallerFileIndexSerializer
+    filterset_class = InstallerFileIndexFilter
+
+
+# Infrastructure
 
 
 class DebRemoteViewSet(RemoteViewSet):
