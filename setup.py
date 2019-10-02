@@ -2,7 +2,7 @@
 
 from setuptools import find_packages, setup
 
-requirements = ["pulpcore-plugin==0.1rc6", "python-debian>=0.1.36"]
+requirements = ["pulpcore-plugin~=0.1rc6", "python-debian>=0.1.36"]
 
 setup(
     name="pulp-deb",
