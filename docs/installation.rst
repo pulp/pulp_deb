@@ -56,8 +56,8 @@ Run Services
 
 .. code-block:: bash
 
-   sudo systemctl restart pulp-content-app
-   sudo systemctl restart pulp-api
-   sudo systemctl restart pulp-resource-manager
-   sudo systemctl restart pulp-worker@1
-   sudo systemctl restart pulp-worker@2
+   sudo systemctl restart pulpcore-content-app
+   sudo systemctl restart pulpcore-api
+   sudo systemctl restart pulpcore-resource-manager
+   sudo systemctl restart pulpcore-worker@1
+   sudo systemctl restart pulpcore-worker@2
