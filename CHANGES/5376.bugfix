@@ -1,1 +1,0 @@
-Change content serializers to use relative_path instead of _relative_path.
