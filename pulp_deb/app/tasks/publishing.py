@@ -82,7 +82,7 @@ def publish(repository_version_pk, simple=False, structured=False):
                 release["SHA512"] = []
                 package_index_files = {}
                 for package in Package.objects.filter(
-                    pk__in=repo_version.content.order_by("-_created")
+                    pk__in=repo_version.content.order_by("-pulp_created")
                 ):
                     published_artifact = PublishedArtifact(
                         relative_path=package.filename(),
