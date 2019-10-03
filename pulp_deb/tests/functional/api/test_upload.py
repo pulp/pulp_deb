@@ -48,15 +48,15 @@ class SingleRequestUploadTestCase(unittest.TestCase):
         if relative_path:
             data["relative_path"] = relative_path
         if repo:
-            data["repository"] = repo["_href"]
+            data["repository"] = repo["pulp_href"]
         return self.client.post(DEB_PACKAGE_PATH, files=self.file, data=data)
 
     def test_single_request_upload(self):
         """Test single request upload."""
         repo = self.client.post(REPO_PATH, gen_repo())
-        self.addCleanup(self.client.delete, repo["_href"])
+        self.addCleanup(self.client.delete, repo["pulp_href"])
         self.single_request_upload(repo=repo)
-        repo = self.client.get(repo["_href"])
+        repo = self.client.get(repo["pulp_href"])
 
         # Assertion about repo version.
         self.assertIsNotNone(repo["_latest_version_href"], repo)
@@ -75,7 +75,7 @@ class SingleRequestUploadTestCase(unittest.TestCase):
     def test_duplicate_unit(self):
         """Test single request upload for unit already present in Pulp."""
         repo = self.client.post(REPO_PATH, gen_repo())
-        self.addCleanup(self.client.delete, repo["_href"])
+        self.addCleanup(self.client.delete, repo["pulp_href"])
         # Hint this relative path is different from the one from a simple upload, because it
         # contains the release
         result = self.single_request_upload(relative_path=DEB_PACKAGE_RELPATH)
@@ -94,11 +94,11 @@ class SingleRequestUploadTestCase(unittest.TestCase):
     def test_sync_interference(self):
         """Test that uploading a file does not break a consecutive sync containing that file."""
         upload_repo = self.client.post(REPO_PATH, gen_repo())
-        self.addCleanup(self.client.delete, upload_repo["_href"])
+        self.addCleanup(self.client.delete, upload_repo["pulp_href"])
         sync_repo = self.client.post(REPO_PATH, gen_repo())
-        self.addCleanup(self.client.delete, sync_repo["_href"])
+        self.addCleanup(self.client.delete, sync_repo["pulp_href"])
         remote = self.client.post(DEB_REMOTE_PATH, gen_deb_remote())
-        self.addCleanup(self.client.delete, remote["_href"])
+        self.addCleanup(self.client.delete, remote["pulp_href"])
 
         # upload a file into one repository
         self.single_request_upload(repo=upload_repo)

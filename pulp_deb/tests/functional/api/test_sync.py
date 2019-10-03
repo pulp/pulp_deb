@@ -38,16 +38,16 @@ class BasicSyncTestCase(unittest.TestCase):
         6. Assert that repository version is different from the previous one.
         """
         repo = self.client.post(REPO_PATH, gen_repo())
-        self.addCleanup(self.client.delete, repo["_href"])
+        self.addCleanup(self.client.delete, repo["pulp_href"])
 
         body = gen_deb_remote()
         remote = self.client.post(DEB_REMOTE_PATH, body)
-        self.addCleanup(self.client.delete, remote["_href"])
+        self.addCleanup(self.client.delete, remote["pulp_href"])
 
         # Sync the repository.
         self.assertIsNone(repo["_latest_version_href"])
         sync(self.cfg, remote, repo)
-        repo = self.client.get(repo["_href"])
+        repo = self.client.get(repo["pulp_href"])
 
         self.assertIsNotNone(repo["_latest_version_href"])
         self.assertDictEqual(get_content_summary(repo), DEB_FIXTURE_SUMMARY)
@@ -56,7 +56,7 @@ class BasicSyncTestCase(unittest.TestCase):
         # Sync the repository again.
         latest_version_href = repo["_latest_version_href"]
         sync(self.cfg, remote, repo)
-        repo = self.client.get(repo["_href"])
+        repo = self.client.get(repo["pulp_href"])
 
         self.assertNotEqual(latest_version_href, repo["_latest_version_href"])
         self.assertDictEqual(get_content_summary(repo), DEB_FIXTURE_SUMMARY)
@@ -82,10 +82,10 @@ class BasicSyncTestCase(unittest.TestCase):
             raise unittest.SkipTest("lsof package is not present")
 
         repo = self.client.post(REPO_PATH, gen_repo())
-        self.addCleanup(self.client.delete, repo["_href"])
+        self.addCleanup(self.client.delete, repo["pulp_href"])
 
         remote = self.client.post(DEB_REMOTE_PATH, gen_deb_remote())
-        self.addCleanup(self.client.delete, remote["_href"])
+        self.addCleanup(self.client.delete, remote["pulp_href"])
 
         sync(self.cfg, remote, repo)
 
@@ -108,11 +108,11 @@ class SyncInvalidURLTestCase(unittest.TestCase):
         client = api.Client(cfg, api.json_handler)
 
         repo = client.post(REPO_PATH, gen_repo())
-        self.addCleanup(client.delete, repo["_href"])
+        self.addCleanup(client.delete, repo["pulp_href"])
 
         body = gen_deb_remote(url="http://i-am-an-invalid-url.com/invalid/")
         remote = client.post(DEB_REMOTE_PATH, body)
-        self.addCleanup(client.delete, remote["_href"])
+        self.addCleanup(client.delete, remote["pulp_href"])
 
         with self.assertRaises(exceptions.TaskReportError):
             sync(cfg, remote, repo)

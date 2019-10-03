@@ -78,16 +78,16 @@ class SyncPublishDownloadPolicyTestCase(unittest.TestCase):
         # file system
         delete_orphans(self.cfg)
         repo = self.client.post(REPO_PATH, gen_repo())
-        self.addCleanup(self.client.delete, repo["_href"])
+        self.addCleanup(self.client.delete, repo["pulp_href"])
 
         body = gen_deb_remote(policy=download_policy)
         remote = self.client.post(DEB_REMOTE_PATH, body)
-        self.addCleanup(self.client.delete, remote["_href"])
+        self.addCleanup(self.client.delete, remote["pulp_href"])
 
         # Sync the repository.
         self.assertIsNone(repo["_latest_version_href"])
         sync(self.cfg, remote, repo)
-        repo = self.client.get(repo["_href"])
+        repo = self.client.get(repo["pulp_href"])
 
         self.assertIsNotNone(repo["_latest_version_href"])
         self.assertDictEqual(get_content_summary(repo), DEB_FIXTURE_SUMMARY)
@@ -96,7 +96,7 @@ class SyncPublishDownloadPolicyTestCase(unittest.TestCase):
         # Sync the repository again.
         latest_version_href = repo["_latest_version_href"]
         sync(self.cfg, remote, repo)
-        repo = self.client.get(repo["_href"])
+        repo = self.client.get(repo["pulp_href"])
 
         self.assertNotEqual(latest_version_href, repo["_latest_version_href"])
         self.assertDictEqual(get_content_summary(repo), DEB_FIXTURE_SUMMARY)
@@ -105,14 +105,14 @@ class SyncPublishDownloadPolicyTestCase(unittest.TestCase):
     def do_publish(self, download_policy):
         """Publish repository synced with lazy download policy."""
         repo = self.client.post(REPO_PATH, gen_repo())
-        self.addCleanup(self.client.delete, repo["_href"])
+        self.addCleanup(self.client.delete, repo["pulp_href"])
 
         body = gen_deb_remote(policy=download_policy)
         remote = self.client.post(DEB_REMOTE_PATH, body)
-        self.addCleanup(self.client.delete, remote["_href"])
+        self.addCleanup(self.client.delete, remote["pulp_href"])
 
         sync(self.cfg, remote, repo)
-        repo = self.client.get(repo["_href"])
+        repo = self.client.get(repo["pulp_href"])
 
         publication = create_deb_publication(self.cfg, repo)
         self.assertIsNotNone(publication["repository_version"], publication)
@@ -150,16 +150,16 @@ class LazySyncedContentAccessTestCase(unittest.TestCase):
         # file system
         delete_orphans(self.cfg)
         repo = self.client.post(REPO_PATH, gen_repo())
-        self.addCleanup(self.client.delete, repo["_href"])
+        self.addCleanup(self.client.delete, repo["pulp_href"])
 
         body = gen_deb_remote(policy=policy)
         remote = self.client.post(DEB_REMOTE_PATH, body)
-        self.addCleanup(self.client.delete, remote["_href"])
+        self.addCleanup(self.client.delete, remote["pulp_href"])
 
         # Sync the repository.
         self.assertIsNone(repo["_latest_version_href"])
         sync(self.cfg, remote, repo)
-        repo = self.client.get(repo["_href"])
+        repo = self.client.get(repo["pulp_href"])
         self.assertIsNotNone(repo["_latest_version_href"])
 
         # Assert that no HTTP error was raised.
@@ -190,11 +190,11 @@ class SwitchDownloadPolicyTestCase(unittest.TestCase):
         client = api.Client(cfg, api.page_handler)
 
         repo = client.post(REPO_PATH, gen_repo())
-        self.addCleanup(client.delete, repo["_href"])
+        self.addCleanup(client.delete, repo["pulp_href"])
 
         body = gen_deb_remote(policy=choice(ON_DEMAND_DOWNLOAD_POLICIES))
         remote = client.post(DEB_REMOTE_PATH, body)
-        self.addCleanup(client.delete, remote["_href"])
+        self.addCleanup(client.delete, remote["pulp_href"])
 
         # Sync the repository using a lazy download policy
         sync(cfg, remote, repo)
@@ -202,8 +202,8 @@ class SwitchDownloadPolicyTestCase(unittest.TestCase):
         self.assertEqual(len(artifacts), NON_LAZY_ARTIFACT_COUNT, artifacts)
 
         # Update the policy to immediate
-        client.patch(remote["_href"], {"policy": "immediate"})
-        remote = client.get(remote["_href"])
+        client.patch(remote["pulp_href"], {"policy": "immediate"})
+        remote = client.get(remote["pulp_href"])
         self.assertEqual(remote["policy"], "immediate")
 
         # Sync using immediate download policy

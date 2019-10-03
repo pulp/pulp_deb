@@ -68,7 +68,7 @@ class GenericContentUnitTestCase(unittest.TestCase):
     @skip_if(bool, "content_unit", False)
     def test_02_read_content_unit(self):
         """Read a content unit by its href."""
-        content_unit = self.client.get(self.content_unit["_href"])
+        content_unit = self.client.get(self.content_unit["pulp_href"])
         for key, val in self.content_unit.items():
             with self.subTest(key=key):
                 self.assertEqual(content_unit[key], val)
@@ -92,7 +92,7 @@ class GenericContentUnitTestCase(unittest.TestCase):
         """
         attrs = self.gen_content_attrs(self.artifact)
         with self.assertRaises(HTTPError) as exc:
-            self.client.patch(self.content_unit["_href"], attrs)
+            self.client.patch(self.content_unit["pulp_href"], attrs)
         self.assertEqual(exc.exception.response.status_code, 405)
 
     @skip_if(bool, "content_unit", False)
@@ -103,7 +103,7 @@ class GenericContentUnitTestCase(unittest.TestCase):
         """
         attrs = self.gen_content_attrs(self.artifact)
         with self.assertRaises(HTTPError) as exc:
-            self.client.put(self.content_unit["_href"], attrs)
+            self.client.put(self.content_unit["pulp_href"], attrs)
         self.assertEqual(exc.exception.response.status_code, 405)
 
     @skip_if(bool, "content_unit", False)
@@ -113,7 +113,7 @@ class GenericContentUnitTestCase(unittest.TestCase):
         This HTTP method is not supported and a HTTP exception is expected.
         """
         with self.assertRaises(HTTPError) as exc:
-            self.client.delete(self.content_unit["_href"])
+            self.client.delete(self.content_unit["pulp_href"])
         self.assertEqual(exc.exception.response.status_code, 405)
 
 
@@ -165,7 +165,7 @@ class GenericContentUnitUploadTestCase(unittest.TestCase):
     @skip_if(bool, "content_unit", False)
     def test_02_read_content_unit(self):
         """Read a content unit by its href."""
-        content_unit = self.client.get(self.content_unit["_href"])
+        content_unit = self.client.get(self.content_unit["pulp_href"])
         for key, val in self.content_unit.items():
             with self.subTest(key=key):
                 self.assertEqual(content_unit[key], val)
