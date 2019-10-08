@@ -1861,12 +1861,6 @@
                     "format": "date-time",
                     "readOnly": true
                 },
-                "_type": {
-                    "title": " type",
-                    "type": "string",
-                    "readOnly": true,
-                    "minLength": 1
-                },
                 "artifact": {
                     "title": "Artifact",
                     "description": "Artifact file representing the physical content",
@@ -1971,12 +1965,6 @@
                     "format": "date-time",
                     "readOnly": true
                 },
-                "_type": {
-                    "title": " type",
-                    "type": "string",
-                    "readOnly": true,
-                    "minLength": 1
-                },
                 "artifacts": {
                     "title": "Artifacts",
                     "description": "A dict mapping relative paths inside the Content to the correspondingArtifact URLs. E.g.: {'relative/path': '/artifacts/1/'",
@@ -2026,12 +2014,6 @@
                     "type": "string",
                     "format": "date-time",
                     "readOnly": true
-                },
-                "_type": {
-                    "title": " type",
-                    "type": "string",
-                    "readOnly": true,
-                    "minLength": 1
                 },
                 "artifact": {
                     "title": "Artifact",
@@ -2295,12 +2277,6 @@
                     "format": "date-time",
                     "readOnly": true
                 },
-                "_type": {
-                    "title": " type",
-                    "type": "string",
-                    "readOnly": true,
-                    "minLength": 1
-                },
                 "artifacts": {
                     "title": "Artifacts",
                     "description": "A dict mapping relative paths inside the Content to the correspondingArtifact URLs. E.g.: {'relative/path': '/artifacts/1/'",
@@ -2350,12 +2326,6 @@
                     "type": "string",
                     "format": "date-time",
                     "readOnly": true
-                },
-                "_type": {
-                    "title": " type",
-                    "type": "string",
-                    "readOnly": true,
-                    "minLength": 1
                 },
                 "artifact": {
                     "title": "Artifact",
@@ -2617,12 +2587,6 @@
                     "format": "date-time",
                     "readOnly": true
                 },
-                "_type": {
-                    "title": " type",
-                    "type": "string",
-                    "readOnly": true,
-                    "minLength": 1
-                },
                 "artifacts": {
                     "title": "Artifacts",
                     "description": "A dict mapping relative paths inside the Content to the correspondingArtifact URLs. E.g.: {'relative/path': '/artifacts/1/'",
@@ -2730,12 +2694,6 @@
                     "format": "date-time",
                     "readOnly": true
                 },
-                "_type": {
-                    "title": " type",
-                    "type": "string",
-                    "readOnly": true,
-                    "minLength": 1
-                },
                 "publisher": {
                     "title": "Publisher",
                     "type": "string",
@@ -2783,12 +2741,6 @@
                     "format": "date-time",
                     "readOnly": true
                 },
-                "_type": {
-                    "title": " type",
-                    "type": "string",
-                    "readOnly": true,
-                    "minLength": 1
-                },
                 "publisher": {
                     "title": "Publisher",
                     "type": "string",
@@ -2828,12 +2780,6 @@
                     "type": "string",
                     "format": "date-time",
                     "readOnly": true
-                },
-                "_type": {
-                    "title": " type",
-                    "type": "string",
-                    "readOnly": true,
-                    "minLength": 1
                 },
                 "name": {
                     "title": "Name",
