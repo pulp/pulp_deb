@@ -7,7 +7,12 @@ from pulp_smash import api, config, utils
 from pulp_smash.pulp3.constants import ARTIFACTS_PATH, REPO_PATH
 from pulp_smash.pulp3.utils import delete_orphans, gen_repo, sync
 
-from pulp_deb.tests.functional.constants import DEB_PACKAGE_PATH, DEB_PACKAGE_URL, DEB_REMOTE_PATH
+from pulp_deb.tests.functional.constants import (
+    DEB_PACKAGE_PATH,
+    DEB_PACKAGE_RELPATH,
+    DEB_PACKAGE_URL,
+    DEB_REMOTE_PATH,
+)
 from pulp_deb.tests.functional.utils import gen_deb_remote
 from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 
@@ -71,7 +76,9 @@ class SingleRequestUploadTestCase(unittest.TestCase):
         """Test single request upload for unit already present in Pulp."""
         repo = self.client.post(REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, repo["_href"])
-        result = self.single_request_upload(relative_path="another_name.deb")
+        # Hint this relative path is different from the one from a simple upload, because it
+        # contains the release
+        result = self.single_request_upload(relative_path=DEB_PACKAGE_RELPATH)
         # Check for a content_unit in created_resources
         task = self.client.get(result["task"])
         self.assertEqual(len(task["created_resources"]), 1)

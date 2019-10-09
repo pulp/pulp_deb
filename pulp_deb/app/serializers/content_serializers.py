@@ -1,6 +1,8 @@
 from gettext import gettext as _
 from logging import getLogger
 
+import os
+
 from debian import debfile
 
 from rest_framework.serializers import CharField, Field, ValidationError
@@ -232,6 +234,10 @@ class BasePackageSerializer(SingleArtifactContentUploadSerializer, ContentChecks
         data["sha256"] = data["artifact"].sha256
         if "relative_path" not in data:
             data["relative_path"] = self.Meta.model(**package_dict).filename()
+        elif not os.path.basename(data["relative_path"]) == "{}.{}".format(
+            self.Meta.model(**package_dict).name, self.Meta.model.SUFFIX
+        ):
+            raise ValidationError(_("Invalid relative_path provided, filename does not match."))
 
         content = self.Meta.model.objects.filter(
             sha256=data["sha256"], relative_path=data["relative_path"]
@@ -290,7 +296,15 @@ class PackageSerializer(BasePackageSerializer):
     A Serializer for Package.
     """
 
-    # TODO validate for 'normal' Package
+    def deferred_validate(self, data):
+        """Validate for 'normal' Package (not installer)."""
+
+        data = super().deferred_validate(data)
+
+        if data.get("section") == "debian-installer":
+            raise ValidationError(_("Not a valid Deb Package"))
+
+        return data
 
     class Meta(BasePackageSerializer.Meta):
         model = Package
@@ -301,7 +315,15 @@ class InstallerPackageSerializer(BasePackageSerializer):
     A Serializer for InstallerPackage.
     """
 
-    # TODO validate for InstallerPackage
+    def deferred_validate(self, data):
+        """Validate for InstallerPackage."""
+
+        data = super().deferred_validate(data)
+
+        if data.get("section") != "debian-installer":
+            raise ValidationError(_("Not a valid uDeb Package"))
+
+        return data
 
     class Meta(BasePackageSerializer.Meta):
         model = InstallerPackage
