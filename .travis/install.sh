@@ -30,10 +30,13 @@ cd $TRAVIS_BUILD_DIR/../pulpcore/containers/
 # starting point:
 # https://stackoverflow.com/a/50687120
 #
+# If we are on a tag
+if [ -n "$TRAVIS_TAG" ]; then
+  TAG=$(echo $TRAVIS_TAG | tr / _)
 # If we are on a PR
-if [ -n "$TRAVIS_PULL_REQUEST_BRANCH" ]; then
+elif [ -n "$TRAVIS_PULL_REQUEST_BRANCH" ]; then
   TAG=$(echo $TRAVIS_PULL_REQUEST_BRANCH | tr / _)
-# For push builds, tag builds, and hopefully cron builds
+# For push builds and hopefully cron builds
 elif [ -n "$TRAVIS_BRANCH" ]; then
   TAG=$(echo $TRAVIS_BRANCH | tr / _)
   if [ "$TAG" = "master" ]; then
@@ -48,15 +51,22 @@ fi
 PLUGIN=pulp_deb
 
 
-# For pulpcore, and any other repo that might check out a pulp-certguard PR
-if [ -e $TRAVIS_BUILD_DIR/../pulp-certguard ]; then
-  PULP_CERTGUARD=./pulp-certguard
-else
-  # Otherwise, master branch release
-  PULP_CERTGUARD=git+https://github.com/pulp/pulp-certguard.git
-fi
+# For pulpcore, and any other repo that might check out some plugin PR
 
-cat > vars/vars.yaml << VARSYAML
+
+if [ -n "$TRAVIS_TAG" ]; then
+  # Install the plugin only and use published PyPI packages for the rest
+  cat > vars/vars.yaml << VARSYAML
+---
+images:
+  - ${PLUGIN}-${TAG}:
+      image_name: $PLUGIN
+      tag: $TAG
+      plugins:
+        - ./$PLUGIN
+VARSYAML
+else
+  cat > vars/vars.yaml << VARSYAML
 ---
 images:
   - ${PLUGIN}-${TAG}:
@@ -65,9 +75,9 @@ images:
       pulpcore: ./pulpcore
       pulpcore_plugin: ./pulpcore-plugin
       plugins:
-        - $PULP_CERTGUARD
         - ./$PLUGIN
 VARSYAML
+fi
 
 ansible-playbook build.yaml
 
