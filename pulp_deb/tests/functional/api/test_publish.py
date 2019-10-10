@@ -55,22 +55,22 @@ class PublishAnyRepoVersionTestCase(unittest.TestCase):
 
         body = gen_deb_remote()
         remote = client.post(DEB_REMOTE_PATH, body)
-        self.addCleanup(client.delete, remote["_href"])
+        self.addCleanup(client.delete, remote["pulp_href"])
 
         repo = client.post(REPO_PATH, gen_repo())
-        self.addCleanup(client.delete, repo["_href"])
+        self.addCleanup(client.delete, repo["pulp_href"])
 
         sync(cfg, remote, repo)
 
         # Step 1
-        repo = client.get(repo["_href"])
+        repo = client.get(repo["pulp_href"])
         for deb_generic_content in get_content(repo)[DEB_GENERIC_CONTENT_NAME]:
             client.post(
-                repo["_versions_href"], {"add_content_units": [deb_generic_content["_href"]]}
+                repo["_versions_href"], {"add_content_units": [deb_generic_content["pulp_href"]]}
             )
         for deb_package in get_content(repo)[DEB_PACKAGE_NAME]:
-            client.post(repo["_versions_href"], {"add_content_units": [deb_package["_href"]]})
-        version_hrefs = tuple(ver["_href"] for ver in get_versions(repo))
+            client.post(repo["_versions_href"], {"add_content_units": [deb_package["pulp_href"]]})
+        version_hrefs = tuple(ver["pulp_href"] for ver in get_versions(repo))
         non_latest = choice(version_hrefs[:-1])
 
         # Step 2
@@ -87,7 +87,7 @@ class PublishAnyRepoVersionTestCase(unittest.TestCase):
 
         # Step 6
         with self.assertRaises(HTTPError):
-            body = {"repository": repo["_href"], "repository_version": non_latest}
+            body = {"repository": repo["pulp_href"], "repository_version": non_latest}
             client.post(self.Meta.PUBLICATION_PATH, body)
 
 

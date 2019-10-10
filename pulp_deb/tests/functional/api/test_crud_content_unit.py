@@ -18,6 +18,8 @@ from pulp_deb.tests.functional.constants import (
 from pulp_deb.tests.functional.utils import (
     gen_deb_content_attrs,
     gen_deb_content_upload_attrs,
+    gen_deb_package_attrs,
+    gen_deb_package_upload_attrs,
     skip_if,
 )
 from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
@@ -66,7 +68,7 @@ class GenericContentUnitTestCase(unittest.TestCase):
     @skip_if(bool, "content_unit", False)
     def test_02_read_content_unit(self):
         """Read a content unit by its href."""
-        content_unit = self.client.get(self.content_unit["_href"])
+        content_unit = self.client.get(self.content_unit["pulp_href"])
         for key, val in self.content_unit.items():
             with self.subTest(key=key):
                 self.assertEqual(content_unit[key], val)
@@ -90,7 +92,7 @@ class GenericContentUnitTestCase(unittest.TestCase):
         """
         attrs = self.gen_content_attrs(self.artifact)
         with self.assertRaises(HTTPError) as exc:
-            self.client.patch(self.content_unit["_href"], attrs)
+            self.client.patch(self.content_unit["pulp_href"], attrs)
         self.assertEqual(exc.exception.response.status_code, 405)
 
     @skip_if(bool, "content_unit", False)
@@ -101,7 +103,7 @@ class GenericContentUnitTestCase(unittest.TestCase):
         """
         attrs = self.gen_content_attrs(self.artifact)
         with self.assertRaises(HTTPError) as exc:
-            self.client.put(self.content_unit["_href"], attrs)
+            self.client.put(self.content_unit["pulp_href"], attrs)
         self.assertEqual(exc.exception.response.status_code, 405)
 
     @skip_if(bool, "content_unit", False)
@@ -111,13 +113,15 @@ class GenericContentUnitTestCase(unittest.TestCase):
         This HTTP method is not supported and a HTTP exception is expected.
         """
         with self.assertRaises(HTTPError) as exc:
-            self.client.delete(self.content_unit["_href"])
+            self.client.delete(self.content_unit["pulp_href"])
         self.assertEqual(exc.exception.response.status_code, 405)
 
 
 class PackageTestCase(GenericContentUnitTestCase):
     """CRUD content unit."""
 
+    gen_content_attrs = staticmethod(gen_deb_package_attrs)
+    gen_content_verify_attrs = staticmethod(gen_deb_package_attrs)
     CONTENT_PATH = DEB_PACKAGE_PATH
     CONTENT_URL = DEB_PACKAGE_URL
 
@@ -161,7 +165,7 @@ class GenericContentUnitUploadTestCase(unittest.TestCase):
     @skip_if(bool, "content_unit", False)
     def test_02_read_content_unit(self):
         """Read a content unit by its href."""
-        content_unit = self.client.get(self.content_unit["_href"])
+        content_unit = self.client.get(self.content_unit["pulp_href"])
         for key, val in self.content_unit.items():
             with self.subTest(key=key):
                 self.assertEqual(content_unit[key], val)
@@ -191,13 +195,16 @@ class GenericContentUnitUploadTestCase(unittest.TestCase):
     def test_03_duplicate_content_unit(self):
         """Create content unit."""
         attrs = self.attrs.copy()
-        attrs["relative_path"] = utils.uuid4()
+        # Packages types only validate the filename, so we can prepend something to the path.
+        attrs["relative_path"] = "moved-" + self.content_unit["relative_path"]
         self.client.post(self.CONTENT_PATH, data=attrs, files=self.files)
 
 
 class PackageUnitUploadTestCase(GenericContentUnitUploadTestCase):
     """CRUD content unit with upload feature."""
 
+    gen_content_upload_attrs = staticmethod(gen_deb_package_upload_attrs)
+    gen_content_upload_verify_attrs = staticmethod(gen_deb_package_upload_attrs)
     CONTENT_PATH = DEB_PACKAGE_PATH
     CONTENT_URL = DEB_PACKAGE_URL
 
@@ -219,7 +226,7 @@ class DuplicateGenericContentUnit(unittest.TestCase):
     def setUpClass(cls):
         """Create class-wide variables."""
         cls.cfg = config.get_config()
-        cls.client = api.Client(cls.cfg, api.json_handler)
+        cls.client = api.Client(cls.cfg, api.smart_handler)
 
     @classmethod
     def tearDownClass(cls):
@@ -264,9 +271,10 @@ class DuplicateGenericContentUnit(unittest.TestCase):
         attrs = self.gen_content_attrs(artifact)
 
         # create first content unit.
-        self.client.post(self.CONTENT_PATH, attrs)
+        content_unit = self.client.post(self.CONTENT_PATH, attrs)
 
-        attrs["relative_path"] = utils.uuid4()
+        # Packages types only validate the filename, so we can prepend something to the path.
+        attrs["relative_path"] = "moved-" + content_unit["relative_path"]
         # create second content unit.
         self.client.post(self.CONTENT_PATH, attrs)
 
@@ -274,5 +282,7 @@ class DuplicateGenericContentUnit(unittest.TestCase):
 class DuplicatePackageUnit(DuplicateGenericContentUnit):
     """Attempt to create a duplicate content unit."""
 
+    gen_content_attrs = staticmethod(gen_deb_package_attrs)
+    gen_content_verify_attrs = staticmethod(gen_deb_package_attrs)
     CONTENT_PATH = DEB_PACKAGE_PATH
     CONTENT_URL = DEB_PACKAGE_URL
