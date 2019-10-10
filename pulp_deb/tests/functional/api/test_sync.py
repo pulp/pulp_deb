@@ -6,12 +6,15 @@ from pulp_smash import api, cli, config, exceptions
 from pulp_smash.pulp3.constants import MEDIA_PATH, REPO_PATH
 from pulp_smash.pulp3.utils import gen_repo, get_content_summary, get_added_content_summary, sync
 
-from pulp_deb.tests.functional.constants import DEB_FIXTURE_SUMMARY, DEB_REMOTE_PATH
+from pulp_deb.tests.functional.constants import (
+    DEB_FIXTURE_SUMMARY,
+    DEB_FULL_FIXTURE_SUMMARY,
+    DEB_REMOTE_PATH,
+)
 from pulp_deb.tests.functional.utils import gen_deb_remote
 from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 
 
-# Implement sync support before enabling this test.
 class BasicSyncTestCase(unittest.TestCase):
     """Sync repositories with the deb plugin."""
 
@@ -21,7 +24,15 @@ class BasicSyncTestCase(unittest.TestCase):
         cls.cfg = config.get_config()
         cls.client = api.Client(cls.cfg, api.json_handler)
 
-    def test_sync(self):
+    def test_sync_small(self):
+        """Test synching with deb content only."""
+        self.do_sync(sync_udebs=False, fixture_summary=DEB_FIXTURE_SUMMARY)
+
+    def test_sync_full(self):
+        """Test synching with udeb."""
+        self.do_sync(sync_udebs=True, fixture_summary=DEB_FULL_FIXTURE_SUMMARY)
+
+    def do_sync(self, sync_udebs, fixture_summary):
         """Sync repositories with the deb plugin.
 
         In order to sync a repository a remote has to be associated within
@@ -40,7 +51,7 @@ class BasicSyncTestCase(unittest.TestCase):
         repo = self.client.post(REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, repo["pulp_href"])
 
-        body = gen_deb_remote()
+        body = gen_deb_remote(sync_udebs=sync_udebs)
         remote = self.client.post(DEB_REMOTE_PATH, body)
         self.addCleanup(self.client.delete, remote["pulp_href"])
 
@@ -50,8 +61,8 @@ class BasicSyncTestCase(unittest.TestCase):
         repo = self.client.get(repo["pulp_href"])
 
         self.assertIsNotNone(repo["latest_version_href"])
-        self.assertDictEqual(get_content_summary(repo), DEB_FIXTURE_SUMMARY)
-        self.assertDictEqual(get_added_content_summary(repo), DEB_FIXTURE_SUMMARY)
+        self.assertDictEqual(get_content_summary(repo), fixture_summary)
+        self.assertDictEqual(get_added_content_summary(repo), fixture_summary)
 
         # Sync the repository again.
         latest_version_href = repo["latest_version_href"]
@@ -59,7 +70,7 @@ class BasicSyncTestCase(unittest.TestCase):
         repo = self.client.get(repo["pulp_href"])
 
         self.assertNotEqual(latest_version_href, repo["latest_version_href"])
-        self.assertDictEqual(get_content_summary(repo), DEB_FIXTURE_SUMMARY)
+        self.assertDictEqual(get_content_summary(repo), fixture_summary)
         self.assertDictEqual(get_added_content_summary(repo), {})
 
     def test_file_decriptors(self):

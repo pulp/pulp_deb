@@ -7,6 +7,7 @@ Priority: optional
 Standards-Version: 3.9.2
 
 Package: mundilfari
+XC-Package-Type: udeb
 # Version: <enter version here; defaults to 1.0>
 # Maintainer: Your Name <yourname@example.com>
 # Pre-Depends: <comma-separated list of packages>
