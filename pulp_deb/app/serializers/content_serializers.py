@@ -217,7 +217,8 @@ class BasePackageSerializer(SingleArtifactContentUploadSerializer, ContentChecks
     def __init__(self, *args, **kwargs):
         """Initializer for BasePackageSerializer."""
         super().__init__(*args, **kwargs)
-        self.fields["relative_path"].required = False
+        if "relative_path" in self.fields:
+            self.fields["relative_path"].required = False
 
     def deferred_validate(self, data):
         """Validate that the artifact is a package and extract it's values."""
