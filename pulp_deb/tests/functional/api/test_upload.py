@@ -59,7 +59,7 @@ class SingleRequestUploadTestCase(unittest.TestCase):
         repo = self.client.get(repo["pulp_href"])
 
         # Assertion about repo version.
-        self.assertIsNotNone(repo["_latest_version_href"], repo)
+        self.assertIsNotNone(repo["latest_version_href"], repo)
 
         # Assertions about artifacts.
         artifact = self.client.get(ARTIFACTS_PATH)
