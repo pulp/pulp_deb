@@ -31,7 +31,7 @@ class GenericContent(Content):
 
     TYPE = "generic"
 
-    relative_path = models.CharField(max_length=255, null=False)
+    relative_path = models.TextField(null=False)
     sha256 = models.CharField(max_length=255, null=False)
 
     class Meta:
@@ -56,7 +56,7 @@ class Release(Content):
     distribution = models.CharField(max_length=255)
     components = models.CharField(max_length=255, blank=True)
     architectures = models.CharField(max_length=255, blank=True)
-    relative_path = models.CharField(max_length=255)
+    relative_path = models.TextField()
     sha256 = models.CharField(max_length=255)
 
     class Meta:
@@ -89,7 +89,7 @@ class PackageIndex(Content):
     release = models.ForeignKey(Release, on_delete=models.CASCADE)
     component = models.CharField(max_length=255)
     architecture = models.CharField(max_length=255)
-    relative_path = models.CharField(max_length=255)
+    relative_path = models.TextField()
     sha256 = models.CharField(max_length=255)
 
     class Meta:
@@ -122,7 +122,7 @@ class InstallerFileIndex(Content):
     release = models.ForeignKey(Release, on_delete=models.CASCADE)
     component = models.CharField(max_length=255)
     architecture = models.CharField(max_length=255)
-    relative_path = models.CharField(max_length=255)
+    relative_path = models.TextField()
     sha256 = models.CharField(max_length=255)
 
     class Meta:
@@ -215,7 +215,7 @@ class BasePackage(Content):
     replaces = models.TextField(null=True)
 
     # relative path in the upstream repository
-    relative_path = models.CharField(max_length=255, null=False)
+    relative_path = models.TextField(null=False)
     # this digest is transferred to the content as a natural_key
     sha256 = models.CharField(max_length=255, null=False)
 
