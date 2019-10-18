@@ -70,6 +70,7 @@ class PackageFilter(ContentFilter):
             "auto_built_package",
             "multi_arch",
             "sha256",
+            "relative_path",
         ]
 
 
