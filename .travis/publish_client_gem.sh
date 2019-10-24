@@ -22,8 +22,8 @@ export DESCRIPTION="$(git describe --all --exact-match `git rev-parse HEAD`)"
 if [[ $DESCRIPTION == 'tags/'$REPORTED_VERSION ]]; then
   export VERSION=${REPORTED_VERSION}
 else
-  # Daily publishing of development version (ends in ".dev")
-  [ "${REPORTED_VERSION%.dev}" != "${REPORTED_VERSION}" ] || exit 1
+  # Daily publishing of development version (ends in ".dev" reported as ".dev0")
+  [ "${REPORTED_VERSION%.dev*}" != "${REPORTED_VERSION}" ] || exit 1
   export EPOCH="$(date +%s)"
   export VERSION=${REPORTED_VERSION}.${EPOCH}
 fi
