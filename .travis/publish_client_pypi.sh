@@ -23,7 +23,7 @@ else
   # Daily publishing of development version (ends in ".dev" reported as ".dev0")
   [ "${REPORTED_VERSION%.dev*}" != "${REPORTED_VERSION}" ] || exit 1
   export EPOCH="$(date +%s)"
-  export VERSION=${REPORTED_VERSION}.${EPOCH}
+  export VERSION=${REPORTED_VERSION}${EPOCH}
 fi
 
 export response=$(curl --write-out %{http_code} --silent --output /dev/null https://pypi.org/project/pulp-deb-client/$VERSION/)
