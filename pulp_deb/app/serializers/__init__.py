@@ -6,7 +6,7 @@ from .content_serializers import (
     InstallerPackageSerializer,
     PackageSerializer,
     PackageIndexSerializer,
-    ReleaseSerializer,
+    ReleaseFileSerializer,
 )
 
 from .publication_serializers import (

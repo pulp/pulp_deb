@@ -33,7 +33,7 @@ from pulpcore.plugin.stages import (
 
 from pulp_deb.app.models import (
     GenericContent,
-    Release,
+    ReleaseFile,
     PackageIndex,
     InstallerFileIndex,
     Package,
@@ -123,7 +123,7 @@ class DebDeclarativeVersion(DeclarativeVersion):
             # This is dependent on
             # https://salsa.debian.org/python-debian-team/python-debian/merge_requests/11
             # DebUpdatePackageAttributes(),
-            DebUpdateReleaseAttributes(self.first_stage.components, self.first_stage.architectures),
+            DebUpdateReleaseFileAttributes(),
             DebUpdatePackageIndexAttributes(),
             QueryExistingContents(),
             ContentSaver(),
@@ -133,59 +133,44 @@ class DebDeclarativeVersion(DeclarativeVersion):
         return pipeline
 
 
-def _filter_ssl(values, filter_list):
-    """Filter space separated list and return space separated."""
+def _filter_split(values, filter_list):
+    """Filter space separated list and return iterable."""
     value_set = set(values.split())
     if filter_list:
         value_set &= set(filter_list)
-    return " ".join(sorted(value_set))
+    return sorted(value_set)
 
 
-class DebUpdateReleaseAttributes(Stage):
+class DebUpdateReleaseFileAttributes(Stage):
     """
-    This stage handles Release content.
+    This stage handles ReleaseFile content.
 
-    It also transfers the sha256 from the artifact to the Release content units.
+    It also transfers the sha256 from the artifact to the ReleaseFile content units.
 
     TODO: Verify signature
     """
 
-    def __init__(self, components, architectures, *args, **kwargs):
-        """
-        Initialize release parser with filters.
-
-        Args:
-            components: list of components
-            architectures: list of architectures
-
-        """
-        super().__init__(*args, **kwargs)
-        self.components = components
-        self.architectures = architectures
-
     async def run(self):
         """
-        Parse Release content units.
+        Parse ReleaseFile content units.
 
         Update release content with information obtained from its artifact.
         """
-        with ProgressReport(message="Update Release units", code="update.release") as pb:
+        with ProgressReport(message="Update ReleaseFile units", code="update.release_file") as pb:
             async for d_content in self.items():
-                if isinstance(d_content.content, Release):
-                    release = d_content.content
-                    release_artifact = d_content.d_artifacts[0].artifact
-                    release.sha256 = release_artifact.sha256
-                    release_dict = deb822.Release(release_artifact.file)
-                    release.codename = release_dict["Codename"]
-                    release.suite = release_dict["Suite"]
+                if isinstance(d_content.content, ReleaseFile):
+                    release_file = d_content.content
+                    release_file_artifact = d_content.d_artifacts[0].artifact
+                    release_file.sha256 = release_file_artifact.sha256
+                    release_file_dict = deb822.Release(release_file_artifact.file)
+                    release_file.codename = release_file_dict["Codename"]
+                    release_file.suite = release_file_dict["Suite"]
                     # TODO split of extra stuff e.g. : 'updates/main' -> 'main'
-                    release.components = _filter_ssl(release_dict["Components"], self.components)
-                    release.architectures = _filter_ssl(
-                        release_dict["Architectures"], self.architectures
-                    )
-                    log.debug("Codename: {}".format(release.codename))
-                    log.debug("Components: {}".format(release.components))
-                    log.debug("Architectures: {}".format(release.architectures))
+                    release_file.components = release_file_dict["Components"]
+                    release_file.architectures = release_file_dict["Architectures"]
+                    log.debug("Codename: {}".format(release_file.codename))
+                    log.debug("Components: {}".format(release_file.components))
+                    log.debug("Architectures: {}".format(release_file.architectures))
                     pb.increment()
                 await self.put(d_content)
 
@@ -339,7 +324,7 @@ class DebFirstStage(Stage):
         Build and emit `DeclarativeContent` from the Release data.
         """
         # TODO Merge into one list of futures
-        future_releases = []
+        future_release_files = []
         future_package_indices = []
         future_installer_file_indices = []
         with ProgressReport(
@@ -376,27 +361,31 @@ class DebFirstStage(Stage):
                     self.remote,
                     deferred_download=False,
                 )
-                release_unit = Release(distribution=distribution, relative_path=release_relpath)
-                release_dc = DeclarativeContent(
-                    content=release_unit,
+                release_file_unit = ReleaseFile(
+                    distribution=distribution, relative_path=release_relpath
+                )
+                release_file_dc = DeclarativeContent(
+                    content=release_file_unit,
                     d_artifacts=[release_da, release_gpg_da, inrelease_da],
                     does_batch=False,
                 )
-                future_releases.append(release_dc.get_or_create_future())
-                await self.put(release_dc)
+                future_release_files.append(release_file_dc.get_or_create_future())
+                await self.put(release_file_dc)
                 pb.increment()
 
         with ProgressReport(
-            message="Parsing Release files", code="parsing.release", total=self.num_distributions
+            message="Parsing Release files",
+            code="parsing.release_file",
+            total=self.num_distributions,
         ) as pb:
-            for release_future in asyncio.as_completed(future_releases):
-                release = await release_future
-                if release is None:
+            for release_file_future in asyncio.as_completed(future_release_files):
+                release_file = await release_file_future
+                if release_file is None:
                     continue
-                log.info('Parsing Release file for release: "{}"'.format(release.codename))
-                release_artifact = release._artifacts.get(sha256=release.sha256)
-                release_dict = deb822.Release(release_artifact.file)
-                async for d_content in self._read_release_file(release, release_dict):
+                log.info('Parsing Release file for release: "{}"'.format(release_file.codename))
+                release_file_artifact = release_file._artifacts.get(sha256=release_file.sha256)
+                release_file_dict = deb822.Release(release_file_artifact.file)
+                async for d_content in self._read_release_file(release_file, release_file_dict):
                     if isinstance(d_content.content, PackageIndex):
                         future_package_indices.append(d_content.get_or_create_future())
                     if isinstance(d_content.content, InstallerFileIndex):
@@ -405,7 +394,7 @@ class DebFirstStage(Stage):
                 pb.increment()
 
         with ProgressReport(
-            message="Parsing package index files", code="parsing.packageindex"
+            message="Parsing package index files", code="parsing.package_index"
         ) as pb:
             for package_index_future in asyncio.as_completed(future_package_indices):
                 package_index = await package_index_future
@@ -422,7 +411,7 @@ class DebFirstStage(Stage):
                 pb.increment()
 
         with ProgressReport(
-            message="Parsing installer file index files", code="parsing.installer"
+            message="Parsing installer file index files", code="parsing.installer_file_index"
         ) as pb:
             for installer_file_index_future in asyncio.as_completed(future_installer_file_indices):
                 installer_file_index = await installer_file_index_future
@@ -437,14 +426,14 @@ class DebFirstStage(Stage):
                     await self.put(d_content)
                 pb.increment()
 
-    async def _read_release_file(self, release, release_dict):
+    async def _read_release_file(self, release_file, release_file_dict):
         """
         Parse a Release file of apt Repositories.
 
         Yield DeclarativeContent in the queue accordingly.
 
         Args:
-            release_dict: parsed release dictionary
+            release_file_dict: parsed release file dictionary
 
         Returns:
             async iterator: Iterator of :class:`asyncio.Future` instances
@@ -452,10 +441,10 @@ class DebFirstStage(Stage):
         """
 
         def to_d_artifact(data):
-            nonlocal release
+            nonlocal release_file
 
             artifact = Artifact(**_get_checksums(data))
-            relpath = os.path.join(os.path.dirname(release.relative_path), data["Name"])
+            relpath = os.path.join(os.path.dirname(release_file.relative_path), data["Name"])
             urlpath = os.path.join(self.parsed_url.path, relpath)
             return DeclarativeFailsafeArtifact(
                 artifact,
@@ -469,7 +458,7 @@ class DebFirstStage(Stage):
             raise NotImplementedError("Syncing source repositories is not yet implemented.")
 
         def generate_package_index(component, architecture, infix=""):
-            nonlocal release
+            nonlocal release_file
             nonlocal file_references
 
             package_index_dir = os.path.join(
@@ -484,12 +473,12 @@ class DebFirstStage(Stage):
             if not d_artifacts:
                 return
             content_unit = PackageIndex(
-                release=release,
+                release=release_file,
                 component=component,
                 architecture=architecture,
                 sha256=d_artifacts[0].artifact.sha256,
                 relative_path=os.path.join(
-                    os.path.dirname(release.relative_path), package_index_dir, "Packages"
+                    os.path.dirname(release_file.relative_path), package_index_dir, "Packages"
                 ),
             )
             d_content = DeclarativeContent(
@@ -498,7 +487,7 @@ class DebFirstStage(Stage):
             yield d_content
 
         def generate_installer_file_index(component, architecture):
-            nonlocal release
+            nonlocal release_file
             nonlocal file_references
 
             installer_file_index_dir = os.path.join(
@@ -516,12 +505,12 @@ class DebFirstStage(Stage):
             if not d_artifacts:
                 return
             content_unit = InstallerFileIndex(
-                release=release,
+                release=release_file,
                 component=component,
                 architecture=architecture,
                 sha256=d_artifacts[0].artifact.sha256,
                 relative_path=os.path.join(
-                    os.path.dirname(release.relative_path), installer_file_index_dir
+                    os.path.dirname(release_file.relative_path), installer_file_index_dir
                 ),
             )
             d_content = DeclarativeContent(
@@ -530,7 +519,7 @@ class DebFirstStage(Stage):
             yield d_content
 
         def generate_translation_files(component):
-            nonlocal release
+            nonlocal release_file
             nonlocal file_references
 
             translation_dir = os.path.join(os.path.basename(component), "i18n")
@@ -548,7 +537,7 @@ class DebFirstStage(Stage):
             for path, translation in translations.items():
                 content_unit = GenericContent(
                     sha256=translation["sha256"],
-                    relative_path=os.path.join(os.path.dirname(release.relative_path), path),
+                    relative_path=os.path.join(os.path.dirname(release_file.relative_path), path),
                 )
                 d_content = DeclarativeContent(
                     content=content_unit, d_artifacts=translation["d_artifacts"]
@@ -558,12 +547,12 @@ class DebFirstStage(Stage):
         file_references = defaultdict(deb822.Deb822Dict)
         # collect file references in new dict
         for digest_name in ["SHA512", "SHA256", "SHA1", "MD5sum"]:
-            if digest_name in release_dict:
-                for unit in release_dict[digest_name]:
+            if digest_name in release_file_dict:
+                for unit in release_file_dict[digest_name]:
                     file_references[unit["Name"]].update(unit)
         # Find Package Index files for Component Architecture combinations
-        for component in release.components.split():
-            for architecture in release.architectures.split():
+        for component in _filter_split(release_file.components, self.components):
+            for architecture in _filter_split(release_file.architectures, self.architectures):
                 log.info('Component: "{}" Architecture: "{}"'.format(component, architecture))
                 for d_content in generate_package_index(component, architecture):
                     yield d_content

@@ -20,7 +20,7 @@ from pulp_deb.app.models import (
     InstallerPackage,
     Package,
     PackageIndex,
-    Release,
+    ReleaseFile,
 )
 
 
@@ -87,9 +87,9 @@ class GenericContentSerializer(SingleArtifactContentUploadSerializer, ContentChe
         model = GenericContent
 
 
-class ReleaseSerializer(MultipleArtifactContentSerializer):
+class ReleaseFileSerializer(MultipleArtifactContentSerializer):
     """
-    A serializer for Release.
+    A serializer for ReleaseFile.
     """
 
     codename = CharField(help_text='Codename of the release, i.e. "buster".', required=True)
@@ -109,7 +109,7 @@ class ReleaseSerializer(MultipleArtifactContentSerializer):
             "distribution",
             "relative_path",
         )
-        model = Release
+        model = ReleaseFile
 
 
 class PackageIndexSerializer(MultipleArtifactContentSerializer):
@@ -130,7 +130,7 @@ class PackageIndexSerializer(MultipleArtifactContentSerializer):
     release = DetailRelatedField(
         help_text="Release this index file belongs to.",
         many=False,
-        queryset=Release.objects.all(),
+        queryset=ReleaseFile.objects.all(),
         view_name="deb-release-detail",
     )
 
@@ -165,7 +165,7 @@ class InstallerFileIndexSerializer(MultipleArtifactContentSerializer):
     release = DetailRelatedField(
         help_text="Release this index file belongs to.",
         many=False,
-        queryset=Release.objects.all(),
+        queryset=ReleaseFile.objects.all(),
         view_name="deb-release-detail",
     )
 
