@@ -24,7 +24,7 @@ from pulp_deb.tests.functional.constants import (
     # DEB_PACKAGE_INDEX_NAME,
     DEB_PACKAGE_NAME,
     DEB_PUBLICATION_PATH,
-    DEB_RELEASE_NAME,
+    DEB_RELEASE_FILE_NAME,
     DEB_REMOTE_PATH,
     VERBATIM_PUBLICATION_PATH,
 )
@@ -86,9 +86,9 @@ def get_deb_verbatim_content_unit_paths(repo, version_href=None):
         local version.
     """
     return {
-        DEB_RELEASE_NAME: [
+        DEB_RELEASE_FILE_NAME: [
             (content_unit["relative_path"], content_unit["relative_path"])
-            for content_unit in get_content(repo, version_href)[DEB_RELEASE_NAME]
+            for content_unit in get_content(repo, version_href)[DEB_RELEASE_FILE_NAME]
         ],
         DEB_PACKAGE_NAME: [
             (content_unit["relative_path"], content_unit["relative_path"])

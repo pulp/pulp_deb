@@ -127,25 +127,25 @@ class InstallerPackageViewSet(SingleArtifactContentUploadViewSet):
 # Metadata
 
 
-class ReleaseFilter(ContentFilter):
+class ReleaseFileFilter(ContentFilter):
     """
-    FilterSet for Release.
+    FilterSet for ReleaseFile.
     """
 
     class Meta:
-        model = models.Release
+        model = models.ReleaseFile
         fields = ["codename", "suite", "relative_path", "sha256"]
 
 
-class ReleaseViewSet(ContentViewSet):
+class ReleaseFileViewSet(ContentViewSet):
     """
-    A ViewSet for Release.
+    A ViewSet for ReleaseFile.
     """
 
-    endpoint_name = "releases"
-    queryset = models.Release.objects.all()
-    serializer_class = serializers.ReleaseSerializer
-    filterset_class = ReleaseFilter
+    endpoint_name = "release_files"
+    queryset = models.ReleaseFile.objects.all()
+    serializer_class = serializers.ReleaseFileSerializer
+    filterset_class = ReleaseFileFilter
 
 
 class PackageIndexFilter(ContentFilter):

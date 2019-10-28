@@ -39,17 +39,14 @@ class GenericContent(Content):
         unique_together = (("relative_path", "sha256"),)
 
 
-class Release(Content):
+class ReleaseFile(Content):
     """
-    The "Release" content.
+    The "ReleaseFile" content.
 
-    This model represents a debian release and holds an artifact to the
-    upstream Release file at the same time.
-
-    TODO This Content should include the Artifacts InRelease and Release.gpg
+    This model holds an artifact to the upstream Release file at the same time.
     """
 
-    TYPE = "release"
+    TYPE = "release_file"
 
     codename = models.CharField(max_length=255)
     suite = models.CharField(max_length=255)
@@ -86,7 +83,7 @@ class PackageIndex(Content):
 
     TYPE = "package_index"
 
-    release = models.ForeignKey(Release, on_delete=models.CASCADE)
+    release = models.ForeignKey(ReleaseFile, on_delete=models.CASCADE)
     component = models.CharField(max_length=255)
     architecture = models.CharField(max_length=255)
     relative_path = models.TextField()
@@ -119,7 +116,7 @@ class InstallerFileIndex(Content):
 
     FILE_ALGORITHM = {"SHA256SUMS": "sha256", "MD5SUMS": "md5"}  # Are there more?
 
-    release = models.ForeignKey(Release, on_delete=models.CASCADE)
+    release = models.ForeignKey(ReleaseFile, on_delete=models.CASCADE)
     component = models.CharField(max_length=255)
     architecture = models.CharField(max_length=255)
     relative_path = models.TextField()
