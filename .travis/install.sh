@@ -71,7 +71,6 @@ images:
       image_name: $PLUGIN
       tag: $TAG
       pulpcore: ./pulpcore
-      pulpcore_plugin: ./pulpcore-plugin
       plugins:
         - ./$PLUGIN
 VARSYAML
