@@ -16,6 +16,7 @@ from urllib.parse import urlparse, urlunparse
 
 from django.core.exceptions import ObjectDoesNotExist
 
+from pulpcore.plugin.exceptions import DigestValidationError
 from pulpcore.plugin.models import Artifact, ProgressReport, Remote, Repository
 from pulpcore.plugin.stages import (
     DeclarativeArtifact,
@@ -95,6 +96,9 @@ class DeclarativeFailsafeArtifact(DeclarativeArtifact):
                 log.info("Artifact not found. Ignored")
             else:
                 raise
+        except DigestValidationError:
+            self.artifact = None
+            log.info("Artifact digest not matched. Ignored")
 
 
 class DebDeclarativeVersion(DeclarativeVersion):

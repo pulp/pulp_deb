@@ -36,12 +36,14 @@ def set_up_module():
     require_pulp_plugins({"pulp_deb"}, SkipTest)
 
 
-def gen_deb_remote(url=DEB_FIXTURE_URL, **kwargs):
+def gen_deb_remote(
+    url=DEB_FIXTURE_URL, distributions=DEB_FIXTURE_RELEASE, sync_udebs=False, **kwargs
+):
     """Return a semi-random dict for use in creating a deb Remote.
 
     :param url: The URL of an external content source.
     """
-    return gen_remote(url, distributions=DEB_FIXTURE_RELEASE, **kwargs)
+    return gen_remote(url, distributions=distributions, sync_udebs=sync_udebs, **kwargs)
 
 
 def get_deb_content_unit_paths(repo, version_href=None):
