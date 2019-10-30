@@ -63,6 +63,13 @@ class ReleaseFile(Content):
             ),
         )
 
+    @property
+    def main_artifact(self):
+        """
+        Retrieve the plain ReleaseFile artifact.
+        """
+        return self._artifacts.get(sha256=self.sha256)
+
 
 class PackageIndex(Content):
     """
@@ -102,7 +109,7 @@ class InstallerFileIndex(Content):
     This model represents the MD5SUMS and SHA256SUMS files for a specific
     component - architecture combination.
     It's artifacts should include all available versions of those SUM-files
-    with the sha256-field pointing to the one with the strongest algorithm.
+    with the sha256-field pointing to the one with the sha256 algorithm.
     """
 
     TYPE = "installer_file_index"
