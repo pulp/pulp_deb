@@ -2,7 +2,7 @@
 
 from setuptools import find_packages, setup
 
-requirements = ["pulpcore-plugin~=0.1rc6", "python-debian>=0.1.36"]
+requirements = ["pulpcore>=3.0.0rc7", "python-debian>=0.1.36"]
 
 setup(
     name="pulp-deb",
@@ -15,7 +15,7 @@ setup(
     python_requires=">=3.6",
     install_requires=requirements,
     include_package_data=True,
-    packages=find_packages(exclude=["test"]),
+    packages=find_packages(exclude=["tests", "tests.*"]),
     classifiers=(
         "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
         "Operating System :: POSIX :: Linux",
