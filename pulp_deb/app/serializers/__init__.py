@@ -6,6 +6,10 @@ from .content_serializers import (
     InstallerPackageSerializer,
     PackageSerializer,
     PackageIndexSerializer,
+    PackageReleaseComponentSerializer,
+    ReleaseSerializer,
+    ReleaseArchitectureSerializer,
+    ReleaseComponentSerializer,
     ReleaseFileSerializer,
 )
 
