@@ -5,7 +5,6 @@ from functools import partial
 from unittest import SkipTest
 
 from pulp_smash import api, selectors
-from pulp_smash.pulp3.constants import REPO_PATH
 from pulp_smash.pulp3.utils import (
     gen_remote,
     gen_repo,
@@ -26,6 +25,7 @@ from pulp_deb.tests.functional.constants import (
     DEB_PUBLICATION_PATH,
     DEB_RELEASE_FILE_NAME,
     DEB_REMOTE_PATH,
+    DEB_REPO_PATH,
     VERBATIM_PUBLICATION_PATH,
 )
 
@@ -150,7 +150,7 @@ def populate_pulp(cfg, url=DEB_FIXTURE_URL):
     repo = {}
     try:
         remote.update(client.post(DEB_REMOTE_PATH, gen_deb_remote(url)))
-        repo.update(client.post(REPO_PATH, gen_repo()))
+        repo.update(client.post(DEB_REPO_PATH, gen_repo()))
         sync(cfg, remote, repo)
     finally:
         if remote:

@@ -3,13 +3,14 @@
 import unittest
 
 from pulp_smash import api, cli, config, exceptions
-from pulp_smash.pulp3.constants import MEDIA_PATH, REPO_PATH
+from pulp_smash.pulp3.constants import MEDIA_PATH
 from pulp_smash.pulp3.utils import gen_repo, get_content_summary, get_added_content_summary, sync
 
 from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_SUMMARY,
     DEB_FULL_FIXTURE_SUMMARY,
     DEB_REMOTE_PATH,
+    DEB_REPO_PATH,
 )
 from pulp_deb.tests.functional.utils import gen_deb_remote
 from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
@@ -48,7 +49,7 @@ class BasicSyncTestCase(unittest.TestCase):
         5. Sync the remote one more time.
         6. Assert that repository version is different from the previous one.
         """
-        repo = self.client.post(REPO_PATH, gen_repo())
+        repo = self.client.post(DEB_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, repo["pulp_href"])
 
         body = gen_deb_remote(sync_udebs=sync_udebs)
@@ -92,7 +93,7 @@ class BasicSyncTestCase(unittest.TestCase):
         if cli_client.run(("which", "lsof")).returncode != 0:
             raise unittest.SkipTest("lsof package is not present")
 
-        repo = self.client.post(REPO_PATH, gen_repo())
+        repo = self.client.post(DEB_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, repo["pulp_href"])
 
         remote = self.client.post(DEB_REMOTE_PATH, gen_deb_remote())
@@ -118,7 +119,7 @@ class SyncInvalidURLTestCase(unittest.TestCase):
         cfg = config.get_config()
         client = api.Client(cfg, api.json_handler)
 
-        repo = client.post(REPO_PATH, gen_repo())
+        repo = client.post(DEB_REPO_PATH, gen_repo())
         self.addCleanup(client.delete, repo["pulp_href"])
 
         body = gen_deb_remote(url="http://i-am-an-invalid-url.com/invalid/")

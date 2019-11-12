@@ -13,6 +13,7 @@ from pulpcore.plugin.models import (
     PublicationDistribution,
     Remote,
     RemoteArtifact,
+    Repository,
 )
 
 logger = getLogger(__name__)
@@ -354,6 +355,17 @@ class DebRemote(Remote):
     sync_sources = models.BooleanField(default=False)
     sync_udebs = models.BooleanField(default=False)
     sync_installer = models.BooleanField(default=False)
+
+    class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
+
+
+class DebRepository(Repository):
+    """
+    A Repository for DebContent.
+    """
+
+    TYPE = "deb"
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"

@@ -6,12 +6,12 @@ Create a repository
 
 If you don't already have a repository, create one::
 
-    $ http POST $BASE_ADDR/pulp/api/v3/repositories/ name=foo
+    $ http POST $BASE_ADDR/pulp/api/v3/repositories/deb/apt/ name=foo
 
 Response::
 
     {
-        "pulp_href": "/pulp/api/v3/repositories/1/",
+        "pulp_href": "/pulp/api/v3/repositories/deb/apt/1/",
         ...
     }
 
@@ -91,4 +91,4 @@ Add content to a repository
 
 Once there is a content unit, it can be added to and removed from to repositories::
 
-    $ http POST $BASE_ADDR/pulp/api/v3/repositories/1/versions/ add_content_units:="[\"http://localhost:24817/pulp/api/v3/content/deb/packages/1/\"]"
+    $ http POST $BASE_ADDR/pulp/api/v3/repositories/deb/apt/1/modify/ add_content_units:="[\"http://localhost:24817/pulp/api/v3/content/deb/packages/1/\"]"

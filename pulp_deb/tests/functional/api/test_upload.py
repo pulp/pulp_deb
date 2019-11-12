@@ -4,7 +4,7 @@ import hashlib
 import unittest
 
 from pulp_smash import api, config, utils
-from pulp_smash.pulp3.constants import ARTIFACTS_PATH, REPO_PATH
+from pulp_smash.pulp3.constants import ARTIFACTS_PATH
 from pulp_smash.pulp3.utils import delete_orphans, gen_repo, sync
 
 from pulp_deb.tests.functional.constants import (
@@ -12,6 +12,7 @@ from pulp_deb.tests.functional.constants import (
     DEB_PACKAGE_RELPATH,
     DEB_PACKAGE_URL,
     DEB_REMOTE_PATH,
+    DEB_REPO_PATH,
 )
 from pulp_deb.tests.functional.utils import gen_deb_remote
 from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
@@ -53,7 +54,7 @@ class SingleRequestUploadTestCase(unittest.TestCase):
 
     def test_single_request_upload(self):
         """Test single request upload."""
-        repo = self.client.post(REPO_PATH, gen_repo())
+        repo = self.client.post(DEB_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, repo["pulp_href"])
         self.single_request_upload(repo=repo)
         repo = self.client.get(repo["pulp_href"])
@@ -74,7 +75,7 @@ class SingleRequestUploadTestCase(unittest.TestCase):
 
     def test_duplicate_unit(self):
         """Test single request upload for unit already present in Pulp."""
-        repo = self.client.post(REPO_PATH, gen_repo())
+        repo = self.client.post(DEB_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, repo["pulp_href"])
         # Hint this relative path is different from the one from a simple upload, because it
         # contains the release
@@ -93,9 +94,9 @@ class SingleRequestUploadTestCase(unittest.TestCase):
 
     def test_sync_interference(self):
         """Test that uploading a file does not break a consecutive sync containing that file."""
-        upload_repo = self.client.post(REPO_PATH, gen_repo())
+        upload_repo = self.client.post(DEB_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, upload_repo["pulp_href"])
-        sync_repo = self.client.post(REPO_PATH, gen_repo())
+        sync_repo = self.client.post(DEB_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, sync_repo["pulp_href"])
         remote = self.client.post(DEB_REMOTE_PATH, gen_deb_remote())
         self.addCleanup(self.client.delete, remote["pulp_href"])

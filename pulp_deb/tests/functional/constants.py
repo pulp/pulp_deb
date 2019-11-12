@@ -1,14 +1,16 @@
 # coding=utf-8
+"""Constants for Pulp Deb plugin tests."""
 from urllib.parse import urljoin
 
 from pulp_smash.constants import PULP_FIXTURES_BASE_URL
 from pulp_smash.pulp3.constants import (
     # API_DOCS_PATH,
+    BASE_CONTENT_PATH,
     BASE_DISTRIBUTION_PATH,
     BASE_PATH,
     BASE_PUBLICATION_PATH,
     BASE_REMOTE_PATH,
-    CONTENT_PATH,
+    BASE_REPO_PATH,
 )
 
 DOWNLOAD_POLICIES = ["immediate", "streamed", "on_demand"]
@@ -19,12 +21,14 @@ DEB_PACKAGE_NAME = "deb.package"
 DEB_INSTALLER_PACKAGE_NAME = "deb.installer_package"
 DEB_GENERIC_CONTENT_NAME = "deb.generic"
 
-DEB_PACKAGE_PATH = urljoin(CONTENT_PATH, "deb/packages/")
-DEB_GENERIC_CONTENT_PATH = urljoin(CONTENT_PATH, "deb/generic_contents/")
+DEB_PACKAGE_PATH = urljoin(BASE_CONTENT_PATH, "deb/packages/")
+DEB_GENERIC_CONTENT_PATH = urljoin(BASE_CONTENT_PATH, "deb/generic_contents/")
 
 DEB_DISTRIBUTION_PATH = urljoin(BASE_DISTRIBUTION_PATH, "deb/apt/")
 
 DEB_REMOTE_PATH = urljoin(BASE_REMOTE_PATH, "deb/apt/")
+
+DEB_REPO_PATH = urljoin(BASE_REPO_PATH, "deb/apt/")
 
 DEB_PUBLICATION_PATH = urljoin(BASE_PUBLICATION_PATH, "deb/apt/")
 VERBATIM_PUBLICATION_PATH = urljoin(BASE_PUBLICATION_PATH, "deb/verbatim/")

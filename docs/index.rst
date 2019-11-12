@@ -20,6 +20,7 @@ Table of Contents
 
    installation
    workflows/index
+   bindings
    changes
    contributing
 

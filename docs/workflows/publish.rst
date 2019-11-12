@@ -10,7 +10,7 @@ Create a Publication
 Publiations contain extra settings for how to publish. You can use a deb publisher on any
 repository that contains deb content::
 
-    $ http POST $BASE_ADDR/pulp/api/v3/publication/deb/apt/ repository=/pulp/api/v3/repositories/<uuid> simple=true
+    $ http POST $BASE_ADDR/pulp/api/v3/publication/deb/apt/ repository=/pulp/api/v3/repositories/deb/apt/<uuid> simple=true
 
 Response::
 
@@ -25,7 +25,7 @@ Host a Publication (Create a Distribution)
 To host a publication, (which makes it consumable by a package manager), users create a distribution which
 will serve the associated publication at ``/pulp/content/<distribution.base_path>``::
 
-    $ http POST $BASE_ADDR/pulp/api/v3/distributions/deb/apt/ name='baz' base_path='foo' publication=$BASE_ADDR/publications/1/
+    $ http POST $BASE_ADDR/pulp/api/v3/distributions/deb/apt/ name='baz' base_path='foo' publication=$BASE_ADDR/publications/deb/apt/1/
 
 Response::
 

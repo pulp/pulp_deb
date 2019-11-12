@@ -16,3 +16,5 @@ from .publication_serializers import (
 )
 
 from .remote_serializers import DebRemoteSerializer
+
+from .repository_serializers import DebRepositorySerializer
