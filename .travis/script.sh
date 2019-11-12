@@ -85,9 +85,8 @@ export CMD_STDIN_PREFIX="sudo kubectl exec -i $PULP_API_POD --"
 # The alias does not seem to work in Travis / the scripting framework
 #alias pytest="$CMD_PREFIX pytest"
 
-# Do not do this now. It requires gcc to install packages not needed in the container.
-# cat test_requirements.txt | $CMD_STDIN_PREFIX bash -c "cat > /tmp/test_requirements.txt"
-# $CMD_PREFIX pip3 install -r /tmp/test_requirements.txt
+cat unittest_requirements.txt | $CMD_STDIN_PREFIX bash -c "cat > /tmp/test_requirements.txt"
+$CMD_PREFIX pip3 install -r /tmp/test_requirements.txt
 
 # Run unit tests.
 $CMD_PREFIX bash -c "PULP_DATABASES__default__USER=postgres django-admin test --noinput /usr/local/lib/python${TRAVIS_PYTHON_VERSION}/site-packages/pulp_deb/tests/unit/"
