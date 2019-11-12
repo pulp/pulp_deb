@@ -1,7 +1,7 @@
 Workflows
 =========
 
-If you have not yet installed the deb plugins on your Pulp installation, please follow our
+If you have not yet installed the `deb` plugin on your Pulp installation, please follow our
 :doc:`../installation`. These documents will assume you have the environment installed and
 ready to go.
 
