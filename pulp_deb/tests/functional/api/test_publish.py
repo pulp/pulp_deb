@@ -6,14 +6,14 @@ from random import choice
 from requests.exceptions import HTTPError
 
 from pulp_smash import api, config
-from pulp_smash.pulp3.constants import REPO_PATH
-from pulp_smash.pulp3.utils import gen_repo, get_content, get_versions, sync
+from pulp_smash.pulp3.utils import gen_repo, get_content, get_versions, modify_repo, sync
 
 from pulp_deb.tests.functional.constants import (
     DEB_GENERIC_CONTENT_NAME,
     DEB_PACKAGE_NAME,
     DEB_PUBLICATION_PATH,
     DEB_REMOTE_PATH,
+    DEB_REPO_PATH,
     VERBATIM_PUBLICATION_PATH,
 )
 from pulp_deb.tests.functional.utils import (
@@ -57,7 +57,7 @@ class PublishAnyRepoVersionTestCase(unittest.TestCase):
         remote = client.post(DEB_REMOTE_PATH, body)
         self.addCleanup(client.delete, remote["pulp_href"])
 
-        repo = client.post(REPO_PATH, gen_repo())
+        repo = client.post(DEB_REPO_PATH, gen_repo())
         self.addCleanup(client.delete, repo["pulp_href"])
 
         sync(cfg, remote, repo)
@@ -65,11 +65,9 @@ class PublishAnyRepoVersionTestCase(unittest.TestCase):
         # Step 1
         repo = client.get(repo["pulp_href"])
         for deb_generic_content in get_content(repo)[DEB_GENERIC_CONTENT_NAME]:
-            client.post(
-                repo["versions_href"], {"add_content_units": [deb_generic_content["pulp_href"]]}
-            )
+            modify_repo(cfg, repo, add_units=[deb_generic_content])
         for deb_package in get_content(repo)[DEB_PACKAGE_NAME]:
-            client.post(repo["versions_href"], {"add_content_units": [deb_package["pulp_href"]]})
+            modify_repo(cfg, repo, add_units=[deb_package])
         version_hrefs = tuple(ver["pulp_href"] for ver in get_versions(repo))
         non_latest = choice(version_hrefs[:-1])
 

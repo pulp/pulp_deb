@@ -4,7 +4,7 @@ from random import choice
 import unittest
 
 from pulp_smash import api, config
-from pulp_smash.pulp3.constants import ARTIFACTS_PATH, ON_DEMAND_DOWNLOAD_POLICIES, REPO_PATH
+from pulp_smash.pulp3.constants import ARTIFACTS_PATH, ON_DEMAND_DOWNLOAD_POLICIES
 from pulp_smash.pulp3.utils import (
     delete_orphans,
     gen_repo,
@@ -18,6 +18,7 @@ from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_SUMMARY,
     DEB_PACKAGE_PATH,
     DEB_REMOTE_PATH,
+    DEB_REPO_PATH,
 )
 from pulp_deb.tests.functional.utils import create_deb_publication, gen_deb_remote
 from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
@@ -77,7 +78,7 @@ class SyncPublishDownloadPolicyTestCase(unittest.TestCase):
         # delete orphans to assure that no content units are present on the
         # file system
         delete_orphans(self.cfg)
-        repo = self.client.post(REPO_PATH, gen_repo())
+        repo = self.client.post(DEB_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, repo["pulp_href"])
 
         body = gen_deb_remote(policy=download_policy)
@@ -104,7 +105,7 @@ class SyncPublishDownloadPolicyTestCase(unittest.TestCase):
 
     def do_publish(self, download_policy):
         """Publish repository synced with lazy download policy."""
-        repo = self.client.post(REPO_PATH, gen_repo())
+        repo = self.client.post(DEB_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, repo["pulp_href"])
 
         body = gen_deb_remote(policy=download_policy)
@@ -149,7 +150,7 @@ class LazySyncedContentAccessTestCase(unittest.TestCase):
         # delete orphans to assure that no content units are present on the
         # file system
         delete_orphans(self.cfg)
-        repo = self.client.post(REPO_PATH, gen_repo())
+        repo = self.client.post(DEB_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, repo["pulp_href"])
 
         body = gen_deb_remote(policy=policy)
@@ -189,7 +190,7 @@ class SwitchDownloadPolicyTestCase(unittest.TestCase):
         delete_orphans(cfg)
         client = api.Client(cfg, api.page_handler)
 
-        repo = client.post(REPO_PATH, gen_repo())
+        repo = client.post(DEB_REPO_PATH, gen_repo())
         self.addCleanup(client.delete, repo["pulp_href"])
 
         body = gen_deb_remote(policy=choice(ON_DEMAND_DOWNLOAD_POLICIES))

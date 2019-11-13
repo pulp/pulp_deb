@@ -38,7 +38,7 @@ From Source
 
    sudo -u pulp -i
    source ~/pulpvenv/bin/activate
-   cd pulp_deb # assuming you have `git clone`d here.
+   cd pulp_deb
    pip install -e .
    django-admin runserver 24817
 
@@ -47,8 +47,8 @@ Make and Run Migrations
 
 .. code-block:: bash
 
-   django-admin makemigrations deb
-   django-admin migrate deb
+   pulp-manager makemigrations pulp_deb
+   pulp-manager migrate pulp_deb
 
 
 Run Services
@@ -56,8 +56,8 @@ Run Services
 
 .. code-block:: bash
 
-   sudo systemctl restart pulpcore-content
-   sudo systemctl restart pulpcore-api
+   pulp-manager runserver
+   gunicorn pulpcore.content:server --bind 'localhost:24816' --worker-class 'aiohttp.GunicornWebWorker' -w 2
    sudo systemctl restart pulpcore-resource-manager
    sudo systemctl restart pulpcore-worker@1
    sudo systemctl restart pulpcore-worker@2

@@ -6,13 +6,13 @@ from random import choice
 from urllib.parse import urljoin
 
 from pulp_smash import api, config, utils
-from pulp_smash.pulp3.constants import REPO_PATH
 from pulp_smash.pulp3.utils import download_content_unit, gen_distribution, gen_repo, sync
 
 from pulp_deb.tests.functional.constants import (
     DEB_DISTRIBUTION_PATH,
     DEB_FIXTURE_URL,
     DEB_REMOTE_PATH,
+    DEB_REPO_PATH,
     DOWNLOAD_POLICIES,
 )
 from pulp_deb.tests.functional.utils import (
@@ -71,7 +71,7 @@ class DownloadContentTestCase(unittest.TestCase):
         cfg = config.get_config()
         client = api.Client(cfg, api.json_handler)
 
-        repo = client.post(REPO_PATH, gen_repo())
+        repo = client.post(DEB_REPO_PATH, gen_repo())
         self.addCleanup(client.delete, repo["pulp_href"])
 
         body = gen_deb_remote()

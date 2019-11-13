@@ -15,6 +15,8 @@ from pulpcore.plugin.viewsets import (
     RemoteViewSet,
     OperationPostponedResponse,
     PublicationViewSet,
+    RepositoryVersionViewSet,
+    RepositoryViewSet,
     SingleArtifactContentUploadViewSet,
 )
 
@@ -202,30 +204,50 @@ class DebRemoteViewSet(RemoteViewSet):
     queryset = models.DebRemote.objects.all()
     serializer_class = serializers.DebRemoteSerializer
 
+
+class DebRepositoryViewSet(RepositoryViewSet):
+    """
+    A ViewSet for DebRepository.
+    """
+
+    endpoint_name = "apt"
+    queryset = models.DebRepository.objects.all()
+    serializer_class = serializers.DebRepositorySerializer
+
+    # This decorator is necessary since a sync operation is asyncrounous and returns
+    # the id and href of the sync task.
     @swagger_auto_schema(
         operation_description="Trigger an asynchronous task to sync content",
+        operation_summary="Sync from remote",
         responses={202: AsyncOperationResponseSerializer},
     )
     @action(detail=True, methods=["post"], serializer_class=RepositorySyncURLSerializer)
     def sync(self, request, pk):
         """
-        Synchronizes a repository.
-
-        The ``repository`` field has to be provided.
+        Dispatches a sync task.
         """
-        remote = self.get_object()
+        repository = self.get_object()
         serializer = RepositorySyncURLSerializer(data=request.data, context={"request": request})
 
         # Validate synchronously to return 400 errors.
         serializer.is_valid(raise_exception=True)
-        repository = serializer.validated_data.get("repository")
+        remote = serializer.validated_data.get("remote")
         mirror = serializer.validated_data.get("mirror", True)
+
         result = enqueue_with_reservation(
             tasks.synchronize,
             [repository, remote],
             kwargs={"remote_pk": remote.pk, "repository_pk": repository.pk, "mirror": mirror},
         )
         return OperationPostponedResponse(result, request)
+
+
+class DebRepositoryVersionViewSet(RepositoryVersionViewSet):
+    """
+    DebRepositoryVersion represents a single deb repository version.
+    """
+
+    parent_viewset = DebRepositoryViewSet
 
 
 class VerbatimPublicationViewSet(PublicationViewSet):
