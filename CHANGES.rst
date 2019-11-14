@@ -13,6 +13,58 @@ Changelog
 
 .. towncrier release notes start
 
+2.0.0b3 (2019-11-14)
+====================
+
+Features
+--------
+
+
+- Change `relative_path` from `CharField` to `TextField`
+  `#4544 <https://pulp.plan.io/issues/4544>`_
+- Add more validation for uploading packages and installer packages.
+  `#5377 <https://pulp.plan.io/issues/5377>`_
+
+
+
+Deprecations and Removals
+-------------------------
+
+
+- Change `_id`, `_created`, `_last_updated`, `_href` to `pulp_id`, `pulp_created`, `pulp_last_updated`, `pulp_href`
+  `#5457 <https://pulp.plan.io/issues/5457>`_
+- Remove "_" from `_versions_href`, `_latest_version_href`
+  `#5548 <https://pulp.plan.io/issues/5548>`_
+- Removing base field: `_type` .
+  `#5550 <https://pulp.plan.io/issues/5550>`_
+- Sync is no longer available at the {remote_href}/sync/ repository={repo_href} endpoint. Instead, use POST {repo_href}/sync/ remote={remote_href}.
+
+  Creating / listing / editing / deleting deb repositories is now performed on /pulp/api/v3/repositories/deb/apt/ instead of /pulp/api/v3/repositories/.
+  `#5698 <https://pulp.plan.io/issues/5698>`_
+
+
+
+Bugfixes
+--------
+
+
+- Fix `fields` filter.
+  `#5543 <https://pulp.plan.io/issues/5543>`_
+
+
+
+Misc
+----
+
+
+- Depend on pulpcore, directly, instead of pulpcore-plugin.
+  `#5580 <https://pulp.plan.io/issues/5580>`_
+
+
+
+----
+
+
 2.0.0b2 (2019-10-02)
 ====================
 
