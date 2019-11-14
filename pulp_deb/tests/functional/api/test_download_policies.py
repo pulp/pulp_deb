@@ -70,7 +70,7 @@ class SyncPublishDownloadPolicyTestCase(unittest.TestCase):
            were shown.
         6. Sync the remote one more time in order to create another repository
            version.
-        7. Assert that repository version is different from the previous one.
+        7. Assert that repository version is the same as the previous one.
         8. Assert that the same number of units are shown, and after the
            second sync no extra units should be shown, since the same remote
            was synced again.
@@ -99,9 +99,8 @@ class SyncPublishDownloadPolicyTestCase(unittest.TestCase):
         sync(self.cfg, remote, repo)
         repo = self.client.get(repo["pulp_href"])
 
-        self.assertNotEqual(latest_version_href, repo["latest_version_href"])
+        self.assertEqual(latest_version_href, repo["latest_version_href"])
         self.assertDictEqual(get_content_summary(repo), DEB_FIXTURE_SUMMARY)
-        self.assertDictEqual(get_added_content_summary(repo), {})
 
     def do_publish(self, download_policy):
         """Publish repository synced with lazy download policy."""

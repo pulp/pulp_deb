@@ -47,7 +47,7 @@ class BasicSyncTestCase(unittest.TestCase):
         3. Sync the remote.
         4. Assert that repository version is not None.
         5. Sync the remote one more time.
-        6. Assert that repository version is different from the previous one.
+        6. Assert that repository version is the same as the previous one.
         """
         repo = self.client.post(DEB_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, repo["pulp_href"])
@@ -70,9 +70,8 @@ class BasicSyncTestCase(unittest.TestCase):
         sync(self.cfg, remote, repo)
         repo = self.client.get(repo["pulp_href"])
 
-        self.assertNotEqual(latest_version_href, repo["latest_version_href"])
+        self.assertEqual(latest_version_href, repo["latest_version_href"])
         self.assertDictEqual(get_content_summary(repo), fixture_summary)
-        self.assertDictEqual(get_added_content_summary(repo), {})
 
     def test_file_decriptors(self):
         """Test whether file descriptors are closed properly.

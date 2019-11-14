@@ -3,6 +3,7 @@ from gettext import gettext as _  # noqa
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.decorators import action
 
+from pulpcore.plugin.actions import ModifyRepositoryActionMixin
 from pulpcore.plugin.serializers import (
     AsyncOperationResponseSerializer,
     RepositorySyncURLSerializer,
@@ -205,7 +206,7 @@ class DebRemoteViewSet(RemoteViewSet):
     serializer_class = serializers.DebRemoteSerializer
 
 
-class DebRepositoryViewSet(RepositoryViewSet):
+class DebRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin):
     """
     A ViewSet for DebRepository.
     """
