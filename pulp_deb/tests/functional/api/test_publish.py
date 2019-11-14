@@ -65,9 +65,9 @@ class PublishAnyRepoVersionTestCase(unittest.TestCase):
         # Step 1
         repo = client.get(repo["pulp_href"])
         for deb_generic_content in get_content(repo)[DEB_GENERIC_CONTENT_NAME]:
-            modify_repo(cfg, repo, add_units=[deb_generic_content])
+            modify_repo(cfg, repo, remove_units=[deb_generic_content])
         for deb_package in get_content(repo)[DEB_PACKAGE_NAME]:
-            modify_repo(cfg, repo, add_units=[deb_package])
+            modify_repo(cfg, repo, remove_units=[deb_package])
         version_hrefs = tuple(ver["pulp_href"] for ver in get_versions(repo))
         non_latest = choice(version_hrefs[:-1])
 
