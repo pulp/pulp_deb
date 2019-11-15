@@ -6,7 +6,7 @@ requirements = ["pulpcore>=3.0.0rc8", "python-debian>=0.1.36"]
 
 setup(
     name="pulp-deb",
-    version="2.0.0b3",
+    version="2.0.0b4.dev",
     description="pulp-deb plugin for the Pulp Project",
     license="GPLv2+",
     author="Matthias Dellweg",
