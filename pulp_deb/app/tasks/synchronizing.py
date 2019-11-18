@@ -179,8 +179,8 @@ class DebUpdateReleaseFileAttributes(Stage):
                         release_file.relative_path = da_names["Release"].relative_path
                     else:
                         # No (proper) artifacts left -> drop it
-                        if d_content.future is not None:
-                            d_content.future.set_result(None)
+                        d_content.content = None
+                        d_content.resolve()
                         continue
                     release_file.sha256 = release_file_artifact.sha256
                     release_file_dict = deb822.Release(release_file_artifact.file)
@@ -351,9 +351,8 @@ class DebFirstStage(Stage):
 
     async def _create_unit(self, d_content):
         # Warning! If d_content batches, this will deadlock.
-        future = d_content.get_or_create_future()
         await self.put(d_content)
-        return await future
+        return await d_content.resolution()
 
     def _to_d_artifact(self, relative_path, data=None):
         artifact = Artifact(**_get_checksums(data or {}))
@@ -371,7 +370,6 @@ class DebFirstStage(Stage):
         # Create release_file
         release_file_dc = DeclarativeContent(
             content=ReleaseFile(distribution=distribution),
-            does_batch=False,
             d_artifacts=[
                 self._to_d_artifact(os.path.join("dists", distribution, filename))
                 for filename in ["Release", "InRelease", "Release.gpg"]
@@ -384,7 +382,7 @@ class DebFirstStage(Stage):
         release_unit = Release(
             codename=release_file.codename, suite=release_file.suite, distribution=distribution
         )
-        release_dc = DeclarativeContent(content=release_unit, does_batch=False)
+        release_dc = DeclarativeContent(content=release_unit)
         release = await self._create_unit(release_dc)
         # Create release architectures
         for architecture in _filter_split(release_file.architectures, self.architectures):
@@ -411,7 +409,7 @@ class DebFirstStage(Stage):
     async def _handle_component(self, component, release, release_file, file_references):
         # Create release_component
         release_component_dc = DeclarativeContent(
-            content=ReleaseComponent(component=component, release=release), does_batch=False
+            content=ReleaseComponent(component=component, release=release)
         )
         release_component = await self._create_unit(release_component_dc)
         architectures = _filter_split(release_file.architectures, self.architectures)
@@ -483,7 +481,7 @@ class DebFirstStage(Stage):
             relative_path=os.path.join(release_base_path, package_index_dir, "Packages"),
         )
         package_index = await self._create_unit(
-            DeclarativeContent(content=content_unit, d_artifacts=d_artifacts, does_batch=False)
+            DeclarativeContent(content=content_unit, d_artifacts=d_artifacts)
         )
         # Interpret policy to download Artifacts or not
         deferred_download = self.remote.policy != Remote.IMMEDIATE
@@ -513,13 +511,13 @@ class DebFirstStage(Stage):
                 package_dc = DeclarativeContent(
                     content=package_content_unit, d_artifacts=[package_da]
                 )
-                package_futures.append(package_dc.get_or_create_future())
+                package_futures.append(package_dc)
                 await self.put(package_dc)
             except KeyError:
                 log.warning("Ignoring invalid package paragraph. {}".format(package_paragraph))
         # Assign packages to this release_component
         for package_future in package_futures:
-            package = await package_future
+            package = await package_future.resolution()
             if not isinstance(package, Package):
                 # TODO repeat this for installer packages
                 continue
@@ -557,9 +555,7 @@ class DebFirstStage(Stage):
             sha256=d_artifacts[0].artifact.sha256,
             relative_path=os.path.join(release_base_path, installer_file_index_dir),
         )
-        d_content = DeclarativeContent(
-            content=content_unit, d_artifacts=d_artifacts, does_batch=False
-        )
+        d_content = DeclarativeContent(content=content_unit, d_artifacts=d_artifacts)
         installer_file_index = await self._create_unit(d_content)
         # Interpret policy to download Artifacts or not
         deferred_download = self.remote.policy != Remote.IMMEDIATE
