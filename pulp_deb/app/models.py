@@ -366,6 +366,14 @@ class DebRepository(Repository):
     """
 
     TYPE = "deb"
+    CONTENT_TYPES = [
+        GenericContent,
+        ReleaseFile,
+        PackageIndex,
+        InstallerFileIndex,
+        Package,
+        InstallerPackage,
+    ]
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
