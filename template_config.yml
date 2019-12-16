@@ -21,6 +21,7 @@ plugin_dash_short: deb
 plugin_name: pulp_deb
 plugin_snake: pulp_deb
 pulp_settings: null
+pulpcore_branch: master
 pydocstyle: true
 pypi_username: pulp
 test_bindings: false
