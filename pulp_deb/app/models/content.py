@@ -6,15 +6,7 @@ from debian import deb822
 
 from django.db import models
 
-from pulpcore.plugin.models import (
-    Artifact,
-    Content,
-    Publication,
-    PublicationDistribution,
-    Remote,
-    RemoteArtifact,
-    Repository,
-)
+from pulpcore.plugin.models import Artifact, Content, RemoteArtifact
 
 logger = getLogger(__name__)
 
@@ -71,6 +63,13 @@ class ReleaseFile(Content):
             ),
         )
 
+    @property
+    def main_artifact(self):
+        """
+        Retrieve the plain ReleaseFile artifact.
+        """
+        return self._artifacts.get(sha256=self.sha256)
+
 
 class PackageIndex(Content):
     """
@@ -110,7 +109,7 @@ class InstallerFileIndex(Content):
     This model represents the MD5SUMS and SHA256SUMS files for a specific
     component - architecture combination.
     It's artifacts should include all available versions of those SUM-files
-    with the sha256-field pointing to the one with the strongest algorithm.
+    with the sha256-field pointing to the one with the sha256 algorithm.
     """
 
     TYPE = "installer_file_index"
@@ -302,78 +301,71 @@ class InstallerPackage(BasePackage):
         pass
 
 
-class VerbatimPublication(Publication):
+class Release(Content):
     """
-    A verbatim Publication for Content.
+    The "Release" content.
 
-    This publication publishes the obtained metadata unchanged.
+    This model represents a debian release.
     """
 
-    TYPE = "verbatim-publication"
+    TYPE = "release"
+
+    codename = models.CharField(max_length=255)
+    suite = models.CharField(max_length=255)
+    distribution = models.CharField(max_length=255)
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
+        unique_together = (("codename", "suite", "distribution"),)
 
 
-class DebPublication(Publication):
+class ReleaseArchitecture(Content):
     """
-    A Publication for DebContent.
+    The ReleaseArchitecture content.
 
-    This publication recreates all metadata.
+    This model represents an architecture in association to a Release.
     """
 
-    TYPE = "apt-publication"
+    TYPE = "release_architecture"
 
-    simple = models.BooleanField(default=False)
-    structured = models.BooleanField(default=False)
+    architecture = models.CharField(max_length=255)
+    release = models.ForeignKey(Release, on_delete=models.CASCADE)
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
+        unique_together = (("architecture", "release"),)
 
 
-class DebDistribution(PublicationDistribution):
+class ReleaseComponent(Content):
     """
-    A Distribution for DebContent.
+    The ReleaseComponent content.
+
+    This model represents a repository component in association to a Release.
     """
 
-    TYPE = "apt-distribution"
+    TYPE = "release_component"
+
+    component = models.CharField(max_length=255)
+    release = models.ForeignKey(Release, on_delete=models.CASCADE)
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
+        unique_together = (("component", "release"),)
 
 
-class DebRemote(Remote):
+class PackageReleaseComponent(Content):
     """
-    A Remote for DebContent.
+    The PackageReleaseComponent.
+
+    This is the join table that decides, which Packages (in which RepositoryVersions) belong to
+    which ReleaseComponents.
     """
 
-    TYPE = "apt-remote"
+    TYPE = "package_release_component"
 
-    distributions = models.CharField(max_length=255, null=True)
-    components = models.CharField(max_length=255, null=True)
-    architectures = models.CharField(max_length=255, null=True)
-    sync_sources = models.BooleanField(default=False)
-    sync_udebs = models.BooleanField(default=False)
-    sync_installer = models.BooleanField(default=False)
+    package = models.ForeignKey(Package, on_delete=models.CASCADE)
+    release_component = models.ForeignKey(ReleaseComponent, on_delete=models.CASCADE)
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
-
-
-class DebRepository(Repository):
-    """
-    A Repository for DebContent.
-    """
-
-    TYPE = "deb"
-    CONTENT_TYPES = [
-        GenericContent,
-        ReleaseFile,
-        PackageIndex,
-        InstallerFileIndex,
-        Package,
-        InstallerPackage,
-    ]
-
-    class Meta:
-        default_related_name = "%(app_label)s_%(model_name)s"
+        unique_together = (("package", "release_component"),)

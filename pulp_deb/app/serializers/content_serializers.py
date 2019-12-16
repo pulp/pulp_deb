@@ -9,6 +9,7 @@ from rest_framework.serializers import CharField, Field, ValidationError
 from pulpcore.plugin.serializers import (
     ContentChecksumSerializer,
     MultipleArtifactContentSerializer,
+    NoArtifactContentSerializer,
     SingleArtifactContentUploadSerializer,
     DetailRelatedField,
 )
@@ -20,6 +21,10 @@ from pulp_deb.app.models import (
     InstallerPackage,
     Package,
     PackageIndex,
+    PackageReleaseComponent,
+    Release,
+    ReleaseArchitecture,
+    ReleaseComponent,
     ReleaseFile,
 )
 
@@ -131,7 +136,7 @@ class PackageIndexSerializer(MultipleArtifactContentSerializer):
         help_text="Release this index file belongs to.",
         many=False,
         queryset=ReleaseFile.objects.all(),
-        view_name="deb-release-detail",
+        view_name="deb-release-file-detail",
     )
 
     class Meta:
@@ -166,7 +171,7 @@ class InstallerFileIndexSerializer(MultipleArtifactContentSerializer):
         help_text="Release this index file belongs to.",
         many=False,
         queryset=ReleaseFile.objects.all(),
-        view_name="deb-release-detail",
+        view_name="deb-release-file-detail",
     )
 
     class Meta:
@@ -328,3 +333,76 @@ class InstallerPackageSerializer(BasePackageSerializer):
 
     class Meta(BasePackageSerializer.Meta):
         model = InstallerPackage
+
+
+class ReleaseSerializer(NoArtifactContentSerializer):
+    """
+    A Serializer for Release.
+    """
+
+    codename = CharField()
+    suite = CharField()
+    distribution = CharField()
+
+    class Meta(NoArtifactContentSerializer.Meta):
+        model = Release
+        fields = NoArtifactContentSerializer.Meta.fields + ("codename", "suite", "distribution")
+
+
+class ReleaseArchitectureSerializer(NoArtifactContentSerializer):
+    """
+    A Serializer for ReleaseArchitecture.
+    """
+
+    architecture = CharField(help_text="Name of the architecture.")
+    release = DetailRelatedField(
+        help_text="Release this architecture is contained in.",
+        many=False,
+        queryset=Release.objects.all(),
+        view_name="deb-release-detail",
+    )
+
+    class Meta(NoArtifactContentSerializer.Meta):
+        model = ReleaseArchitecture
+        fields = NoArtifactContentSerializer.Meta.fields + ("architecture", "release")
+
+
+class ReleaseComponentSerializer(NoArtifactContentSerializer):
+    """
+    A Serializer for ReleaseComponent.
+    """
+
+    component = CharField(help_text="Name of the component.")
+    release = DetailRelatedField(
+        help_text="Release this component is contained in.",
+        many=False,
+        queryset=Release.objects.all(),
+        view_name="deb-release-detail",
+    )
+
+    class Meta(NoArtifactContentSerializer.Meta):
+        model = ReleaseComponent
+        fields = NoArtifactContentSerializer.Meta.fields + ("component", "release")
+
+
+class PackageReleaseComponentSerializer(NoArtifactContentSerializer):
+    """
+    A Serializer for PackageReleaseComponent.
+    """
+
+    package = DetailRelatedField(
+        help_text="Package that is contained in release_comonent.",
+        many=False,
+        queryset=ReleaseComponent.objects.all(),
+        view_name="deb-release_component-detail",
+    )
+    release_component = DetailRelatedField(
+        help_text="ReleaseComponent this package is contained in.",
+        many=False,
+        queryset=ReleaseComponent.objects.all(),
+        view_name="deb-release_component-detail",
+    )
+
+    class Meta(NoArtifactContentSerializer.Meta):
+        model = PackageReleaseComponent
+        fields = NoArtifactContentSerializer.Meta.fields + ("package", "release_component")
