@@ -74,8 +74,16 @@ if [ -n "$PULP_OPERATOR_PR_NUMBER" ]; then
   cd ..
 fi
 
+git clone https://github.com/pulp/pulp-openapi-generator.git
+if [ -n "$PULP_BINDINGS_PR_NUMBER" ]; then
+  cd pulp-openapi-generator
+  git fetch origin +refs/pull/$PULP_BINDINGS_PR_NUMBER/merge
+  git checkout FETCH_HEAD
+  cd ..
+fi
 
-git clone --depth=1 https://github.com/pulp/pulpcore.git
+
+git clone --depth=1 https://github.com/pulp/pulpcore.git --branch master
 
 if [ -n "$PULP_PR_NUMBER" ]; then
   cd pulpcore

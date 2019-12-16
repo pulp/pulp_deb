@@ -36,7 +36,7 @@ class ReleaseFile(Content):
     """
     The "ReleaseFile" content.
 
-    This model holds an artifact to the upstream Release file at the same time.
+    This model holds an artifact to the upstream Release file.
     """
 
     TYPE = "release_file"
