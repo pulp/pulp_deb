@@ -12,6 +12,7 @@ from .... import testbase
 
 from pulp_deb.common import constants
 from pulp_deb.common import ids
+from pulp_deb.plugins.db import models
 from pulp_deb.plugins.importers import sync
 
 
@@ -167,6 +168,39 @@ SHA256:
             set([x['SHA256'] for x in pkgs]),
             set([x.checksum for x in self.step.available_units]))
         self.assertEquals(len(self.step.component_packages[self.release]['main']), 2)
+
+    @mock.patch('os.path.isfile', return_value=True)
+    @mock.patch('pulp.plugins.util.publish_step.repo_controller.associate_single_unit')
+    @mock.patch('pulp.plugins.util.publish_step.units_controller.find_units')
+    def test_getLocalUnits(self, _find_units, _associate_single_unit, _isfile):
+        self.step.conduit.remove_unit = mock.MagicMock()
+        pkgs = self._mock_repometa()
+        units = [
+            models.DebPackage.from_packages_paragraph(pkg)
+            for pkg in pkgs
+        ]
+        if self.repair_sync:
+            for unit in units:
+                checksums = {
+                    'md5sum': unit.md5sum,
+                    'sha1': unit.sha1,
+                    'sha256': unit.sha256,
+                }
+                unit.calculate_deb_checksums = mock.MagicMock(return_value=checksums)
+            # Break the first one
+            units[0].calculate_deb_checksums.return_value['sha1'] = "invalid"
+        self.step.available_units = units
+        _find_units.return_value = units
+        step = self.step.children[4]
+        step.process_lifecycle()
+        if self.repair_sync:
+            self.assertEqual(_associate_single_unit.call_count, len(units) - 1)
+            self.assertEqual(len(step.units_to_download), 1)
+            self.step.conduit.remove_unit.assert_not_called()
+        else:
+            self.assertEqual(_associate_single_unit.call_count, len(units))
+            self.assertEqual(len(step.units_to_download), 0)
+            self.step.conduit.remove_unit.assert_called_once()
 
     @mock.patch('pulp_deb.plugins.importers.sync.misc.mkdir')
     def test_CreateRequestsUnitsToDownload(self, _mkdir):
