@@ -10,6 +10,7 @@ from pulpcore.plugin.serializers import (
     ContentChecksumSerializer,
     MultipleArtifactContentSerializer,
     NoArtifactContentSerializer,
+    SingleArtifactContentSerializer,
     SingleArtifactContentUploadSerializer,
     DetailRelatedField,
 )
@@ -332,6 +333,99 @@ class InstallerPackageSerializer(BasePackageSerializer):
         return data
 
     class Meta(BasePackageSerializer.Meta):
+        model = InstallerPackage
+
+
+class BasePackageSyncSerializer(SingleArtifactContentSerializer):
+    """
+    A Serializer for abstract BasePackage used in sync.
+    """
+
+    package = CharField()
+    source = CharField(required=False)
+    version = CharField()
+    architecture = CharField()
+    section = CharField()
+    priority = CharField()
+    origin = CharField(required=False)
+    tag = CharField(required=False)
+    bugs = CharField(required=False)
+    essential = YesNoField(required=False)
+    build_essential = YesNoField(required=False)
+    installed_size = CharField(required=False)
+    maintainer = CharField()
+    original_maintainer = CharField(required=False)
+    description = CharField()
+    description_md5 = CharField(required=False)
+    homepage = CharField(required=False)
+    built_using = CharField(required=False)
+    auto_built_package = CharField(required=False)
+    multi_arch = CharField(required=False)
+    breaks = CharField(required=False)
+    conflicts = CharField(required=False)
+    depends = CharField(required=False)
+    recommends = CharField(required=False)
+    suggests = CharField(required=False)
+    enhances = CharField(required=False)
+    pre_depends = CharField(required=False)
+    provides = CharField(required=False)
+    replaces = CharField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        """Initializer for BasePackageSyncSerializer."""
+        super().__init__(*args, **kwargs)
+        self.fields.pop("artifact")
+
+    class Meta(SingleArtifactContentSerializer.Meta):
+        fields = SingleArtifactContentSerializer.Meta.fields + (
+            "package",
+            "source",
+            "version",
+            "architecture",
+            "section",
+            "priority",
+            "origin",
+            "tag",
+            "bugs",
+            "essential",
+            "build_essential",
+            "installed_size",
+            "maintainer",
+            "original_maintainer",
+            "description",
+            "description_md5",
+            "homepage",
+            "built_using",
+            "auto_built_package",
+            "multi_arch",
+            "breaks",
+            "conflicts",
+            "depends",
+            "recommends",
+            "suggests",
+            "enhances",
+            "pre_depends",
+            "provides",
+            "replaces",
+        )
+        model = BasePackage
+
+
+class PackageSyncSerializer(BasePackageSyncSerializer):
+    """
+    A Serializer for Package used in sync.
+    """
+
+    class Meta(BasePackageSyncSerializer.Meta):
+        model = Package
+
+
+class InstallerPackageSyncSerializer(BasePackageSyncSerializer):
+    """
+    A Serializer for InstallerPackage used in sync.
+    """
+
+    class Meta(BasePackageSyncSerializer.Meta):
         model = InstallerPackage
 
 
