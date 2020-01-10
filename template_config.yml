@@ -4,6 +4,7 @@
 additional_plugins: []
 black: true
 check_commit_message: true
+cherry_pick_automation: false
 coverage: false
 deploy_client_to_pypi: true
 deploy_client_to_rubygems: true
@@ -21,8 +22,10 @@ plugin_dash_short: deb
 plugin_name: pulp_deb
 plugin_snake: pulp_deb
 pulp_settings: null
+pulpcore_branch: 3.0
 pydocstyle: true
 pypi_username: pulp
+stable_branch: null
 test_bindings: false
 test_performance: false
 travis_notifications: None
