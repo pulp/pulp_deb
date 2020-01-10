@@ -17,6 +17,7 @@ Package: odin
 # Replaces: <comma-separated list of packages>
 Architecture: ppc64
 # Multi-Arch: <one of: foreign|same|allowed>
+Essential: Yes
 # Copyright: <copyright file; defaults to GPL2>
 # Changelog: <changelog file; defaults to a generic changelog>
 # Readme: <README.Debian file; defaults to a generic one>
