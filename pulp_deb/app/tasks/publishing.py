@@ -13,6 +13,7 @@ from pulpcore.plugin.models import PublishedArtifact, PublishedMetadata, Reposit
 from pulpcore.plugin.tasking import WorkingDirectory
 
 from pulp_deb.app.models import DebPublication, Package, VerbatimPublication
+from pulp_deb.app.serializers import Package822Serializer
 
 
 log = logging.getLogger(__name__)
@@ -103,7 +104,10 @@ def publish(repository_version_pk, simple=False, structured=False):
                             open(package_index_path, "wb"),
                             package_index_path,
                         )
-                    package.to822("all").dump(package_index_files[package.architecture][0])
+                    package_serializer = Package822Serializer(package, context={"request": None})
+                    package_serializer.to822("all").dump(
+                        package_index_files[package.architecture][0]
+                    )
                     package_index_files[package.architecture][0].write(b"\n")
                 for (package_index_file, package_index_path) in package_index_files.values():
                     package_index_file.close()

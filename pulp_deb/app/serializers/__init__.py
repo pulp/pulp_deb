@@ -4,10 +4,10 @@ from .content_serializers import (
     GenericContentSerializer,
     InstallerFileIndexSerializer,
     InstallerPackageSerializer,
-    InstallerPackageSyncSerializer,
+    InstallerPackage822Serializer,
     PackageSerializer,
     PackageIndexSerializer,
-    PackageSyncSerializer,
+    Package822Serializer,
     ReleaseFileSerializer,
 )
 
