@@ -3,6 +3,7 @@ from django.test import TestCase
 
 from pulpcore.plugin.models import Artifact, ContentArtifact
 from pulp_deb.app.models import Package
+from pulp_deb.app.serializers import Package822Serializer
 
 
 class TestPackage(TestCase):
@@ -12,6 +13,7 @@ class TestPackage(TestCase):
         "Package: aegir\n"
         "Version: 0.1-edda0\n"
         "Architecture: sea\n"
+        "Essential: yes\n"
         "Maintainer: Utgardloki\n"
         "Description: A sea jötunn associated with the ocean.\n"
         "MD5sum: aabb\n"
@@ -26,6 +28,7 @@ class TestPackage(TestCase):
             package="aegir",
             version="0.1-edda0",
             architecture="sea",
+            essential=True,
             maintainer="Utgardloki",
             description="A sea jötunn associated with the ocean.",
         )
@@ -56,7 +59,9 @@ class TestPackage(TestCase):
 
     def test_to822(self):
         """Test if package transforms correctly into 822dict."""
-        package_dict = self.package1.to822("joetunn")
+        package_dict = Package822Serializer(self.package1, context={"request": None}).to822(
+            "joetunn"
+        )
         self.assertEqual(package_dict["package"], self.package1.package)
         self.assertEqual(package_dict["version"], self.package1.version)
         self.assertEqual(package_dict["architecture"], self.package1.architecture)
@@ -69,4 +74,7 @@ class TestPackage(TestCase):
 
     def test_to822_dump(self):
         """Test dump to package index."""
-        self.assertEqual(self.package1.to822().dump(), self.PACKAGE_PARAGRAPH)
+        self.assertEqual(
+            Package822Serializer(self.package1, context={"request": None}).to822().dump(),
+            self.PACKAGE_PARAGRAPH,
+        )

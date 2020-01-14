@@ -2,11 +2,9 @@ import os
 
 from logging import getLogger
 
-from debian import deb822
-
 from django.db import models
 
-from pulpcore.plugin.models import Artifact, Content, RemoteArtifact
+from pulpcore.plugin.models import Content
 
 logger = getLogger(__name__)
 
@@ -140,38 +138,6 @@ class BasePackage(Content):
     Abstract base class for package like content.
     """
 
-    TRANSLATION_DICT = {
-        "package": "Package",
-        "source": "Source",
-        "version": "Version",
-        "architecture": "Architecture",
-        "section": "Section",
-        "priority": "Priority",
-        "origin": "Origin",
-        "tag": "Tag",
-        "bugs": "Bugs",
-        "essential": "Essential",
-        "build_essential": "Build_essential",
-        "installed_size": "Installed_size",
-        "maintainer": "Maintainer",
-        "original_maintainer": "Original_Maintainer",
-        "description": "Description",
-        "description_md5": "Description_MD5",
-        "homepage": "Homepage",
-        "built_using": "Built_Using",
-        "auto_built_package": "Auto_Built_Package",
-        "multi_arch": "Multi_Arch",
-        "breaks": "Breaks",
-        "conflicts": "Conflicts",
-        "depends": "Depends",
-        "recommends": "Recommends",
-        "suggests": "Suggests",
-        "enhances": "Enhances",
-        "pre_depends": "Pre_Depends",
-        "provides": "Provides",
-        "replaces": "Replaces",
-    }
-
     MULTIARCH_CHOICES = [
         ("no", "no"),
         ("same", "same"),
@@ -231,37 +197,6 @@ class BasePackage(Content):
         return os.path.join(
             "pool", component, prefix, sourcename, "{}.{}".format(self.name, self.SUFFIX)
         )
-
-    def to822(self, component=""):
-        """Create deb822.Package object from model."""
-        ret = deb822.Packages()
-
-        for k, v in self.TRANSLATION_DICT.items():
-            value = getattr(self, k, None)
-            if value is not None:
-                ret[v] = value
-
-        try:
-            artifact = self._artifacts.get()
-            ret["MD5sum"] = artifact.md5
-            ret["SHA1"] = artifact.sha1
-            ret["SHA256"] = artifact.sha256
-        except Artifact.DoesNotExist:
-            remote_artifact = RemoteArtifact.objects.filter(sha256=self.sha256).first()
-            ret["MD5sum"] = remote_artifact.md5
-            ret["SHA1"] = remote_artifact.sha1
-            ret["SHA256"] = remote_artifact.sha256
-
-        ret["Filename"] = self.filename(component)
-
-        return ret
-
-    @classmethod
-    def from822(cls, package_dict):
-        """
-        Translate deb822.Package to a dictionary for class instatiation.
-        """
-        return {k: package_dict[v] for k, v in cls.TRANSLATION_DICT.items() if v in package_dict}
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"

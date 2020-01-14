@@ -3,9 +3,10 @@ from logging import getLogger
 
 import os
 
-from debian import debfile
+from debian import deb822, debfile
 
 from rest_framework.serializers import CharField, Field, ValidationError
+from pulpcore.plugin.models import Artifact, RemoteArtifact
 from pulpcore.plugin.serializers import (
     ContentChecksumSerializer,
     MultipleArtifactContentSerializer,
@@ -185,6 +186,166 @@ class InstallerFileIndexSerializer(MultipleArtifactContentSerializer):
         model = InstallerFileIndex
 
 
+class BasePackage822Serializer(SingleArtifactContentSerializer):
+    """
+    A Serializer for abstract BasePackage used for conversion from 822 format.
+    """
+
+    TRANSLATION_DICT = {
+        "package": "Package",
+        "source": "Source",
+        "version": "Version",
+        "architecture": "Architecture",
+        "section": "Section",
+        "priority": "Priority",
+        "origin": "Origin",
+        "tag": "Tag",
+        "bugs": "Bugs",
+        "essential": "Essential",
+        "build_essential": "Build_essential",
+        "installed_size": "Installed_size",
+        "maintainer": "Maintainer",
+        "original_maintainer": "Original_Maintainer",
+        "description": "Description",
+        "description_md5": "Description_MD5",
+        "homepage": "Homepage",
+        "built_using": "Built_Using",
+        "auto_built_package": "Auto_Built_Package",
+        "multi_arch": "Multi_Arch",
+        "breaks": "Breaks",
+        "conflicts": "Conflicts",
+        "depends": "Depends",
+        "recommends": "Recommends",
+        "suggests": "Suggests",
+        "enhances": "Enhances",
+        "pre_depends": "Pre_Depends",
+        "provides": "Provides",
+        "replaces": "Replaces",
+    }
+
+    package = CharField()
+    source = CharField(required=False)
+    version = CharField()
+    architecture = CharField()
+    section = CharField()
+    priority = CharField()
+    origin = CharField(required=False)
+    tag = CharField(required=False)
+    bugs = CharField(required=False)
+    essential = YesNoField(required=False)
+    build_essential = YesNoField(required=False)
+    installed_size = CharField(required=False)
+    maintainer = CharField()
+    original_maintainer = CharField(required=False)
+    description = CharField()
+    description_md5 = CharField(required=False)
+    homepage = CharField(required=False)
+    built_using = CharField(required=False)
+    auto_built_package = CharField(required=False)
+    multi_arch = CharField(required=False)
+    breaks = CharField(required=False)
+    conflicts = CharField(required=False)
+    depends = CharField(required=False)
+    recommends = CharField(required=False)
+    suggests = CharField(required=False)
+    enhances = CharField(required=False)
+    pre_depends = CharField(required=False)
+    provides = CharField(required=False)
+    replaces = CharField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        """Initializer for BasePackage822Serializer."""
+        super().__init__(*args, **kwargs)
+        self.fields.pop("artifact")
+        if "relative_path" in self.fields:
+            self.fields["relative_path"].required = False
+
+    @classmethod
+    def from822(cls, data, **kwargs):
+        """
+        Translate deb822.Package to a dictionary for class instatiation.
+        """
+        return cls(
+            data={k: data[v] for k, v in cls.TRANSLATION_DICT.items() if v in data}, **kwargs
+        )
+
+    def to822(self, component=""):
+        """Create deb822.Package object from model."""
+        ret = deb822.Packages()
+
+        for k, v in self.TRANSLATION_DICT.items():
+            value = self.data.get(k)
+            if value is not None:
+                ret[v] = value
+
+        try:
+            artifact = self.instance._artifacts.get()
+            ret["MD5sum"] = artifact.md5
+            ret["SHA1"] = artifact.sha1
+            ret["SHA256"] = artifact.sha256
+        except Artifact.DoesNotExist:
+            remote_artifact = RemoteArtifact.objects.filter(sha256=self.instance.sha256).first()
+            ret["MD5sum"] = remote_artifact.md5
+            ret["SHA1"] = remote_artifact.sha1
+            ret["SHA256"] = remote_artifact.sha256
+
+        ret["Filename"] = self.instance.filename(component)
+
+        return ret
+
+    class Meta(SingleArtifactContentSerializer.Meta):
+        fields = SingleArtifactContentSerializer.Meta.fields + (
+            "package",
+            "source",
+            "version",
+            "architecture",
+            "section",
+            "priority",
+            "origin",
+            "tag",
+            "bugs",
+            "essential",
+            "build_essential",
+            "installed_size",
+            "maintainer",
+            "original_maintainer",
+            "description",
+            "description_md5",
+            "homepage",
+            "built_using",
+            "auto_built_package",
+            "multi_arch",
+            "breaks",
+            "conflicts",
+            "depends",
+            "recommends",
+            "suggests",
+            "enhances",
+            "pre_depends",
+            "provides",
+            "replaces",
+        )
+        model = BasePackage
+
+
+class Package822Serializer(BasePackage822Serializer):
+    """
+    A Serializer for Package used for conversion from 822 format.
+    """
+
+    class Meta(BasePackage822Serializer.Meta):
+        model = Package
+
+
+class InstallerPackage822Serializer(BasePackage822Serializer):
+    """
+    A Serializer for InstallerPackage used for conversion from 822 format.
+    """
+
+    class Meta(BasePackage822Serializer.Meta):
+        model = InstallerPackage
+
+
 class BasePackageSerializer(SingleArtifactContentUploadSerializer, ContentChecksumSerializer):
     """
     A Serializer for abstract BasePackage.
@@ -236,13 +397,16 @@ class BasePackageSerializer(SingleArtifactContentUploadSerializer, ContentChecks
         except Exception:  # TODO: Be more specific
             raise ValidationError(_("Not a valid Deb Package"))
 
-        package_dict = self.Meta.model.from822(package_paragraph)
-        data.update(package_dict)
+        from822_serializer = self.Meta.from822_serializer.from822(data=package_paragraph)
+        from822_serializer.is_valid(raise_exception=True)
+        package_data = from822_serializer.validated_data
+        data.update(package_data)
         data["sha256"] = data["artifact"].sha256
+
         if "relative_path" not in data:
-            data["relative_path"] = self.Meta.model(**package_dict).filename()
+            data["relative_path"] = self.Meta.model(**package_data).filename()
         elif not os.path.basename(data["relative_path"]) == "{}.{}".format(
-            self.Meta.model(**package_dict).name, self.Meta.model.SUFFIX
+            self.Meta.model(**package_data).name, self.Meta.model.SUFFIX
         ):
             raise ValidationError(_("Invalid relative_path provided, filename does not match."))
 
@@ -315,6 +479,7 @@ class PackageSerializer(BasePackageSerializer):
 
     class Meta(BasePackageSerializer.Meta):
         model = Package
+        from822_serializer = Package822Serializer
 
 
 class InstallerPackageSerializer(BasePackageSerializer):
@@ -334,99 +499,7 @@ class InstallerPackageSerializer(BasePackageSerializer):
 
     class Meta(BasePackageSerializer.Meta):
         model = InstallerPackage
-
-
-class BasePackageSyncSerializer(SingleArtifactContentSerializer):
-    """
-    A Serializer for abstract BasePackage used in sync.
-    """
-
-    package = CharField()
-    source = CharField(required=False)
-    version = CharField()
-    architecture = CharField()
-    section = CharField()
-    priority = CharField()
-    origin = CharField(required=False)
-    tag = CharField(required=False)
-    bugs = CharField(required=False)
-    essential = YesNoField(required=False)
-    build_essential = YesNoField(required=False)
-    installed_size = CharField(required=False)
-    maintainer = CharField()
-    original_maintainer = CharField(required=False)
-    description = CharField()
-    description_md5 = CharField(required=False)
-    homepage = CharField(required=False)
-    built_using = CharField(required=False)
-    auto_built_package = CharField(required=False)
-    multi_arch = CharField(required=False)
-    breaks = CharField(required=False)
-    conflicts = CharField(required=False)
-    depends = CharField(required=False)
-    recommends = CharField(required=False)
-    suggests = CharField(required=False)
-    enhances = CharField(required=False)
-    pre_depends = CharField(required=False)
-    provides = CharField(required=False)
-    replaces = CharField(required=False)
-
-    def __init__(self, *args, **kwargs):
-        """Initializer for BasePackageSyncSerializer."""
-        super().__init__(*args, **kwargs)
-        self.fields.pop("artifact")
-
-    class Meta(SingleArtifactContentSerializer.Meta):
-        fields = SingleArtifactContentSerializer.Meta.fields + (
-            "package",
-            "source",
-            "version",
-            "architecture",
-            "section",
-            "priority",
-            "origin",
-            "tag",
-            "bugs",
-            "essential",
-            "build_essential",
-            "installed_size",
-            "maintainer",
-            "original_maintainer",
-            "description",
-            "description_md5",
-            "homepage",
-            "built_using",
-            "auto_built_package",
-            "multi_arch",
-            "breaks",
-            "conflicts",
-            "depends",
-            "recommends",
-            "suggests",
-            "enhances",
-            "pre_depends",
-            "provides",
-            "replaces",
-        )
-        model = BasePackage
-
-
-class PackageSyncSerializer(BasePackageSyncSerializer):
-    """
-    A Serializer for Package used in sync.
-    """
-
-    class Meta(BasePackageSyncSerializer.Meta):
-        model = Package
-
-
-class InstallerPackageSyncSerializer(BasePackageSyncSerializer):
-    """
-    A Serializer for InstallerPackage used in sync.
-    """
-
-    class Meta(BasePackageSyncSerializer.Meta):
-        model = InstallerPackage
+        from822_serializer = InstallerPackage822Serializer
 
 
 class ReleaseSerializer(NoArtifactContentSerializer):

@@ -10,7 +10,7 @@ import lzma
 from collections import defaultdict
 from tempfile import NamedTemporaryFile
 
-from debian import deb822, debfile
+from debian import deb822
 
 from urllib.parse import urlparse, urlunparse
 
@@ -44,7 +44,7 @@ from pulp_deb.app.models import (
     DebRemote,
 )
 
-from pulp_deb.app.serializers import InstallerPackageSyncSerializer, PackageSyncSerializer
+from pulp_deb.app.serializers import InstallerPackage822Serializer, Package822Serializer
 
 
 log = logging.getLogger(__name__)
@@ -128,11 +128,6 @@ class DebDeclarativeVersion(DeclarativeVersion):
             ArtifactDownloader(),
             DebDropEmptyContent(),
             ArtifactSaver(),
-            # This is dependent on
-            # https://salsa.debian.org/python-debian-team/python-debian/merge_requests/11
-            # We might not want to do this anyways, as it introduces differences between
-            # lazy and direct sync.
-            # DebUpdatePackageAttributes(),
             DebUpdateReleaseFileAttributes(),
             DebUpdatePackageIndexAttributes(),
             QueryExistingContents(),
@@ -259,33 +254,6 @@ def _uncompress_artifact(d_artifacts):
         return "file://{}".format(f_out.name)
     # Not one artifact was suitable
     raise NoPackageIndexFile()
-
-
-class DebUpdatePackageAttributes(Stage):
-    """
-    This stage handles Package content.
-
-    It reads all Package related database fields from the actual file.
-    """
-
-    async def run(self):
-        """
-        Update package content with the information obtained from its artifact.
-        """
-        with ProgressReport(message="Update Package units", code="update.package") as pb:
-            async for d_content in self.items():
-                if isinstance(d_content.content, Package):
-                    package = d_content.content
-                    package_artifact = d_content.d_artifacts[0].artifact
-                    if not package_artifact._state.adding:
-                        package_paragraph = debfile.DebFile(
-                            fileobj=package_artifact.file
-                        ).debcontrol()
-                        package_dict = Package.from822(package_paragraph)
-                        for key, value in package_dict.items():
-                            setattr(package, key, value)
-                        pb.increment()
-                await self.put(d_content)
 
 
 class DebDropEmptyContent(Stage):
@@ -495,17 +463,17 @@ class DebFirstStage(Stage):
                 package_sha256 = package_paragraph["sha256"]
                 if package_relpath.endswith(".deb"):
                     package_class = Package
-                    serializer_class = PackageSyncSerializer
+                    serializer_class = Package822Serializer
                 elif package_relpath.endswith(".udeb"):
                     package_class = InstallerPackage
-                    serializer_class = InstallerPackageSyncSerializer
+                    serializer_class = InstallerPackage822Serializer
                 log.debug("Downloading package {}".format(package_paragraph["Package"]))
-                package_dict = package_class.from822(package_paragraph)
-                package_dict["relative_path"] = package_relpath
-                serializer = serializer_class(data=package_dict)
+                serializer = serializer_class.from822(data=package_paragraph)
                 serializer.is_valid(raise_exception=True)
                 package_content_unit = package_class(
-                    sha256=package_sha256, **serializer.validated_data
+                    relative_path=package_relpath,
+                    sha256=package_sha256,
+                    **serializer.validated_data,
                 )
                 package_path = os.path.join(self.parsed_url.path, package_relpath)
                 package_da = DeclarativeArtifact(
