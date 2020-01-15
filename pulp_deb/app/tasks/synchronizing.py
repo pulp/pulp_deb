@@ -274,8 +274,8 @@ class DebDropEmptyContent(Stage):
                 ]
                 if not d_content.d_artifacts:
                     # No artifacts left -> drop it
-                    if d_content.future is not None:
-                        d_content.future.set_result(None)
+                    d_content.content = None
+                    d_content.resolve()
                     continue
             await self.put(d_content)
 
