@@ -49,28 +49,33 @@ after_failure:
   - sudo kubectl logs -l app=pulp-worker --tail=10000
 jobs:
   include:
-    - stage: deploy-plugin-to-pypi
+    - stage: deploy
+      name: "Deploy plugin to pypi"
       before_install: skip
       install: skip
       before_script: skip
       script: bash .travis/publish_plugin_pypi.sh
       if: tag IS present
-    - stage: publish-daily-client-gem
+    - stage: deploy
+      name: "Publish client to rubygems"
       script: bash .travis/publish_client_gem.sh
       env:
         - TEST=bindings
       if: type = cron
-    - stage: publish-daily-client-pypi
+    - stage: deploy
+      name: "Publish client to pypi"
       script: bash .travis/publish_client_pypi.sh
       env:
         - TEST=bindings
       if: type = cron
-    - stage: publish-client-gem
+    - stage: deploy
+      name: "Publish client to rubygems"
       script: bash .travis/publish_client_gem.sh
       env:
         - TEST=bindings
       if: tag IS present
-    - stage: publish-client-pypi
+    - stage: deploy
+      name: "Publish client to pypi"
       script: bash .travis/publish_client_pypi.sh
       env:
         - TEST=bindings
