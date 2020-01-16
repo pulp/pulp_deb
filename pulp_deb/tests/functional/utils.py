@@ -46,7 +46,7 @@ def gen_deb_remote(
     return gen_remote(url, distributions=distributions, sync_udebs=sync_udebs, **kwargs)
 
 
-def get_deb_content_unit_paths(repo, version_href=None):
+def get_deb_content_unit_paths(repo, version_href=None, component="all"):
     """Return the relative path of content units present in a deb repository.
 
     :param repo: A dict of information about the repository.
@@ -72,7 +72,7 @@ def get_deb_content_unit_paths(repo, version_href=None):
 
     return {
         DEB_PACKAGE_NAME: [
-            (content_unit["relative_path"], _rel_path(content_unit))
+            (content_unit["relative_path"], _rel_path(content_unit, component))
             for content_unit in get_content(repo, version_href)[DEB_PACKAGE_NAME]
         ]
     }

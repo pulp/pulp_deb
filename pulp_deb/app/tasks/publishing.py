@@ -3,7 +3,6 @@ import shutil
 import logging
 from gettext import gettext as _
 
-import hashlib
 from debian import deb822
 from gzip import GzipFile
 
@@ -68,70 +67,29 @@ def publish(repository_version_pk, simple=False, structured=False):
         with DebPublication.create(repo_version, pass_through=False) as publication:
             publication.simple = simple
             publication.structured = structured
-            if simple:
-                repository = repo_version.repository
-                release = deb822.Release()
-                # TODO: release['Label']
-                release["Codename"] = "default"
-                release["Components"] = "all"
-                release["Architectures"] = ""
-                if repository.description:
-                    release["Description"] = repository.description
-                release["MD5sum"] = []
-                release["SHA1"] = []
-                release["SHA256"] = []
-                release["SHA512"] = []
-                package_index_files = {}
-                for package in Package.objects.filter(
-                    pk__in=repo_version.content.order_by("-pulp_created")
-                ):
-                    published_artifact = PublishedArtifact(
-                        relative_path=package.filename(),
-                        publication=publication,
-                        content_artifact=package.contentartifact_set.get(),
-                    )
-                    published_artifact.save()
-                    if package.architecture not in package_index_files:
-                        package_index_path = os.path.join(
-                            "dists",
-                            "default",
-                            "all",
-                            "binary-{}".format(package.architecture),
-                            "Packages",
-                        )
-                        os.makedirs(os.path.dirname(package_index_path), exist_ok=True)
-                        package_index_files[package.architecture] = (
-                            open(package_index_path, "wb"),
-                            package_index_path,
-                        )
-                    package_serializer = Package822Serializer(package, context={"request": None})
-                    package_serializer.to822("all").dump(
-                        package_index_files[package.architecture][0]
-                    )
-                    package_index_files[package.architecture][0].write(b"\n")
-                for (package_index_file, package_index_path) in package_index_files.values():
-                    package_index_file.close()
-                    gz_package_index_path = _zip_file(package_index_path)
-                    _add_to_release(release, package_index_path)
-                    _add_to_release(release, gz_package_index_path)
+            repository = repo_version.repository
 
-                    package_index = PublishedMetadata.create_from_file(
-                        publication=publication, file=File(open(package_index_path, "rb"))
-                    )
-                    package_index.save()
-                    gz_package_index = PublishedMetadata.create_from_file(
-                        publication=publication, file=File(open(gz_package_index_path, "rb"))
-                    )
-                    gz_package_index.save()
-                release["Architectures"] = ", ".join(package_index_files.keys())
-                release_path = os.path.join("dists", "default", "Release")
-                os.makedirs(os.path.dirname(release_path), exist_ok=True)
-                with open(release_path, "wb") as release_file:
-                    release.dump(release_file)
-                release_metadata = PublishedMetadata.create_from_file(
-                    publication=publication, file=File(open(release_path, "rb"))
+            if simple:
+                codename = "default"
+                component_name = "all"
+                architectures = (
+                    Package.objects.filter(pk__in=repo_version.content.order_by("-pulp_created"),)
+                    .distinct("architecture")
+                    .values_list("architecture", flat=True)
                 )
-                release_metadata.save()
+                release_helper = _ReleaseHelper(
+                    publication=publication,
+                    codename=codename,
+                    components=[component_name],
+                    architectures=architectures,
+                    description=repository.description,
+                )
+
+                for package in Package.objects.filter(
+                    pk__in=repo_version.content.order_by("-pulp_created"),
+                ):
+                    release_helper.components[component_name].add_package(package)
+                release_helper.finish()
 
             if structured:
                 raise NotImplementedError("Structured publishing is not yet implemented.")
@@ -139,30 +97,104 @@ def publish(repository_version_pk, simple=False, structured=False):
     log.info(_("Publication: {publication} created").format(publication=publication.pk))
 
 
-def _add_to_release(release, file_path):
-    with open(file_path, "rb") as infile:
-        size = 0
-        md5sum_hasher = hashlib.md5()
-        sha1_hasher = hashlib.sha1()
-        sha256_hasher = hashlib.sha256()
-        sha512_hasher = hashlib.sha512()
-        for chunk in iter(lambda: infile.read(4096), b""):
-            size += len(chunk)
-            md5sum_hasher.update(chunk)
-            sha1_hasher.update(chunk)
-            sha256_hasher.update(chunk)
-            sha512_hasher.update(chunk)
+class _ComponentHelper:
+    def __init__(self, parent, name):
+        self.parent = parent
+        self.name = name
+        self.package_index_files = {}
 
-        release["MD5sum"].append(
-            {"md5sum": md5sum_hasher.hexdigest(), "size": size, "name": file_path}
+        for architecture in self.parent.architectures:
+            package_index_path = os.path.join(
+                "dists",
+                self.parent.release["codename"],
+                self.name,
+                "binary-{}".format(architecture),
+                "Packages",
+            )
+            os.makedirs(os.path.dirname(package_index_path), exist_ok=True)
+            self.package_index_files[architecture] = (
+                open(package_index_path, "wb"),
+                package_index_path,
+            )
+
+    def add_package(self, package):
+        published_artifact = PublishedArtifact(
+            relative_path=package.filename(self.name),
+            publication=self.parent.publication,
+            content_artifact=package.contentartifact_set.get(),
         )
-        release["SHA1"].append({"sha1": sha1_hasher.hexdigest(), "size": size, "name": file_path})
-        release["SHA256"].append(
-            {"sha256": sha256_hasher.hexdigest(), "size": size, "name": file_path}
+        published_artifact.save()
+        package_serializer = Package822Serializer(package, context={"request": None})
+        package_serializer.to822(self.name).dump(self.package_index_files[package.architecture][0])
+        self.package_index_files[package.architecture][0].write(b"\n")
+
+    def finish(self):
+        # Publish Packages files
+        for (package_index_file, package_index_path) in self.package_index_files.values():
+            package_index_file.close()
+            gz_package_index_path = _zip_file(package_index_path)
+            package_index = PublishedMetadata.create_from_file(
+                publication=self.parent.publication, file=File(open(package_index_path, "rb"))
+            )
+            package_index.save()
+            gz_package_index = PublishedMetadata.create_from_file(
+                publication=self.parent.publication, file=File(open(gz_package_index_path, "rb"))
+            )
+            gz_package_index.save()
+            self.parent.add_metadata(package_index)
+            self.parent.add_metadata(gz_package_index)
+
+
+class _ReleaseHelper:
+    def __init__(
+        self, publication, codename, components, architectures, label=None, description=None
+    ):
+        self.publication = publication
+        self.release = deb822.Release()
+        self.release["Codename"] = codename
+        self.release["Architectures"] = " ".join(architectures)
+        if label:
+            self.release["Label"] = label
+        if description:
+            self.release["Description"] = description
+        self.release["MD5sum"] = []
+        self.release["SHA1"] = []
+        self.release["SHA256"] = []
+        self.release["SHA512"] = []
+        self.architectures = architectures
+        self.components = {name: _ComponentHelper(self, name) for name in components}
+
+    def add_metadata(self, metadata):
+        artifact = metadata._artifacts.get()
+
+        self.release["MD5sum"].append(
+            {"md5sum": artifact.md5, "size": artifact.size, "name": metadata.relative_path}
         )
-        release["SHA512"].append(
-            {"sha512": sha512_hasher.hexdigest(), "size": size, "name": file_path}
+        self.release["SHA1"].append(
+            {"sha1": artifact.sha1, "size": artifact.size, "name": metadata.relative_path}
         )
+        self.release["SHA256"].append(
+            {"sha256": artifact.sha256, "size": artifact.size, "name": metadata.relative_path}
+        )
+        self.release["SHA512"].append(
+            {"sha512": artifact.sha512, "size": artifact.size, "name": metadata.relative_path}
+        )
+
+    def finish(self):
+        # Publish Packages files
+        for component in self.components.values():
+            component.finish()
+        # Publish Release file
+        self.release["components"] = " ".join(self.components.keys())
+        release_path = os.path.join("dists", self.release["codename"], "Release")
+        os.makedirs(os.path.dirname(release_path), exist_ok=True)
+        with open(release_path, "wb") as release_file:
+            self.release.dump(release_file)
+        release_metadata = PublishedMetadata.create_from_file(
+            publication=self.publication, file=File(open(release_path, "rb")),
+        )
+        release_metadata.save()
+        # TODO Sign release
 
 
 def _zip_file(file_path):
