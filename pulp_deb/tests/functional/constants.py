@@ -23,8 +23,8 @@ DOWNLOAD_POLICIES = ["immediate", "streamed", "on_demand"]
 # Metadata
 DEB_RELEASE_NAME = "deb.release"
 DEB_RELEASE_ARCHITECTURE_NAME = "deb.release_architecture"
-DEB_RELEASE_COMPONENT = "deb.release_component"
-DEB_PACKAGE_RELEASE_COMPONENT = "deb.package_release_component"
+DEB_RELEASE_COMPONENT_NAME = "deb.release_component"
+DEB_PACKAGE_RELEASE_COMPONENT_NAME = "deb.package_release_component"
 # Metadata files
 DEB_RELEASE_FILE_NAME = "deb.release_file"
 DEB_PACKAGE_INDEX_NAME = "deb.package_index"
@@ -55,10 +55,10 @@ DEB_FIXTURE_SUMMARY = _clean_dict(
     {
         DEB_RELEASE_NAME: 1,
         DEB_RELEASE_ARCHITECTURE_NAME: 2,
-        DEB_RELEASE_COMPONENT: 2,
+        DEB_RELEASE_COMPONENT_NAME: 2,
         DEB_RELEASE_FILE_NAME: 1,
         DEB_PACKAGE_INDEX_NAME: 4,
-        DEB_PACKAGE_RELEASE_COMPONENT: 4,
+        DEB_PACKAGE_RELEASE_COMPONENT_NAME: 4,
         DEB_INSTALLER_FILE_INDEX_NAME: 0,
         DEB_PACKAGE_NAME: 4,
         DEB_INSTALLER_PACKAGE_NAME: 0,
@@ -70,10 +70,10 @@ DEB_FULL_FIXTURE_SUMMARY = _clean_dict(
     {
         DEB_RELEASE_NAME: 1,
         DEB_RELEASE_ARCHITECTURE_NAME: 2,
-        DEB_RELEASE_COMPONENT: 2,
+        DEB_RELEASE_COMPONENT_NAME: 2,
         DEB_RELEASE_FILE_NAME: 1,
         DEB_PACKAGE_INDEX_NAME: 6,
-        DEB_PACKAGE_RELEASE_COMPONENT: 4,
+        DEB_PACKAGE_RELEASE_COMPONENT_NAME: 4,
         DEB_INSTALLER_FILE_INDEX_NAME: 0,
         DEB_PACKAGE_NAME: 4,
         DEB_INSTALLER_PACKAGE_NAME: 1,

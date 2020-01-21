@@ -11,7 +11,15 @@ from django.core.files import File
 from pulpcore.plugin.models import PublishedArtifact, PublishedMetadata, RepositoryVersion
 from pulpcore.plugin.tasking import WorkingDirectory
 
-from pulp_deb.app.models import DebPublication, Package, VerbatimPublication
+from pulp_deb.app.models import (
+    DebPublication,
+    Package,
+    PackageReleaseComponent,
+    Release,
+    ReleaseArchitecture,
+    ReleaseComponent,
+    VerbatimPublication,
+)
 from pulp_deb.app.serializers import Package822Serializer
 
 
@@ -92,7 +100,31 @@ def publish(repository_version_pk, simple=False, structured=False):
                 release_helper.finish()
 
             if structured:
-                raise NotImplementedError("Structured publishing is not yet implemented.")
+                for release in Release.objects.filter(
+                    pk__in=repo_version.content.order_by("-pulp_created"),
+                ):
+                    architectures = ReleaseArchitecture.objects.filter(
+                        pk__in=repo_version.content.order_by("-pulp_created"), release=release,
+                    ).values_list("architecture", flat=True)
+                    components = ReleaseComponent.objects.filter(
+                        pk__in=repo_version.content.order_by("-pulp_created"), release=release,
+                    )
+                    release_helper = _ReleaseHelper(
+                        publication=publication,
+                        codename=release.codename,
+                        components=components.values_list("component", flat=True),
+                        architectures=architectures,
+                        description=repository.description,
+                    )
+
+                    for prc in PackageReleaseComponent.objects.filter(
+                        pk__in=repo_version.content.order_by("-pulp_created"),
+                        release_component__in=components,
+                    ):
+                        release_helper.components[prc.release_component.component].add_package(
+                            prc.package
+                        )
+                    release_helper.finish()
 
     log.info(_("Publication: {publication} created").format(publication=publication.pk))
 

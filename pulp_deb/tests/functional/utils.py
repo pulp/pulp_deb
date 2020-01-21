@@ -22,7 +22,9 @@ from pulp_deb.tests.functional.constants import (
     DEB_GENERIC_CONTENT_RELPATH,
     # DEB_PACKAGE_INDEX_NAME,
     DEB_PACKAGE_NAME,
+    DEB_PACKAGE_RELEASE_COMPONENT_NAME,
     DEB_PUBLICATION_PATH,
+    DEB_RELEASE_COMPONENT_NAME,
     DEB_RELEASE_FILE_NAME,
     DEB_REMOTE_PATH,
     DEB_REPO_PATH,
@@ -46,7 +48,7 @@ def gen_deb_remote(
     return gen_remote(url, distributions=distributions, sync_udebs=sync_udebs, **kwargs)
 
 
-def get_deb_content_unit_paths(repo, version_href=None, component="all"):
+def get_deb_content_unit_paths(repo, version_href=None):
     """Return the relative path of content units present in a deb repository.
 
     :param repo: A dict of information about the repository.
@@ -70,12 +72,28 @@ def get_deb_content_unit_paths(repo, version_href=None, component="all"):
             "{}_{}_{}.deb".format(package["package"], package["version"], package["architecture"]),
         )
 
-    return {
+    content = get_content(repo, version_href)
+    result = {
         DEB_PACKAGE_NAME: [
-            (content_unit["relative_path"], _rel_path(content_unit, component))
-            for content_unit in get_content(repo, version_href)[DEB_PACKAGE_NAME]
+            (content_unit["relative_path"], _rel_path(content_unit, "all"))
+            for content_unit in content[DEB_PACKAGE_NAME]
         ]
     }
+    for prc in content[DEB_PACKAGE_RELEASE_COMPONENT_NAME]:
+        package = next(
+            package
+            for package in content[DEB_PACKAGE_NAME]
+            if package["pulp_href"] == prc["package"]
+        )
+        release_component = next(
+            rc
+            for rc in content[DEB_RELEASE_COMPONENT_NAME]
+            if rc["pulp_href"] == prc["release_component"]
+        )
+        result[DEB_PACKAGE_NAME].append(
+            (package["relative_path"], _rel_path(package, release_component["component"]))
+        )
+    return result
 
 
 def get_deb_verbatim_content_unit_paths(repo, version_href=None):
@@ -175,6 +193,7 @@ def create_deb_publication(cfg, repo, version_href=None):
     else:
         body = {"repository": repo["pulp_href"]}
     body["simple"] = True
+    body["structured"] = True
 
     client = api.Client(cfg, api.json_handler)
     call_report = client.post(DEB_PUBLICATION_PATH, body)
