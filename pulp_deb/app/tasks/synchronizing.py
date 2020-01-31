@@ -214,16 +214,17 @@ class DebUpdatePackageIndexAttributes(Stage):  # TODO: Needs a new name
                     if not [
                         da for da in d_content.d_artifacts if da.artifact.sha256 == content.sha256
                     ]:
-                        # No main_artifact found uncompress one
+                        # No main_artifact found, uncompress one
                         filename = _uncompress_artifact(d_content.d_artifacts)
                         da = DeclarativeArtifact(
-                            Artifact(sha256=content.sha256),
+                            Artifact.init_and_validate(
+                                filename, expected_digests={"sha256": content.sha256}
+                            ),
                             filename,
                             content.relative_path,
                             d_content.d_artifacts[0].remote,
                         )
                         d_content.d_artifacts.append(da)
-                        await da.download()
                         da.artifact.save()
                         log.info(
                             "*** Expected: {} *** Uncompressed: {} ***".format(
@@ -251,7 +252,7 @@ def _uncompress_artifact(d_artifacts):
         with NamedTemporaryFile(delete=False) as f_out:
             with compressor.open(d_artifact.artifact.file) as f_in:
                 shutil.copyfileobj(f_in, f_out)
-        return "file://{}".format(f_out.name)
+        return f_out.name
     # Not one artifact was suitable
     raise NoPackageIndexFile()
 
