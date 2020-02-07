@@ -3,8 +3,10 @@
 import os
 from functools import partial
 from unittest import SkipTest
+from time import sleep
+from tempfile import NamedTemporaryFile
 
-from pulp_smash import api, selectors
+from pulp_smash import api, selectors, utils
 from pulp_smash.pulp3.utils import (
     gen_remote,
     gen_repo,
@@ -31,11 +33,58 @@ from pulp_deb.tests.functional.constants import (
     VERBATIM_PUBLICATION_PATH,
 )
 
+from pulpcore.client.pulpcore import (
+    ApiClient as CoreApiClient,
+    ArtifactsApi,
+    Configuration,
+    TasksApi,
+)
+from pulpcore.client.pulp_deb import (
+    ApiClient as DebApiClient,
+    ContentGenericContentsApi,
+    ContentPackagesApi,
+    DistributionsAptApi,
+    PublicationsAptApi,
+    PublicationsVerbatimApi,
+    RemotesAptApi,
+    RepositoriesAptApi,
+)
+
+skip_if = partial(selectors.skip_if, exc=SkipTest)  # pylint:disable=invalid-name
+"""The ``@skip_if`` decorator, customized for unittest.
+
+:func:`pulp_smash.selectors.skip_if` is test runner agnostic. This function is
+identical, except that ``exc`` has been set to ``unittest.SkipTest``.
+"""
+
+configuration = Configuration()
+configuration.username = "admin"
+configuration.password = "password"
+configuration.safe_chars_for_path_param = "/"
+
+core_client = CoreApiClient(configuration)
+artifact_api = ArtifactsApi(core_client)
+task_api = TasksApi(core_client)
+
+deb_client = DebApiClient(configuration)
+deb_generic_content_api = ContentGenericContentsApi(deb_client)
+deb_package_api = ContentPackagesApi(deb_client)
+deb_remote_api = RemotesAptApi(deb_client)
+deb_repository_api = RepositoriesAptApi(deb_client)
+deb_apt_publication_api = PublicationsAptApi(deb_client)
+deb_verbatim_publication_api = PublicationsVerbatimApi(deb_client)
+deb_distribution_api = DistributionsAptApi(deb_client)
+
 
 def set_up_module():
     """Skip tests Pulp 3 isn't under test or if pulp_deb isn't installed."""
     require_pulp_3(SkipTest)
     require_pulp_plugins({"pulp_deb"}, SkipTest)
+
+
+def gen_deb_client():
+    """Return an OBJECT for deb client."""
+    return deb_client
 
 
 def gen_deb_remote(
@@ -72,7 +121,7 @@ def get_deb_content_unit_paths(repo, version_href=None):
             "{}_{}_{}.deb".format(package["package"], package["version"], package["architecture"]),
         )
 
-    content = get_content(repo, version_href)
+    content = get_content(repo.to_dict(), version_href)
     result = {
         DEB_PACKAGE_NAME: [
             (content_unit["relative_path"], _rel_path(content_unit, "all"))
@@ -108,15 +157,15 @@ def get_deb_verbatim_content_unit_paths(repo, version_href=None):
     return {
         DEB_RELEASE_FILE_NAME: [
             (content_unit["relative_path"], content_unit["relative_path"])
-            for content_unit in get_content(repo, version_href)[DEB_RELEASE_FILE_NAME]
+            for content_unit in get_content(repo.to_dict(), version_href)[DEB_RELEASE_FILE_NAME]
         ],
         DEB_PACKAGE_NAME: [
             (content_unit["relative_path"], content_unit["relative_path"])
-            for content_unit in get_content(repo, version_href)[DEB_PACKAGE_NAME]
+            for content_unit in get_content(repo.to_dict(), version_href)[DEB_PACKAGE_NAME]
         ],
         DEB_GENERIC_CONTENT_NAME: [
             (content_unit["relative_path"], content_unit["relative_path"])
-            for content_unit in get_content(repo, version_href)[DEB_GENERIC_CONTENT_NAME]
+            for content_unit in get_content(repo.to_dict(), version_href)[DEB_GENERIC_CONTENT_NAME]
         ],
     }
 
@@ -222,9 +271,45 @@ def create_verbatim_publication(cfg, repo, version_href=None):
     return client.get(tasks[-1]["created_resources"][0])
 
 
-skip_if = partial(selectors.skip_if, exc=SkipTest)
-"""The ``@skip_if`` decorator, customized for unittest.
+def gen_artifact(url):
+    """Creates an artifact."""
+    response = utils.http_get(url)
+    with NamedTemporaryFile() as temp_file:
+        temp_file.write(response)
+        temp_file.flush()
+        artifact = ArtifactsApi(core_client).create(file=temp_file.name)
+        return artifact.to_dict()
 
-:func:`pulp_smash.selectors.skip_if` is test runner agnostic. This function is
-identical, except that ``exc`` has been set to ``unittest.SkipTest``.
-"""
+
+class PulpTaskError(Exception):
+    """Exception to describe task errors."""
+
+    def __init__(self, task):
+        """Provide task info to exception."""
+        description = task.error["description"]
+        super().__init__(self, f"Pulp task failed ({description})")
+        self.task = task
+
+
+def monitor_task(task_href):
+    """Polls the Task API until the task is in a completed state.
+
+    Prints the task details and a success or failure message. Exits on failure.
+
+    Args:
+        task_href(str): The href of the task to monitor
+
+    Returns:
+        list[str]: List of hrefs that identify resource created by the task
+
+    """
+    completed = ["completed", "failed", "canceled"]
+    task = task_api.read(task_href)
+    while task.state not in completed:
+        sleep(2)
+        task = task_api.read(task_href)
+
+    if task.state == "completed":
+        return task.created_resources
+
+    raise PulpTaskError(task=task)
