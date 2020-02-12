@@ -182,7 +182,7 @@ class SwitchDownloadPolicyTestCase(unittest.TestCase):
 
     def test_all(self):
         """Perform a lazy sync and change to immeditae to force download."""
-        NON_LAZY_ARTIFACT_COUNT = 11
+        NON_LAZY_ARTIFACT_COUNT = 13
         cfg = config.get_config()
         # delete orphans to assure that no content units are present on the
         # file system
