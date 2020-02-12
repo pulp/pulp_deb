@@ -2,7 +2,7 @@
 """Constants for Pulp Deb plugin tests."""
 from urllib.parse import urljoin
 
-from pulp_smash.constants import PULP_FIXTURES_BASE_URL
+from pulp_smash import config
 from pulp_smash.pulp3.constants import (
     # API_DOCS_PATH,
     BASE_CONTENT_PATH,
@@ -17,6 +17,8 @@ from pulp_smash.pulp3.constants import (
 def _clean_dict(d):
     return {k: v for k, v in d.items() if v != 0}
 
+
+PULP_FIXTURES_BASE_URL = config.get_config().get_fixtures_url()
 
 DOWNLOAD_POLICIES = ["immediate", "streamed", "on_demand"]
 
