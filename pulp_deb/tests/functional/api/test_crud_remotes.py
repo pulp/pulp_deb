@@ -5,7 +5,7 @@ import unittest
 
 from pulp_smash import utils
 
-from pulp_deb.tests.functional.constants import DOWNLOAD_POLICIES
+from pulp_deb.tests.functional.constants import DOWNLOAD_POLICIES, DEB_SIGNING_KEY
 from pulp_deb.tests.functional.utils import (
     deb_remote_api,
     gen_deb_remote,
@@ -216,6 +216,7 @@ def _gen_verbose_remote():
             "distributions": "{} {}".format(utils.uuid4(), utils.uuid4()),
             "components": "{} {}".format(utils.uuid4(), utils.uuid4()),
             "architectures": "{} {}".format(utils.uuid4(), utils.uuid4()),
+            "gpgkey": DEB_SIGNING_KEY,
         }
     )
     return attrs

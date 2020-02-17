@@ -10,6 +10,9 @@ from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_SUMMARY,
     DEB_FULL_FIXTURE_SUMMARY,
     DEB_INVALID_FIXTURE_URL,
+    DEB_FIXTURE_URL,
+    DEB_FIXTURE_RELEASE,
+    DEB_SIGNING_KEY,
 )
 from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 from pulp_deb.tests.functional.utils import (
@@ -65,7 +68,7 @@ class BasicSyncTestCase(unittest.TestCase):
         repo = repo_api.create(gen_repo())
         self.addCleanup(repo_api.delete, repo.pulp_href)
 
-        body = gen_deb_remote(sync_udebs=sync_udebs)
+        body = gen_deb_remote(sync_udebs=sync_udebs, gpgkey=DEB_SIGNING_KEY)
         remote = remote_api.create(body)
         self.addCleanup(remote_api.delete, remote.pulp_href)
 
@@ -137,9 +140,19 @@ class SyncInvalidTestCase(unittest.TestCase):
         Test that we get a task failure. See :meth:`do_test`.
         """
         with self.assertRaises(PulpTaskError) as exc:
-            self.do_test("http://i-am-an-invalid-url.com/invalid/")
+            self.do_test(url="http://i-am-an-invalid-url.com/invalid/")
         error = exc.exception.task.error
-        self.assertIsNotNone(error["description"])
+        self.assertIn("Cannot connect", error["description"])
+
+    def test_invalid_distribution(self):
+        """Sync a repository using a distribution that does not exist.
+
+        Test that we get a task failure. See :meth:`do_test`.
+        """
+        with self.assertRaises(PulpTaskError) as exc:
+            self.do_test(distribution="no_dist")
+        error = exc.exception.task.error
+        self.assertIn("No valid Release file found", error["description"])
 
     # Provide an invalid repository and specify keywords in the anticipated error message
     @unittest.skip("FIXME: Plugin writer action required.")
@@ -150,12 +163,12 @@ class SyncInvalidTestCase(unittest.TestCase):
         keywords related to the reason of the failure. See :meth:`do_test`.
         """
         with self.assertRaises(PulpTaskError) as exc:
-            self.do_test(DEB_INVALID_FIXTURE_URL)
+            self.do_test(url=DEB_INVALID_FIXTURE_URL)
         error = exc.exception.task.error
         for key in ("mismached", "empty"):
             self.assertIn(key, error["description"])
 
-    def do_test(self, url):
+    def do_test(self, url=DEB_FIXTURE_URL, distribution=DEB_FIXTURE_RELEASE):
         """Sync a repository given ``url`` on the remote."""
         repo_api = deb_repository_api
         remote_api = deb_remote_api
@@ -163,7 +176,7 @@ class SyncInvalidTestCase(unittest.TestCase):
         repo = repo_api.create(gen_repo())
         self.addCleanup(repo_api.delete, repo.pulp_href)
 
-        body = gen_deb_remote(url=url)
+        body = gen_deb_remote(url=url, distributions=distribution)
         remote = remote_api.create(body)
         self.addCleanup(remote_api.delete, remote.pulp_href)
 
