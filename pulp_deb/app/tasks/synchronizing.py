@@ -174,8 +174,6 @@ class DebUpdateReleaseFileAttributes(Stage):
     This stage handles ReleaseFile content.
 
     It also transfers the sha256 from the artifact to the ReleaseFile content units.
-
-    TODO: Verify signature
     """
 
     def __init__(self, remote, *args, **kwargs):

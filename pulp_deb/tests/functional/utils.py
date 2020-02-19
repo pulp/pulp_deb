@@ -38,6 +38,7 @@ from pulpcore.client.pulpcore import (
     ArtifactsApi,
     Configuration,
     TasksApi,
+    SigningServicesApi,
 )
 from pulpcore.client.pulp_deb import (
     ApiClient as DebApiClient,
@@ -65,6 +66,7 @@ configuration.safe_chars_for_path_param = "/"
 core_client = CoreApiClient(configuration)
 artifact_api = ArtifactsApi(core_client)
 task_api = TasksApi(core_client)
+signing_service_api = SigningServicesApi(core_client)
 
 deb_client = DebApiClient(configuration)
 deb_generic_content_api = ContentGenericContentsApi(deb_client)
