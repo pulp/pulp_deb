@@ -16,7 +16,7 @@ from pulp_deb.tests.functional.constants import (
     DEB_FULL_FIXTURE_SUMMARY,
     DEB_INVALID_FIXTURE_URL,
     DEB_FIXTURE_URL,
-    DEB_FIXTURE_RELEASE,
+    DEB_FIXTURE_DISTRIBUTIONS,
     DEB_SIGNING_KEY,
 )
 from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
@@ -205,7 +205,7 @@ class SyncInvalidTestCase(unittest.TestCase):
         error = exc.exception.task.error
         self.assertIn("No valid Release file found", error["description"])
 
-    def do_test(self, url=DEB_FIXTURE_URL, distribution=DEB_FIXTURE_RELEASE, **kwargs):
+    def do_test(self, url=DEB_FIXTURE_URL, distribution=DEB_FIXTURE_DISTRIBUTIONS, **kwargs):
         """Sync a repository given ``url`` on the remote."""
         repo_api = deb_repository_api
         remote_api = deb_remote_api
