@@ -8,7 +8,12 @@ from gzip import GzipFile
 
 from django.core.files import File
 
-from pulpcore.plugin.models import PublishedArtifact, PublishedMetadata, RepositoryVersion
+from pulpcore.plugin.models import (
+    PublishedArtifact,
+    PublishedMetadata,
+    RepositoryVersion,
+    AsciiArmoredDetachedSigningService,
+)
 from pulpcore.plugin.tasking import WorkingDirectory
 
 from pulp_deb.app.models import (
@@ -48,7 +53,7 @@ def publish_verbatim(repository_version_pk):
     log.info(_("Publication (verbatim): {publication} created").format(publication=publication.pk))
 
 
-def publish(repository_version_pk, simple=False, structured=False):
+def publish(repository_version_pk, simple=False, structured=False, signing_service_pk=None):
     """
     Use provided publisher to create a Publication based on a RepositoryVersion.
 
@@ -56,10 +61,14 @@ def publish(repository_version_pk, simple=False, structured=False):
         repository_version_pk (str): Create a publication from this repository version.
         simple (bool): Create a simple publication with all packages contained in default/all.
         structured (bool): Create a structured publication with releases and components.
-            (Not yet implemented)
+        signing_service_pk (str): Use this SigningService to sign the Release files.
 
     """
     repo_version = RepositoryVersion.objects.get(pk=repository_version_pk)
+    if signing_service_pk:
+        signing_service = AsciiArmoredDetachedSigningService.objects.get(pk=signing_service_pk)
+    else:
+        signing_service = None
 
     log.info(
         _(
@@ -75,6 +84,7 @@ def publish(repository_version_pk, simple=False, structured=False):
         with DebPublication.create(repo_version, pass_through=False) as publication:
             publication.simple = simple
             publication.structured = structured
+            publication.signing_service = signing_service
             repository = repo_version.repository
 
             if simple:
@@ -195,6 +205,7 @@ class _ReleaseHelper:
         self.release["SHA512"] = []
         self.architectures = architectures
         self.components = {name: _ComponentHelper(self, name) for name in components}
+        self.signing_service = publication.signing_service
 
     def add_metadata(self, metadata):
         artifact = metadata._artifacts.get()
@@ -218,7 +229,8 @@ class _ReleaseHelper:
             component.finish()
         # Publish Release file
         self.release["components"] = " ".join(self.components.keys())
-        release_path = os.path.join("dists", self.release["codename"], "Release")
+        release_dir = os.path.join("dists", self.release["codename"])
+        release_path = os.path.join(release_dir, "Release")
         os.makedirs(os.path.dirname(release_path), exist_ok=True)
         with open(release_path, "wb") as release_file:
             self.release.dump(release_file)
@@ -226,7 +238,18 @@ class _ReleaseHelper:
             publication=self.publication, file=File(open(release_path, "rb")),
         )
         release_metadata.save()
-        # TODO Sign release
+        if self.signing_service:
+            in_release_path = os.path.join(release_dir, "InRelease")
+            release_gpg_path = os.path.join(release_dir, "Release.gpg")
+            self.signing_service.sign(release_path)
+            in_release_metadata = PublishedMetadata.create_from_file(
+                publication=self.publication, file=File(open(in_release_path, "rb")),
+            )
+            in_release_metadata.save()
+            release_gpg_metadata = PublishedMetadata.create_from_file(
+                publication=self.publication, file=File(open(release_gpg_path, "rb")),
+            )
+            release_gpg_metadata.save()
 
 
 def _zip_file(file_path):

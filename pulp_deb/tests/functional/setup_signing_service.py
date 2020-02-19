@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: {} <path_to_signing_script>".format(sys.argv[0]))
+        sys.exit(1)
+
+    script_path = os.path.realpath(sys.argv[1])
+    if not os.path.exists(script_path):
+        print("Usage: {} <path_to_signing_script>".format(sys.argv[0]))
+        sys.exit(1)
+
+    import django
+
+    django.setup()
+
+    from pulpcore.app.models.content import AsciiArmoredDetachedSigningService
+
+    AsciiArmoredDetachedSigningService.objects.create(
+        name="sign_deb_release", script=script_path,
+    )
