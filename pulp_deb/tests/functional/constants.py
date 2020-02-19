@@ -91,6 +91,9 @@ DEB_GENERIC_CONTENT_RELPATH = "dists/ragnarok/asgard/binary-armeb/Release"
 DEB_GENERIC_CONTENT_URL = urljoin(DEB_FIXTURE_URL, DEB_GENERIC_CONTENT_RELPATH)
 
 # FIXME: replace this with your own fixture repository URL and metadata
+DEB_INVALID_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, "deb_invalid/")
+
+# FIXME: replace this with your own fixture repository URL and metadata
 DEB_LARGE_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, "deb_large/")
 
 # FIXME: replace this with the actual number of content units in your test fixture

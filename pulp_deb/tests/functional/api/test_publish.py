@@ -3,39 +3,47 @@
 import unittest
 from random import choice
 
-from requests.exceptions import HTTPError
-
-from pulp_smash import api, config
-from pulp_smash.pulp3.utils import gen_repo, get_content, get_versions, modify_repo, sync
+from pulp_smash import config
+from pulp_smash.pulp3.utils import gen_repo, get_content, get_versions, modify_repo
 
 from pulp_deb.tests.functional.constants import (
     DEB_GENERIC_CONTENT_NAME,
     DEB_PACKAGE_NAME,
-    DEB_PUBLICATION_PATH,
-    DEB_REMOTE_PATH,
-    DEB_REPO_PATH,
-    VERBATIM_PUBLICATION_PATH,
-)
-from pulp_deb.tests.functional.utils import (
-    create_deb_publication,
-    create_verbatim_publication,
-    gen_deb_remote,
 )
 from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
+from pulp_deb.tests.functional.utils import (
+    gen_deb_remote,
+    monitor_task,
+    deb_apt_publication_api,
+    deb_remote_api,
+    deb_repository_api,
+    deb_verbatim_publication_api,
+)
+
+from pulpcore.client.pulp_deb import (
+    RepositorySyncURL,
+    DebDebPublication,
+    DebVerbatimPublication,
+)
+from pulpcore.client.pulp_deb.exceptions import ApiException
 
 
-class PublishAnyRepoVersionTestCase(unittest.TestCase):
-    """Test whether a particular repository version can be published.
+class PublishAnyRepoVersionSimpleTestCase(unittest.TestCase):
+    """Test whether a particular repository version can be published simple.
 
     This test targets the following issues:
 
     * `Pulp #3324 <https://pulp.plan.io/issues/3324>`_
-    * `Pulp Smash #897 <https://github.com/PulpQE/pulp-smash/issues/897>`_
+    * `Pulp Smash #897 <https://github.com/pulp/pulp-smash/issues/897>`_
     """
 
     class Meta:
-        PUBLICATION_PATH = DEB_PUBLICATION_PATH
-        create_publication = create_deb_publication
+        publication_api = deb_apt_publication_api
+
+        @staticmethod
+        def Publication(*args, **kwargs):
+            """Delegate Publication constructor."""
+            return DebDebPublication(simple=True, *args, **kwargs)
 
     def test_all(self):
         """Test whether a particular repository version can be published.
@@ -51,53 +59,102 @@ class PublishAnyRepoVersionTestCase(unittest.TestCase):
            repository versions to be published at same time.
         """
         cfg = config.get_config()
-        client = api.Client(cfg, api.json_handler)
+        repo_api = deb_repository_api
+        remote_api = deb_remote_api
+        publication_api = self.Meta.publication_api
 
         body = gen_deb_remote()
-        remote = client.post(DEB_REMOTE_PATH, body)
-        self.addCleanup(client.delete, remote["pulp_href"])
+        remote = remote_api.create(body)
+        self.addCleanup(remote_api.delete, remote.pulp_href)
 
-        repo = client.post(DEB_REPO_PATH, gen_repo())
-        self.addCleanup(client.delete, repo["pulp_href"])
+        repo = repo_api.create(gen_repo())
+        self.addCleanup(repo_api.delete, repo.pulp_href)
 
-        sync(cfg, remote, repo)
+        repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
+        sync_response = repo_api.sync(repo.pulp_href, repository_sync_data)
+        monitor_task(sync_response.task)
 
         # Step 1
-        repo = client.get(repo["pulp_href"])
-        for deb_generic_content in get_content(repo)[DEB_GENERIC_CONTENT_NAME]:
-            modify_repo(cfg, repo, remove_units=[deb_generic_content])
-        for deb_package in get_content(repo)[DEB_PACKAGE_NAME]:
-            modify_repo(cfg, repo, remove_units=[deb_package])
-        version_hrefs = tuple(ver["pulp_href"] for ver in get_versions(repo))
+        repo = repo_api.read(repo.pulp_href)
+        for deb_generic_content in get_content(repo.to_dict())[DEB_GENERIC_CONTENT_NAME]:
+            modify_repo(cfg, repo.to_dict(), remove_units=[deb_generic_content])
+        for deb_package in get_content(repo.to_dict())[DEB_PACKAGE_NAME]:
+            modify_repo(cfg, repo.to_dict(), remove_units=[deb_package])
+        version_hrefs = tuple(ver["pulp_href"] for ver in get_versions(repo.to_dict()))
         non_latest = choice(version_hrefs[:-1])
 
         # Step 2
-        publication = self.Meta.create_publication(cfg, repo)
+        publish_data = self.Meta.Publication(repository=repo.pulp_href)
+        publish_response = publication_api.create(publish_data)
+        created_resources = monitor_task(publish_response.task)
+        publication_href = created_resources[0]
+        self.addCleanup(publication_api.delete, publication_href)
+        publication = publication_api.read(publication_href)
 
         # Step 3
-        self.assertEqual(publication["repository_version"], version_hrefs[-1])
+        self.assertEqual(publication.repository_version, version_hrefs[-1])
 
         # Step 4
-        publication = self.Meta.create_publication(cfg, repo, non_latest)
+        publish_data = self.Meta.Publication(repository_version=non_latest)
+        publish_response = publication_api.create(publish_data)
+        created_resources = monitor_task(publish_response.task)
+        publication_href = created_resources[0]
+        publication = publication_api.read(publication_href)
 
         # Step 5
-        self.assertEqual(publication["repository_version"], non_latest)
+        self.assertEqual(publication.repository_version, non_latest)
 
         # Step 6
-        with self.assertRaises(HTTPError):
-            body = {"repository": repo["pulp_href"], "repository_version": non_latest}
-            client.post(self.Meta.PUBLICATION_PATH, body)
+        with self.assertRaises(ApiException):
+            body = {"repository": repo.pulp_href, "repository_version": non_latest}
+            publication_api.create(body)
 
 
-class VerbatimPublishAnyRepoVersionTestCase(PublishAnyRepoVersionTestCase):
+class PublishAnyRepoVersionStructuredTestCase(PublishAnyRepoVersionSimpleTestCase):
+    """Test whether a particular repository version can be published structured.
+
+    This test targets the following issues:
+
+    * `Pulp #3324 <https://pulp.plan.io/issues/3324>`_
+    * `Pulp Smash #897 <https://github.com/pulp/pulp-smash/issues/897>`_
+    """
+
+    class Meta:
+        publication_api = deb_apt_publication_api
+
+        @staticmethod
+        def Publication(*args, **kwargs):
+            """Delegate Publication constructor."""
+            return DebDebPublication(structured=True, *args, **kwargs)
+
+
+class PublishAnyRepoVersionCombinedTestCase(PublishAnyRepoVersionSimpleTestCase):
+    """Test whether a particular repository version can be published both simple and structured.
+
+    This test targets the following issues:
+
+    * `Pulp #3324 <https://pulp.plan.io/issues/3324>`_
+    * `Pulp Smash #897 <https://github.com/pulp/pulp-smash/issues/897>`_
+    """
+
+    class Meta:
+        publication_api = deb_apt_publication_api
+
+        @staticmethod
+        def Publication(*args, **kwargs):
+            """Delegate Publication constructor."""
+            return DebDebPublication(simple=True, structured=True, *args, **kwargs)
+
+
+class VerbatimPublishAnyRepoVersionTestCase(PublishAnyRepoVersionSimpleTestCase):
     """Test whether a particular repository version can be published verbatim.
 
     This test targets the following issues:
 
     * `Pulp #3324 <https://pulp.plan.io/issues/3324>`_
-    * `Pulp Smash #897 <https://github.com/PulpQE/pulp-smash/issues/897>`_
+    * `Pulp Smash #897 <https://github.com/pulp/pulp-smash/issues/897>`_
     """
 
     class Meta:
-        PUBLICATION_PATH = VERBATIM_PUBLICATION_PATH
-        create_publication = create_verbatim_publication
+        publication_api = deb_verbatim_publication_api
+        Publication = DebVerbatimPublication

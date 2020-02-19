@@ -2,28 +2,34 @@
 """Tests that sync deb plugin repositories."""
 import unittest
 
-from pulp_smash import api, cli, config, exceptions
+from pulp_smash import cli, config
 from pulp_smash.pulp3.constants import MEDIA_PATH
-from pulp_smash.pulp3.utils import gen_repo, get_content_summary, get_added_content_summary, sync
+from pulp_smash.pulp3.utils import gen_repo, get_added_content_summary, get_content_summary
 
 from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_SUMMARY,
     DEB_FULL_FIXTURE_SUMMARY,
-    DEB_REMOTE_PATH,
-    DEB_REPO_PATH,
+    DEB_INVALID_FIXTURE_URL,
 )
-from pulp_deb.tests.functional.utils import gen_deb_remote
 from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
+from pulp_deb.tests.functional.utils import (
+    gen_deb_remote,
+    monitor_task,
+    PulpTaskError,
+    deb_remote_api,
+    deb_repository_api,
+)
+
+from pulpcore.client.pulp_deb import RepositorySyncURL
 
 
 class BasicSyncTestCase(unittest.TestCase):
-    """Sync repositories with the deb plugin."""
+    """Sync a repository with the deb plugin."""
 
     @classmethod
     def setUpClass(cls):
         """Create class-wide variables."""
         cls.cfg = config.get_config()
-        cls.client = api.Client(cls.cfg, api.json_handler)
 
     def test_sync_small(self):
         """Test synching with deb content only."""
@@ -46,40 +52,53 @@ class BasicSyncTestCase(unittest.TestCase):
         2. Assert that repository version is None.
         3. Sync the remote.
         4. Assert that repository version is not None.
-        5. Sync the remote one more time.
-        6. Assert that repository version is the same as the previous one.
+        5. Assert that the correct number of units were added and are present
+           in the repo.
+        6. Sync the remote one more time.
+        7. Assert that repository version is the same as the previous one.
+        8. Assert that the same number of content units are present and that no
+           units were added.
         """
-        repo = self.client.post(DEB_REPO_PATH, gen_repo())
-        self.addCleanup(self.client.delete, repo["pulp_href"])
+        repo_api = deb_repository_api
+        remote_api = deb_remote_api
+
+        repo = repo_api.create(gen_repo())
+        self.addCleanup(repo_api.delete, repo.pulp_href)
 
         body = gen_deb_remote(sync_udebs=sync_udebs)
-        remote = self.client.post(DEB_REMOTE_PATH, body)
-        self.addCleanup(self.client.delete, remote["pulp_href"])
+        remote = remote_api.create(body)
+        self.addCleanup(remote_api.delete, remote.pulp_href)
 
         # Sync the repository.
-        self.assertEqual(repo["latest_version_href"], f"{repo['pulp_href']}versions/0/")
-        sync(self.cfg, remote, repo)
-        repo = self.client.get(repo["pulp_href"])
+        self.assertEqual(repo.latest_version_href, f"{repo.pulp_href}versions/0/")
+        repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
+        sync_response = repo_api.sync(repo.pulp_href, repository_sync_data)
+        monitor_task(sync_response.task)
+        repo = repo_api.read(repo.pulp_href)
 
-        self.assertIsNotNone(repo["latest_version_href"])
-        self.assertDictEqual(get_content_summary(repo), fixture_summary)
-        self.assertDictEqual(get_added_content_summary(repo), fixture_summary)
+        self.assertIsNotNone(repo.latest_version_href)
+        self.assertDictEqual(get_content_summary(repo.to_dict()), fixture_summary)
+        self.assertDictEqual(get_added_content_summary(repo.to_dict()), fixture_summary)
 
         # Sync the repository again.
-        latest_version_href = repo["latest_version_href"]
-        sync(self.cfg, remote, repo)
-        repo = self.client.get(repo["pulp_href"])
+        latest_version_href = repo.latest_version_href
+        repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
+        sync_response = repo_api.sync(repo.pulp_href, repository_sync_data)
+        monitor_task(sync_response.task)
+        repo = repo_api.read(repo.pulp_href)
 
-        self.assertEqual(latest_version_href, repo["latest_version_href"])
-        self.assertDictEqual(get_content_summary(repo), fixture_summary)
+        self.assertEqual(latest_version_href, repo.latest_version_href)
+        self.assertDictEqual(get_content_summary(repo.to_dict()), fixture_summary)
 
     def test_file_decriptors(self):
         """Test whether file descriptors are closed properly.
 
         This test targets the following issue:
+
         `Pulp #4073 <https://pulp.plan.io/issues/4073>`_
 
         Do the following:
+
         1. Check if 'lsof' is installed. If it is not, skip this test.
         2. Create and sync a repo.
         3. Run the 'lsof' command to verify that files in the
@@ -87,43 +106,67 @@ class BasicSyncTestCase(unittest.TestCase):
         4. Assert that issued command returns `0` opened files.
         """
         cli_client = cli.Client(self.cfg, cli.echo_handler)
+        repo_api = deb_repository_api
+        remote_api = deb_remote_api
 
         # check if 'lsof' is available
         if cli_client.run(("which", "lsof")).returncode != 0:
             raise unittest.SkipTest("lsof package is not present")
 
-        repo = self.client.post(DEB_REPO_PATH, gen_repo())
-        self.addCleanup(self.client.delete, repo["pulp_href"])
+        repo = repo_api.create(gen_repo())
+        self.addCleanup(repo_api.delete, repo.pulp_href)
 
-        remote = self.client.post(DEB_REMOTE_PATH, gen_deb_remote())
-        self.addCleanup(self.client.delete, remote["pulp_href"])
+        remote = remote_api.create(gen_deb_remote())
+        self.addCleanup(remote_api.delete, remote.pulp_href)
 
-        sync(self.cfg, remote, repo)
+        repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
+        sync_response = repo_api.sync(repo.pulp_href, repository_sync_data)
+        monitor_task(sync_response.task)
 
         cmd = "lsof -t +D {}".format(MEDIA_PATH).split()
         response = cli_client.run(cmd).stdout
         self.assertEqual(len(response), 0, response)
 
 
-class SyncInvalidURLTestCase(unittest.TestCase):
-    """Sync a repository with an invalid url on the Remote."""
+class SyncInvalidTestCase(unittest.TestCase):
+    """Sync a repository with a given url on the remote."""
 
-    def test_all(self):
+    def test_invalid_url(self):
+        """Sync a repository using a remote url that does not exist.
+
+        Test that we get a task failure. See :meth:`do_test`.
         """
-        Sync a repository using a Remote url that does not exist.
+        with self.assertRaises(PulpTaskError) as exc:
+            self.do_test("http://i-am-an-invalid-url.com/invalid/")
+        error = exc.exception.task.error
+        self.assertIsNotNone(error["description"])
 
-        Test that we get a task failure.
+    # Provide an invalid repository and specify keywords in the anticipated error message
+    @unittest.skip("FIXME: Plugin writer action required.")
+    def test_invalid_deb_content(self):
+        """Sync a repository using an invalid plugin_content repository.
 
+        Assert that an exception is raised, and that error message has
+        keywords related to the reason of the failure. See :meth:`do_test`.
         """
-        cfg = config.get_config()
-        client = api.Client(cfg, api.json_handler)
+        with self.assertRaises(PulpTaskError) as exc:
+            self.do_test(DEB_INVALID_FIXTURE_URL)
+        error = exc.exception.task.error
+        for key in ("mismached", "empty"):
+            self.assertIn(key, error["description"])
 
-        repo = client.post(DEB_REPO_PATH, gen_repo())
-        self.addCleanup(client.delete, repo["pulp_href"])
+    def do_test(self, url):
+        """Sync a repository given ``url`` on the remote."""
+        repo_api = deb_repository_api
+        remote_api = deb_remote_api
 
-        body = gen_deb_remote(url="http://i-am-an-invalid-url.com/invalid/")
-        remote = client.post(DEB_REMOTE_PATH, body)
-        self.addCleanup(client.delete, remote["pulp_href"])
+        repo = repo_api.create(gen_repo())
+        self.addCleanup(repo_api.delete, repo.pulp_href)
 
-        with self.assertRaises(exceptions.TaskReportError):
-            sync(cfg, remote, repo)
+        body = gen_deb_remote(url=url)
+        remote = remote_api.create(body)
+        self.addCleanup(remote_api.delete, remote.pulp_href)
+
+        repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
+        sync_response = repo_api.sync(repo.pulp_href, repository_sync_data)
+        return monitor_task(sync_response.task)

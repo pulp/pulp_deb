@@ -5,33 +5,41 @@ import unittest
 from random import choice
 from urllib.parse import urljoin
 
-from pulp_smash import api, config, utils
-from pulp_smash.pulp3.utils import download_content_unit, gen_distribution, gen_repo, sync
+from pulp_smash import config, utils
+from pulp_smash.pulp3.utils import download_content_unit, gen_distribution, gen_repo
 
-from pulp_deb.tests.functional.constants import (
-    DEB_DISTRIBUTION_PATH,
-    DEB_FIXTURE_URL,
-    DEB_REMOTE_PATH,
-    DEB_REPO_PATH,
-    DOWNLOAD_POLICIES,
-)
+from pulp_deb.tests.functional.constants import DEB_FIXTURE_URL, DOWNLOAD_POLICIES
 from pulp_deb.tests.functional.utils import (
-    create_deb_publication,
-    create_verbatim_publication,
+    deb_repository_api,
+    deb_remote_api,
+    deb_apt_publication_api,
+    deb_verbatim_publication_api,
+    deb_distribution_api,
     gen_deb_remote,
     get_deb_content_unit_paths,
     get_deb_verbatim_content_unit_paths,
+    monitor_task,
 )
 from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
+
+from pulpcore.client.pulp_deb import (
+    RepositorySyncURL,
+    DebDebPublication,
+    DebVerbatimPublication,
+)
 
 
 class DownloadContentTestCase(unittest.TestCase):
     """Verify whether content served by pulp can be downloaded."""
 
     class Meta:
-        create_publication = create_deb_publication
-        DISTRIBUTION_PATH = DEB_DISTRIBUTION_PATH
+        publication_api = deb_apt_publication_api
         get_content_unit_paths = get_deb_content_unit_paths
+
+        @staticmethod
+        def Publication(*args, **kwargs):
+            """Delagate Publication constructor."""
+            return DebDebPublication(structured=True, simple=True, *args, **kwargs)
 
     def test_all(self):
         """Download content from Pulp. Content is synced with different policies.
@@ -66,32 +74,39 @@ class DownloadContentTestCase(unittest.TestCase):
         This test targets the following issues:
 
         * `Pulp #2895 <https://pulp.plan.io/issues/2895>`_
-        * `Pulp Smash #872 <https://github.com/PulpQE/pulp-smash/issues/872>`_
+        * `Pulp Smash #872 <https://github.com/pulp/pulp-smash/issues/872>`_
         """
-        cfg = config.get_config()
-        client = api.Client(cfg, api.json_handler)
+        repo_api = deb_repository_api
+        remote_api = deb_remote_api
+        publication_api = self.Meta.publication_api
+        distribution_api = deb_distribution_api
 
-        repo = client.post(DEB_REPO_PATH, gen_repo())
-        self.addCleanup(client.delete, repo["pulp_href"])
+        repo = repo_api.create(gen_repo())
+        self.addCleanup(repo_api.delete, repo.pulp_href)
 
         body = gen_deb_remote()
-        remote = client.post(DEB_REMOTE_PATH, body)
-        self.addCleanup(client.delete, remote["pulp_href"])
+        remote = remote_api.create(body)
+        self.addCleanup(remote_api.delete, remote.pulp_href)
 
-        sync(cfg, remote, repo)
-        repo = client.get(repo["pulp_href"])
+        # Sync a Repository
+        repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
+        sync_response = repo_api.sync(repo.pulp_href, repository_sync_data)
+        monitor_task(sync_response.task)
+        repo = repo_api.read(repo.pulp_href)
 
         # Create a publication.
-        publication = self.Meta.create_publication(cfg, repo)
-        self.addCleanup(client.delete, publication["pulp_href"])
+        publish_data = self.Meta.Publication(repository=repo.pulp_href)
+        publish_response = publication_api.create(publish_data)
+        publication_href = monitor_task(publish_response.task)[0]
+        self.addCleanup(publication_api.delete, publication_href)
 
         # Create a distribution.
         body = gen_distribution()
-        body["publication"] = publication["pulp_href"]
-        distribution = client.using_handler(api.task_handler).post(
-            self.Meta.DISTRIBUTION_PATH, body
-        )
-        self.addCleanup(client.delete, distribution["pulp_href"])
+        body["publication"] = publication_href
+        distribution_response = distribution_api.create(body)
+        distribution_href = monitor_task(distribution_response.task)[0]
+        distribution = distribution_api.read(distribution_href)
+        self.addCleanup(distribution_api.delete, distribution.pulp_href)
 
         # Pick a content unit (of each type), and download it from both Pulp Fixtures…
         unit_paths = [
@@ -103,10 +118,12 @@ class DownloadContentTestCase(unittest.TestCase):
         ]
 
         # …and Pulp.
-        contents = [
-            download_content_unit(cfg, distribution, unit_path[1]) for unit_path in unit_paths
-        ]
-        pulp_hashes = [hashlib.sha256(content).hexdigest() for content in contents]
+        pulp_hashes = []
+        cfg = config.get_config()
+        for unit_path in unit_paths:
+            content = download_content_unit(cfg, distribution.to_dict(), unit_path[1])
+            pulp_hashes.append(hashlib.sha256(content).hexdigest())
+
         self.assertEqual(fixtures_hashes, pulp_hashes)
 
 
@@ -114,6 +131,6 @@ class VerbatimDownloadContentTestCase(DownloadContentTestCase):
     """Verify whether content served by pulp can be downloaded."""
 
     class Meta:
-        create_publication = create_verbatim_publication
-        DISTRIBUTION_PATH = DEB_DISTRIBUTION_PATH
+        Publication = DebVerbatimPublication
+        publication_api = deb_verbatim_publication_api
         get_content_unit_paths = get_deb_verbatim_content_unit_paths

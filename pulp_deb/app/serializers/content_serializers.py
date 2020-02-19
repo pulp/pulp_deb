@@ -68,7 +68,6 @@ class GenericContentSerializer(SingleArtifactContentUploadSerializer, ContentChe
 
     def deferred_validate(self, data):
         """Validate the GenericContent data."""
-
         data = super().deferred_validate(data)
 
         data["sha256"] = data["artifact"].sha256
@@ -389,13 +388,12 @@ class BasePackageSerializer(SingleArtifactContentUploadSerializer, ContentChecks
 
     def deferred_validate(self, data):
         """Validate that the artifact is a package and extract it's values."""
-
         data = super().deferred_validate(data)
 
         try:
             package_paragraph = debfile.DebFile(fileobj=data["artifact"].file).debcontrol()
         except Exception:  # TODO: Be more specific
-            raise ValidationError(_("Not a valid Deb Package"))
+            raise ValidationError(_("Unable to read Deb Package"))
 
         from822_serializer = self.Meta.from822_serializer.from822(data=package_paragraph)
         from822_serializer.is_valid(raise_exception=True)
@@ -469,7 +467,6 @@ class PackageSerializer(BasePackageSerializer):
 
     def deferred_validate(self, data):
         """Validate for 'normal' Package (not installer)."""
-
         data = super().deferred_validate(data)
 
         if data.get("section") == "debian-installer":
@@ -489,7 +486,6 @@ class InstallerPackageSerializer(BasePackageSerializer):
 
     def deferred_validate(self, data):
         """Validate for InstallerPackage."""
-
         data = super().deferred_validate(data)
 
         if data.get("section") != "debian-installer":
