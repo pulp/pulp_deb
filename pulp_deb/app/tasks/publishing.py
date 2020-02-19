@@ -7,6 +7,7 @@ from debian import deb822
 from gzip import GzipFile
 
 from django.core.files import File
+from django.db.utils import IntegrityError
 
 from pulpcore.plugin.models import (
     PublishedArtifact,
@@ -131,9 +132,12 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                         pk__in=repo_version.content.order_by("-pulp_created"),
                         release_component__in=components,
                     ):
-                        release_helper.components[prc.release_component.component].add_package(
-                            prc.package
-                        )
+                        try:
+                            release_helper.components[prc.release_component.component].add_package(
+                                prc.package
+                            )
+                        except IntegrityError:
+                            continue
                     release_helper.finish()
 
     log.info(_("Publication: {publication} created").format(publication=publication.pk))
