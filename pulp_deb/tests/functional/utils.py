@@ -88,12 +88,14 @@ def gen_deb_client():
 
 
 def gen_deb_remote(
-    url=DEB_FIXTURE_URL, distributions=DEB_FIXTURE_RELEASE, sync_udebs=False, **kwargs
+    url=DEB_FIXTURE_URL, distributions=DEB_FIXTURE_RELEASE, sync_udebs=False, gpgkey=None, **kwargs
 ):
     """Return a semi-random dict for use in creating a deb Remote.
 
     :param url: The URL of an external content source.
     """
+    if gpgkey:
+        kwargs["gpgkey"] = gpgkey
     return gen_remote(url, distributions=distributions, sync_udebs=sync_udebs, **kwargs)
 
 

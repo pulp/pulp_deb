@@ -7,6 +7,7 @@ import shutil
 import bz2
 import gzip
 import lzma
+import gnupg
 from collections import defaultdict
 from tempfile import NamedTemporaryFile
 
@@ -48,6 +49,18 @@ from pulp_deb.app.serializers import InstallerPackage822Serializer, Package822Se
 
 
 log = logging.getLogger(__name__)
+
+
+class NoReleaseFile(Exception):
+    """
+    Exception to signal, that no file representing a release is present.
+    """
+
+    def __init__(self, distribution, *args, **kwargs):
+        """
+        Exception to signal, that no file representing a release is present.
+        """
+        super().__init__("No valid Release file found for {}".format(distribution), *args, **kwargs)
 
 
 class NoPackageIndexFile(Exception):
@@ -126,9 +139,9 @@ class DebDeclarativeVersion(DeclarativeVersion):
             self.first_stage,
             QueryExistingArtifacts(),
             ArtifactDownloader(),
-            DebDropEmptyContent(),
+            DebDropFailedArtifacts(),
             ArtifactSaver(),
-            DebUpdateReleaseFileAttributes(),
+            DebUpdateReleaseFileAttributes(remote=self.first_stage.remote),
             DebUpdatePackageIndexAttributes(),
             QueryExistingContents(),
             ContentSaver(),
@@ -155,6 +168,20 @@ class DebUpdateReleaseFileAttributes(Stage):
     TODO: Verify signature
     """
 
+    def __init__(self, remote, *args, **kwargs):
+        """Initialize DebUpdateReleaseFileAttributes stage."""
+        super().__init__(*args, **kwargs)
+        self.remote = remote
+        self.gpgkey = remote.gpgkey
+        if self.gpgkey:
+            gnupghome = os.path.join(os.getcwd(), "gpg-home")
+            os.makedirs(gnupghome)
+            self.gpg = gnupg.GPG(gpgbinary="/usr/bin/gpg", gnupghome=gnupghome)
+            import_res = self.gpg.import_keys(self.gpgkey)
+            if import_res.count == 0:
+                log.warn("Key import failed.")
+            pass
+
     async def run(self):
         """
         Parse ReleaseFile content units.
@@ -168,17 +195,55 @@ class DebUpdateReleaseFileAttributes(Stage):
                     da_names = {
                         os.path.basename(da.relative_path): da for da in d_content.d_artifacts
                     }
-                    if "InRelease" in da_names:
-                        release_file_artifact = da_names["InRelease"].artifact
-                        release_file.relative_path = da_names["InRelease"].relative_path
-                    elif "Release" in da_names:
-                        release_file_artifact = da_names["Release"].artifact
-                        release_file.relative_path = da_names["Release"].relative_path
+                    if "Release" in da_names:
+                        if "Release.gpg" in da_names:
+                            if self.gpgkey:
+                                with NamedTemporaryFile() as tmp_file:
+                                    tmp_file.write(da_names["Release"].artifact.file.read())
+                                    tmp_file.flush()
+                                    verified = self.gpg.verify_file(
+                                        da_names["Release.gpg"].artifact.file, tmp_file.name
+                                    )
+                                if verified.valid:
+                                    log.info("Verification of Release successful.")
+                                    release_file_artifact = da_names["Release"].artifact
+                                    release_file.relative_path = da_names["Release"].relative_path
+                                else:
+                                    log.warn("Verification of Release failed. Dropping it.")
+                                    d_content.d_artifacts.remove(da_names.pop("Release"))
+                                    d_content.d_artifacts.remove(da_names.pop("Release.gpg"))
+                            else:
+                                release_file_artifact = da_names["Release"].artifact
+                                release_file.relative_path = da_names["Release"].relative_path
+                        else:
+                            if self.gpgkey:
+                                d_content.d_artifacts.delete(da_names["Release"])
+                            else:
+                                release_file_artifact = da_names["Release"].artifact
+                                release_file.relative_path = da_names["Release"].relative_path
                     else:
-                        # No (proper) artifacts left -> drop it
-                        d_content.content = None
-                        d_content.resolve()
-                        continue
+                        if "Release.gpg" in da_names:
+                            # No need to keep the signature without "Release"
+                            d_content.d_artifacts.remove(da_names.pop("Release.gpg"))
+
+                    if "InRelease" in da_names:
+                        if self.gpgkey:
+                            verified = self.gpg.verify_file(da_names["InRelease"].artifact.file)
+                            if verified.valid:
+                                log.info("Verification of InRelease successful.")
+                                release_file_artifact = da_names["InRelease"].artifact
+                                release_file.relative_path = da_names["InRelease"].relative_path
+                            else:
+                                log.warn("Verification of InRelease failed. Dropping it.")
+                                d_content.d_artifacts.remove(da_names.pop("InRelease"))
+                        else:
+                            release_file_artifact = da_names["InRelease"].artifact
+                            release_file.relative_path = da_names["InRelease"].relative_path
+
+                    if not d_content.d_artifacts:
+                        # No (proper) artifacts left -> distribution not found
+                        raise NoReleaseFile(distribution=release_file.distribution)
+
                     release_file.sha256 = release_file_artifact.sha256
                     release_file_dict = deb822.Release(release_file_artifact.file)
                     release_file.codename = release_file_dict["Codename"]
@@ -257,27 +322,21 @@ def _uncompress_artifact(d_artifacts):
     raise NoPackageIndexFile()
 
 
-class DebDropEmptyContent(Stage):
+class DebDropFailedArtifacts(Stage):
     """
-    This stage removes empty DeclarativeContent objects.
+    This stage removes failed failsafe artifacts.
 
     In case we tried to fetch something, but the artifact 404ed, we simply drop it.
     """
 
     async def run(self):
         """
-        Drop GenericContent units if they have no artifacts left.
+        Remove None from d_artifacts in DeclarativeContent units.
         """
         async for d_content in self.items():
-            if d_content.d_artifacts:  # Should there be artifacts?
-                d_content.d_artifacts = [
-                    d_artifact for d_artifact in d_content.d_artifacts if d_artifact.artifact
-                ]
-                if not d_content.d_artifacts:
-                    # No artifacts left -> drop it
-                    d_content.content = None
-                    d_content.resolve()
-                    continue
+            d_content.d_artifacts = [
+                d_artifact for d_artifact in d_content.d_artifacts if d_artifact.artifact
+            ]
             await self.put(d_content)
 
 
