@@ -4,7 +4,12 @@ import unittest
 
 from pulp_smash import cli, config
 from pulp_smash.pulp3.constants import MEDIA_PATH
-from pulp_smash.pulp3.utils import gen_repo, get_added_content_summary, get_content_summary
+from pulp_smash.pulp3.utils import (
+    gen_repo,
+    get_added_content_summary,
+    get_content_summary,
+    delete_orphans,
+)
 
 from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_SUMMARY,
@@ -33,6 +38,10 @@ class BasicSyncTestCase(unittest.TestCase):
     def setUpClass(cls):
         """Create class-wide variables."""
         cls.cfg = config.get_config()
+
+    def setUp(self):
+        """Cleanup."""
+        delete_orphans()
 
     def test_sync_small(self):
         """Test synching with deb content only."""
@@ -134,6 +143,10 @@ class BasicSyncTestCase(unittest.TestCase):
 class SyncInvalidTestCase(unittest.TestCase):
     """Sync a repository with a given url on the remote."""
 
+    def setUp(self):
+        """Cleanup."""
+        delete_orphans()
+
     def test_invalid_url(self):
         """Sync a repository using a remote url that does not exist.
 
@@ -154,21 +167,45 @@ class SyncInvalidTestCase(unittest.TestCase):
         error = exc.exception.task.error
         self.assertIn("No valid Release file found", error["description"])
 
-    # Provide an invalid repository and specify keywords in the anticipated error message
-    @unittest.skip("FIXME: Plugin writer action required.")
-    def test_invalid_deb_content(self):
-        """Sync a repository using an invalid plugin_content repository.
+    def test_missing_package_indices_1(self):
+        """Sync a repository missing a set of Package indices.
 
-        Assert that an exception is raised, and that error message has
-        keywords related to the reason of the failure. See :meth:`do_test`.
+        All the files associated with the relavant content unit are missing.
+        Assert that the relevant exception is thrown.
         """
         with self.assertRaises(PulpTaskError) as exc:
-            self.do_test(url=DEB_INVALID_FIXTURE_URL)
+            self.do_test(url=DEB_INVALID_FIXTURE_URL, architectures="ppc64")
         error = exc.exception.task.error
-        for key in ("mismached", "empty"):
-            self.assertIn(key, error["description"])
+        self.assertIn("No suitable Package index file", error["description"])
+        self.assertIn("ppc64", error["description"])
 
-    def do_test(self, url=DEB_FIXTURE_URL, distribution=DEB_FIXTURE_RELEASE):
+    def test_missing_package_indices_2(self):
+        """Sync a repository missing a set of Package indices.
+
+        The needed Package indices associated with the relevant content unit are missing.
+        The Release file next to the missing Package indices is retained.
+        Assert that the relevant exception is thrown.
+        """
+        with self.assertRaises(PulpTaskError) as exc:
+            self.do_test(url=DEB_INVALID_FIXTURE_URL, architectures="armeb")
+        error = exc.exception.task.error
+        self.assertIn("No suitable Package index file", error["description"])
+        self.assertIn("armeb", error["description"])
+
+    def test_invalid_signature(self):
+        """Sync a repository with an invalid signature.
+
+        Verify the repository by supplying a GPG key.
+        Assert that the relevant exception is thrown.
+        """
+        with self.assertRaises(PulpTaskError) as exc:
+            self.do_test(
+                distribution="nosuite", url=DEB_INVALID_FIXTURE_URL, gpgkey=DEB_SIGNING_KEY
+            )
+        error = exc.exception.task.error
+        self.assertIn("No valid Release file found", error["description"])
+
+    def do_test(self, url=DEB_FIXTURE_URL, distribution=DEB_FIXTURE_RELEASE, **kwargs):
         """Sync a repository given ``url`` on the remote."""
         repo_api = deb_repository_api
         remote_api = deb_remote_api
@@ -176,7 +213,7 @@ class SyncInvalidTestCase(unittest.TestCase):
         repo = repo_api.create(gen_repo())
         self.addCleanup(repo_api.delete, repo.pulp_href)
 
-        body = gen_deb_remote(url=url, distributions=distribution)
+        body = gen_deb_remote(url=url, distributions=distribution, **kwargs)
         remote = remote_api.create(body)
         self.addCleanup(remote_api.delete, remote.pulp_href)
 

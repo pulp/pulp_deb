@@ -60,13 +60,23 @@ class NoReleaseFile(Exception):
         """
         Exception to signal, that no file representing a release is present.
         """
-        super().__init__("No valid Release file found for {}".format(distribution), *args, **kwargs)
+        super().__init__(
+            "No valid Release file found for '{}'.".format(distribution), *args, **kwargs
+        )
 
 
 class NoPackageIndexFile(Exception):
     """
     Exception to signal, that no file representing a package index is present.
     """
+
+    def __init__(self, relative_dir, *args, **kwargs):
+        """
+        Exception to signal, that no file representing a package index is present.
+        """
+        super().__init__(
+            "No suitable Package index file found in '{}'.".format(relative_dir), *args, **kwargs
+        )
 
     pass
 
@@ -272,15 +282,16 @@ class DebUpdatePackageIndexAttributes(Stage):  # TODO: Needs a new name
         with ProgressReport(message="Update PackageIndex units", code="update.packageindex") as pb:
             async for d_content in self.items():
                 if isinstance(d_content.content, PackageIndex):
+                    relative_dir = os.path.dirname(d_content.content.relative_path)
                     if not d_content.d_artifacts:
-                        raise NoPackageIndexFile()
+                        raise NoPackageIndexFile(relative_dir=relative_dir)
 
                     content = d_content.content
                     if not [
                         da for da in d_content.d_artifacts if da.artifact.sha256 == content.sha256
                     ]:
                         # No main_artifact found, uncompress one
-                        filename = _uncompress_artifact(d_content.d_artifacts)
+                        filename = _uncompress_artifact(d_content.d_artifacts, relative_dir)
                         da = DeclarativeArtifact(
                             Artifact.init_and_validate(
                                 filename, expected_digests={"sha256": content.sha256}
@@ -301,7 +312,7 @@ class DebUpdatePackageIndexAttributes(Stage):  # TODO: Needs a new name
                 await self.put(d_content)
 
 
-def _uncompress_artifact(d_artifacts):
+def _uncompress_artifact(d_artifacts, relative_dir):
     for d_artifact in d_artifacts:
         ext = os.path.splitext(d_artifact.relative_path)[1]
         if ext == ".gz":
@@ -319,7 +330,7 @@ def _uncompress_artifact(d_artifacts):
                 shutil.copyfileobj(f_in, f_out)
         return f_out.name
     # Not one artifact was suitable
-    raise NoPackageIndexFile()
+    raise NoPackageIndexFile(relative_dir=relative_dir)
 
 
 class DebDropFailedArtifacts(Stage):

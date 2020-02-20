@@ -90,8 +90,7 @@ DEB_PACKAGE_URL = urljoin(DEB_FIXTURE_URL, DEB_PACKAGE_RELPATH)
 DEB_GENERIC_CONTENT_RELPATH = "dists/ragnarok/asgard/binary-armeb/Release"
 DEB_GENERIC_CONTENT_URL = urljoin(DEB_FIXTURE_URL, DEB_GENERIC_CONTENT_RELPATH)
 
-# FIXME: replace this with your own fixture repository URL and metadata
-DEB_INVALID_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, "deb_invalid/")
+DEB_INVALID_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, "debian-invalid/")
 
 # FIXME: replace this with your own fixture repository URL and metadata
 DEB_LARGE_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, "deb_large/")
