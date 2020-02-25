@@ -33,6 +33,19 @@ DEBSYNC002 = Error(
     ["repo_id", "feed_url", "filename", "checksum_expected", "checksum_actual"])
 
 
+def verify_unit_callback(unit):
+    if not os.path.isfile(unit.storage_path):
+        return False
+    checksums = unit.calculate_deb_checksums(unit.storage_path)
+    if unit.sha1 and unit.sha1 != checksums['sha1']:
+        return False
+    if unit.md5sum and unit.md5sum != checksums['md5sum']:
+        return False
+    if unit.sha256 and unit.sha256 != checksums['sha256']:
+        return False
+    return True
+
+
 class RepoSync(publish_step.PluginStep):
     Type_Class_Map = {
         models.DebPackage.TYPE_ID: models.DebPackage,
@@ -59,6 +72,7 @@ class RepoSync(publish_step.PluginStep):
         self.components = split_or_none(self.get_config().get('components'))
         self.remove_missing = self.get_config().get_boolean(
             constants.CONFIG_REMOVE_MISSING_UNITS, constants.CONFIG_REMOVE_MISSING_UNITS_DEFAULT)
+        self.repair_sync = self.get_config().get_boolean(constants.CONFIG_REPAIR_SYNC, False)
 
         self.unit_relative_urls = {}
         self.available_units = None
@@ -111,8 +125,12 @@ class RepoSync(publish_step.PluginStep):
         self.add_child(ParsePackagesStep(constants.SYNC_STEP_PACKAGES_PARSE))
 
         #  packages
+        if self.repair_sync:
+            verify_unit = verify_unit_callback
+        else:
+            verify_unit = None
         self.step_local_units = publish_step.GetLocalUnitsStep(
-            importer_type=ids.TYPE_ID_IMPORTER)
+            importer_type=ids.TYPE_ID_IMPORTER, verify_unit=verify_unit)
         self.add_child(self.step_local_units)
 
         self.add_child(CreateRequestsUnitsToDownload(
@@ -129,18 +147,18 @@ class RepoSync(publish_step.PluginStep):
         #  metadata
         self.add_child(SaveMetadataStep(constants.SYNC_STEP_SAVE_META))
 
-        self.debs_to_check = []
-        self.deb_comps_to_check = []
-        self.deb_releases_to_check = []
+        self.debs_to_check = {}
+        self.deb_comps_to_check = {}
+        self.deb_releases_to_check = {}
         # cleanup
         if self.remove_missing:
             units_to_check = self.conduit.get_units()
-            self.debs_to_check = [unit for unit in units_to_check
-                                  if unit.type_id == ids.TYPE_ID_DEB]
-            self.deb_comps_to_check = [unit for unit in units_to_check
-                                       if unit.type_id == ids.TYPE_ID_DEB_COMP]
-            self.deb_releases_to_check = [unit for unit in units_to_check
-                                          if unit.type_id == ids.TYPE_ID_DEB_RELEASE]
+            self.debs_to_check = {unit.id: unit for unit in units_to_check
+                                  if unit.type_id == ids.TYPE_ID_DEB}
+            self.deb_comps_to_check = {unit.id: unit for unit in units_to_check
+                                       if unit.type_id == ids.TYPE_ID_DEB_COMP}
+            self.deb_releases_to_check = {unit.id: unit for unit in units_to_check
+                                          if unit.type_id == ids.TYPE_ID_DEB_RELEASE}
             del units_to_check
             self.add_child(OrphanRemovedUnits(constants.SYNC_STEP_ORPHAN_REMOVED_UNITS))
 
@@ -229,10 +247,7 @@ class ParseReleaseStep(publish_step.PluginStep):
             self.parent.release_units[distribution] = release_unit
 
             # Prevent this unit from being cleaned up
-            try:
-                self.parent.deb_releases_to_check.remove(release_unit)
-            except ValueError:
-                pass
+            self.parent.deb_releases_to_check.pop(release_unit.id, None)
             # get release component units
             for release_file_component in repometa.components:
                 component = release_file_component.split('/')[-1]
@@ -243,10 +258,7 @@ class ParseReleaseStep(publish_step.PluginStep):
                                                                         component)
                     self.parent.component_packages[distribution][component] = []
                     # Prevent this unit from being cleaned up
-                    try:
-                        self.parent.deb_comps_to_check.remove(comp_unit)
-                    except ValueError:
-                        pass
+                    self.parent.deb_comps_to_check.pop(comp_unit.id, None)
             # generate download requests for all relevant packages files
             rel_dl_reqs = repometa.create_Packages_download_requests(
                 self.get_working_dir())
@@ -344,7 +356,7 @@ class SaveDownloadedUnits(publish_step.PluginStep):
     def process_main(self, item=None):
         path_to_unit = self.parent.step_download_units.path_to_unit
         repo = self.get_repo().repo_obj
-        for path, unit in sorted(path_to_unit.items()):
+        for path, unit in path_to_unit.items():
             checksums = unit.calculate_deb_checksums(path)
             if unit.sha1:
                 self.verify_checksum(checksums['sha1'], unit.sha1, path)
@@ -359,7 +371,7 @@ class SaveDownloadedUnits(publish_step.PluginStep):
             else:
                 unit.sha256 = checksums['sha256']
             self.verify_checksum(unit.checksum, unit.sha256, path)
-            unit.save_and_associate(path, repo)
+            unit.save_and_associate(path, repo, force=self.parent.repair_sync)
 
 
 class SaveMetadataStep(publish_step.PluginStep):
@@ -379,10 +391,7 @@ class SaveMetadataStep(publish_step.PluginStep):
                              for unit_key in self.parent.component_packages[distribution][comp]]:
                     comp_unit_packages_set.add(unit.id)
                     # Prevent this unit from being cleaned up
-                    try:
-                        self.parent.debs_to_check.remove(unit)
-                    except ValueError:
-                        pass
+                    self.parent.debs_to_check.pop(unit.id, None)
                 comp_unit.packages = list(comp_unit_packages_set)
                 comp_unit.save()
 
@@ -393,11 +402,11 @@ class OrphanRemovedUnits(publish_step.PluginStep):
         self.description = _('Orphan removed units')
 
     def process_main(self, item=None):
-        for unit in self.parent.deb_releases_to_check:
+        for unit in self.parent.deb_releases_to_check.values():
             self.parent.conduit.remove_unit(unit)
-        for unit in self.parent.deb_comps_to_check:
+        for unit in self.parent.deb_comps_to_check.values():
             self.parent.conduit.remove_unit(unit)
-        for unit in self.parent.debs_to_check:
+        for unit in self.parent.debs_to_check.values():
             self.parent.conduit.remove_unit(unit)
 
 

@@ -285,7 +285,7 @@ class DebPackage(FileContentUnit):
             repository=repo, unit=self)
         return self
 
-    def save_and_associate(self, file_path, repo):
+    def save_and_associate(self, file_path, repo, force=False):
         filename = self.filename_from_unit_key(self.unit_key)
         self.set_storage_path(filename)
         unit = self
@@ -294,6 +294,8 @@ class DebPackage(FileContentUnit):
             self.safe_import_content(file_path)
         except NotUniqueError:
             unit = self.__class__.objects.filter(**unit.unit_key).first()
+            if force:
+                self.import_content(file_path)
         unit.associate(repo)
         return unit
 

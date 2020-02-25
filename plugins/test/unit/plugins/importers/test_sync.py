@@ -18,6 +18,7 @@ from pulp_deb.plugins.importers import sync
 class _TestSyncBase(testbase.TestCase):
     remove_missing = False
     release = None
+    repair_sync = False
 
     def setUp(self):
         super(_TestSyncBase, self).setUp()
@@ -25,14 +26,15 @@ class _TestSyncBase(testbase.TestCase):
         self.repo = RepositoryModel('repo1')
         self.conduit = mock.MagicMock()
         self.conduit.get_units.return_value = [
-            Namespace(type_id=ids.TYPE_ID_DEB_RELEASE),
-            Namespace(type_id=ids.TYPE_ID_DEB_COMP),
-            Namespace(type_id=ids.TYPE_ID_DEB),
+            Namespace(type_id=ids.TYPE_ID_DEB_RELEASE, id="AAAA"),
+            Namespace(type_id=ids.TYPE_ID_DEB_COMP, id="BBBB"),
+            Namespace(type_id=ids.TYPE_ID_DEB, id="CCCC"),
         ]
         plugin_config = {
             importer_constants.KEY_FEED: 'http://example.com/deb',
             constants.CONFIG_REQUIRE_SIGNATURE: False,
             importer_constants.KEY_UNITS_REMOVE_MISSING: self.remove_missing,
+            constants.CONFIG_REPAIR_SYNC: self.repair_sync,
         }
         if self.release:
             plugin_config['releases'] = self.release
@@ -230,7 +232,7 @@ SHA256:
 
         repo = self.repo.repo_obj
         for path, unit in path_to_unit.items():
-            unit.save_and_associate.assert_called_once_with(path, repo)
+            unit.save_and_associate.assert_called_once_with(path, repo, force=self.repair_sync)
 
     def test_SaveDownloadedUnits_bad_sha256(self):
         self.repo.repo_obj = mock.MagicMock(repo_id=self.repo.id)
@@ -270,8 +272,8 @@ SHA256:
         step = self.step.children[8]
         self.assertEquals(constants.SYNC_STEP_SAVE_META, step.step_id)
         step.process_lifecycle()
-        self.step.debs_to_check.remove.assert_called_once_with(
-            _UnitKeyToUnit.return_value)
+        self.step.debs_to_check.pop.assert_called_once_with(
+            _UnitKeyToUnit.return_value.id, None)
         _UnitKeyToUnit.assert_called_once_with(
             {'name': 'ape', 'version': '1.2a-4~exp', 'architecture': 'DNA'})
 
@@ -313,3 +315,7 @@ class TestSyncRemoveMissing(_TestSyncBase):
 
 class TestSyncNestedDistribution(_TestSyncBase):
     release = 'stable/updates'
+
+
+class TestSyncRepairSync(_TestSyncBase):
+    repair_sync = True
