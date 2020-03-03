@@ -2,11 +2,11 @@
 
 from setuptools import find_packages, setup
 
-requirements = ["pulpcore>=3.2.0,<3.3", "python-debian>=0.1.36"]
+requirements = ["pulpcore>=3.2.0", "python-debian>=0.1.36"]
 
 setup(
     name="pulp-deb",
-    version="2.2.0b1",
+    version="2.3.0b1.dev",
     description="pulp-deb plugin for the Pulp Project",
     license="GPLv2+",
     author="Matthias Dellweg",
