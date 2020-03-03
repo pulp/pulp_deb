@@ -13,6 +13,23 @@ Changelog
 
 .. towncrier release notes start
 
+2.2.0b1 (2020-03-03)
+====================
+
+Features
+--------
+
+
+- Structured publishing (with releases and components) has been implemented.
+  `#6029 <https://pulp.plan.io/issues/6029>`_
+- Verification of upstream signed metadata has been implemented.
+  `#6170 <https://pulp.plan.io/issues/6170>`_
+
+
+
+----
+
+
 2.0.0b3 (2019-11-14)
 ====================
 
