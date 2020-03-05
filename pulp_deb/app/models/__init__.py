@@ -19,3 +19,5 @@ from .publication import DebDistribution, DebPublication, VerbatimPublication
 from .remote import DebRemote
 
 from .repository import DebRepository
+
+from .signing_service import AptReleaseSigningService
