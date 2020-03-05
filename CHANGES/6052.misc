@@ -1,0 +1,1 @@
+Added tests for invalid Debian repositories (bad signature and, missing Package indecies)
