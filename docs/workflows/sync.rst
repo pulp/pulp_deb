@@ -24,12 +24,12 @@ Create a Remote
 
 Creating a remote object informs Pulp about an external content source.
 
-``$ http POST $BASE_ADDR/pulp/pulp/api/v3/remotes/deb/apt/ name='bar' url='http://some.url/somewhere/'``
+``$ http POST $BASE_ADDR/pulp/api/v3/remotes/deb/apt/ name='bar' url='http://some.url/somewhere/'``
 
 Response::
 
     {
-        "pulp_href": "http://localhost:24817/pulp/pulp/api/v3/remotes/deb/apt/1/",
+        "pulp_href": "http://localhost:24817/pulp/api/v3/remotes/deb/apt/1/",
         ...
     }
 
@@ -40,7 +40,7 @@ Sync repository foo with remote
 Use the remote object to kick off a synchronize task by specifying the repository to
 sync with. You are telling pulp to fetch content from the remote and add to the repository::
 
-    $ http POST $BASE_ADDR/pulp/pulp/api/v3/repositories/deb/apt/593e2fa9-af64-4d4b-aa7b-7078c96f2443/sync/' remote=http://localhost:24817/pulp/api/v3/remotes/deb/apt/1/
+    $ http POST $BASE_ADDR/pulp/api/v3/repositories/deb/apt/593e2fa9-af64-4d4b-aa7b-7078c96f2443/sync/' remote=http://localhost:24817/pulp/api/v3/remotes/deb/apt/1/
 
 Response::
 
