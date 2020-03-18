@@ -70,14 +70,16 @@ class DebPublicationViewSet(PublicationViewSet):
         repository_version = serializer.validated_data.get("repository_version")
         simple = serializer.validated_data.get("simple")
         structured = serializer.validated_data.get("structured")
+        signing_service = serializer.validated_data.get("signing_service")
 
         result = enqueue_with_reservation(
             tasks.publish,
             [repository_version.repository],
             kwargs={
-                "repository_version_pk": str(repository_version.pk),
+                "repository_version_pk": repository_version.pk,
                 "simple": simple,
                 "structured": structured,
+                "signing_service_pk": getattr(signing_service, "pk", None),
             },
         )
         return OperationPostponedResponse(result, request)

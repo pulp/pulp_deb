@@ -4,6 +4,8 @@ from django.db import models
 
 from pulpcore.plugin.models import Publication, PublicationDistribution
 
+from pulp_deb.app.models.signing_service import AptReleaseSigningService
+
 logger = getLogger(__name__)
 
 BOOL_CHOICES = [(True, "yes"), (False, "no")]
@@ -33,6 +35,9 @@ class DebPublication(Publication):
 
     simple = models.BooleanField(default=False)
     structured = models.BooleanField(default=False)
+    signing_service = models.ForeignKey(
+        AptReleaseSigningService, on_delete=models.PROTECT, null=True
+    )
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"

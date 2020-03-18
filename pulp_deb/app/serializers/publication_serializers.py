@@ -1,7 +1,12 @@
-from rest_framework.serializers import BooleanField, ValidationError
+from rest_framework.serializers import BooleanField, ValidationError, HyperlinkedRelatedField
 from pulpcore.plugin.serializers import PublicationDistributionSerializer, PublicationSerializer
 
-from pulp_deb.app.models import DebDistribution, DebPublication, VerbatimPublication
+from pulp_deb.app.models import (
+    DebDistribution,
+    DebPublication,
+    VerbatimPublication,
+    AptReleaseSigningService,
+)
 
 
 class VerbatimPublicationSerializer(PublicationSerializer):
@@ -24,6 +29,13 @@ class DebPublicationSerializer(PublicationSerializer):
         default=False,
     )
     structured = BooleanField(help_text="Activate structured publishing mode.", default=False)
+    signing_service = HyperlinkedRelatedField(
+        help_text="Sign Release files with this signing key",
+        many=False,
+        queryset=AptReleaseSigningService.objects.all(),
+        view_name="signing-services-detail",
+        required=False,
+    )
 
     def validate(self, data):
         """
@@ -35,7 +47,7 @@ class DebPublicationSerializer(PublicationSerializer):
         return data
 
     class Meta:
-        fields = PublicationSerializer.Meta.fields + ("simple", "structured")
+        fields = PublicationSerializer.Meta.fields + ("simple", "structured", "signing_service")
         model = DebPublication
 
 

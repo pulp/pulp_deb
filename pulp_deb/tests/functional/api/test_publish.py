@@ -18,6 +18,7 @@ from pulp_deb.tests.functional.utils import (
     deb_remote_api,
     deb_repository_api,
     deb_verbatim_publication_api,
+    signing_service_api,
 )
 
 from pulpcore.client.pulp_deb import (
@@ -39,11 +40,10 @@ class PublishAnyRepoVersionSimpleTestCase(unittest.TestCase):
 
     class Meta:
         publication_api = deb_apt_publication_api
+        Publication = DebDebPublication
 
-        @staticmethod
-        def Publication(*args, **kwargs):
-            """Delegate Publication constructor."""
-            return DebDebPublication(simple=True, *args, **kwargs)
+    def _publication_extra_args(self):
+        return {"simple": True}
 
     def test_all(self):
         """Test whether a particular repository version can be published.
@@ -84,7 +84,9 @@ class PublishAnyRepoVersionSimpleTestCase(unittest.TestCase):
         non_latest = choice(version_hrefs[:-1])
 
         # Step 2
-        publish_data = self.Meta.Publication(repository=repo.pulp_href)
+        publish_data = self.Meta.Publication(
+            repository=repo.pulp_href, **self._publication_extra_args()
+        )
         publish_response = publication_api.create(publish_data)
         created_resources = monitor_task(publish_response.task)
         publication_href = created_resources[0]
@@ -95,7 +97,9 @@ class PublishAnyRepoVersionSimpleTestCase(unittest.TestCase):
         self.assertEqual(publication.repository_version, version_hrefs[-1])
 
         # Step 4
-        publish_data = self.Meta.Publication(repository_version=non_latest)
+        publish_data = self.Meta.Publication(
+            repository_version=non_latest, **self._publication_extra_args()
+        )
         publish_response = publication_api.create(publish_data)
         created_resources = monitor_task(publish_response.task)
         publication_href = created_resources[0]
@@ -121,11 +125,10 @@ class PublishAnyRepoVersionStructuredTestCase(PublishAnyRepoVersionSimpleTestCas
 
     class Meta:
         publication_api = deb_apt_publication_api
+        Publication = DebDebPublication
 
-        @staticmethod
-        def Publication(*args, **kwargs):
-            """Delegate Publication constructor."""
-            return DebDebPublication(structured=True, *args, **kwargs)
+    def _publication_extra_args(self):
+        return {"structured": True}
 
 
 class PublishAnyRepoVersionCombinedTestCase(PublishAnyRepoVersionSimpleTestCase):
@@ -139,11 +142,40 @@ class PublishAnyRepoVersionCombinedTestCase(PublishAnyRepoVersionSimpleTestCase)
 
     class Meta:
         publication_api = deb_apt_publication_api
+        Publication = DebDebPublication
 
-        @staticmethod
-        def Publication(*args, **kwargs):
-            """Delegate Publication constructor."""
-            return DebDebPublication(simple=True, structured=True, *args, **kwargs)
+    def _publication_extra_args(self):
+        return {"simple": True, "structured": True}
+
+
+class PublishAnyRepoVersionSignedTestCase(PublishAnyRepoVersionSimpleTestCase):
+    """Test whether a particular repository version can be published with signed metadata.
+
+    This test targets the following issues:
+
+    * `PulpDeb #6171 <https://pulp.plan.io/issues/6171>`_
+    """
+
+    class Meta:
+        publication_api = deb_apt_publication_api
+        Publication = DebDebPublication
+
+    def _publication_extra_args(self):
+        return {
+            "simple": True,
+            "structured": True,
+            "signing_service": self.signing_service.pulp_href,
+        }
+
+    def setUp(self):
+        """Find SigningService for use in tests."""
+        response = signing_service_api.list(name="sign_deb_release")
+        if response.count == 0:
+            self.fail(
+                """No signing service setup.
+Please call pulp_deb/pulp_deb/tests/functional/setup_signing_service.py"""
+            )
+        self.signing_service = response.results[0]
 
 
 class VerbatimPublishAnyRepoVersionTestCase(PublishAnyRepoVersionSimpleTestCase):
@@ -158,3 +190,6 @@ class VerbatimPublishAnyRepoVersionTestCase(PublishAnyRepoVersionSimpleTestCase)
     class Meta:
         publication_api = deb_verbatim_publication_api
         Publication = DebVerbatimPublication
+
+    def _publication_extra_args(self):
+        return {}
