@@ -6,7 +6,7 @@ from unittest import SkipTest
 from time import sleep
 from tempfile import NamedTemporaryFile
 
-from pulp_smash import api, selectors, utils
+from pulp_smash import api, config, selectors, utils
 from pulp_smash.pulp3.utils import (
     gen_remote,
     gen_repo,
@@ -36,7 +36,6 @@ from pulp_deb.tests.functional.constants import (
 from pulpcore.client.pulpcore import (
     ApiClient as CoreApiClient,
     ArtifactsApi,
-    Configuration,
     TasksApi,
     SigningServicesApi,
 )
@@ -58,10 +57,8 @@ skip_if = partial(selectors.skip_if, exc=SkipTest)  # pylint:disable=invalid-nam
 identical, except that ``exc`` has been set to ``unittest.SkipTest``.
 """
 
-configuration = Configuration()
-configuration.username = "admin"
-configuration.password = "password"
-configuration.safe_chars_for_path_param = "/"
+cfg = config.get_config()
+configuration = cfg.get_bindings_config()
 
 core_client = CoreApiClient(configuration)
 artifact_api = ArtifactsApi(core_client)
