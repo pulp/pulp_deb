@@ -255,7 +255,8 @@ class DebUpdateReleaseFileAttributes(Stage):
                     release_file.sha256 = release_file_artifact.sha256
                     release_file_dict = deb822.Release(release_file_artifact.file)
                     release_file.codename = release_file_dict["Codename"]
-                    release_file.suite = release_file_dict["Suite"]
+                    if "suite" in release_file_dict:
+                        release_file.suite = release_file_dict.get("Suite")
                     # TODO split of extra stuff e.g. : 'updates/main' -> 'main'
                     release_file.components = release_file_dict["Components"]
                     release_file.architectures = release_file_dict["Architectures"]
