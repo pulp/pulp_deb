@@ -1,11 +1,8 @@
 import os
 import gnupg
 import tempfile
-import subprocess
-import json
 
 from logging import getLogger
-from json import JSONDecodeError
 
 from pulpcore.plugin.models import SigningService
 
@@ -132,37 +129,3 @@ class AptReleaseSigningService(SigningService):
                         if not verified.valid:
                             message = "GPG Verification of the detached file '{}' failed!"
                             raise RuntimeError(message.format(detached_path))
-
-    def save(self, *args, **kwargs):
-        """
-        Save a signing service to the database (unless it fails to validate).
-        """
-        self.validate()
-        super().save(*args, **kwargs)
-
-    def sign(self, filename):
-        """
-        Create signature files for the passed filename, as expected for an APT release.
-
-        Args:
-            filename (str): A relative path to a file which is intended to be signed.
-
-        Raises:
-            RuntimeError: If a return code of the script is not equal to 0, indicating a failure.
-
-        Returns:
-            A dictionary as validated by the save() function above.
-        """
-        completed_process = subprocess.run(
-            [self.script, filename], env={}, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        )
-        if completed_process.returncode != 0:
-            raise RuntimeError(str(completed_process.stderr))
-
-        try:
-            return_value = json.loads(completed_process.stdout)
-        except JSONDecodeError:
-            message = "The signing service script did not return valid JSON!"
-            raise RuntimeError(message)
-
-        return return_value
