@@ -17,7 +17,7 @@ from pulp_smash.pulp3.utils import (
 )
 
 from pulp_deb.tests.functional.constants import (
-    DEB_FIXTURE_RELEASE,
+    DEB_FIXTURE_DISTRIBUTIONS,
     DEB_FIXTURE_URL,
     DEB_GENERIC_CONTENT_NAME,
     DEB_GENERIC_CONTENT_PATH,
@@ -87,7 +87,11 @@ def gen_deb_client():
 
 
 def gen_deb_remote(
-    url=DEB_FIXTURE_URL, distributions=DEB_FIXTURE_RELEASE, sync_udebs=False, gpgkey=None, **kwargs
+    url=DEB_FIXTURE_URL,
+    distributions=DEB_FIXTURE_DISTRIBUTIONS,
+    sync_udebs=False,
+    gpgkey=None,
+    **kwargs,
 ):
     """Return a semi-random dict for use in creating a deb Remote.
 

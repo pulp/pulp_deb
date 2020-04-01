@@ -231,7 +231,7 @@ class SwitchDownloadPolicyTestCase(unittest.TestCase):
 
     def do_test(self, policy):
         """Perform a lazy sync and change to immediate to force download."""
-        NON_LAZY_ARTIFACT_COUNT = 13
+        NON_LAZY_ARTIFACT_COUNT = 17
         # delete orphans to assure that no content units are present on the
         # file system
         delete_orphans()
