@@ -3,7 +3,7 @@
 from setuptools import find_packages, setup
 
 requirements = [
-    "pulpcore>=3.3.0.dev",
+    "pulpcore>=3.3,<3.4",
     "python-debian>=0.1.36",
 ]
 
