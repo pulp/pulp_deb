@@ -1,1 +1,0 @@
-Fixed a bug preventing publication of repositories that include the same package in multiple Packages files.
