@@ -13,6 +13,52 @@ Changelog
 
 .. towncrier release notes start
 
+2.3.0b1 (2020-04-29)
+====================
+
+Features
+--------
+
+
+- Added Release file signing using signing services.
+  `#6171 <https://pulp.plan.io/issues/6171>`_
+
+
+
+Bugfixes
+--------
+
+
+- Fixed synchronization of Release files without a Suite field.
+  `#6050 <https://pulp.plan.io/issues/6050>`_
+- Fixed publication creation with packages referenced from multiple package inecies.
+  `#6383 <https://pulp.plan.io/issues/6383>`_
+
+
+
+Improved Documentation
+----------------------
+
+
+- Documented bindings installation for the dev environment.
+  `#6396 <https://pulp.plan.io/issues/6396>`_
+
+
+
+Misc
+----
+
+
+- Added tests for invalid Debian repositories (bad signature, missing package indecies).
+  `#6052 <https://pulp.plan.io/issues/6052>`_
+- Made tests use the bindings config from pulp-smash.
+  `#6393 <https://pulp.plan.io/issues/6393>`_
+
+
+
+----
+
+
 2.2.0b1 (2020-03-03)
 ====================
 
