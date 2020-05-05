@@ -6,6 +6,7 @@ SPHINXOPTS    = -W -n
 SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = _build
+PULP_URL      = "http://localhost:24817"
 
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
@@ -42,7 +43,7 @@ clean:
 	-rm -rf $(BUILDDIR)/*
 
 html:
-	curl --fail -o _static/api.json "http://localhost:24817/pulp/api/v3/docs/api.json?plugin=pulp_deb&include_html=1"
+	curl -o _static/api.json "$(PULP_URL)/pulp/api/v3/docs/api.json?plugin=pulp_deb"
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
