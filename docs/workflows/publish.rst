@@ -10,7 +10,7 @@ Create a Publication
 Publiations contain extra settings for how to publish. You can use a deb publisher on any
 repository that contains deb content::
 
-    $ http POST $BASE_ADDR/pulp/api/v3/publication/deb/apt/ repository=/pulp/api/v3/repositories/deb/apt/<uuid> simple=true
+    $ http POST $BASE_ADDR/pulp/api/v3/publications/deb/apt/ repository=/pulp/api/v3/repositories/deb/apt/<uuid> simple=true
 
 Response::
 
