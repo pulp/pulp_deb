@@ -25,7 +25,7 @@ Host a Publication (Create a Distribution)
 To host a publication, (which makes it consumable by a package manager), users create a distribution which
 will serve the associated publication at ``/pulp/content/<distribution.base_path>``::
 
-    $ http POST $BASE_ADDR/pulp/api/v3/distributions/deb/apt/ name='baz' base_path='foo' publication=$BASE_ADDR/publications/deb/apt/1/
+    $ http POST $BASE_ADDR/pulp/api/v3/distributions/deb/apt/ name='baz' base_path='foo' publication=$BASE_ADDR/pulp/api/v3/publications/deb/apt/1/
 
 Response::
 
