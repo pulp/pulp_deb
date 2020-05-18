@@ -20,6 +20,7 @@ from pulpcore.plugin.tasking import WorkingDirectory
 from pulp_deb.app.models import (
     AptPublication,
     Package,
+    DebugPackage,
     PackageReleaseComponent,
     Release,
     ReleaseArchitecture,
@@ -103,6 +104,15 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                 architectures = list(architectures)
                 if "all" not in architectures:
                     architectures.append("all")
+
+                for ptype in [Package, DebugPackage]:
+                    architectures = architectures.union(
+                        ptype.objects.filter(
+                            pk__in=repo_version.content.order_by("-pulp_created"),
+                        )
+                        .distinct("architecture")
+                        .values_list("architecture", flat=True)
+                    )
                 release_helper = _ReleaseHelper(
                     publication=publication,
                     codename=codename,
@@ -115,6 +125,10 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                 )
 
                 for package in Package.objects.filter(
+                    pk__in=repo_version.content.order_by("-pulp_created"),
+                ):
+                    release_helper.components[component].add_package(package)
+                for package in DebugPackage.objects.filter(
                     pk__in=repo_version.content.order_by("-pulp_created"),
                 ):
                     release_helper.components[component].add_package(package)

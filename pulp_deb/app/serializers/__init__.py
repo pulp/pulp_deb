@@ -1,6 +1,7 @@
 # flake8: noqa
 
 from .content_serializers import (
+    DebugPackageSerializer,
     GenericContentSerializer,
     InstallerFileIndexSerializer,
     InstallerPackageSerializer,

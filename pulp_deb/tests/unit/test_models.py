@@ -11,6 +11,7 @@ class TestPackage(TestCase):
 
     PACKAGE_PARAGRAPH = (
         "Package: aegir\n"
+        "Package-Type: deb\n"
         "Version: 0.1-edda0\n"
         "Architecture: sea\n"
         "Essential: yes\n"

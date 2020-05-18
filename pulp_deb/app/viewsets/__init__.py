@@ -6,6 +6,8 @@ from .content import (
     InstallerPackageViewSet,
     PackageViewSet,
     PackageIndexViewSet,
+    DebugPackageIndexViewSet,
+    DebugPackageViewSet,
     PackageReleaseComponentViewSet,
     ReleaseViewSet,
     ReleaseArchitectureViewSet,

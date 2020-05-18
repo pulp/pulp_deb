@@ -124,6 +124,45 @@ class InstallerPackageViewSet(SingleArtifactContentUploadViewSet):
     filterset_class = InstallerPackageFilter
 
 
+class DebugPackageFilter(ContentFilter):
+    """
+    FilterSet for DebugPackage.
+    """
+
+    class Meta:
+        model = models.DebugPackage
+        fields = [
+            "package",
+            "source",
+            "version",
+            "architecture",
+            "section",
+            "priority",
+            "origin",
+            "tag",
+            "essential",
+            "build_essential",
+            "installed_size",
+            "maintainer",
+            "original_maintainer",
+            "built_using",
+            "auto_built_package",
+            "multi_arch",
+            "sha256",
+        ]
+
+
+class DebugPackageViewSet(SingleArtifactContentUploadViewSet):
+    """
+    A ViewSet for DebugPackage.
+    """
+
+    endpoint_name = "debug_packages"
+    queryset = models.DebugPackage.objects.prefetch_related("_artifacts")
+    serializer_class = serializers.DebugPackageSerializer
+    filterset_class = DebugPackageFilter
+
+
 # Metadata
 
 
@@ -213,6 +252,27 @@ class InstallerFileIndexViewSet(ContentViewSet):
     queryset = models.InstallerFileIndex.objects.all()
     serializer_class = serializers.InstallerFileIndexSerializer
     filterset_class = InstallerFileIndexFilter
+
+
+class DebugPackageIndexFilter(ContentFilter):
+    """
+    FilterSet for DebugPackageIndex.
+    """
+
+    class Meta:
+        model = models.DebugPackageFileIndex
+        fields = ["component", "architecture", "relative_path", "sha256"]
+
+
+class DebugPackageIndexViewSet(ContentViewSet):
+    """
+    A ViewSet for DebugPackageIndex.
+    """
+
+    endpoint_name = "debugpackage_file_indices"
+    queryset = models.DebugPackageFileIndex.objects.all()
+    serializer_class = serializers.DebugPackageSerializer
+    filterset_class = DebugPackageIndexFilter
 
 
 class ReleaseFilter(ContentFilter):

@@ -18,6 +18,7 @@ from pulpcore.plugin.serializers import (
 
 from pulp_deb.app.models import (
     BasePackage,
+    DebugPackage,
     GenericContent,
     InstallerFileIndex,
     InstallerPackage,
@@ -192,6 +193,7 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
 
     TRANSLATION_DICT = {
         "package": "Package",
+        "package_type": "Package-Type",
         "source": "Source",
         "version": "Version",
         "architecture": "Architecture",
@@ -223,6 +225,7 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
     }
 
     package = CharField()
+    package_type = CharField(required=False)
     source = CharField(required=False)
     version = CharField()
     architecture = CharField()
@@ -295,6 +298,7 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
     class Meta(SingleArtifactContentSerializer.Meta):
         fields = SingleArtifactContentSerializer.Meta.fields + (
             "package",
+            "package_type",
             "source",
             "version",
             "architecture",
@@ -351,6 +355,7 @@ class BasePackageSerializer(SingleArtifactContentUploadSerializer, ContentChecks
     """
 
     package = CharField(read_only=True)
+    package_type = CharField(read_only=True)
     source = CharField(read_only=True)
     version = CharField(read_only=True)
     architecture = CharField(read_only=True)
@@ -427,6 +432,7 @@ class BasePackageSerializer(SingleArtifactContentUploadSerializer, ContentChecks
             + ContentChecksumSerializer.Meta.fields
             + (
                 "package",
+                "package_type",
                 "source",
                 "version",
                 "architecture",
@@ -469,13 +475,32 @@ class PackageSerializer(BasePackageSerializer):
         """Validate for 'normal' Package (not installer)."""
         data = super().deferred_validate(data)
 
-        if data.get("section") == "debian-installer":
+        if data.get("section") == "debian-installer" or data.get("package_type") != "deb":
             raise ValidationError(_("Not a valid Deb Package"))
 
         return data
 
     class Meta(BasePackageSerializer.Meta):
         model = Package
+        from822_serializer = Package822Serializer
+
+
+class DebugPackageSerializer(BasePackageSerializer):
+    """
+    A Serializer for DebugPackage.
+    """
+
+    def deferred_validate(self, data):
+        """Validate for 'normal' Package (not installer)."""
+        data = super().deferred_validate(data)
+
+        if data.get("section") != "debug" or data.get("package_type") != "ddeb":
+            raise ValidationError(_("Not a valid DDeb Package"))
+
+        return data
+
+    class Meta(BasePackageSerializer.Meta):
+        model = DebugPackage
         from822_serializer = Package822Serializer
 
 
@@ -488,7 +513,7 @@ class InstallerPackageSerializer(BasePackageSerializer):
         """Validate for InstallerPackage."""
         data = super().deferred_validate(data)
 
-        if data.get("section") != "debian-installer":
+        if data.get("section") != "debian-installer" or data.get("package_type") != "udeb":
             raise ValidationError(_("Not a valid uDeb Package"))
 
         return data

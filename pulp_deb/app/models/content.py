@@ -133,6 +133,39 @@ class InstallerFileIndex(Content):
         return self._artifacts.get(sha256=self.sha256)
 
 
+class DebugPackageFileIndex(Content):
+    """
+    The "DebugPackageFileIndex" content type.
+
+    This model represents the MD5SUMS and SHA256SUMS files for a specific
+    component - architecture combination.
+    It's artifacts should include all available versions of those SUM-files
+    with the sha256-field pointing to the one with the sha256 algorithm.
+    """
+
+    TYPE = "debugpackage_file_index"
+
+    FILE_ALGORITHM = {"SHA256SUMS": "sha256", "MD5SUMS": "md5"}  # Are there more?
+
+    release = models.ForeignKey(ReleaseFile, on_delete=models.CASCADE)
+    component = models.CharField(max_length=255)
+    architecture = models.CharField(max_length=255)
+    relative_path = models.TextField()
+    sha256 = models.CharField(max_length=255)
+
+    class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
+        verbose_name_plural = "DebugPackageFileIndices"
+        unique_together = (("relative_path", "sha256"),)
+
+    @property
+    def main_artifact(self):
+        """
+        Retrieve the uncompressed SHA256SUMS artifact.
+        """
+        return self._artifacts.get(sha256=self.sha256)
+
+
 class BasePackage(Content):
     """
     Abstract base class for package like content.
@@ -146,6 +179,9 @@ class BasePackage(Content):
     ]
 
     package = models.TextField()  # package name
+    package_type = models.CharField(
+        null=True, max_length=255
+    )  # package type, added to Ubuntu's dbgsym pkgs
     source = models.TextField(null=True)  # source package name
     version = models.TextField()
     architecture = models.TextField()  # all, i386, ...
@@ -223,6 +259,10 @@ class Package(BasePackage):
 
     SUFFIX = "deb"
 
+    package_type = models.CharField(
+        null=True, max_length=255, default="deb"
+    )  # package type, added to Ubuntu's dbgsym pkgs
+
     class Meta(BasePackage.Meta):
         pass
 
@@ -238,6 +278,30 @@ class InstallerPackage(BasePackage):
     TYPE = "installer_package"
 
     SUFFIX = "udeb"
+
+    package_type = models.CharField(
+        null=True, max_length=255, default="udeb"
+    )  # package type, added to Ubuntu's dbgsym pkgs
+
+    class Meta(BasePackage.Meta):
+        pass
+
+
+class DebugPackage(BasePackage):
+    """
+    The "debug_package" content type.
+
+    Ubuntu Bionic and newer use ".ddeb" as suffix for debug
+    packages.
+    """
+
+    TYPE = "debug_package"
+
+    SUFFIX = "ddeb"
+
+    package_type = models.CharField(
+        null=True, max_length=255, default="ddeb"
+    )  # package type, added to Ubuntu's dbgsym pkgs
 
     class Meta(BasePackage.Meta):
         pass

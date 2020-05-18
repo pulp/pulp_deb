@@ -2,6 +2,8 @@
 
 from .content import (
     BasePackage,
+    DebugPackage,
+    DebugPackageFileIndex,
     GenericContent,
     InstallerFileIndex,
     InstallerPackage,
