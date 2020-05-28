@@ -19,7 +19,7 @@ REDMINE_URL = "https://pulp.plan.io"
 CHANGELOG_EXTS = [".feature", ".bugfix", ".doc", ".removal", ".misc"]
 
 sha = sys.argv[1]
-project = ""
+project = "pulp_deb"
 message = subprocess.check_output(["git", "log", "--format=%B", "-n 1", sha]).decode("utf-8")
 
 
