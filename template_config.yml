@@ -27,7 +27,7 @@ pulpcore_branch: master
 pulpcore_pip_version_specifier: null
 pydocstyle: true
 pypi_username: pulp
-redmine_project: null
+redmine_project: pulp_deb
 stable_branch: null
 test_bindings: false
 test_performance: false
