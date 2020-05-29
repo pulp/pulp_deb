@@ -171,8 +171,14 @@ class _ComponentHelper:
         )
         published_artifact.save()
         package_serializer = Package822Serializer(package, context={"request": None})
-        package_serializer.to822(self.name).dump(self.package_index_files[package.architecture][0])
-        self.package_index_files[package.architecture][0].write(b"\n")
+        deb822_package = package_serializer.to822(self.name)
+        if package.architecture == "all":
+            for index_file in self.package_index_files.values():
+                deb822_package.dump(index_file[0])
+                index_file[0].write(b"\n")
+        else:
+            deb822_package.dump(self.package_index_files[package.architecture][0])
+            self.package_index_files[package.architecture][0].write(b"\n")
 
     def finish(self):
         # Publish Packages files
