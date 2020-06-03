@@ -3,6 +3,7 @@ import shutil
 import logging
 from gettext import gettext as _
 
+from datetime import datetime, timezone
 from debian import deb822
 from gzip import GzipFile
 
@@ -213,6 +214,7 @@ class _ReleaseHelper:
         self.release["SHA1"] = []
         self.release["SHA256"] = []
         self.release["SHA512"] = []
+        self.release["Date"] = datetime.now(tz=timezone.utc).strftime("%a, %d %b %Y %H:%M:%S %z")
         self.architectures = architectures
         self.components = {name: _ComponentHelper(self, name) for name in components}
         self.signing_service = publication.signing_service
