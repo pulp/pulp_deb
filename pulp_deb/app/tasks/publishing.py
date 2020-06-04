@@ -251,7 +251,7 @@ class _ReleaseHelper:
         for component in self.components.values():
             component.finish()
         # Publish Release file
-        self.release["components"] = " ".join(self.components.keys())
+        self.release["Components"] = " ".join(self.components.keys())
         release_dir = os.path.join("dists", self.distribution)
         release_path = os.path.join(release_dir, "Release")
         os.makedirs(os.path.dirname(release_path), exist_ok=True)
