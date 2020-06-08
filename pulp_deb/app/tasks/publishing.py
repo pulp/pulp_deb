@@ -91,6 +91,7 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
 
             if simple:
                 codename = "default"
+                distribution = "default"
                 component_name = "all"
                 architectures = (
                     Package.objects.filter(pk__in=repo_version.content.order_by("-pulp_created"),)
@@ -100,6 +101,7 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                 release_helper = _ReleaseHelper(
                     publication=publication,
                     codename=codename,
+                    distribution=distribution,
                     components=[component_name],
                     architectures=architectures,
                     description=repository.description,
@@ -124,6 +126,7 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                     release_helper = _ReleaseHelper(
                         publication=publication,
                         codename=release.codename,
+                        distribution=release.distribution,
                         components=components.values_list("component", flat=True),
                         architectures=architectures,
                         description=repository.description,
@@ -153,7 +156,7 @@ class _ComponentHelper:
         for architecture in self.parent.architectures:
             package_index_path = os.path.join(
                 "dists",
-                self.parent.release["codename"],
+                self.parent.distribution,
                 self.name,
                 "binary-{}".format(architecture),
                 "Packages",
@@ -200,9 +203,17 @@ class _ComponentHelper:
 
 class _ReleaseHelper:
     def __init__(
-        self, publication, codename, components, architectures, label=None, description=None
+        self,
+        publication,
+        codename,
+        distribution,
+        components,
+        architectures,
+        label=None,
+        description=None,
     ):
         self.publication = publication
+        self.distribution = distribution
         self.release = deb822.Release()
         self.release["Codename"] = codename
         self.release["Architectures"] = " ".join(architectures)
@@ -221,18 +232,20 @@ class _ReleaseHelper:
 
     def add_metadata(self, metadata):
         artifact = metadata._artifacts.get()
+        release_file_folder = os.path.join("dists", self.distribution)
+        release_file_relative_path = os.path.relpath(metadata.relative_path, release_file_folder)
 
         self.release["MD5sum"].append(
-            {"md5sum": artifact.md5, "size": artifact.size, "name": metadata.relative_path}
+            {"md5sum": artifact.md5, "size": artifact.size, "name": release_file_relative_path}
         )
         self.release["SHA1"].append(
-            {"sha1": artifact.sha1, "size": artifact.size, "name": metadata.relative_path}
+            {"sha1": artifact.sha1, "size": artifact.size, "name": release_file_relative_path}
         )
         self.release["SHA256"].append(
-            {"sha256": artifact.sha256, "size": artifact.size, "name": metadata.relative_path}
+            {"sha256": artifact.sha256, "size": artifact.size, "name": release_file_relative_path}
         )
         self.release["SHA512"].append(
-            {"sha512": artifact.sha512, "size": artifact.size, "name": metadata.relative_path}
+            {"sha512": artifact.sha512, "size": artifact.size, "name": release_file_relative_path}
         )
 
     def finish(self):
@@ -240,8 +253,8 @@ class _ReleaseHelper:
         for component in self.components.values():
             component.finish()
         # Publish Release file
-        self.release["components"] = " ".join(self.components.keys())
-        release_dir = os.path.join("dists", self.release["codename"])
+        self.release["Components"] = " ".join(self.components.keys())
+        release_dir = os.path.join("dists", self.distribution)
         release_path = os.path.join(release_dir, "Release")
         os.makedirs(os.path.dirname(release_path), exist_ok=True)
         with open(release_path, "wb") as release_file:

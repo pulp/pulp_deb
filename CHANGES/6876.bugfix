@@ -1,0 +1,1 @@
+Fixed a bug where published Release files were using paths relative to the repo root, instead of relative to the release file.
