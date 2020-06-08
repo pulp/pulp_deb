@@ -8,7 +8,7 @@ from django.contrib.postgres.operations import CreateExtension
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('deb', '0007_create_metadata_models'),
+        ('deb', '0013_aptremote_ignore_missing_package_indices'),
     ]
 
     operations = [
