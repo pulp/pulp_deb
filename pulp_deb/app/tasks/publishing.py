@@ -105,6 +105,8 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                     components=[component_name],
                     architectures=architectures,
                     description=repository.description,
+                    label=repository.name,
+                    version=str(repo_version.number),
                 )
 
                 for package in Package.objects.filter(
@@ -130,6 +132,9 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                         components=components.values_list("component", flat=True),
                         architectures=architectures,
                         description=repository.description,
+                        label=repository.name,
+                        version=str(repo_version.number),
+                        suite=release.suite,
                     )
 
                     for prc in PackageReleaseComponent.objects.filter(
@@ -209,23 +214,33 @@ class _ReleaseHelper:
         distribution,
         components,
         architectures,
-        label=None,
+        label,
+        version,
         description=None,
+        suite=None,
     ):
         self.publication = publication
         self.distribution = distribution
+        # Note: The order in which fields are added to self.release is retained in the
+        # published Release file. As a "nice to have" for human readers, we try to use
+        # the same order of fields that official Debian repositories use.
         self.release = deb822.Release()
+        self.release["Origin"] = "Pulp 3"
+        self.release["Label"] = label
+        if suite:
+            self.release["Suite"] = suite
+        self.release["Version"] = version
         self.release["Codename"] = codename
+        self.release["Date"] = datetime.now(tz=timezone.utc).strftime("%a, %d %b %Y %H:%M:%S %z")
         self.release["Architectures"] = " ".join(architectures)
-        if label:
-            self.release["Label"] = label
+        self.release["Components"] = ""  # Will be set later
         if description:
             self.release["Description"] = description
         self.release["MD5sum"] = []
         self.release["SHA1"] = []
         self.release["SHA256"] = []
         self.release["SHA512"] = []
-        self.release["Date"] = datetime.now(tz=timezone.utc).strftime("%a, %d %b %Y %H:%M:%S %z")
+
         self.architectures = architectures
         self.components = {name: _ComponentHelper(self, name) for name in components}
         self.signing_service = publication.signing_service
