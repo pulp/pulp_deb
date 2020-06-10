@@ -14,10 +14,10 @@ from .content import (
     ReleaseFile,
 )
 
-from .publication import DebDistribution, DebPublication, VerbatimPublication
+from .publication import AptDistribution, AptPublication, VerbatimPublication
 
-from .remote import DebRemote
+from .remote import AptRemote
 
-from .repository import DebRepository
+from .repository import AptRepository
 
 from .signing_service import AptReleaseSigningService

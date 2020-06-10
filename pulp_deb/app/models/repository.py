@@ -18,7 +18,7 @@ from pulp_deb.app.models import (
 logger = getLogger(__name__)
 
 
-class DebRepository(Repository):
+class AptRepository(Repository):
     """
     A Repository for DebContent.
     """

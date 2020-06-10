@@ -27,7 +27,7 @@ from pulp_deb.tests.functional.utils import (
 from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 
 from pulpcore.client.pulp_deb import (
-    DebDebPublication,
+    DebAptPublication,
     RepositorySyncURL,
 )
 
@@ -135,7 +135,7 @@ class SyncPublishDownloadPolicyTestCase(unittest.TestCase):
         monitor_task(sync_response.task)
         repo = repo_api.read(repo.pulp_href)
 
-        publish_data = DebDebPublication(simple=True, repository=repo.pulp_href)
+        publish_data = DebAptPublication(simple=True, repository=repo.pulp_href)
         publish_response = publication_api.create(publish_data)
         publication_href = monitor_task(publish_response.task)[0]
         self.addCleanup(publication_api.delete, publication_href)

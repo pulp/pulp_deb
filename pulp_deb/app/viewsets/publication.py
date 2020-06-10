@@ -45,14 +45,14 @@ class VerbatimPublicationViewSet(PublicationViewSet):
         return OperationPostponedResponse(result, request)
 
 
-class DebPublicationViewSet(PublicationViewSet):
+class AptPublicationViewSet(PublicationViewSet):
     """
-    A ViewSet for DebPublication.
+    A ViewSet for AptPublication.
     """
 
     endpoint_name = "apt"
-    queryset = models.DebPublication.objects.exclude(complete=False)
-    serializer_class = serializers.DebPublicationSerializer
+    queryset = models.AptPublication.objects.exclude(complete=False)
+    serializer_class = serializers.AptPublicationSerializer
 
     @swagger_auto_schema(
         operation_description="Trigger an asynchronous task to publish content",
@@ -85,11 +85,11 @@ class DebPublicationViewSet(PublicationViewSet):
         return OperationPostponedResponse(result, request)
 
 
-class DebDistributionViewSet(BaseDistributionViewSet):
+class AptDistributionViewSet(BaseDistributionViewSet):
     """
-    ViewSet for DebDistributions.
+    ViewSet for AptDistributions.
     """
 
     endpoint_name = "apt"
-    queryset = models.DebDistribution.objects.all()
-    serializer_class = serializers.DebDistributionSerializer
+    queryset = models.AptDistribution.objects.all()
+    serializer_class = serializers.AptDistributionSerializer

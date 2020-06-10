@@ -23,7 +23,7 @@ from pulp_deb.tests.functional.utils import (
 
 from pulpcore.client.pulp_deb import (
     RepositorySyncURL,
-    DebDebPublication,
+    DebAptPublication,
     DebVerbatimPublication,
 )
 from pulpcore.client.pulp_deb.exceptions import ApiException
@@ -40,7 +40,7 @@ class PublishAnyRepoVersionSimpleTestCase(unittest.TestCase):
 
     class Meta:
         publication_api = deb_apt_publication_api
-        Publication = DebDebPublication
+        Publication = DebAptPublication
 
     def _publication_extra_args(self):
         return {"simple": True}
@@ -125,7 +125,7 @@ class PublishAnyRepoVersionStructuredTestCase(PublishAnyRepoVersionSimpleTestCas
 
     class Meta:
         publication_api = deb_apt_publication_api
-        Publication = DebDebPublication
+        Publication = DebAptPublication
 
     def _publication_extra_args(self):
         return {"structured": True}
@@ -142,7 +142,7 @@ class PublishAnyRepoVersionCombinedTestCase(PublishAnyRepoVersionSimpleTestCase)
 
     class Meta:
         publication_api = deb_apt_publication_api
-        Publication = DebDebPublication
+        Publication = DebAptPublication
 
     def _publication_extra_args(self):
         return {"simple": True, "structured": True}
@@ -158,7 +158,7 @@ class PublishAnyRepoVersionSignedTestCase(PublishAnyRepoVersionSimpleTestCase):
 
     class Meta:
         publication_api = deb_apt_publication_api
-        Publication = DebDebPublication
+        Publication = DebAptPublication
 
     def _publication_extra_args(self):
         return {

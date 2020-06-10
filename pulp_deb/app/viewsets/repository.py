@@ -18,14 +18,14 @@ from pulpcore.plugin.viewsets import (
 from pulp_deb.app import models, serializers, tasks
 
 
-class DebRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin):
+class AptRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin):
     """
-    A ViewSet for DebRepository.
+    A ViewSet for AptRepository.
     """
 
     endpoint_name = "apt"
-    queryset = models.DebRepository.objects.all()
-    serializer_class = serializers.DebRepositorySerializer
+    queryset = models.AptRepository.objects.all()
+    serializer_class = serializers.AptRepositorySerializer
 
     # This decorator is necessary since a sync operation is asyncrounous and returns
     # the id and href of the sync task.
@@ -55,9 +55,9 @@ class DebRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin):
         return OperationPostponedResponse(result, request)
 
 
-class DebRepositoryVersionViewSet(RepositoryVersionViewSet):
+class AptRepositoryVersionViewSet(RepositoryVersionViewSet):
     """
-    DebRepositoryVersion represents a single deb repository version.
+    AptRepositoryVersion represents a single deb repository version.
     """
 
-    parent_viewset = DebRepositoryViewSet
+    parent_viewset = AptRepositoryViewSet

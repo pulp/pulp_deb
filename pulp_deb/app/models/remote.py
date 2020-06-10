@@ -7,7 +7,7 @@ from pulpcore.plugin.models import Remote
 logger = getLogger(__name__)
 
 
-class DebRemote(Remote):
+class AptRemote(Remote):
     """
     A Remote for DebContent.
     """

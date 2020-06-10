@@ -2,8 +2,8 @@ from rest_framework.serializers import BooleanField, ValidationError, Hyperlinke
 from pulpcore.plugin.serializers import PublicationDistributionSerializer, PublicationSerializer
 
 from pulp_deb.app.models import (
-    DebDistribution,
-    DebPublication,
+    AptDistribution,
+    AptPublication,
     VerbatimPublication,
     AptReleaseSigningService,
 )
@@ -19,9 +19,9 @@ class VerbatimPublicationSerializer(PublicationSerializer):
         model = VerbatimPublication
 
 
-class DebPublicationSerializer(PublicationSerializer):
+class AptPublicationSerializer(PublicationSerializer):
     """
-    A Serializer for DebPublication.
+    A Serializer for AptPublication.
     """
 
     simple = BooleanField(
@@ -48,14 +48,14 @@ class DebPublicationSerializer(PublicationSerializer):
 
     class Meta:
         fields = PublicationSerializer.Meta.fields + ("simple", "structured", "signing_service")
-        model = DebPublication
+        model = AptPublication
 
 
-class DebDistributionSerializer(PublicationDistributionSerializer):
+class AptDistributionSerializer(PublicationDistributionSerializer):
     """
-    Serializer for DebDistributions.
+    Serializer for AptDistributions.
     """
 
     class Meta:
         fields = PublicationDistributionSerializer.Meta.fields
-        model = DebDistribution
+        model = AptDistribution

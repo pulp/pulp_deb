@@ -24,7 +24,7 @@ class VerbatimPublication(Publication):
         default_related_name = "%(app_label)s_%(model_name)s"
 
 
-class DebPublication(Publication):
+class AptPublication(Publication):
     """
     A Publication for DebContent.
 
@@ -43,7 +43,7 @@ class DebPublication(Publication):
         default_related_name = "%(app_label)s_%(model_name)s"
 
 
-class DebDistribution(PublicationDistribution):
+class AptDistribution(PublicationDistribution):
     """
     A Distribution for DebContent.
     """

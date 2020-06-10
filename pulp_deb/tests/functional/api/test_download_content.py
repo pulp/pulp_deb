@@ -24,7 +24,7 @@ from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa
 
 from pulpcore.client.pulp_deb import (
     RepositorySyncURL,
-    DebDebPublication,
+    DebAptPublication,
     DebVerbatimPublication,
 )
 
@@ -39,7 +39,7 @@ class DownloadContentTestCase(unittest.TestCase):
         @staticmethod
         def Publication(*args, **kwargs):
             """Delagate Publication constructor."""
-            return DebDebPublication(structured=True, simple=True, *args, **kwargs)
+            return DebAptPublication(structured=True, simple=True, *args, **kwargs)
 
     def test_all(self):
         """Download content from Pulp. Content is synced with different policies.

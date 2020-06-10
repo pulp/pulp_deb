@@ -42,7 +42,7 @@ from pulp_deb.app.models import (
     Package,
     PackageReleaseComponent,
     InstallerPackage,
-    DebRemote,
+    AptRemote,
 )
 
 from pulp_deb.app.serializers import InstallerPackage822Serializer, Package822Serializer
@@ -96,7 +96,7 @@ def synchronize(remote_pk, repository_pk, mirror):
         ValueError: If the remote does not specify a URL to sync
 
     """
-    remote = DebRemote.objects.get(pk=remote_pk)
+    remote = AptRemote.objects.get(pk=remote_pk)
     repository = Repository.objects.get(pk=repository_pk)
 
     if not remote.url:

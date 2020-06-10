@@ -16,11 +16,11 @@ from .content_serializers import (
 )
 
 from .publication_serializers import (
-    DebDistributionSerializer,
-    DebPublicationSerializer,
+    AptDistributionSerializer,
+    AptPublicationSerializer,
     VerbatimPublicationSerializer,
 )
 
-from .remote_serializers import DebRemoteSerializer
+from .remote_serializers import AptRemoteSerializer
 
-from .repository_serializers import DebRepositorySerializer
+from .repository_serializers import AptRepositorySerializer
