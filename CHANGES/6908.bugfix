@@ -1,0 +1,1 @@
+Fixed a bug where some nullable fields for remotes could not be set to null via the API.
