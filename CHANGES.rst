@@ -13,6 +13,32 @@ Changelog
 
 .. towncrier release notes start
 
+2.4.0b1 (2020-06-17)
+====================
+
+Features
+--------
+
+
+- The "Date" field is now added to Release files during publish.
+  `#6869 <https://pulp.plan.io/issues/6869>`_
+
+
+
+Bugfixes
+--------
+
+
+- Fixed structured publishing of architecture 'all' type packages.
+  `#6787 <https://pulp.plan.io/issues/6787>`_
+- Fixed a bug where published Release files were using paths relative to the repo root, instead of relative to the release file.
+  `#6876 <https://pulp.plan.io/issues/6876>`_
+
+
+
+----
+
+
 2.3.0b1 (2020-04-29)
 ====================
 
