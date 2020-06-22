@@ -16,11 +16,15 @@ class DebRemoteSerializer(RemoteSerializer):
     )
 
     components = CharField(
-        help_text="Whitespace separatet list of components to sync", required=False,
+        help_text="Whitespace separatet list of components to sync",
+        required=False,
+        allow_null=True,
     )
 
     architectures = CharField(
-        help_text="Whitespace separated list of architectures to sync", required=False,
+        help_text="Whitespace separated list of architectures to sync",
+        required=False,
+        allow_null=True,
     )
 
     sync_sources = BooleanField(help_text="Sync source packages", required=False)
@@ -30,7 +34,9 @@ class DebRemoteSerializer(RemoteSerializer):
     sync_installer = BooleanField(help_text="Sync installer files", required=False)
 
     gpgkey = CharField(
-        help_text="Gpg public key to verify origin releases against", required=False,
+        help_text="Gpg public key to verify origin releases against",
+        required=False,
+        allow_null=True,
     )
 
     policy = ChoiceField(
