@@ -13,8 +13,8 @@ from .content import (
     ReleaseFileViewSet,
 )
 
-from .publication import DebDistributionViewSet, DebPublicationViewSet, VerbatimPublicationViewSet
+from .publication import AptDistributionViewSet, AptPublicationViewSet, VerbatimPublicationViewSet
 
-from .remote import DebRemoteViewSet
+from .remote import AptRemoteViewSet
 
-from .repository import DebRepositoryVersionViewSet, DebRepositoryViewSet
+from .repository import AptRepositoryVersionViewSet, AptRepositoryViewSet

@@ -3,12 +3,12 @@ from rest_framework.serializers import BooleanField, CharField, ChoiceField
 from pulpcore.plugin.models import Remote
 from pulpcore.plugin.serializers import RemoteSerializer
 
-from pulp_deb.app.models import DebRemote
+from pulp_deb.app.models import AptRemote
 
 
-class DebRemoteSerializer(RemoteSerializer):
+class AptRemoteSerializer(RemoteSerializer):
     """
-    A Serializer for DebRemote.
+    A Serializer for AptRemote.
     """
 
     distributions = CharField(
@@ -56,4 +56,4 @@ class DebRemoteSerializer(RemoteSerializer):
             "sync_installer",
             "gpgkey",
         )
-        model = DebRemote
+        model = AptRemote

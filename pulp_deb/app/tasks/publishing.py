@@ -18,7 +18,7 @@ from pulpcore.plugin.models import (
 from pulpcore.plugin.tasking import WorkingDirectory
 
 from pulp_deb.app.models import (
-    DebPublication,
+    AptPublication,
     Package,
     PackageReleaseComponent,
     Release,
@@ -83,7 +83,7 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
         )
     )
     with WorkingDirectory():
-        with DebPublication.create(repo_version, pass_through=False) as publication:
+        with AptPublication.create(repo_version, pass_through=False) as publication:
             publication.simple = simple
             publication.structured = structured
             publication.signing_service = signing_service

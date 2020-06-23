@@ -1,13 +1,13 @@
 from pulpcore.plugin.serializers import RepositorySerializer
 
-from pulp_deb.app.models import DebRepository
+from pulp_deb.app.models import AptRepository
 
 
-class DebRepositorySerializer(RepositorySerializer):
+class AptRepositorySerializer(RepositorySerializer):
     """
-    A Serializer for DebRepository.
+    A Serializer for AptRepository.
     """
 
     class Meta:
         fields = RepositorySerializer.Meta.fields
-        model = DebRepository
+        model = AptRepository
