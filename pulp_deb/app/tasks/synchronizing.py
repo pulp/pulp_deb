@@ -81,6 +81,20 @@ class NoPackageIndexFile(Exception):
     pass
 
 
+class MissingAttribute(Exception):
+    """
+    Exception to signal, that no atrribute representing a valid attritute is present.
+    """
+
+    def __init__(self, distribution, *args, **kwargs):
+        """
+        Exception to signal, that no atrribute representing a valid attritute is present.
+        """
+        super().__init__("No valid attribute found in '{}'.".format(distribution), *args, **kwargs)
+
+    pass
+
+
 def synchronize(remote_pk, repository_pk, mirror):
     """
     Sync content from the remote repository.
@@ -181,6 +195,8 @@ class DebUpdateReleaseFileAttributes(Stage):
         super().__init__(*args, **kwargs)
         self.remote = remote
         self.gpgkey = remote.gpgkey
+        self.components = remote.components
+        self.architectures = remote.architectures
         if self.gpgkey:
             gnupghome = os.path.join(os.getcwd(), "gpg-home")
             os.makedirs(gnupghome)
@@ -263,6 +279,16 @@ class DebUpdateReleaseFileAttributes(Stage):
                     log.debug("Codename: {}".format(release_file.codename))
                     log.debug("Components: {}".format(release_file.components))
                     log.debug("Architectures: {}".format(release_file.architectures))
+
+                    if "Release" or "InRelease" in da_names:
+                        if self.components:
+                            for component in self.components:
+                                if component not in release_file.components:
+                                    raise MissingAttribute(distribution=release_file.distribution)
+                        if self.architectures:
+                            for architecture in self.architectures:
+                                if architecture not in release_file.architectures:
+                                    raise MissingAttribute(distribution=release_file.distribution)
                     pb.increment()
                 await self.put(d_content)
 

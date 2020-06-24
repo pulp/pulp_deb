@@ -192,6 +192,26 @@ class SyncInvalidTestCase(unittest.TestCase):
         self.assertIn("No suitable Package index file", error["description"])
         self.assertIn("armeb", error["description"])
 
+    def test_invalid_architecture(self):
+        """Sync a repository using a architecture that does not exist.
+
+        Test that we get a task failure. See :meth:`do_test`.
+        """
+        with self.assertRaises(PulpTaskError) as exc:
+            self.do_test(url=DEB_FIXTURE_URL, architectures="no_arch")
+        error = exc.exception.task.error
+        self.assertIn("No valid attribute", error["description"])
+
+    def test_invalid_component(self):
+        """Sync a repository using a component that does not exist.
+
+        Test that we get a task failure. See :meth:`do_test`.
+        """
+        with self.assertRaises(PulpTaskError) as exc:
+            self.do_test(url=DEB_FIXTURE_URL, components="no_comp")
+        error = exc.exception.task.error
+        self.assertIn("No valid attribute", error["description"])
+
     def test_invalid_signature(self):
         """Sync a repository with an invalid signature.
 

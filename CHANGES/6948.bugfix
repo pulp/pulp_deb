@@ -1,0 +1,1 @@
+Fixed a bug to prevent the repository to sync with bad remote repository which has non-existing components or architectures.
