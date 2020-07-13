@@ -202,7 +202,7 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
         "bugs": "Bugs",
         "essential": "Essential",
         "build_essential": "Build_essential",
-        "installed_size": "Installed_size",
+        "installed_size": "Installed-Size",
         "maintainer": "Maintainer",
         "original_maintainer": "Original_Maintainer",
         "description": "Description",
