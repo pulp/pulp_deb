@@ -13,6 +13,41 @@ Changelog
 
 .. towncrier release notes start
 
+2.5.0b1 (2020-07-15)
+====================
+
+Features
+--------
+
+
+- Added additional metadata fields to published Release files.
+  `#6907 <https://pulp.plan.io/issues/6907>`_
+
+
+
+Bugfixes
+--------
+
+
+- Fixed a bug where some nullable fields for remotes could not be set to null via the API.
+  `#6908 <https://pulp.plan.io/issues/6908>`_
+- Fixed a bug where APT client was installing same patches again and again.
+  `#6982 <https://pulp.plan.io/issues/6982>`_
+
+
+
+Misc
+----
+
+
+- Renamed some internal models to Apt.. to keep API consistent with other plugins.
+  `#6897 <https://pulp.plan.io/issues/6897>`_
+
+
+
+----
+
+
 2.4.0b1 (2020-06-17)
 ====================
 
