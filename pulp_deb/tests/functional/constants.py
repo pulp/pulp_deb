@@ -92,6 +92,8 @@ DEB_GENERIC_CONTENT_URL = urljoin(DEB_FIXTURE_URL, DEB_GENERIC_CONTENT_RELPATH)
 
 DEB_INVALID_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, "debian-invalid/")
 
+DEB_COMPLEX_DISTS_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, "debian-complex-dists/")
+
 # FIXME: replace this with your own fixture repository URL and metadata
 DEB_LARGE_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, "deb_large/")
 
