@@ -2,19 +2,22 @@
 
 from setuptools import find_packages, setup
 
-requirements = [
-    "pulpcore>=3.5",
-    "python-debian>=0.1.36",
-]
+with open("requirements.txt") as requirements:
+    requirements = requirements.readlines()
+
+with open("README.md") as description:
+    long_description = description.read()
 
 setup(
     name="pulp-deb",
     version="2.6.0b1.dev",
     description="pulp-deb plugin for the Pulp Project",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     license="GPLv2+",
     author="Matthias Dellweg",
     author_email="dellweg@atix.de",
-    url="https://pulpproject.org/#deb",
+    url="https://pulpproject.org",
     python_requires=">=3.6",
     install_requires=requirements,
     include_package_data=True,
