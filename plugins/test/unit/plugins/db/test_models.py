@@ -26,7 +26,7 @@ class TestModel(testbase.TestCase):
             'architecture': 'amd64',
             'checksum': '177937795c2ef5b381718aefe2981ada4e8cfe458226348d87a6f5b100a4612b',  # noqa
             'checksumtype': 'sha256',
-            })
+        })
 
     def test_from_file_different_checksumtype(self):
         metadata = dict(checksumtype='sha1',

@@ -85,13 +85,13 @@ def create_dirs(opts):
 
 def getlinks():
     links = []
-    for l in LINKS:
-        if isinstance(l, (list, tuple)):
-            src = l[0]
-            dst = l[1]
+    for link in LINKS:
+        if isinstance(link, (list, tuple)):
+            src = link[0]
+            dst = link[1]
         else:
-            src = l
-            dst = os.path.join('/', l)
+            src = link
+            dst = os.path.join('/', link)
         links.append((src, dst))
     return links
 
