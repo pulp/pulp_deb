@@ -1,6 +1,6 @@
 from gettext import gettext as _  # noqa
 
-from drf_yasg.utils import swagger_auto_schema
+from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 
 from pulpcore.plugin.actions import ModifyRepositoryActionMixin
@@ -29,9 +29,9 @@ class AptRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin):
 
     # This decorator is necessary since a sync operation is asyncrounous and returns
     # the id and href of the sync task.
-    @swagger_auto_schema(
-        operation_description="Trigger an asynchronous task to sync content",
-        operation_summary="Sync from remote",
+    @extend_schema(
+        description="Trigger an asynchronous task to sync content",
+        summary="Sync from remote",
         responses={202: AsyncOperationResponseSerializer},
     )
     @action(detail=True, methods=["post"], serializer_class=RepositorySyncURLSerializer)

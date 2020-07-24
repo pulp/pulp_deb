@@ -1,6 +1,6 @@
 from gettext import gettext as _  # noqa
 
-from drf_yasg.utils import swagger_auto_schema
+from drf_spectacular.utils import extend_schema
 
 from pulpcore.plugin.serializers import AsyncOperationResponseSerializer
 from pulpcore.plugin.tasking import enqueue_with_reservation
@@ -22,8 +22,8 @@ class VerbatimPublicationViewSet(PublicationViewSet):
     queryset = models.VerbatimPublication.objects.exclude(complete=False)
     serializer_class = serializers.VerbatimPublicationSerializer
 
-    @swagger_auto_schema(
-        operation_description="Trigger an asynchronous task to publish content",
+    @extend_schema(
+        description="Trigger an asynchronous task to publish content",
         responses={202: AsyncOperationResponseSerializer},
     )
     def create(self, request):
@@ -54,8 +54,8 @@ class AptPublicationViewSet(PublicationViewSet):
     queryset = models.AptPublication.objects.exclude(complete=False)
     serializer_class = serializers.AptPublicationSerializer
 
-    @swagger_auto_schema(
-        operation_description="Trigger an asynchronous task to publish content",
+    @extend_schema(
+        description="Trigger an asynchronous task to publish content",
         responses={202: AsyncOperationResponseSerializer},
     )
     def create(self, request):
