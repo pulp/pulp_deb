@@ -1,34 +1,27 @@
-pulp-deb Plugin
-===============
+The ``pulp_deb`` Plugin
+================================================================================
 
-The ``deb`` plugin extends `pulpcore <https://pypi.python.org/pypi/pulpcore/>`__ to support
-hosting deb packages. This plugin is a part of the `Pulp Project
-<http://www.pulpproject.org>`_, and assumes some familiarity with the `pulpcore documentation
-<https://docs.pulpproject.org/en/3.0/nightly/>`_.
+.. _pulpcore python package: https://pypi.python.org/pypi/pulpcore
+.. _Pulp project: http://www.pulpproject.org
+.. _pulpcore documentation: https://docs.pulpproject.org
+.. _plugin REST API documentation: restapi.html
 
-If you are just getting started, we recommend getting to know the :doc:`basic
-workflows<workflows/index>`.
+The ``pulp_deb`` plugin extends the `pulpcore python package`_ with the ability to host deb packages within APT repositories.
+This plugin is a part of the `Pulp Project`_, and assumes some familiarity with the `pulpcore documentation`_.
 
-The REST API documentation for ``pulp_deb`` is available `here <restapi.html>`_.
+If you are just getting started, we recommend getting to know the :doc:`basic workflows <workflows>`.
+
+See the `plugin REST API documentation`_ for the full feature set of the ``pulp_deb`` plugin.
 
 
 Table of Contents
------------------
+--------------------------------------------------------------------------------
 
 .. toctree::
    :maxdepth: 1
 
    installation
-   workflows/index
+   workflows
    bindings
    changes
    contributing
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
