@@ -1,28 +1,32 @@
 Client Bindings
 ===============
 
+.. _pulp-deb-client package: https://pypi.org/project/pulp-deb-client
+.. _pulpcore-client package: https://pypi.org/project/pulpcore-client
+.. _pulp_deb API documentation: restapi.html
+.. _pulpcore API documentation: https://docs.pulpproject.org/restapi.html
+.. _pulp_deb_client Ruby Gem: https://rubygems.org/gems/pulp_deb_client
+.. _pulpcore_client Ruby Gem: https://rubygems.org/gems/pulpcore_client
+
+
 Python Client
 -------------
 
-The `pulp-deb-client package <https://pypi.org/project/pulp-deb-client/>`_ on PyPI provides
-bindings for all API calls in the `pulp_deb API documentation <../restapi.html>`_. It is
-currently published daily and with every RC.
+The `pulp-deb-client package`_ on PyPI provides bindings for all API calls in the `pulp_deb API documentation`_.
+It is currently published daily and with every RC.
 
-The `pulpcore-client package <https://pypi.org/project/pulpcore-client/>`_ on PyPI provides bindings
-for all API calls in the `pulpcore API documentation <https://docs.pulpproject.org/en/3.0/nightly/
-restapi.html>`_. It is currently published daily and with every RC.
+The `pulpcore-client package`_ on PyPI provides bindings for all API calls in the `pulpcore API documentation`_.
+It is currently published daily and with every RC.
 
 
 Ruby Client
 -----------
 
-The `pulp_deb_client Ruby Gem <https://rubygems.org/gems/pulp_deb_client>`_ on rubygems.org
-provides bindings for all API calls in the `pulp_deb API documentation <../restapi.html>`_. It
-is currently published daily and with every RC.
+The `pulp_deb_client Ruby Gem`_ on rubygems.org provides bindings for all API calls in the `pulp_deb API documentation`_.
+It is currently published daily and with every RC.
 
-The `pulpcore_client Ruby Gem <https://rubygems.org/gems/pulpcore_client>`_ on rubygems.org provides
-bindings for all API calls in the `pulpcore API documentation <https://docs.pulpproject.org/en/3.0/
-nightly/restapi.html>`_. It is currently published daily and with every RC.
+The `pulpcore_client Ruby Gem`_ on rubygems.org provides bindings for all API calls in the `pulpcore API documentation`_.
+It is currently published daily and with every RC.
 
 
 Client in a language of your choice
