@@ -184,7 +184,10 @@ class ParseReleaseStep(publish_step.PluginStep):
         # check signature
         if not self.get_config().get_boolean(constants.CONFIG_REQUIRE_SIGNATURE, False):
             return
-        gpg = self.gnupg_factory(homedir=os.path.join(self.get_working_dir(), 'gpg-home'))
+        worker_gpg_homedir = os.path.join(self.get_working_dir(), 'gpg-home')
+        if not os.path.exists(worker_gpg_homedir):
+            os.mkdir(worker_gpg_homedir, 0o700)
+        gpg = self.gnupg_factory(homedir=worker_gpg_homedir)
         shared_gpg = self.gnupg_factory(homedir=os.path.join('/', 'var', 'lib', 'pulp', 'gpg-home'))
 
         if self.get_config().get(constants.CONFIG_GPG_KEYS):
