@@ -1,15 +1,15 @@
-=========
+================================================================================
 Changelog
-=========
+================================================================================
+
+.. _changelog documentation: https://pulp-deb.readthedocs.io/en/latest/contributing.html#changelog-update
 
 ..
-    You should *NOT* be adding new change log entries to this file, this
-    file is managed by towncrier. You *may* edit previous change logs to
-    fix problems like typo corrections or such.
-    To add a new change log entry, please see
-    https://docs.pulpproject.org/en/3.0/nightly/contributing/git.html#changelog-update
+   You should *NOT* be adding new change log entries to this file, this file is managed by towncrier.
+   You *may* edit previous change logs to correct typos or similar.
+   To learn how to add new entries see the `changelog documentation`_.
 
-    WARNING: Don't drop the next directive!
+   WARNING: Don't drop the next directive!
 
 .. towncrier release notes start
 
@@ -289,8 +289,3 @@ Misc
   `#4681 <https://pulp.plan.io/issues/4681>`_
 - Generate and commit initial migrations.
   `#5401 <https://pulp.plan.io/issues/5401>`_
-
-
-
-
-

@@ -1,38 +1,27 @@
-User Setup
-==========
+Installation
+================================================================================
 
-All REST API examples below use `httpie <https://httpie.org/doc>`__ to
-perform the requests.
+.. _pulpcore installation: https://docs.pulpproject.org/installation/index.html
 
-.. code-block:: bash
-
-    machine localhost
-    login admin
-    password admin
-
-If you configured the ``admin`` user with a different password, adjust the configuration
-accordingly. If you prefer to specify the username and password with each request, please see
-``httpie`` documentation on how to do that.
+.. include:: httpie_usage.rst
 
 
 Install ``pulpcore``
---------------------
+--------------------------------------------------------------------------------
 
-Follow the `installation
-instructions <docs.pulpproject.org/en/3.0/nightly/installation/instructions.html>`__
-provided with pulpcore.
+Please see the `pulpcore installation`_ instructions.
 
-Install plugin
---------------
 
-This document assumes that you have
-`installed pulpcore <https://docs.pulpproject.org/en/3.0/nightly/installation/instructions.html>`_
-into a the virtual environment ``pulpvenv``.
+Install ``pulp_deb`` Plugin
+--------------------------------------------------------------------------------
+
+This document assumes that you have used the `pulpcore installation`_ to install pulpcore into a the virtual environment ``pulpvenv``.
 
 Users should install from **either** PyPI or source.
 
+
 From Source
-***********
+********************************************************************************
 
 .. code-block:: bash
 
@@ -42,8 +31,9 @@ From Source
    pip install -e .
    django-admin runserver 24817
 
+
 Make and Run Migrations
------------------------
+--------------------------------------------------------------------------------
 
 .. code-block:: bash
 
@@ -52,7 +42,7 @@ Make and Run Migrations
 
 
 Run Services
-------------
+--------------------------------------------------------------------------------
 
 .. code-block:: bash
 
