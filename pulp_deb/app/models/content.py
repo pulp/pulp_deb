@@ -145,26 +145,26 @@ class BasePackage(Content):
         ("allowed", "allowed"),
     ]
 
-    package = models.CharField(max_length=255)  # package name
-    source = models.CharField(max_length=255, null=True)  # source package name
-    version = models.CharField(max_length=255)
-    architecture = models.CharField(max_length=255)  # all, i386, ...
-    section = models.CharField(max_length=255, null=True)  # admin, comm, database, ...
-    priority = models.CharField(max_length=255, null=True)  # required, standard, optional, extra
-    origin = models.CharField(max_length=255, null=True)
+    package = models.TextField()  # package name
+    source = models.TextField(null=True)  # source package name
+    version = models.TextField()
+    architecture = models.TextField()  # all, i386, ...
+    section = models.TextField(null=True)  # admin, comm, database, ...
+    priority = models.TextField(null=True)  # required, standard, optional, extra
+    origin = models.TextField(null=True)
     tag = models.TextField(null=True)
     bugs = models.TextField(null=True)
     essential = models.BooleanField(null=True, choices=BOOL_CHOICES)
     build_essential = models.BooleanField(null=True, choices=BOOL_CHOICES)
     installed_size = models.IntegerField(null=True)
-    maintainer = models.CharField(max_length=255)
-    original_maintainer = models.CharField(max_length=255, null=True)
+    maintainer = models.TextField()
+    original_maintainer = models.TextField(null=True)
     description = models.TextField()
-    description_md5 = models.CharField(max_length=255, null=True)
-    homepage = models.CharField(max_length=255, null=True)
-    built_using = models.CharField(max_length=255, null=True)
-    auto_built_package = models.CharField(max_length=255, null=True)
-    multi_arch = models.CharField(max_length=255, null=True, choices=MULTIARCH_CHOICES)
+    description_md5 = models.TextField(null=True)
+    homepage = models.TextField(null=True)
+    built_using = models.TextField(null=True)
+    auto_built_package = models.TextField(null=True)
+    multi_arch = models.TextField(null=True, choices=MULTIARCH_CHOICES)
 
     # Depends et al
     breaks = models.TextField(null=True)
@@ -180,7 +180,7 @@ class BasePackage(Content):
     # relative path in the upstream repository
     relative_path = models.TextField(null=False)
     # this digest is transferred to the content as a natural_key
-    sha256 = models.CharField(max_length=255, null=False)
+    sha256 = models.TextField(null=False)
 
     @property
     def name(self):
