@@ -283,6 +283,22 @@ class ReleaseComponent(Content):
     component = models.CharField(max_length=255)
     release = models.ForeignKey(Release, on_delete=models.CASCADE)
 
+    @property
+    def plain_component(self):
+        """
+        The "plain_component" returns the component WITHOUT path prefixes.
+
+        When a Release file is not stored in a directory directly beneath "dists/",
+        the components, as stored in the Release file, may be prefixed with the
+        path following the directory beneath "dists/".
+
+        e.g.: If a Release file is stored at "REPO_BASE/dists/something/extra/Release",
+        then a component normally named "main" may be stored as "extra/main".
+
+        See also: https://wiki.debian.org/DebianRepository/Format#Components
+        """
+        return os.path.basename(self.component)
+
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
         unique_together = (("component", "release"),)
