@@ -501,7 +501,7 @@ class DebFirstStage(Stage):
         # Create package_index
         release_base_path = os.path.dirname(release_file.relative_path)
         package_index_dir = os.path.join(
-            os.path.basename(release_component.component), infix, "binary-{}".format(architecture)
+            release_component.plain_component, infix, "binary-{}".format(architecture)
         )
         d_artifacts = []
         for filename in ["Packages", "Packages.gz", "Packages.xz", "Release"]:
@@ -579,7 +579,7 @@ class DebFirstStage(Stage):
         # Create installer file index
         release_base_path = os.path.dirname(release_file.relative_path)
         installer_file_index_dir = os.path.join(
-            os.path.basename(release_component.component),
+            release_component.plain_component,
             "installer-{}".format(architecture),
             "current",
             "images",
@@ -634,7 +634,7 @@ class DebFirstStage(Stage):
             await self.put(d_content)
 
     async def _handle_translation_files(self, release_file, release_component, file_references):
-        translation_dir = os.path.join(os.path.basename(release_component.component), "i18n")
+        translation_dir = os.path.join(release_component.plain_component, "i18n")
         paths = [path for path in file_references.keys() if path.startswith(translation_dir)]
         translations = {}
         for path in paths:

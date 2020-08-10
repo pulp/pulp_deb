@@ -92,7 +92,7 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
             if simple:
                 codename = "default"
                 distribution = "default"
-                component_name = "all"
+                component = "all"
                 architectures = (
                     Package.objects.filter(pk__in=repo_version.content.order_by("-pulp_created"),)
                     .distinct("architecture")
@@ -102,7 +102,7 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                     publication=publication,
                     codename=codename,
                     distribution=distribution,
-                    components=[component_name],
+                    components=[component],
                     architectures=architectures,
                     description=repository.description,
                     label=repository.name,
@@ -112,7 +112,7 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                 for package in Package.objects.filter(
                     pk__in=repo_version.content.order_by("-pulp_created"),
                 ):
-                    release_helper.components[component_name].add_package(package)
+                    release_helper.components[component].add_package(package)
                 release_helper.finish()
 
             if structured:
@@ -153,16 +153,17 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
 
 
 class _ComponentHelper:
-    def __init__(self, parent, name):
+    def __init__(self, parent, component):
         self.parent = parent
-        self.name = name
+        self.component = component
+        self.plain_component = os.path.basename(component)
         self.package_index_files = {}
 
         for architecture in self.parent.architectures:
             package_index_path = os.path.join(
                 "dists",
                 self.parent.distribution,
-                self.name,
+                self.plain_component,
                 "binary-{}".format(architecture),
                 "Packages",
             )
@@ -174,13 +175,13 @@ class _ComponentHelper:
 
     def add_package(self, package):
         published_artifact = PublishedArtifact(
-            relative_path=package.filename(self.name),
+            relative_path=package.filename(self.component),
             publication=self.parent.publication,
             content_artifact=package.contentartifact_set.get(),
         )
         published_artifact.save()
         package_serializer = Package822Serializer(package, context={"request": None})
-        deb822_package = package_serializer.to822(self.name)
+        deb822_package = package_serializer.to822(self.component)
         if package.architecture == "all":
             for index_file in self.package_index_files.values():
                 deb822_package.dump(index_file[0])
@@ -242,7 +243,7 @@ class _ReleaseHelper:
         self.release["SHA512"] = []
 
         self.architectures = architectures
-        self.components = {name: _ComponentHelper(self, name) for name in components}
+        self.components = {component: _ComponentHelper(self, component) for component in components}
         self.signing_service = publication.signing_service
 
     def add_metadata(self, metadata):

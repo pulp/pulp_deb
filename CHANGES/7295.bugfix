@@ -1,0 +1,1 @@
+Fixed a bug where component path prefixes were added to package index paths twice instead of once when using structured publish.
