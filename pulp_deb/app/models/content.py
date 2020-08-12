@@ -190,12 +190,13 @@ class BasePackage(Content):
     def filename(self, component=""):
         """Assemble filename in pool directory."""
         sourcename = self.source or self.package
+        sourcename = sourcename.split("(", 1)[0].rstrip()
         if sourcename.startswith("lib"):
             prefix = sourcename[0:4]
         else:
             prefix = sourcename[0]
         return os.path.join(
-            "pool", component, prefix, sourcename, "{}.{}".format(self.name, self.SUFFIX)
+            "pool", component, prefix, sourcename, "{}.{}".format(self.name, self.SUFFIX),
         )
 
     class Meta:
