@@ -19,6 +19,7 @@ Table of Contents
 
    installation
    workflows
+   rest_api
    bindings
    changes
    contributing
