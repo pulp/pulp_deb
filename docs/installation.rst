@@ -1,8 +1,7 @@
 Installation
 ================================================================================
 
-.. _pulpcore installation: https://docs.pulpproject.org/installation/index.html
-
+.. include:: external_references.rst
 .. include:: httpie_usage.rst
 
 

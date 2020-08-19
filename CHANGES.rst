@@ -2,12 +2,10 @@
 Changelog
 ================================================================================
 
-.. _changelog documentation: https://pulp-deb.readthedocs.io/en/latest/contributing.html#changelog-update
-
 ..
    You should *NOT* be adding new change log entries to this file, this file is managed by towncrier.
    You *may* edit previous change logs to correct typos or similar.
-   To learn how to add new entries see the `changelog documentation`_.
+   To learn how to add new entries see the 'Changelog Update' heading in the CONTRIBUTING.rst file.
 
    WARNING: Don't drop the next directive!
 
