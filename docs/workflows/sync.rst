@@ -1,7 +1,7 @@
 Synchronize a Repository
 ================================================================================
 
-.. _nginx.org: https://nginx.org/en/linux_packages.html#Debian
+.. include:: ../external_references.rst
 
 Users can populate their repositories with content from an external source by syncing their repository.
 

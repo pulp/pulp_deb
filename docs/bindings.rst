@@ -1,35 +1,26 @@
 Client Bindings
 ================================================================================
 
-.. _pulp-deb-client package: https://pypi.org/project/pulp-deb-client
-.. _pulpcore-client package: https://pypi.org/project/pulpcore-client
-.. _pulp_deb API documentation: restapi.html
-.. _pulpcore API documentation: https://docs.pulpproject.org/restapi.html
-.. _pulp_deb_client Ruby Gem: https://rubygems.org/gems/pulp_deb_client
-.. _pulpcore_client Ruby Gem: https://rubygems.org/gems/pulpcore_client
-.. _OpenAPI generators: https://openapi-generator.tech/docs/generators
-.. _try OpenAPI generator: https://openapi-generator.tech/#try
-.. _pulplift: https://github.com/pulp/pulplift
-.. _pulp installer: https://github.com/pulp/pulp_installer
+.. include:: external_references.rst
 
 
 Python Client
 --------------------------------------------------------------------------------
 
-The `pulp-deb-client package`_ on PyPI provides bindings for all API calls in the `pulp_deb API documentation`_.
+The `pulp-deb-client package`_ on PyPI provides bindings for all API calls in the `pulp_deb REST API`_.
 It is currently published daily and with every RC.
 
-The `pulpcore-client package`_ on PyPI provides bindings for all API calls in the `pulpcore API documentation`_.
+The `pulpcore-client package`_ on PyPI provides bindings for all API calls in the `pulpcore REST API`_.
 It is currently published daily and with every RC.
 
 
 Ruby Client
 --------------------------------------------------------------------------------
 
-The `pulp_deb_client Ruby Gem`_ on rubygems.org provides bindings for all API calls in the `pulp_deb API documentation`_.
+The `pulp_deb_client Ruby Gem`_ on rubygems.org provides bindings for all API calls in the `pulp_deb REST API`_.
 It is currently published daily and with every RC.
 
-The `pulpcore_client Ruby Gem`_ on rubygems.org provides bindings for all API calls in the `pulpcore API documentation`_.
+The `pulpcore_client Ruby Gem`_ on rubygems.org provides bindings for all API calls in the `pulpcore REST API`_.
 It is currently published daily and with every RC.
 
 

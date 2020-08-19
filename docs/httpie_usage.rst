@@ -1,4 +1,4 @@
-.. _httpie: https://httpie.org/doc
+.. include:: external_references.rst
 
 All REST API examples below use `httpie`_ to perform the requests.
 The ``httpie`` commands below assume that the user executing the commands has a ``.netrc`` file in the home directory.
