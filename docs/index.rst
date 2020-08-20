@@ -8,7 +8,7 @@ This plugin is a part of the `Pulp Project`_, and assumes some familiarity with 
 
 If you are just getting started, we recommend getting to know the :doc:`basic workflows <workflows>`.
 
-See the `pulp_deb REST API`_ documentation for the full feature set of the ``pulp_deb`` plugin.
+See the :ref:`REST API <rest_api>` documentation for the full feature set of the ``pulp_deb`` plugin.
 
 
 Table of Contents

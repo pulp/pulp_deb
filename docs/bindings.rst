@@ -7,20 +7,20 @@ Client Bindings
 Python Client
 --------------------------------------------------------------------------------
 
-The `pulp-deb-client package`_ on PyPI provides bindings for all API calls in the `pulp_deb REST API`_.
+The `pulp-deb-client package`_ on PyPI provides bindings for all ``pulp_deb`` :ref:`REST API <rest_api>` endpoints.
 It is currently published daily and with every RC.
 
-The `pulpcore-client package`_ on PyPI provides bindings for all API calls in the `pulpcore REST API`_.
+The `pulpcore-client package`_ on PyPI provides bindings for all pulpcore :ref:`REST API <rest_api>` endpoints.
 It is currently published daily and with every RC.
 
 
 Ruby Client
 --------------------------------------------------------------------------------
 
-The `pulp_deb_client Ruby Gem`_ on rubygems.org provides bindings for all API calls in the `pulp_deb REST API`_.
+The `pulp_deb_client Ruby Gem`_ on rubygems.org provides bindings for all ``pulp_deb`` :ref:`REST API <rest_api>` endpoints.
 It is currently published daily and with every RC.
 
-The `pulpcore_client Ruby Gem`_ on rubygems.org provides bindings for all API calls in the `pulpcore REST API`_.
+The `pulpcore_client Ruby Gem`_ on rubygems.org provides bindings for all pulpcore :ref:`REST API <rest_api>` endpoints.
 It is currently published daily and with every RC.
 
 
