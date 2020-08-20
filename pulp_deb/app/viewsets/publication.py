@@ -14,8 +14,14 @@ from pulp_deb.app import models, serializers, tasks
 
 
 class VerbatimPublicationViewSet(PublicationViewSet):
+    # The doc string is a top level element of the user facing REST API documentation:
     """
-    A ViewSet for VerbatimPublication.
+    An VerbatimPublication is the Pulp-internal representation of a "mirrored" AptRepositoryVersion.
+
+    In other words, the verbatim publisher will recreate the synced subset of some a APT
+    repository using the exact same metadata files and signatures as used by the upstream original.
+    Once a Pulp publication has been created, it can be served by creating a Pulp distribution (in
+    a near atomic action).
     """
 
     endpoint_name = "verbatim"
@@ -46,8 +52,15 @@ class VerbatimPublicationViewSet(PublicationViewSet):
 
 
 class AptPublicationViewSet(PublicationViewSet):
+    # The doc string is a top level element of the user facing REST API documentation:
     """
-    A ViewSet for AptPublication.
+    An AptPublication is the ready to serve Pulp-internal representation of an AptRepositoryVersion.
+
+    When creating an APT publication, users must use simple or structured mode (or both). If the
+    publication should include '.deb' packages that were manually uploaded to the relevant
+    AptRepository, users must use 'simple=true'. Conversely, 'structured=true' is only useful for
+    publishing content obtained via synchronization. Once a Pulp publication has been created, it
+    can be served by creating a Pulp distribution (in a near atomic action).
     """
 
     endpoint_name = "apt"
@@ -86,8 +99,13 @@ class AptPublicationViewSet(PublicationViewSet):
 
 
 class AptDistributionViewSet(BaseDistributionViewSet):
+    # The doc string is a top level element of the user facing REST API documentation:
     """
-    ViewSet for AptDistributions.
+    An AptDistribution is just an AptPublication made available via the content app.
+
+    Creating an AptDistribution is a comparatively quick action. This way Pulp users may take as
+    much time as is needed to prepare a VerbatimPublication or AptPublication, and then control the
+    exact moment when that publication is made available.
     """
 
     endpoint_name = "apt"

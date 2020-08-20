@@ -19,8 +19,12 @@ from pulp_deb.app import models, serializers, tasks
 
 
 class AptRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin):
+    # The doc string is a top level element of the user facing REST API documentation:
     """
-    A ViewSet for AptRepository.
+    An AptRepository is the locally stored, Pulp-internal representation of a APT repository.
+
+    It may be filled with content via synchronization or content upload to create an
+    AptRepositoryVersion.
     """
 
     endpoint_name = "apt"
@@ -56,8 +60,12 @@ class AptRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin):
 
 
 class AptRepositoryVersionViewSet(RepositoryVersionViewSet):
+    # The doc string is a top level element of the user facing REST API documentation:
     """
-    AptRepositoryVersion represents a single deb repository version.
+    An AptRepositoryVersion represents a single APT repository version as stored by Pulp.
+
+    It may be used as the basis for the creation of Pulp distributions in order to actually serve
+    the content contained within the repository version.
     """
 
     parent_viewset = AptRepositoryViewSet
