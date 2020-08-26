@@ -1,3 +1,5 @@
+.. _upload_and_manage_content:
+
 Upload and Manage Content
 ================================================================================
 
