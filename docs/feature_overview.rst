@@ -89,6 +89,14 @@ In general, uploading content works the same way as for any other Pulp plugin, s
    As a result, manually uploaded packages will only show up in your publications, if you are using the "simple" publisher.
    For more information, see :ref:`simple and structured publishing <simple_and_structured_publishing>` below.
 
+.. note::
+   As a matter of best practice, the existence of multiple Debian packages with the same name, version, and architecture (but different content/checksum) should be avoided.
+   Since the existence of such packages may be beyond the control of the ``pulp_deb`` user, the plugin takes a maximally permissive approach:
+   Users can upload arbitrary (valid) packages to the Pulp database, but they cannot add multiple colliding packages of the same type (``.deb`` or ``.udeb``), to a single Pulp repository version.
+   If users attempt to add one or more packages to a Pulp repository, and there are collisions with packages from the previous repository version, then the older packages will automatically be removed.
+   If there are still collisions in the new repository version, an error is thrown and the task will fail.
+   (This latter case can only happen if users attempt to add several colliding packages in a single API call.)
+
 
 .. _simple_and_structured_publishing:
 
