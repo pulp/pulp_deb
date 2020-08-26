@@ -98,6 +98,9 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                     .distinct("architecture")
                     .values_list("architecture", flat=True)
                 )
+                architectures = list(architectures)
+                if "all" not in architectures:
+                    architectures.append("all")
                 release_helper = _ReleaseHelper(
                     publication=publication,
                     codename=codename,
@@ -122,6 +125,9 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                     architectures = ReleaseArchitecture.objects.filter(
                         pk__in=repo_version.content.order_by("-pulp_created"), release=release,
                     ).values_list("architecture", flat=True)
+                    architectures = list(architectures)
+                    if "all" not in architectures:
+                        architectures.append("all")
                     components = ReleaseComponent.objects.filter(
                         pk__in=repo_version.content.order_by("-pulp_created"), release=release,
                     )
@@ -181,14 +187,10 @@ class _ComponentHelper:
         )
         published_artifact.save()
         package_serializer = Package822Serializer(package, context={"request": None})
-        deb822_package = package_serializer.to822(self.component)
-        if package.architecture == "all":
-            for index_file in self.package_index_files.values():
-                deb822_package.dump(index_file[0])
-                index_file[0].write(b"\n")
-        else:
-            deb822_package.dump(self.package_index_files[package.architecture][0])
-            self.package_index_files[package.architecture][0].write(b"\n")
+        package_serializer.to822(self.component).dump(
+            self.package_index_files[package.architecture][0]
+        )
+        self.package_index_files[package.architecture][0].write(b"\n")
 
     def finish(self):
         # Publish Packages files
