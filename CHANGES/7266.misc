@@ -1,0 +1,1 @@
+Added tests to ensure all control file fields present in an upstream package index will be present in pulp_deb.

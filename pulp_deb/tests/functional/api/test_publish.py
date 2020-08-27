@@ -57,6 +57,8 @@ class PublishAnyRepoVersionSimpleTestCase(unittest.TestCase):
            to the supplied repository version.
         6. Assert that an exception is raised when providing two different
            repository versions to be published at same time.
+        7. Assert that package control files in published repository contains all fields
+           as in remote repository.
         """
         cfg = config.get_config()
         repo_api = deb_repository_api
@@ -112,6 +114,15 @@ class PublishAnyRepoVersionSimpleTestCase(unittest.TestCase):
         with self.assertRaises(ApiException):
             body = {"repository": repo.pulp_href, "repository_version": non_latest}
             publication_api.create(body)
+
+        # Step 7
+        release_package_files = get_content(
+            repo=publication.to_dict(), version_href=publication.repository_version
+        )[DEB_PACKAGE_NAME]
+        remote_package_files = get_content(repo.to_dict())[DEB_PACKAGE_NAME]
+
+        for package_file in release_package_files:
+            self.assertIn(package_file, remote_package_files)
 
 
 class PublishAnyRepoVersionStructuredTestCase(PublishAnyRepoVersionSimpleTestCase):
