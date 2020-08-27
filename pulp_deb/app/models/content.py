@@ -196,7 +196,11 @@ class BasePackage(Content):
         else:
             prefix = sourcename[0]
         return os.path.join(
-            "pool", component, prefix, sourcename, "{}.{}".format(self.name, self.SUFFIX),
+            "pool",
+            component,
+            prefix,
+            sourcename,
+            "{}.{}".format(self.name, self.SUFFIX),
         )
 
     class Meta:

@@ -21,5 +21,6 @@ if __name__ == "__main__":
     from pulp_deb.app.models import AptReleaseSigningService
 
     AptReleaseSigningService.objects.create(
-        name="sign_deb_release", script=script_path,
+        name="sign_deb_release",
+        script=script_path,
     )
