@@ -12,7 +12,8 @@ class AptRemoteSerializer(RemoteSerializer):
     """
 
     distributions = CharField(
-        help_text="Whitespace separated list of distributions to sync", required=True,
+        help_text="Whitespace separated list of distributions to sync",
+        required=True,
     )
 
     components = CharField(

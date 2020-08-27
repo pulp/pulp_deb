@@ -94,7 +94,9 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                 distribution = "default"
                 component = "all"
                 architectures = (
-                    Package.objects.filter(pk__in=repo_version.content.order_by("-pulp_created"),)
+                    Package.objects.filter(
+                        pk__in=repo_version.content.order_by("-pulp_created"),
+                    )
                     .distinct("architecture")
                     .values_list("architecture", flat=True)
                 )
@@ -123,13 +125,15 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                     pk__in=repo_version.content.order_by("-pulp_created"),
                 ):
                     architectures = ReleaseArchitecture.objects.filter(
-                        pk__in=repo_version.content.order_by("-pulp_created"), release=release,
+                        pk__in=repo_version.content.order_by("-pulp_created"),
+                        release=release,
                     ).values_list("architecture", flat=True)
                     architectures = list(architectures)
                     if "all" not in architectures:
                         architectures.append("all")
                     components = ReleaseComponent.objects.filter(
-                        pk__in=repo_version.content.order_by("-pulp_created"), release=release,
+                        pk__in=repo_version.content.order_by("-pulp_created"),
+                        release=release,
                     )
                     release_helper = _ReleaseHelper(
                         publication=publication,
@@ -278,7 +282,8 @@ class _ReleaseHelper:
         with open(release_path, "wb") as release_file:
             self.release.dump(release_file)
         release_metadata = PublishedMetadata.create_from_file(
-            publication=self.publication, file=File(open(release_path, "rb")),
+            publication=self.publication,
+            file=File(open(release_path, "rb")),
         )
         release_metadata.save()
         if self.signing_service:
