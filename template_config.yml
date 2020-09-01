@@ -34,4 +34,5 @@ test_performance: false
 test_s3: false
 travis_addtl_services: []
 travis_notifications: None
+update_redmine: false
 
