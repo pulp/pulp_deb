@@ -1,1 +1,0 @@
-Optional version strings are now stripped from the sourcename before using it for package file paths.
