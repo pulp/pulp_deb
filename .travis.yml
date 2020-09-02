@@ -71,6 +71,12 @@ jobs:
       env:
         - TEST=bindings
       if: tag IS present
+    - stage: update-redmine
+      before_install: skip
+      install: skip
+      before_script: skip
+      script: bash .travis/update_redmine.sh
+      if: tag IS present
 notifications: None
 
 ...
