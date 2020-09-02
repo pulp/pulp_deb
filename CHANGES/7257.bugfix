@@ -1,1 +1,0 @@
-Fixed content creation for fields containing more than 255 characters by using ``TextField`` instead of ``CharField`` for all package model fields.

@@ -11,6 +11,64 @@ Changelog
 
 .. towncrier release notes start
 
+2.6.0b1 (2020-09-01)
+====================
+
+Features
+--------
+
+- Added handling of packages with the same name, version, and architecture, when saving a new repository version.
+  `#6429 <https://pulp.plan.io/issues/6429>`_
+- Both simple and structured publish now use separate ``Architecture: all`` package indecies only.
+  `#6991 <https://pulp.plan.io/issues/6991>`_
+
+
+Bugfixes
+--------
+
+- Optional version strings are now stripped from the sourcename before using it for package file paths.
+  `#7153 <https://pulp.plan.io/issues/7153>`_
+- Fixed several field names in the to deb822 translation dict.
+  `#7190 <https://pulp.plan.io/issues/7190>`_
+- ``Section`` and ``Priority`` are no longer required for package indecies.
+  `#7236 <https://pulp.plan.io/issues/7236>`_
+- Fixed content creation for fields containing more than 255 characters by using ``TextField`` instead of ``CharField`` for all package model fields.
+  `#7257 <https://pulp.plan.io/issues/7257>`_
+- Fixed a bug where component path prefixes were added to package index paths twice instead of once when using structured publish.
+  `#7295 <https://pulp.plan.io/issues/7295>`_
+
+
+Improved Documentation
+----------------------
+
+- Added a note on per repository package uniqueness constraints to the feature overview documentation.
+  `#6429 <https://pulp.plan.io/issues/6429>`_
+- Fixed several URLs pointing at various API documentation.
+  `#6506 <https://pulp.plan.io/issues/6506>`_
+- Reworked the workflow documentation and added flow charts.
+  `#7148 <https://pulp.plan.io/issues/7148>`_
+- Completely refactored the documentation source files.
+  `#7211 <https://pulp.plan.io/issues/7211>`_
+- Added a high level "feature overview" documentation.
+  `#7318 <https://pulp.plan.io/issues/7318>`_
+- Added meaningful endpoint descriptions to the REST API documentation.
+  `#7355 <https://pulp.plan.io/issues/7355>`_
+
+
+Misc
+----
+
+- Added tests for repos with distribution paths that are not equal to the codename.
+  `#6051 <https://pulp.plan.io/issues/6051>`_
+- Added a long_description to the python package.
+  `#6882 <https://pulp.plan.io/issues/6882>`_
+- Added test to publish repository with package index files but no packages.
+  `#7344 <https://pulp.plan.io/issues/7344>`_
+
+
+----
+
+
 2.5.0b1 (2020-07-15)
 ====================
 
