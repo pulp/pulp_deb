@@ -52,18 +52,6 @@ jobs:
       script: bash .travis/publish_client_gem.sh
       env:
         - TEST=bindings
-      if: type = cron
-    - stage: deploy
-      name: "Publish client to pypi"
-      script: bash .travis/publish_client_pypi.sh
-      env:
-        - TEST=bindings
-      if: type = cron
-    - stage: deploy
-      name: "Publish client to rubygems"
-      script: bash .travis/publish_client_gem.sh
-      env:
-        - TEST=bindings
       if: tag IS present
     - stage: deploy
       name: "Publish client to pypi"

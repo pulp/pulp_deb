@@ -8,8 +8,8 @@ cherry_pick_automation: false
 coverage: false
 deploy_client_to_pypi: true
 deploy_client_to_rubygems: true
-deploy_daily_client_to_pypi: true
-deploy_daily_client_to_rubygems: true
+deploy_daily_client_to_pypi: false
+deploy_daily_client_to_rubygems: false
 deploy_to_pypi: true
 docker_fixtures: true
 docs_test: true
