@@ -14,6 +14,7 @@ The most important places:
 * The [plugin documentation][2].
 * The [plugin issue tracker][3].
 * The [plugin source repository][4].
+* The [plugin travis build page][8].
 * Released [python packages on pypi.org][5].
 * The [pulp-deb-client Python package][6] (contains API bindings for Python).
 * The [pulp-deb-client Ruby Gem][7] (contains API bindings for Ruby).
@@ -25,3 +26,4 @@ The most important places:
 [5]: https://pypi.org/project/pulp-deb/
 [6]: https://pypi.org/project/pulp-deb-client/
 [7]: https://rubygems.org/gems/pulp_deb_client
+[8]: https://travis-ci.com/github/pulp/pulp_deb
