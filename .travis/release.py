@@ -14,6 +14,7 @@ from pathlib import Path
 
 from git import Repo
 from redminelib import Redmine
+from redminelib.exceptions import ResourceAttrError
 
 
 REDMINE_URL = "https://pulp.plan.io"
@@ -36,6 +37,15 @@ def validate_redmine_data(redmine_query_url, redmine_issues):
         status = redmine_issue.status.name
         if "CLOSE" not in status and status != "MODIFIED":
             stats["status_not_modified"].append(issue)
+        milestone_id = None
+        try:
+            milestone = redmine_issue.fixed_version.name
+            milestone_id = redmine_issue.fixed_version.id
+            stats[f"milestone_{milestone}"].append(issue)
+        except ResourceAttrError:
+            stats["without_milestone"].append(issue)
+    if milestone_id is not None:
+        milestone_url = f"RedmineMilestone: {REDMINE_URL}/versions/{milestone_id}.json\n[noissue]"
 
     print(f"\n\nRedmine stats: {json.dumps(stats, indent=2)}")
     error_messages = []
