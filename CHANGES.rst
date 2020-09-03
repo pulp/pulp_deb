@@ -11,6 +11,19 @@ Changelog
 
 .. towncrier release notes start
 
+2.6.1 (2020-09-03)
+==================
+
+Misc
+----
+
+- Dropped the beta status of the plugin. The plugin is now GA!
+  `#6999 <https://pulp.plan.io/issues/6999>`_
+
+
+----
+
+
 2.6.0b1 (2020-09-01)
 ====================
 
