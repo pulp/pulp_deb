@@ -22,5 +22,6 @@ Table of Contents
    workflows
    rest_api
    bindings
-   changes
+   plugin_maintenance
    contributing
+   changes
