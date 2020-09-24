@@ -22,9 +22,11 @@ plugin_dash: pulp-deb
 plugin_dash_short: deb
 plugin_name: pulp_deb
 plugin_snake: pulp_deb
+publish_docs_to_pulpprojectdotorg: false
 pulp_settings: null
 pulpcore_branch: master
 pulpcore_pip_version_specifier: null
+pulpprojectdotorg_key_id: null
 pydocstyle: true
 pypi_username: pulp
 redmine_project: pulp_deb
