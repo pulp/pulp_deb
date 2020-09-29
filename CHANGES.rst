@@ -11,6 +11,15 @@ Changelog
 
 .. towncrier release notes start
 
+2.7.0 (2020-09-29)
+==================
+
+Compatible with: ``pulpcore>=3.7,<3.9``
+
+
+----
+
+
 2.6.1 (2020-09-03)
 ==================
 
