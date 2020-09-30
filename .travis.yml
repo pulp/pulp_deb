@@ -67,6 +67,16 @@ jobs:
       env:
         - TEST=bindings
       if: tag IS present
+    - stage: publish-tagged-docs
+      script: bash .travis/publish_docs.sh tag
+      env:
+        - TEST=docs
+      if: tag IS present
+    - stage: publish-continuous-docs
+      script: bash .travis/publish_docs.sh nightly
+      env:
+        - TEST=docs
+      if: type != pull_request AND repo = pulp/pulp_deb AND branch = master
     - stage: update-redmine
       before_install: skip
       install: skip
