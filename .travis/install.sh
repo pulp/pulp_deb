@@ -91,5 +91,20 @@ if [[ "$TEST" == "pulp" || "$TEST" == "performance" || "$TEST" == "s3" ]]; then
     env: {BASE_URL: "http://pulp-fixtures"}' vars/main.yaml
 fi
 
+if [ "$TEST" = "s3" ]; then
+  export MINIO_ACCESS_KEY=AKIAIT2Z5TDYPX3ARJBA
+  export MINIO_SECRET_KEY=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
+  sed -i -e '/^services:/a \
+  - name: minio\
+    image: minio/minio\
+    env:\
+      MINIO_ACCESS_KEY: "'$MINIO_ACCESS_KEY'"\
+      MINIO_SECRET_KEY: "'$MINIO_SECRET_KEY'"\
+    command: "server /data"' vars/main.yaml
+  sed -i -e '$a s3_test: true\
+minio_access_key: "'$MINIO_ACCESS_KEY'"\
+minio_secret_key: "'$MINIO_SECRET_KEY'"' vars/main.yaml
+fi
+
 ansible-playbook build_container.yaml
 ansible-playbook start_container.yaml

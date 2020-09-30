@@ -33,7 +33,7 @@ redmine_project: pulp_deb
 stable_branch: null
 test_bindings: false
 test_performance: false
-test_s3: false
+test_s3: true
 travis_addtl_services: []
 travis_notifications: None
 update_redmine: true
