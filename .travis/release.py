@@ -15,6 +15,7 @@ from pathlib import Path
 from git import Repo
 from redminelib import Redmine
 from redminelib.exceptions import ResourceAttrError
+from sh import sed
 
 
 REDMINE_URL = "https://pulp.plan.io"
@@ -136,21 +137,30 @@ git = repo.git
 git.checkout("HEAD", b=f"release_{release_version}")
 
 # First commit: changelog
+if "pulpcore" not in release_path:
+    pulpcore_requirement = f"pulpcore>={lower_pulpcore_version},<{upper_pulpcore_version}"
+    sed(
+        "-i",
+        f"s/pulpcore_requirement_placeholder/Compatible with: ``{pulpcore_requirement}``/",
+        f"{plugin_path}/CHANGES/.TEMPLATE.rst",
+    )
 os.system(f"towncrier --yes --version {release_version}")
+sed(
+    "-i",
+    "s/Compatible with.*/pulpcore_requirement_placeholder/",
+    f"{plugin_path}/CHANGES/.TEMPLATE.rst",
+)
 git.add("CHANGES.rst")
 git.add("CHANGES/*")
 git.commit("-m", f"Building changelog for {release_version}\n\n[noissue]")
 
 # Second commit: release version
-with open(f"{plugin_path}/requirements.txt", "rt") as setup_file:
-    setup_lines = setup_file.readlines()
-
-with open(f"{plugin_path}/requirements.txt", "wt") as setup_file:
-    for line in setup_lines:
-        if "pulpcore" in line and "pulpcore" not in release_path:
-            line = f"pulpcore>={lower_pulpcore_version},<{upper_pulpcore_version}\n"
-
-        setup_file.write(line)
+if "pulpcore" not in release_path:
+    sed(
+        "-i",
+        f"s/pulpcore.*/{pulpcore_requirement}/",
+        f"{plugin_path}/requirements.txt",
+    )
 
 os.system("bump2version release --allow-dirty")
 
@@ -166,13 +176,10 @@ sha = repo.head.object.hexsha
 short_sha = git.rev_parse(sha, short=7)
 
 # Third commit: bump to .dev
-with open(f"{plugin_path}/requirements.txt", "wt") as setup_file:
-    for line in setup_lines:
-        if "pulpcore" in line and "pulpcore" not in release_path and release_type != "patch":
-            line = f"pulpcore>={lower_pulpcore_version}\n"
-
-        setup_file.write(line)
-
+if "pulpcore" not in release_path:
+    sed(
+        "-i", f"s/pulpcore.*/pulpcore>={lower_pulpcore_version}/", f"{plugin_path}/requirements.txt"
+    )
 os.system(f"bump2version {release_type} --allow-dirty")
 
 version = {}

@@ -1,4 +1,5 @@
 bump2version
 gitpython
 python-redmine
+sh
 towncrier
