@@ -18,6 +18,7 @@ env:
   matrix:
     - TEST=pulp
     - TEST=docs
+    - TEST=s3
 services:
   - docker
 addons:

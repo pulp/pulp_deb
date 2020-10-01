@@ -1,6 +1,6 @@
 set -euv
 
-if [ "$TEST" = "pulp" ] || [ "$TEST" = "performance" ]
+if [ "$TEST" = "pulp" ] || [ "$TEST" = "performance" ] || [ "$TEST" = "s3" ]
 then
   # Add signing service script and setup script:
   cat pulp_deb/tests/functional/sign_deb_release.sh | cmd_stdin_prefix bash -c "cat > /root/sign_deb_release.sh"
