@@ -56,6 +56,8 @@ class GenericContentUnitTestCase(unittest.TestCase):
     def test_01_create_content_unit(self):
         """Create content unit."""
         attrs = self.gen_content_attrs(self.artifact)
+        print(self.artifact)
+        print(attrs)
         response = self.content_api.create(**attrs)
         created_resources = monitor_task(response.task)
         content_unit = self.content_api.read(created_resources[0])

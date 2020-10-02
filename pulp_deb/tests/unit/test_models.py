@@ -64,6 +64,7 @@ class TestPackage(TestCase):
             "joetunn"
         )
         self.assertEqual(package_dict["package"], self.package1.package)
+        self.assertEqual(package_dict["package-type"], self.package1.package_type)
         self.assertEqual(package_dict["version"], self.package1.version)
         self.assertEqual(package_dict["architecture"], self.package1.architecture)
         self.assertEqual(package_dict["maintainer"], self.package1.maintainer)
