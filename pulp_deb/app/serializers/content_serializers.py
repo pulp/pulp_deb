@@ -475,6 +475,9 @@ class PackageSerializer(BasePackageSerializer):
         """Validate for 'normal' Package (not installer)."""
         data = super().deferred_validate(data)
 
+        print("package-type : {}".format(data.get("package_type")))
+        print("data: {}".format(data))
+
         if data.get("section") == "debian-installer" or data.get("package_type") != "deb":
             raise ValidationError(_("Not a valid Deb Package"))
 
