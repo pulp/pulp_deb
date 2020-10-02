@@ -45,6 +45,7 @@ class PackageFilter(ContentFilter):
         model = models.Package
         fields = [
             "package",
+            "package_type",
             "source",
             "version",
             "architecture",
@@ -88,6 +89,7 @@ class InstallerPackageFilter(ContentFilter):
         model = models.InstallerPackage
         fields = [
             "package",
+            "package_type",
             "source",
             "version",
             "architecture",
@@ -133,6 +135,7 @@ class DebugPackageFilter(ContentFilter):
         model = models.DebugPackage
         fields = [
             "package",
+            "package_type",
             "source",
             "version",
             "architecture",
