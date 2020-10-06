@@ -6,6 +6,8 @@ SPHINXOPTS    = -W -n
 SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = _build
+DIAGRAM_BUILD_DIR    = _diagrams
+DIAGRAM_SOURCE_DIR    = diagrams_src
 PULP_URL      = "http://localhost:24817"
 
 # Internal variables.
@@ -41,6 +43,17 @@ help:
 
 clean:
 	-rm -rf $(BUILDDIR)/*
+
+diagrams:
+ifneq ($(wildcard $(DIAGRAM_SOURCE_DIR)), )
+	mkdir -p $(DIAGRAM_BUILD_DIR)
+	python3 -m plantuml diagrams_src/*.dot
+	# cp + rm = mv  workaround https://pulp.plan.io/issues/4791#note-3
+	cp diagrams_src/*.png $(DIAGRAM_BUILD_DIR)/
+	rm diagrams_src/*.png
+else
+	@echo "Did not find diagrams_src."
+endif
 
 html:
 	curl -o _static/api.json "$(PULP_URL)/pulp/api/v3/docs/api.json?plugin=pulp_deb"
