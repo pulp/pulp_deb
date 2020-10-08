@@ -6,6 +6,8 @@
    https://docs.pulpproject.org/workflows/upload-publish.html
 .. _pulpcore installation:
    https://docs.pulpproject.org/installation/index.html
+.. _pulpcore plugin API deprecation policy:
+   https://docs.pulpproject.org/pulpcore/plugins/plugin-writer/concepts/index.html#plugin-api-stability-and-deprecation-policy
 .. _pulp_deb milestone:
    https://pulp.plan.io/projects/pulp_deb/roadmap
 .. _pulpcore release guide:

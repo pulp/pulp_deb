@@ -126,11 +126,18 @@ For a ``Y`` release, perform the following steps (the example assumes we are rel
    .. code-block:: none
 
       workon pulp_release
-      python .travis/release.py minor --lower 3.6 --upper 3.7
+      python .travis/release.py minor --lower 3.6 --upper 3.8
 
    The ``--lower`` and ``--upper`` parameters give the pulpcore version range that the release should be compatible with.
-   Currently, each release is pegged to exactly one pulpcore-``Y`` release.
-   This is due to change with the pulpcore ``3.7`` release.
+   The example would result in a declared compatibility range of ``pulpcore>=3.6,<3.8``.
+   That is, for all pulpcore ``3.6.*`` and ``3.7.*`` releases.
+
+   .. note::
+      pulpcore will introduce breaking changes to the plugin API over a cycle of two ``Y`` releases.
+      Affected functions will be deprecated in some ``Y`` release, but only be removed with the next ``Y`` release after that.
+      As a result, if we are releasing for the pulpcore ``3.6`` release, it should be safe to declare a lower bound of ``3.6``,
+      and an upper bound of ``3.8``, so long as we are no longer dependent on any deprecations announced with the pulpcore ``3.6`` release.
+      See `pulpcore plugin API deprecation policy`_ for more information.
 
 #. Create a PR for the ``release_2.6.0`` branch generated in step 2.
 #. Review and merge the PR to ``master``.
@@ -157,7 +164,7 @@ For a ``Z`` release, perform the following steps (the example assumes we are rel
    .. code-block:: none
 
       workon pulp_release
-      python .travis/release.py patch --lower 3.6 --upper 3.7
+      python .travis/release.py patch --lower 3.6 --upper 3.8
 
    The ``--lower`` and ``--upper`` parameters give the pulpcore version range that the release should be compatible with.
    For the release script to do the right thing, they need to be provided, even if they should not change for the ``Z`` release.
@@ -188,17 +195,22 @@ Example announcement email:
    Subject: pulp_deb 2.6.1 released
 
    pulp_deb version 2.6.1 [0] has been released.
+   Compatible with: pulpcore>=3.6,<3.8 [1].
 
-   Have a look at the release notes [1] for changes.
-   This version of the plugin is compatible with pulpcore version 3.6 [2].
+   Have a look at the release notes [2] for changes.
    You can check the known issues [3] (and open new ones).
 
-   [0] https://pypi.org/project/pulp-deb/2.6.0/
-   [1] https://pulp-deb.readthedocs.io/en/latest/changes.html#b1-2020-09-01
-   [2] https://www.redhat.com/archives/pulp-list/2020-August/msg00008.html
-   [3] https://pulp.plan.io/projects/pulp_deb/issues
+   The Python client package (contains Python API bindings) may be found here [4].
+   The Ruby client gem (contains Ruby API bindings) may be found here [5].
 
-   kind regards,
+   [0] https://pypi.org/project/pulp-deb/2.6.1/
+   [1] https://www.redhat.com/archives/pulp-list/2020-August/msg00008.html
+   [2] https://pulp-deb.readthedocs.io/en/latest/changes.html#b1-2020-09-01
+   [3] https://pulp.plan.io/projects/pulp_deb/issues
+   [4] https://pypi.org/project/pulp-deb-client/2.6.1/
+   [5] https://rubygems.org/gems/pulp_deb_client/versions/2.6.1
+
+   Kind regards,
    Quirin Pamp (quba42)
 
 Feel free to add additional highlights from the release.
