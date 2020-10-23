@@ -40,6 +40,17 @@ class AptRemoteSerializer(RemoteSerializer):
         allow_null=True,
     )
 
+    ignore_missing_package_indices = BooleanField(
+        help_text="By default, upstream repositories that declare architectures "
+        "and corresponding package indices in their Release files without "
+        "actually publishing them, will fail to synchronize.\n"
+        'Set this flag to True to allow the synchronization of such "partial mirrors" '
+        "instead.\n"
+        "Alternatively, you could make your remote filter by architectures for "
+        "which the upstream repository does have indices.",
+        required=False,
+    )
+
     policy = ChoiceField(
         help_text="The policy to use when downloading content. The possible values include: "
         "'immediate', 'on_demand', and 'streamed'. 'immediate' is the default.",
@@ -56,5 +67,6 @@ class AptRemoteSerializer(RemoteSerializer):
             "sync_udebs",
             "sync_installer",
             "gpgkey",
+            "ignore_missing_package_indices",
         )
         model = AptRemote

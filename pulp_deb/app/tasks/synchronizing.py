@@ -281,15 +281,16 @@ class DebUpdatePackageIndexAttributes(Stage):  # TODO: Needs a new name
         with ProgressReport(message="Update PackageIndex units", code="update.packageindex") as pb:
             async for d_content in self.items():
                 if isinstance(d_content.content, PackageIndex):
-                    relative_dir = os.path.dirname(d_content.content.relative_path)
                     if not d_content.d_artifacts:
-                        raise NoPackageIndexFile(relative_dir=relative_dir)
-
+                        d_content.content = None
+                        d_content.resolve()
+                        continue
                     content = d_content.content
                     if not [
                         da for da in d_content.d_artifacts if da.artifact.sha256 == content.sha256
                     ]:
                         # No main_artifact found, uncompress one
+                        relative_dir = os.path.dirname(d_content.content.relative_path)
                         filename = _uncompress_artifact(d_content.d_artifacts, relative_dir)
                         da = DeclarativeArtifact(
                             Artifact.init_and_validate(
@@ -523,6 +524,13 @@ class DebFirstStage(Stage):
         package_index = await self._create_unit(
             DeclarativeContent(content=content_unit, d_artifacts=d_artifacts)
         )
+        if not package_index:
+            if self.remote.ignore_missing_package_indices:
+                log.info(f"No packages index for architecture {architecture}. Skipping.")
+                return
+            else:
+                relative_dir = os.path.join(release_base_path, package_index_dir)
+                raise NoPackageIndexFile(relative_dir=relative_dir)
         # Interpret policy to download Artifacts or not
         deferred_download = self.remote.policy != Remote.IMMEDIATE
         # parse package_index
