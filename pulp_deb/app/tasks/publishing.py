@@ -172,7 +172,7 @@ class _ComponentHelper:
         for architecture in self.parent.architectures:
             package_index_path = os.path.join(
                 "dists",
-                self.parent.distribution,
+                self.parent.distribution.strip("/"),
                 self.plain_component,
                 "binary-{}".format(architecture),
                 "Packages",
@@ -276,7 +276,7 @@ class _ReleaseHelper:
             component.finish()
         # Publish Release file
         self.release["Components"] = " ".join(self.components.keys())
-        release_dir = os.path.join("dists", self.distribution)
+        release_dir = os.path.join("dists", self.distribution.strip("/"))
         release_path = os.path.join(release_dir, "Release")
         os.makedirs(os.path.dirname(release_path), exist_ok=True)
         with open(release_path, "wb") as release_file:
