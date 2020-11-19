@@ -1,5 +1,7 @@
 .. _pulpcore documentation:
    https://docs.pulpproject.org
+.. _flat repository format:
+   https://wiki.debian.org/DebianRepository/Format#Flat_Repository_Format
 .. _pulpcore metadata signing docs:
    https://docs.pulpproject.org/workflows/signed-metadata.html
 .. _pulpcore upload documentation:

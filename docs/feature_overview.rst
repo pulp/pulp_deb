@@ -36,6 +36,7 @@ Repository Synchronization
 Synchronizing upstream repositories is one of two ways to obtain content for the ``pulp_deb`` plugin.
 See :ref:`package uploads <package_uploads>` for the other.
 The aim is for the plugin to be able to synchronize (and publish) arbitrary (valid) APT repositories.
+This also includes repositories using `flat repository format`_.
 
 When synchronizing an upstream repository, only :ref:`content types <content_types>` supported by the ``pulp_deb`` plugin are downloaded.
 Source packages, for example, are currently unsupported.

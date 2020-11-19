@@ -409,10 +409,14 @@ class DebFirstStage(Stage):
     async def _handle_distribution(self, distribution):
         log.info('Downloading Release file for distribution: "{}"'.format(distribution))
         # Create release_file
+        if distribution[-1] == "/":
+            release_file_dir = distribution.strip("/")
+        else:
+            release_file_dir = os.path.join("dists", distribution)
         release_file_dc = DeclarativeContent(
             content=ReleaseFile(distribution=distribution),
             d_artifacts=[
-                self._to_d_artifact(os.path.join("dists", distribution, filename))
+                self._to_d_artifact(os.path.join(release_file_dir, filename))
                 for filename in ["Release", "InRelease", "Release.gpg"]
             ],
         )
@@ -432,7 +436,11 @@ class DebFirstStage(Stage):
             )
             await self.put(release_architecture_dc)
         # Parse release file
-        log.info('Parsing Release file for release: "{}"'.format(release_file.codename))
+        log.info(
+            'Parsing Release file for release with codename="{}" and distribution="{}"'.format(
+                release_file.codename, distribution
+            )
+        )
         release_file_dict = deb822.Release(release_file.main_artifact.file)
         # collect file references in new dict
         file_references = defaultdict(deb822.Deb822Dict)
@@ -501,9 +509,13 @@ class DebFirstStage(Stage):
     ):
         # Create package_index
         release_base_path = os.path.dirname(release_file.relative_path)
-        package_index_dir = os.path.join(
-            release_component.plain_component, infix, "binary-{}".format(architecture)
-        )
+        if release_file.distribution[-1] == "/":
+            # Flat repo format
+            package_index_dir = ""
+        else:
+            package_index_dir = os.path.join(
+                release_component.plain_component, infix, "binary-{}".format(architecture)
+            )
         d_artifacts = []
         for filename in ["Packages", "Packages.gz", "Packages.xz", "Release"]:
             path = os.path.join(package_index_dir, filename)
@@ -537,7 +549,7 @@ class DebFirstStage(Stage):
         package_futures = []
         for package_paragraph in deb822.Packages.iter_paragraphs(package_index.main_artifact.file):
             try:
-                package_relpath = package_paragraph["Filename"]
+                package_relpath = os.path.normpath(package_paragraph["Filename"])
                 package_sha256 = package_paragraph["sha256"]
                 if package_relpath.endswith(".deb"):
                     package_class = Package

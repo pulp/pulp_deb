@@ -73,6 +73,11 @@ This will return a ``201 Created`` response:
        "username": null
    }
 
+.. important::
+   When trying to synchronize a remote repository using `flat repository format`_, any distributions provided must end with ``/``.
+   Conversely, a distribution string provided for a repository not using flat repository format must not end with ``/``!
+   It is not recommended to provide more than one distribution when synchronizing a flat repository.
+
 
 Sync Repository with Remote
 --------------------------------------------------------------------------------

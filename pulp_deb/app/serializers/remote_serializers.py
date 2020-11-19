@@ -12,18 +12,31 @@ class AptRemoteSerializer(RemoteSerializer):
     """
 
     distributions = CharField(
-        help_text="Whitespace separated list of distributions to sync",
+        help_text="Whitespace separated list of distributions to sync.\n"
+        'The distribution is the path from the repository root to the "Release" '
+        "file you want to access. This is often, but not always, equal to either "
+        "the codename or the suite of the release you want to sync. If the "
+        'repository you are trying to sync uses "flat repository format", the '
+        'distribution must end with a "/". Based on "/etc/apt/sources.list" syntax.',
         required=True,
     )
 
     components = CharField(
-        help_text="Whitespace separatet list of components to sync",
+        help_text="Whitespace separatet list of components to sync.\n"
+        "If none are supplied, all that are available will be synchronized. "
+        'Leave blank for repositores using "flat repository format".',
         required=False,
         allow_null=True,
     )
 
     architectures = CharField(
-        help_text="Whitespace separated list of architectures to sync",
+        help_text="Whitespace separated list of architectures to sync\n"
+        "If none are supplied, all that are available will be synchronized. "
+        "A list of valid architecture specification strings can be found by running "
+        '"dpkg-architecture -L". A sync will download the intersection of the list '
+        "of architectures provided via this field and those provided by the relevant "
+        '"Release" file. Architecture="all" is always synchronized and does not need '
+        "to be provided here.",
         required=False,
         allow_null=True,
     )
