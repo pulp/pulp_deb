@@ -14,6 +14,8 @@ if __name__ == "__main__":
         print("Usage: {} <path_to_signing_script>".format(sys.argv[0]))
         sys.exit(1)
 
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
+
     import django
 
     django.setup()
