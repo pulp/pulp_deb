@@ -257,7 +257,6 @@ class DebUpdateReleaseFileAttributes(Stage):
                     release_file.codename = release_file_dict["Codename"]
                     if "suite" in release_file_dict:
                         release_file.suite = release_file_dict.get("Suite")
-                    # TODO split of extra stuff e.g. : 'updates/main' -> 'main'
                     release_file.components = release_file_dict["Components"]
                     release_file.architectures = release_file_dict["Architectures"]
                     log.debug("Codename: {}".format(release_file.codename))
