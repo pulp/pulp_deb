@@ -98,12 +98,12 @@ class ReleaseFileSerializer(MultipleArtifactContentSerializer):
     A serializer for ReleaseFile.
     """
 
-    codename = CharField(help_text='Codename of the release, i.e. "buster".', required=True)
+    codename = CharField(help_text='Codename of the release, i.e. "buster".', required=False)
 
     suite = CharField(help_text='Suite of the release, i.e. "stable".', required=False)
 
     distribution = CharField(
-        help_text='Distribution of the release, i.e. "stable/updates".', required=False
+        help_text='Distribution of the release, i.e. "stable/updates".', required=True
     )
 
     relative_path = CharField(help_text="Path of file relative to url.", required=False)
