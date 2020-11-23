@@ -237,7 +237,7 @@ class _ReleaseHelper:
         if suite:
             self.release["Suite"] = suite
         self.release["Version"] = version
-        self.release["Codename"] = codename
+        self.release["Codename"] = codename or distribution.split("/")[0]
         self.release["Date"] = datetime.now(tz=timezone.utc).strftime("%a, %d %b %Y %H:%M:%S %z")
         self.release["Architectures"] = " ".join(architectures)
         self.release["Components"] = ""  # Will be set later
