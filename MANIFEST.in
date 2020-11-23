@@ -1,3 +1,9 @@
+include CHANGES.rst
+include COMMITMENT
+include COPYRIGHT
+include functest_requirements.txt
 include LICENSE
-include requirements.txt
+include pulp_deb/tests/functional/sign_deb_release.sh
 include pyproject.toml
+include requirements.txt
+include unittest_requirements.txt
