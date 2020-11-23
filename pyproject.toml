@@ -43,6 +43,22 @@ issue_format = "`#{issue} <https://pulp.plan.io/issues/{issue}>`_"
         name = "Misc"
         showcontent = true
 
+[tool.check-manifest]
+ignore = [
+    ".bumpversion.cfg",
+    "CHANGES/**",
+    "CONTRIBUTING.rst",
+    "dev_requirements.txt",
+    "doc_requirements.txt",
+    "docs/**",
+    "flake8.cfg",
+    "template_config.yml",
+    ".pep8speaks.yml",
+    ".travis/**",
+    ".travis.yml",
+    ".ci/**",
+    ".github/**",
+]
 
 [tool.black]
 line-length = 100
