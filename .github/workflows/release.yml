@@ -5,20 +5,69 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 ---
-name: Pulp Release CD
+name: Pulp Release CI/CD
 on:
-  release:
-    types: [created]
+  push:
+    tags:
+      - '*'
 
 jobs:
-  pulp:
+  test:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:9.6
-      redis:
-        image: redis
+    strategy:
+      fail-fast: false
+      matrix:
+        env:
+          - TEST: pulp
+          - TEST: docs
+          - TEST: s3
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # by default, it uses a depth of 1
+          # this fetches all history so that we can read each commit
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.7"
+
+      - name: Install httpie
+        run: |
+          echo ::group::HTTPIE
+          sudo apt-get update -yq
+          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
+          echo ::endgroup::
+          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
+          echo "TEST=${{ matrix.env.TEST }}" >> $GITHUB_ENV
+
+      - name: Before Install
+        run: .github/workflows/scripts/before_install.sh
+        shell: bash
+
+      - name: Install
+        run: .github/workflows/scripts/install.sh
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+        shell: bash
+
+      - name: Before Script
+        run: |
+          .github/workflows/scripts/before_script.sh
+
+      - name: Script
+        run: .github/workflows/scripts/script.sh
+        shell: bash
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: test
+
+    env:
+      TEST: publish
 
     steps:
       - uses: actions/checkout@v2
@@ -41,7 +90,13 @@ jobs:
           sudo apt-get update -yq
           sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
           echo ::endgroup::
-          echo "TEST=bindings" >> $GITHUB_ENV
+          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
+
+      - name: Install python dependencies
+        run: |
+          echo ::group::PYDEPS
+          pip install wheel
+          echo ::endgroup::
 
       - name: Before Install
         run: .github/workflows/scripts/before_install.sh
@@ -57,11 +112,7 @@ jobs:
       - name: Before Script
         run: |
           .github/workflows/scripts/before_script.sh
-          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.github/workflows/" >> $GITHUB_ENV
-
-      - name: Script
-        run: .github/workflows/scripts/script.sh
-        shell: bash
+          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
       - name: Deploy plugin to pypi
         env:
           PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
@@ -75,11 +126,14 @@ jobs:
           PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: bash .ci/scripts/publish_client_pypi.sh
       - name: Publish docs to pulpproject.org
-        run: bash .ci/scripts/publish_docs.sh tag $BRANCH
-      env:
-          - BRANCH=${GITHUB_REF##*/}
+        env:
+          BRANCH: ${GITHUB_REF#refs/{heads,tags}/}
+          PULP_DOCS_KEY: ${{ secrets.PULP_DOCS_KEY }}
+        run: .ci/scripts/publish_docs.sh tag $BRANCH
       - name: Update Redmine
         run: bash .ci/scripts/update_redmine.sh
+        env:
+          REDMINE_API_KEY: ${{ secrets.REDMINE_API_KEY }}
 
       - name: After failure
         if: failure()
