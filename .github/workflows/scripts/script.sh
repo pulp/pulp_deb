@@ -51,9 +51,9 @@ pip install ./pulp_deb-client
 cd $REPO_ROOT
 
 if [[ "$TEST" = 'bindings' || "$TEST" = 'publish' ]]; then
-  python $REPO_ROOT/.github/workflows/scripts/test_bindings.py
+  python $REPO_ROOT/.ci/assets/bindings/test_bindings.py
   cd ../pulp-openapi-generator
-  if [ ! -f $REPO_ROOT/.github/workflows/scripts/test_bindings.rb ]
+  if [ ! -f $REPO_ROOT/.ci/assets/bindings/test_bindings.rb ]
   then
     exit
   fi
@@ -73,7 +73,7 @@ if [[ "$TEST" = 'bindings' || "$TEST" = 'publish' ]]; then
   gem build pulp_deb_client
   gem install --both ./pulp_deb_client-0.gem
   cd ..
-  ruby $REPO_ROOT/.github/workflows/test_bindings.rb
+  ruby $REPO_ROOT/.ci/assets/bindings/test_bindings.rb
   exit
 fi
 
