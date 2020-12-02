@@ -55,11 +55,11 @@ To generate an up to date ``template_config.yml`` file in the base of the ``pulp
 
 You can adjust the configuration in the ``template_config.yml`` file to affect the other plugin template commands.
 
-In order to apply the latest Travis pipeline changes use:
+In order to apply the latest GitHub actions pipeline changes use:
 
 .. code-block:: none
 
-   ./plugin-template --travis pulp_deb
+   ./plugin-template --github pulp_deb
 
 In order to apply a full plugin skeleton from the plugin template use:
 
@@ -84,16 +84,19 @@ It may need to be amended to reflect changes in the release process for pulpcore
    Client packages based on the latest plugin master branch are also released daily.
    See the :ref:`plugin template <using_the_plugin_template>` and the ``template_config.yml`` file for more information on those independent releases.
 
+.. note::
+   While a lot of the preparation can be performed without any privileged access (simply by opening PRs), some release steps require merge/push rights on the upstream ``pulp_deb`` repository.
+
 
 Preparing the Release Environment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. important::
-   The release process uses the release script at ``.travis/release.py``.
+   The release process uses the release script at ``.ci/scripts/release.py``.
    Before performing a major release, it may be worth checking if the :ref:`plugin template <using_the_plugin_template>` has new changes for this script.
 
-Creating a release uses the ``.travis/release.py`` python script.
-Running this script locally, requires the python dependencies from ``.travis/release_requirements.txt``.
+Creating a release uses the ``.ci/scripts/release.py`` python script.
+Running this script locally, requires the python dependencies from ``.ci/scripts/release_requirements.txt``.
 
 Since the script will be creating commits, you should run it somewhere with a configured Git identity (i.e. not from within a ``pulplift`` development box).
 As a result, a local python virtual environment is recommended.
@@ -101,83 +104,91 @@ This can be created as follows:
 
 .. code-block:: none
 
-   mkvirtualenv -r .travis/release_requirements.txt pulp_release
+   mkvirtualenv -r .ci/scripts/release_requirements.txt pulp_release
 
 You can then reenter this venv later using ``workon pulp_release``.
 
 
-Release Steps
+X and Y Release Steps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. note::
-   As one might expect, various release steps require merge/push rights on the ``pulp_deb`` repository.
-   However, a lot of the preparation can be performed by opening the relevant PRs.
+For a ``X`` or a ``Y`` release, perform the following steps (the example assumes we are releasing version ``2.8.0``, at a time when the latest pulpcore release is one of ``3.8.*``):
 
-For a ``Y`` release, perform the following steps (the example assumes we are releasing version ``2.6.0``):
-
-#. Ensure the ``2.6.0``  `pulp_deb milestone`_ exists and contains the correct issues.
+#. Ensure the ``2.8.0``  `pulp_deb milestone`_ exists and contains the correct issues.
 
    .. note::
       You can double check this one more time after step 2.
-      The ``Releasing 2.6.0`` commit from step 2 provides a redmine query for all issues that should be in the milestone.
+      The ``Releasing 2.8.0`` commit from step 2 provides a redmine query for all issues that should be in the milestone.
 
-#. Run the following commands to generate the ``release_2.6.0`` branch (with commits):
+#. Run the following commands to generate the ``release_2.8.0`` branch (with commits):
 
    .. code-block:: none
 
       workon pulp_release
-      python .travis/release.py minor --lower 3.6 --upper 3.8
+      python .ci/scripts/release.py minor --lower 3.7 --upper 3.10
 
    The ``--lower`` and ``--upper`` parameters give the pulpcore version range that the release should be compatible with.
-   The example would result in a declared compatibility range of ``pulpcore>=3.6,<3.8``.
-   That is, for all pulpcore ``3.6.*`` and ``3.7.*`` releases.
+   The example would result in a declared compatibility range of ``pulpcore>=3.7,<3.10``.
+   That is, for pulpcore ``3.7.*``, ``3.8.*``, and ``3.9.*``.
 
    .. note::
       pulpcore will introduce breaking changes to the plugin API over a cycle of two ``Y`` releases.
-      Affected functions will be deprecated in some ``Y`` release, but only be removed with the next ``Y`` release after that.
-      As a result, if we are releasing for the pulpcore ``3.6`` release, it should be safe to declare a lower bound of ``3.6``,
-      and an upper bound of ``3.8``, so long as we are no longer dependent on any deprecations announced with the pulpcore ``3.6`` release.
+      Affected functions will be deprecated in some ``Y`` release, but will only be removed with the next ``Y`` release after that.
+      As a result, if we are releasing for the pulpcore ``3.8`` release, it should be safe to declare an upper bound of strictly smaller than ``3.10`` (up to and including ``3.9.*``).
+      This presupposes that we have already removed any dependencies on any deprecations announced for pulpcore ``3.8``.
       See `pulpcore plugin API deprecation policy`_ for more information.
 
-#. Create a PR for the ``release_2.6.0`` branch generated in step 2.
-#. Review and merge the PR to ``master``.
-#. Create and push the ``2.6`` release branch (with the ``Releasing 2.6.0`` commit checked out).
-#. On the ``2.6`` release branch, manually bump the version from ``2.6.0`` to ``2.6.1.dev`` in ``.bumpversion.cfg``, ``pulp_deb/__init__.py``, and  ``setup.py``.
-   The commit message should be ``Bump to 2.6.1.dev``.
+      The lower bound should be changed directly in master whenever some change actually requires a newer pulpcore version.
+      Therefore it should not normally be necessary to raise this at release time (beyond what it already was in master).
+
+#. Create a PR for the ``release_2.8.0`` branch generated in step 2.
+#. Review and merge the PR to ``master`` (make sure the tests on ``master`` turn green post merge).
+#. Create the ``2.8`` release branch (with the ``Releasing 2.8.0`` commit checked out).
+   The branch needs to be pushed directly into the upstream repository.
+#. On the ``2.8`` release branch, manually bump the version from ``2.8.0`` to ``2.8.1.dev`` in ``.bumpversion.cfg``, ``pulp_deb/__init__.py``, and  ``setup.py``.
+   The commit message should be ``Bump to 2.8.1.dev``.
    This is for the benefit of any future ``Z`` releases on this branch.
-   Don't forget to push.
-#. Trigger the release by creating and pushing the ``2.6.0`` release tag at the ``Releasing 2.6.0`` commit.
-#. Check the `pulp_deb travis build page`_, the `pulp_deb python package`_, the `pulp-deb-client package`_, and the `pulp_deb_client Ruby Gem`_ to see if everything has released correctly.
-#. Finally, send a release announcement to the ``pulp-list`` mailing list.
-   See :ref:`release announcements <release_announcements>` for more information.
+   Don't forget to push (and make sure the tests turn green for the branch).
+#. Trigger the release by creating and pushing the ``2.8.0`` release tag at the ``Releasing 2.8.0`` commit.
+#. Check the `pulp_deb GitHub actions pipelines`_, the `pulp_deb python package`_, the `pulp-deb-client package`_, and the `pulp_deb_client Ruby Gem`_ to see if everything has released correctly.
+   Also check the :ref:`changelog <changelog>` of this documentation to make sure it was also updated.
+#. Finally, send a release announcement to the `Pulp project mailing list`_.
+   See :ref:`release announcements <release_announcements>` below.
+#. If needed, also update this release documentation post release.
 
-For a ``Z`` release, perform the following steps (the example assumes we are releasing version ``2.6.1``):
 
-#. Ensure the ``2.6.1``  `pulp_deb milestone`_ exists and contains the correct issues.
+Z Release Steps
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For a ``Z`` release, perform the following steps (the example assumes we are releasing version ``2.8.1``):
+
+#. Ensure the ``2.8.1``  `pulp_deb milestone`_ exists and contains the correct issues.
 
    .. note::
       You can double check this one more time after step 2.
-      The ``Releasing 2.6.1`` commit from step 2 provides a redmine query for all issues that should be in the milestone.
+      The ``Releasing 2.8.1`` commit from step 2 provides a redmine query for all issues that should be in the milestone.
 
-#. Run the following commands to generate the ``release_2.6.1`` branch (with commits):
+#. Run the following commands to generate the ``release_2.8.1`` branch (with commits):
 
    .. code-block:: none
 
       workon pulp_release
-      python .travis/release.py patch --lower 3.6 --upper 3.8
+      python .ci/scripts/release.py patch --lower 3.7 --upper 3.10
 
    The ``--lower`` and ``--upper`` parameters give the pulpcore version range that the release should be compatible with.
-   For the release script to do the right thing, they need to be provided, even if they should not change for the ``Z`` release.
+   For the release script to do the right thing, they need to be provided, even though they should not be changed for ``Z`` releases.
 
-#. Create a PR for the ``release_2.6.1`` branch generated in step 2.
-   It needs to go into the ``2.6`` branch, not ``master``!
+#. Create a PR for the ``release_2.8.1`` branch generated in step 2.
+   It needs to go into the ``2.8`` branch, not ``master``!
 #. Review and merge the PR.
-#. Switch back to ``master``, and ``git cherry-pick -x`` the ``Building changelog for 2.6.1`` commit from the ``2.6`` release branch.
+#. Switch back to ``master``, and ``git cherry-pick -x`` the ``Building changelog for 2.8.1`` commit from the ``2.8`` release branch.
    Push directly to master or create and merge a PR for it.
-#. Trigger the release by creating and pushing the ``2.6.1`` release tag at the ``Releasing 2.6.1`` commit (on the ``2.6`` release branch).
-#. Check the `pulp_deb travis build page`_, the `pulp_deb python package`_, the `pulp-deb-client package`_, and the `pulp_deb_client Ruby Gem`_ to see if everything has released correctly.
-#. Finally, send a release announcement to the ``pulp-list`` mailing list.
-   See :ref:`release announcements <release_announcements>` for more information.
+#. Trigger the release by creating and pushing the ``2.8.1`` release tag at the ``Releasing 2.8.1`` commit (on the ``2.8`` release branch).
+#. Check the `pulp_deb GitHub actions pipelines`_, the `pulp_deb python package`_, the `pulp-deb-client package`_, and the `pulp_deb_client Ruby Gem`_ to see if everything has released correctly.
+   Also check the :ref:`changelog <changelog>` of this documentation to make sure it was also updated.
+#. Finally, send a release announcement to the `Pulp project mailing list`_.
+   See :ref:`release announcements <release_announcements>` below.
+#. If needed, also update this release documentation post release.
 
 
 .. _release_announcements:
@@ -185,32 +196,34 @@ For a ``Z`` release, perform the following steps (the example assumes we are rel
 Release Announcements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``pulp_deb`` releases are announced on the ``pulp-list`` mailing list.
+``pulp_deb`` releases are announced on the `Pulp project mailing list`_.
+Not to be confused with the `Pulp project development mailing list`_.
 
 Example announcement email:
 
 .. code-block:: none
 
    To: pulp-list@redhat.com
-   Subject: pulp_deb 2.6.1 released
+   Subject: pulp_deb 2.8.0 is Generally Available
 
-   pulp_deb version 2.6.1 [0] has been released.
-   Compatible with: pulpcore>=3.6,<3.8 [1].
+   pulp_deb version 2.8.0 [0] has been released.
+   It is compatible with pulpcore 3.7, pulpcore 3.8 [1] and pulpcore 3.9 (not yet released).
 
    Have a look at the release notes [2] for changes.
+   Highlight is the ability to synchronize APT repositories using "flat repository format",
+   as well as repositories that do not publish the Codename field in their metadata.
    You can check the known issues [3] (and open new ones).
 
    The Python client package (contains Python API bindings) may be found here [4].
    The Ruby client gem (contains Ruby API bindings) may be found here [5].
 
-   [0] https://pypi.org/project/pulp-deb/2.6.1/
-   [1] https://www.redhat.com/archives/pulp-list/2020-August/msg00008.html
-   [2] https://pulp-deb.readthedocs.io/en/latest/changes.html#b1-2020-09-01
+   [0] https://pypi.org/project/pulp-deb/2.8.0/
+   [1] https://www.redhat.com/archives/pulp-list/2020-November/msg00004.html
+   [2] https://pulp-deb.readthedocs.io/en/latest/changes.html#id1
    [3] https://pulp.plan.io/projects/pulp_deb/issues
-   [4] https://pypi.org/project/pulp-deb-client/2.6.1/
-   [5] https://rubygems.org/gems/pulp_deb_client/versions/2.6.1
+   [4] https://pypi.org/project/pulp-deb-client/2.8.0/
+   [5] https://rubygems.org/gems/pulp_deb_client/versions/2.8.0/
 
    Kind regards,
    Quirin Pamp (quba42)
-
-Feel free to add additional highlights from the release.
+   Software Engineer, pulp_deb plugin maintainer, ATIX AG
