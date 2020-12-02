@@ -11,6 +11,25 @@ Changelog
 
 .. towncrier release notes start
 
+2.8.0 (2020-11-23)
+==================
+
+Compatible with: ``pulpcore>=3.7,<3.10``
+
+Features
+--------
+
+- Added an ``ignore_missing_package_indices`` flag to remotes which users may set to allow the synchronization of repositories with missing declared package indices.
+  `#7467 <https://pulp.plan.io/issues/7467>`_
+- Added the capability to synchronize repositories using "flat repository format".
+  `#7502 <https://pulp.plan.io/issues/7502>`_
+- Added ability to handle upstream repositories without a "Codename" field.
+  `#7886 <https://pulp.plan.io/issues/7886>`_
+
+
+----
+
+
 2.7.0 (2020-09-29)
 ==================
 
