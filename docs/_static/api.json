@@ -129,27 +129,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "count": {
-                                            "type": "integer",
-                                            "example": 123
-                                        },
-                                        "next": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "previous": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "results": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/deb.GenericContentResponse"
-                                            }
-                                        }
-                                    }
+                                    "$ref": "#/components/schemas/Paginateddeb.GenericContentResponseList"
                                 }
                             }
                         },
@@ -386,27 +366,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "count": {
-                                            "type": "integer",
-                                            "example": 123
-                                        },
-                                        "next": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "previous": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "results": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/deb.InstallerFileIndexResponse"
-                                            }
-                                        }
-                                    }
+                                    "$ref": "#/components/schemas/Paginateddeb.InstallerFileIndexResponseList"
                                 }
                             }
                         },
@@ -450,7 +410,7 @@
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "201": {
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -779,27 +739,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "count": {
-                                            "type": "integer",
-                                            "example": 123
-                                        },
-                                        "next": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "previous": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "results": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/deb.BasePackageResponse"
-                                            }
-                                        }
-                                    }
+                                    "$ref": "#/components/schemas/Paginateddeb.BasePackageResponseList"
                                 }
                             }
                         },
@@ -1036,27 +976,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "count": {
-                                            "type": "integer",
-                                            "example": 123
-                                        },
-                                        "next": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "previous": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "results": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/deb.PackageIndexResponse"
-                                            }
-                                        }
-                                    }
+                                    "$ref": "#/components/schemas/Paginateddeb.PackageIndexResponseList"
                                 }
                             }
                         },
@@ -1100,7 +1020,7 @@
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "201": {
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1280,27 +1200,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "count": {
-                                            "type": "integer",
-                                            "example": 123
-                                        },
-                                        "next": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "previous": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "results": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/deb.PackageReleaseComponentResponse"
-                                            }
-                                        }
-                                    }
+                                    "$ref": "#/components/schemas/Paginateddeb.PackageReleaseComponentResponseList"
                                 }
                             }
                         },
@@ -1344,7 +1244,7 @@
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "201": {
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1682,27 +1582,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "count": {
-                                            "type": "integer",
-                                            "example": 123
-                                        },
-                                        "next": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "previous": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "results": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/deb.BasePackageResponse"
-                                            }
-                                        }
-                                    }
+                                    "$ref": "#/components/schemas/Paginateddeb.BasePackageResponseList"
                                 }
                             }
                         },
@@ -1921,27 +1801,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "count": {
-                                            "type": "integer",
-                                            "example": 123
-                                        },
-                                        "next": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "previous": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "results": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/deb.ReleaseArchitectureResponse"
-                                            }
-                                        }
-                                    }
+                                    "$ref": "#/components/schemas/Paginateddeb.ReleaseArchitectureResponseList"
                                 }
                             }
                         },
@@ -1985,7 +1845,7 @@
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "201": {
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2165,27 +2025,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "count": {
-                                            "type": "integer",
-                                            "example": 123
-                                        },
-                                        "next": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "previous": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "results": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/deb.ReleaseComponentResponse"
-                                            }
-                                        }
-                                    }
+                                    "$ref": "#/components/schemas/Paginateddeb.ReleaseComponentResponseList"
                                 }
                             }
                         },
@@ -2229,7 +2069,7 @@
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "201": {
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2427,27 +2267,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "count": {
-                                            "type": "integer",
-                                            "example": 123
-                                        },
-                                        "next": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "previous": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "results": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/deb.ReleaseFileResponse"
-                                            }
-                                        }
-                                    }
+                                    "$ref": "#/components/schemas/Paginateddeb.ReleaseFileResponseList"
                                 }
                             }
                         },
@@ -2491,7 +2311,7 @@
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "201": {
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2680,27 +2500,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "count": {
-                                            "type": "integer",
-                                            "example": 123
-                                        },
-                                        "next": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "previous": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "results": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/deb.ReleaseResponse"
-                                            }
-                                        }
-                                    }
+                                    "$ref": "#/components/schemas/Paginateddeb.ReleaseResponseList"
                                 }
                             }
                         },
@@ -2744,7 +2544,7 @@
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "201": {
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2933,27 +2733,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "count": {
-                                            "type": "integer",
-                                            "example": 123
-                                        },
-                                        "next": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "previous": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "results": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/deb.AptDistributionResponse"
-                                            }
-                                        }
-                                    }
+                                    "$ref": "#/components/schemas/Paginateddeb.AptDistributionResponseList"
                                 }
                             }
                         },
@@ -3071,75 +2851,12 @@
                 "summary": "Update an apt distribution",
                 "parameters": [
                     {
-                        "name": "base_path",
-                        "required": false,
-                        "in": "query",
-                        "description": "base_path",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "base_path__contains",
-                        "required": false,
-                        "in": "query",
-                        "description": "base_path__contains",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "base_path__icontains",
-                        "required": false,
-                        "in": "query",
-                        "description": "base_path__icontains",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "base_path__in",
-                        "required": false,
-                        "in": "query",
-                        "description": "base_path__in",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
                         "in": "path",
                         "name": "deb_apt_distribution_href",
                         "schema": {
                             "type": "string"
                         },
                         "required": true
-                    },
-                    {
-                        "name": "name",
-                        "required": false,
-                        "in": "query",
-                        "description": "name",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "name__in",
-                        "required": false,
-                        "in": "query",
-                        "description": "name__in",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "ordering",
-                        "required": false,
-                        "in": "query",
-                        "description": "Which field to use when ordering the results.",
-                        "schema": {
-                            "type": "string"
-                        }
                     }
                 ],
                 "tags": [
@@ -3192,75 +2909,12 @@
                 "summary": "Update an apt distribution",
                 "parameters": [
                     {
-                        "name": "base_path",
-                        "required": false,
-                        "in": "query",
-                        "description": "base_path",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "base_path__contains",
-                        "required": false,
-                        "in": "query",
-                        "description": "base_path__contains",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "base_path__icontains",
-                        "required": false,
-                        "in": "query",
-                        "description": "base_path__icontains",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "base_path__in",
-                        "required": false,
-                        "in": "query",
-                        "description": "base_path__in",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
                         "in": "path",
                         "name": "deb_apt_distribution_href",
                         "schema": {
                             "type": "string"
                         },
                         "required": true
-                    },
-                    {
-                        "name": "name",
-                        "required": false,
-                        "in": "query",
-                        "description": "name",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "name__in",
-                        "required": false,
-                        "in": "query",
-                        "description": "name__in",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "ordering",
-                        "required": false,
-                        "in": "query",
-                        "description": "Which field to use when ordering the results.",
-                        "schema": {
-                            "type": "string"
-                        }
                     }
                 ],
                 "tags": [
@@ -3313,75 +2967,12 @@
                 "summary": "Delete an apt distribution",
                 "parameters": [
                     {
-                        "name": "base_path",
-                        "required": false,
-                        "in": "query",
-                        "description": "base_path",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "base_path__contains",
-                        "required": false,
-                        "in": "query",
-                        "description": "base_path__contains",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "base_path__icontains",
-                        "required": false,
-                        "in": "query",
-                        "description": "base_path__icontains",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "base_path__in",
-                        "required": false,
-                        "in": "query",
-                        "description": "base_path__in",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
                         "in": "path",
                         "name": "deb_apt_distribution_href",
                         "schema": {
                             "type": "string"
                         },
                         "required": true
-                    },
-                    {
-                        "name": "name",
-                        "required": false,
-                        "in": "query",
-                        "description": "name",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "name__in",
-                        "required": false,
-                        "in": "query",
-                        "description": "name__in",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "ordering",
-                        "required": false,
-                        "in": "query",
-                        "description": "Which field to use when ordering the results.",
-                        "schema": {
-                            "type": "string"
-                        }
                     }
                 ],
                 "tags": [
@@ -3538,27 +3129,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "count": {
-                                            "type": "integer",
-                                            "example": 123
-                                        },
-                                        "next": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "previous": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "results": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/deb.AptPublicationResponse"
-                                            }
-                                        }
-                                    }
+                                    "$ref": "#/components/schemas/Paginateddeb.AptPublicationResponseList"
                                 }
                             }
                         },
@@ -3831,27 +3402,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "count": {
-                                            "type": "integer",
-                                            "example": 123
-                                        },
-                                        "next": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "previous": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "results": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/deb.VerbatimPublicationResponse"
-                                            }
-                                        }
-                                    }
+                                    "$ref": "#/components/schemas/Paginateddeb.VerbatimPublicationResponseList"
                                 }
                             }
                         },
@@ -4133,27 +3684,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "count": {
-                                            "type": "integer",
-                                            "example": 123
-                                        },
-                                        "next": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "previous": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "results": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/deb.AptRemoteResponse"
-                                            }
-                                        }
-                                    }
+                                    "$ref": "#/components/schemas/Paginateddeb.AptRemoteResponseList"
                                 }
                             }
                         },
@@ -4197,7 +3728,7 @@
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "201": {
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -4277,87 +3808,6 @@
                             "type": "string"
                         },
                         "required": true
-                    },
-                    {
-                        "name": "name",
-                        "required": false,
-                        "in": "query",
-                        "description": "name",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "name__in",
-                        "required": false,
-                        "in": "query",
-                        "description": "name__in",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "ordering",
-                        "required": false,
-                        "in": "query",
-                        "description": "Which field to use when ordering the results.",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "pulp_last_updated",
-                        "required": false,
-                        "in": "query",
-                        "description": "pulp_last_updated",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "pulp_last_updated__gt",
-                        "required": false,
-                        "in": "query",
-                        "description": "pulp_last_updated__gt",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "pulp_last_updated__gte",
-                        "required": false,
-                        "in": "query",
-                        "description": "pulp_last_updated__gte",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "pulp_last_updated__lt",
-                        "required": false,
-                        "in": "query",
-                        "description": "pulp_last_updated__lt",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "pulp_last_updated__lte",
-                        "required": false,
-                        "in": "query",
-                        "description": "pulp_last_updated__lte",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "pulp_last_updated__range",
-                        "required": false,
-                        "in": "query",
-                        "description": "pulp_last_updated__range",
-                        "schema": {
-                            "type": "string"
-                        }
                     }
                 ],
                 "tags": [
@@ -4416,87 +3866,6 @@
                             "type": "string"
                         },
                         "required": true
-                    },
-                    {
-                        "name": "name",
-                        "required": false,
-                        "in": "query",
-                        "description": "name",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "name__in",
-                        "required": false,
-                        "in": "query",
-                        "description": "name__in",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "ordering",
-                        "required": false,
-                        "in": "query",
-                        "description": "Which field to use when ordering the results.",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "pulp_last_updated",
-                        "required": false,
-                        "in": "query",
-                        "description": "pulp_last_updated",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "pulp_last_updated__gt",
-                        "required": false,
-                        "in": "query",
-                        "description": "pulp_last_updated__gt",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "pulp_last_updated__gte",
-                        "required": false,
-                        "in": "query",
-                        "description": "pulp_last_updated__gte",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "pulp_last_updated__lt",
-                        "required": false,
-                        "in": "query",
-                        "description": "pulp_last_updated__lt",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "pulp_last_updated__lte",
-                        "required": false,
-                        "in": "query",
-                        "description": "pulp_last_updated__lte",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "pulp_last_updated__range",
-                        "required": false,
-                        "in": "query",
-                        "description": "pulp_last_updated__range",
-                        "schema": {
-                            "type": "string"
-                        }
                     }
                 ],
                 "tags": [
@@ -4555,87 +3924,6 @@
                             "type": "string"
                         },
                         "required": true
-                    },
-                    {
-                        "name": "name",
-                        "required": false,
-                        "in": "query",
-                        "description": "name",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "name__in",
-                        "required": false,
-                        "in": "query",
-                        "description": "name__in",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "ordering",
-                        "required": false,
-                        "in": "query",
-                        "description": "Which field to use when ordering the results.",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "pulp_last_updated",
-                        "required": false,
-                        "in": "query",
-                        "description": "pulp_last_updated",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "pulp_last_updated__gt",
-                        "required": false,
-                        "in": "query",
-                        "description": "pulp_last_updated__gt",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "pulp_last_updated__gte",
-                        "required": false,
-                        "in": "query",
-                        "description": "pulp_last_updated__gte",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "pulp_last_updated__lt",
-                        "required": false,
-                        "in": "query",
-                        "description": "pulp_last_updated__lt",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "pulp_last_updated__lte",
-                        "required": false,
-                        "in": "query",
-                        "description": "pulp_last_updated__lte",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "pulp_last_updated__range",
-                        "required": false,
-                        "in": "query",
-                        "description": "pulp_last_updated__range",
-                        "schema": {
-                            "type": "string"
-                        }
                     }
                 ],
                 "tags": [
@@ -4747,27 +4035,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "count": {
-                                            "type": "integer",
-                                            "example": 123
-                                        },
-                                        "next": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "previous": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "results": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/deb.AptRepositoryResponse"
-                                            }
-                                        }
-                                    }
+                                    "$ref": "#/components/schemas/Paginateddeb.AptRepositoryResponseList"
                                 }
                             }
                         },
@@ -4811,7 +4079,7 @@
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "201": {
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -4891,33 +4159,6 @@
                             "type": "string"
                         },
                         "required": true
-                    },
-                    {
-                        "name": "name",
-                        "required": false,
-                        "in": "query",
-                        "description": "name",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "name__in",
-                        "required": false,
-                        "in": "query",
-                        "description": "name__in",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "ordering",
-                        "required": false,
-                        "in": "query",
-                        "description": "Which field to use when ordering the results.",
-                        "schema": {
-                            "type": "string"
-                        }
                     }
                 ],
                 "tags": [
@@ -4976,33 +4217,6 @@
                             "type": "string"
                         },
                         "required": true
-                    },
-                    {
-                        "name": "name",
-                        "required": false,
-                        "in": "query",
-                        "description": "name",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "name__in",
-                        "required": false,
-                        "in": "query",
-                        "description": "name__in",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "ordering",
-                        "required": false,
-                        "in": "query",
-                        "description": "Which field to use when ordering the results.",
-                        "schema": {
-                            "type": "string"
-                        }
                     }
                 ],
                 "tags": [
@@ -5061,33 +4275,6 @@
                             "type": "string"
                         },
                         "required": true
-                    },
-                    {
-                        "name": "name",
-                        "required": false,
-                        "in": "query",
-                        "description": "name",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "name__in",
-                        "required": false,
-                        "in": "query",
-                        "description": "name__in",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "ordering",
-                        "required": false,
-                        "in": "query",
-                        "description": "Which field to use when ordering the results.",
-                        "schema": {
-                            "type": "string"
-                        }
                     }
                 ],
                 "tags": [
@@ -5435,27 +4622,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "count": {
-                                            "type": "integer",
-                                            "example": 123
-                                        },
-                                        "next": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "previous": {
-                                            "type": "string",
-                                            "nullable": true
-                                        },
-                                        "results": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/RepositoryVersionResponse"
-                                            }
-                                        }
-                                    }
+                                    "$ref": "#/components/schemas/PaginatedRepositoryVersionResponseList"
                                 }
                             }
                         },
@@ -5525,147 +4692,12 @@
                 "summary": "Delete a repository version",
                 "parameters": [
                     {
-                        "name": "content",
-                        "required": false,
-                        "in": "query",
-                        "description": "content",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "content__in",
-                        "required": false,
-                        "in": "query",
-                        "description": "content__in",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
                         "in": "path",
                         "name": "deb_apt_repository_version_href",
                         "schema": {
                             "type": "string"
                         },
                         "required": true
-                    },
-                    {
-                        "name": "number",
-                        "required": false,
-                        "in": "query",
-                        "description": "number",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "number__gt",
-                        "required": false,
-                        "in": "query",
-                        "description": "number__gt",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "number__gte",
-                        "required": false,
-                        "in": "query",
-                        "description": "number__gte",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "number__lt",
-                        "required": false,
-                        "in": "query",
-                        "description": "number__lt",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "number__lte",
-                        "required": false,
-                        "in": "query",
-                        "description": "number__lte",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "number__range",
-                        "required": false,
-                        "in": "query",
-                        "description": "number__range",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "ordering",
-                        "required": false,
-                        "in": "query",
-                        "description": "Which field to use when ordering the results.",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "pulp_created",
-                        "required": false,
-                        "in": "query",
-                        "description": "pulp_created",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "pulp_created__gt",
-                        "required": false,
-                        "in": "query",
-                        "description": "pulp_created__gt",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "pulp_created__gte",
-                        "required": false,
-                        "in": "query",
-                        "description": "pulp_created__gte",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "pulp_created__lt",
-                        "required": false,
-                        "in": "query",
-                        "description": "pulp_created__lt",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "pulp_created__lte",
-                        "required": false,
-                        "in": "query",
-                        "description": "pulp_created__lte",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "pulp_created__range",
-                        "required": false,
-                        "in": "query",
-                        "description": "pulp_created__range",
-                        "schema": {
-                            "type": "string"
-                        }
                     }
                 ],
                 "tags": [
@@ -5809,6 +4841,411 @@
                     "removed"
                 ]
             },
+            "PaginatedRepositoryVersionResponseList": {
+                "type": "object",
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/RepositoryVersionResponse"
+                        }
+                    }
+                }
+            },
+            "Paginateddeb.AptDistributionResponseList": {
+                "type": "object",
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/deb.AptDistributionResponse"
+                        }
+                    }
+                }
+            },
+            "Paginateddeb.AptPublicationResponseList": {
+                "type": "object",
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/deb.AptPublicationResponse"
+                        }
+                    }
+                }
+            },
+            "Paginateddeb.AptRemoteResponseList": {
+                "type": "object",
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/deb.AptRemoteResponse"
+                        }
+                    }
+                }
+            },
+            "Paginateddeb.AptRepositoryResponseList": {
+                "type": "object",
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/deb.AptRepositoryResponse"
+                        }
+                    }
+                }
+            },
+            "Paginateddeb.BasePackageResponseList": {
+                "type": "object",
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/deb.BasePackageResponse"
+                        }
+                    }
+                }
+            },
+            "Paginateddeb.GenericContentResponseList": {
+                "type": "object",
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/deb.GenericContentResponse"
+                        }
+                    }
+                }
+            },
+            "Paginateddeb.InstallerFileIndexResponseList": {
+                "type": "object",
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/deb.InstallerFileIndexResponse"
+                        }
+                    }
+                }
+            },
+            "Paginateddeb.PackageIndexResponseList": {
+                "type": "object",
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/deb.PackageIndexResponse"
+                        }
+                    }
+                }
+            },
+            "Paginateddeb.PackageReleaseComponentResponseList": {
+                "type": "object",
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/deb.PackageReleaseComponentResponse"
+                        }
+                    }
+                }
+            },
+            "Paginateddeb.ReleaseArchitectureResponseList": {
+                "type": "object",
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/deb.ReleaseArchitectureResponse"
+                        }
+                    }
+                }
+            },
+            "Paginateddeb.ReleaseComponentResponseList": {
+                "type": "object",
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/deb.ReleaseComponentResponse"
+                        }
+                    }
+                }
+            },
+            "Paginateddeb.ReleaseFileResponseList": {
+                "type": "object",
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/deb.ReleaseFileResponse"
+                        }
+                    }
+                }
+            },
+            "Paginateddeb.ReleaseResponseList": {
+                "type": "object",
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/deb.ReleaseResponse"
+                        }
+                    }
+                }
+            },
+            "Paginateddeb.VerbatimPublicationResponseList": {
+                "type": "object",
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "example": 123
+                    },
+                    "next": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=400&limit=100"
+                    },
+                    "previous": {
+                        "type": "string",
+                        "nullable": true,
+                        "format": "uri",
+                        "example": "http://api.example.org/accounts/?offset=200&limit=100"
+                    },
+                    "results": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/deb.VerbatimPublicationResponse"
+                        }
+                    }
+                }
+            },
             "Patcheddeb.AptDistribution": {
                 "type": "object",
                 "description": "Serializer for AptDistributions.",
@@ -5897,17 +5334,17 @@
                     },
                     "distributions": {
                         "type": "string",
-                        "description": "Whitespace separated list of distributions to sync"
+                        "description": "Whitespace separated list of distributions to sync.\nThe distribution is the path from the repository root to the \"Release\" file you want to access. This is often, but not always, equal to either the codename or the suite of the release you want to sync. If the repository you are trying to sync uses \"flat repository format\", the distribution must end with a \"/\". Based on \"/etc/apt/sources.list\" syntax."
                     },
                     "components": {
                         "type": "string",
                         "nullable": true,
-                        "description": "Whitespace separatet list of components to sync"
+                        "description": "Whitespace separatet list of components to sync.\nIf none are supplied, all that are available will be synchronized. Leave blank for repositores using \"flat repository format\"."
                     },
                     "architectures": {
                         "type": "string",
                         "nullable": true,
-                        "description": "Whitespace separated list of architectures to sync"
+                        "description": "Whitespace separated list of architectures to sync\nIf none are supplied, all that are available will be synchronized. A list of valid architecture specification strings can be found by running \"dpkg-architecture -L\". A sync will download the intersection of the list of architectures provided via this field and those provided by the relevant \"Release\" file. Architecture=\"all\" is always synchronized and does not need to be provided here."
                     },
                     "sync_sources": {
                         "type": "boolean",
@@ -5925,6 +5362,10 @@
                         "type": "string",
                         "nullable": true,
                         "description": "Gpg public key to verify origin releases against"
+                    },
+                    "ignore_missing_package_indices": {
+                        "type": "boolean",
+                        "description": "By default, upstream repositories that declare architectures and corresponding package indices in their Release files without actually publishing them, will fail to synchronize.\nSet this flag to True to allow the synchronization of such \"partial mirrors\" instead.\nAlternatively, you could make your remote filter by architectures for which the upstream repository does have indices."
                     }
                 }
             },
@@ -5979,6 +5420,7 @@
             },
             "RepositorySyncURL": {
                 "type": "object",
+                "description": "A mixin for validating unknown serializers' fields.",
                 "properties": {
                     "remote": {
                         "type": "string",
@@ -6247,17 +5689,17 @@
                     },
                     "distributions": {
                         "type": "string",
-                        "description": "Whitespace separated list of distributions to sync"
+                        "description": "Whitespace separated list of distributions to sync.\nThe distribution is the path from the repository root to the \"Release\" file you want to access. This is often, but not always, equal to either the codename or the suite of the release you want to sync. If the repository you are trying to sync uses \"flat repository format\", the distribution must end with a \"/\". Based on \"/etc/apt/sources.list\" syntax."
                     },
                     "components": {
                         "type": "string",
                         "nullable": true,
-                        "description": "Whitespace separatet list of components to sync"
+                        "description": "Whitespace separatet list of components to sync.\nIf none are supplied, all that are available will be synchronized. Leave blank for repositores using \"flat repository format\"."
                     },
                     "architectures": {
                         "type": "string",
                         "nullable": true,
-                        "description": "Whitespace separated list of architectures to sync"
+                        "description": "Whitespace separated list of architectures to sync\nIf none are supplied, all that are available will be synchronized. A list of valid architecture specification strings can be found by running \"dpkg-architecture -L\". A sync will download the intersection of the list of architectures provided via this field and those provided by the relevant \"Release\" file. Architecture=\"all\" is always synchronized and does not need to be provided here."
                     },
                     "sync_sources": {
                         "type": "boolean",
@@ -6275,6 +5717,10 @@
                         "type": "string",
                         "nullable": true,
                         "description": "Gpg public key to verify origin releases against"
+                    },
+                    "ignore_missing_package_indices": {
+                        "type": "boolean",
+                        "description": "By default, upstream repositories that declare architectures and corresponding package indices in their Release files without actually publishing them, will fail to synchronize.\nSet this flag to True to allow the synchronization of such \"partial mirrors\" instead.\nAlternatively, you could make your remote filter by architectures for which the upstream repository does have indices."
                     }
                 },
                 "required": [
@@ -6362,17 +5808,17 @@
                     },
                     "distributions": {
                         "type": "string",
-                        "description": "Whitespace separated list of distributions to sync"
+                        "description": "Whitespace separated list of distributions to sync.\nThe distribution is the path from the repository root to the \"Release\" file you want to access. This is often, but not always, equal to either the codename or the suite of the release you want to sync. If the repository you are trying to sync uses \"flat repository format\", the distribution must end with a \"/\". Based on \"/etc/apt/sources.list\" syntax."
                     },
                     "components": {
                         "type": "string",
                         "nullable": true,
-                        "description": "Whitespace separatet list of components to sync"
+                        "description": "Whitespace separatet list of components to sync.\nIf none are supplied, all that are available will be synchronized. Leave blank for repositores using \"flat repository format\"."
                     },
                     "architectures": {
                         "type": "string",
                         "nullable": true,
-                        "description": "Whitespace separated list of architectures to sync"
+                        "description": "Whitespace separated list of architectures to sync\nIf none are supplied, all that are available will be synchronized. A list of valid architecture specification strings can be found by running \"dpkg-architecture -L\". A sync will download the intersection of the list of architectures provided via this field and those provided by the relevant \"Release\" file. Architecture=\"all\" is always synchronized and does not need to be provided here."
                     },
                     "sync_sources": {
                         "type": "boolean",
@@ -6390,6 +5836,10 @@
                         "type": "string",
                         "nullable": true,
                         "description": "Gpg public key to verify origin releases against"
+                    },
+                    "ignore_missing_package_indices": {
+                        "type": "boolean",
+                        "description": "By default, upstream repositories that declare architectures and corresponding package indices in their Release files without actually publishing them, will fail to synchronize.\nSet this flag to True to allow the synchronization of such \"partial mirrors\" instead.\nAlternatively, you could make your remote filter by architectures for which the upstream repository does have indices."
                     }
                 },
                 "required": [
@@ -7103,7 +6553,7 @@
                 },
                 "required": [
                     "artifacts",
-                    "codename"
+                    "distribution"
                 ]
             },
             "deb.ReleaseFileResponse": {
@@ -7144,7 +6594,7 @@
                 },
                 "required": [
                     "artifacts",
-                    "codename"
+                    "distribution"
                 ]
             },
             "deb.ReleaseResponse": {
