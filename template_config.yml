@@ -37,7 +37,5 @@ test_bindings: false
 test_performance: false
 test_released_plugin_with_next_pulpcore_release: false
 test_s3: true
-travis_addtl_services: []
-travis_notifications: None
 update_redmine: true
 
