@@ -3,7 +3,7 @@
 import unittest
 
 from pulp_smash import config
-
+from pulp_smash.pulp3.bindings import monitor_task, PulpTaskError
 from pulp_smash.pulp3.utils import (
     gen_repo,
     get_added_content_summary,
@@ -22,8 +22,6 @@ from pulp_deb.tests.functional.constants import (
 from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 from pulp_deb.tests.functional.utils import (
     gen_deb_remote,
-    monitor_task,
-    PulpTaskError,
     deb_remote_api,
     deb_repository_api,
 )

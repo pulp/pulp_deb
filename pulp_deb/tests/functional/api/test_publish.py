@@ -4,6 +4,7 @@ import unittest
 from random import choice
 
 from pulp_smash import config
+from pulp_smash.pulp3.bindings import monitor_task
 from pulp_smash.pulp3.utils import gen_repo, get_content, get_versions, modify_repo
 
 from pulp_deb.tests.functional.constants import (
@@ -13,7 +14,6 @@ from pulp_deb.tests.functional.constants import (
 from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 from pulp_deb.tests.functional.utils import (
     gen_deb_remote,
-    monitor_task,
     deb_apt_publication_api,
     deb_remote_api,
     deb_repository_api,
@@ -88,8 +88,7 @@ class PublishAnyRepoVersionSimpleTestCase(unittest.TestCase):
             repository=repo.pulp_href, **self._publication_extra_args()
         )
         publish_response = publication_api.create(publish_data)
-        created_resources = monitor_task(publish_response.task)
-        publication_href = created_resources[0]
+        publication_href = monitor_task(publish_response.task).created_resources[0]
         self.addCleanup(publication_api.delete, publication_href)
         publication = publication_api.read(publication_href)
 
@@ -101,8 +100,7 @@ class PublishAnyRepoVersionSimpleTestCase(unittest.TestCase):
             repository_version=non_latest, **self._publication_extra_args()
         )
         publish_response = publication_api.create(publish_data)
-        created_resources = monitor_task(publish_response.task)
-        publication_href = created_resources[0]
+        publication_href = monitor_task(publish_response.task).created_resources[0]
         publication = publication_api.read(publication_href)
 
         # Step 5
