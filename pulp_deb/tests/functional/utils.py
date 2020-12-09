@@ -3,7 +3,6 @@
 import os
 from functools import partial
 from unittest import SkipTest
-from time import sleep
 from tempfile import NamedTemporaryFile
 
 from pulp_smash import api, config, selectors, utils
@@ -284,37 +283,3 @@ def gen_artifact(url):
         temp_file.flush()
         artifact = ArtifactsApi(core_client).create(file=temp_file.name)
         return artifact.to_dict()
-
-
-class PulpTaskError(Exception):
-    """Exception to describe task errors."""
-
-    def __init__(self, task):
-        """Provide task info to exception."""
-        description = task.error["description"]
-        super().__init__(self, f"Pulp task failed ({description})")
-        self.task = task
-
-
-def monitor_task(task_href):
-    """Polls the Task API until the task is in a completed state.
-
-    Prints the task details and a success or failure message. Exits on failure.
-
-    Args:
-        task_href(str): The href of the task to monitor
-
-    Returns:
-        list[str]: List of hrefs that identify resource created by the task
-
-    """
-    completed = ["completed", "failed", "canceled"]
-    task = task_api.read(task_href)
-    while task.state not in completed:
-        sleep(2)
-        task = task_api.read(task_href)
-
-    if task.state == "completed":
-        return task.created_resources
-
-    raise PulpTaskError(task=task)

@@ -2,6 +2,7 @@
 """Tests for Pulp`s download policies."""
 import unittest
 
+from pulp_smash.pulp3.bindings import monitor_task
 from pulp_smash.pulp3.utils import (
     delete_orphans,
     gen_repo,
@@ -21,7 +22,6 @@ from pulp_deb.tests.functional.utils import (
     deb_repository_api,
     deb_remote_api,
     gen_deb_remote,
-    monitor_task,
     skip_if,
 )
 from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
@@ -137,7 +137,7 @@ class SyncPublishDownloadPolicyTestCase(unittest.TestCase):
 
         publish_data = DebAptPublication(simple=True, repository=repo.pulp_href)
         publish_response = publication_api.create(publish_data)
-        publication_href = monitor_task(publish_response.task)[0]
+        publication_href = monitor_task(publish_response.task).created_resources[0]
         self.addCleanup(publication_api.delete, publication_href)
         publication = publication_api.read(publication_href)
         self.assertIsNotNone(publication.repository_version, publication)

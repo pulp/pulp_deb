@@ -5,6 +5,7 @@ import unittest
 from tempfile import NamedTemporaryFile
 
 from pulp_smash import utils
+from pulp_smash.pulp3.bindings import monitor_task, PulpTaskError
 from pulp_smash.pulp3.utils import delete_orphans
 
 from pulp_deb.tests.functional.constants import (
@@ -19,8 +20,6 @@ from pulp_deb.tests.functional.utils import (
     gen_deb_content_upload_attrs,
     gen_deb_package_attrs,
     gen_deb_package_upload_attrs,
-    monitor_task,
-    PulpTaskError,
     skip_if,
 )
 from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
@@ -57,7 +56,7 @@ class GenericContentUnitTestCase(unittest.TestCase):
         """Create content unit."""
         attrs = self.gen_content_attrs(self.artifact)
         response = self.content_api.create(**attrs)
-        created_resources = monitor_task(response.task)
+        created_resources = monitor_task(response.task).created_resources
         content_unit = self.content_api.read(created_resources[0])
         self.content_unit.update(content_unit.to_dict())
         for key, val in attrs.items():
@@ -158,7 +157,7 @@ class GenericContentUnitUploadTestCase(unittest.TestCase):
             temp_file.write(self.file)
             temp_file.flush()
             response = self.content_api.create(**self.attrs, file=temp_file.name)
-        created_resources = monitor_task(response.task)
+        created_resources = monitor_task(response.task).created_resources
         content_unit = self.content_api.read(created_resources[0])
         self.content_unit.update(content_unit.to_dict())
         for key, val in self.attrs.items():
@@ -191,7 +190,6 @@ class GenericContentUnitUploadTestCase(unittest.TestCase):
             response = self.content_api.create(**self.attrs, file=temp_file.name)
         with self.assertRaises(PulpTaskError) as exc:
             monitor_task(response.task)
-        self.assertEqual(exc.exception.task.state, "failed")
         error = exc.exception.task.error
         for key in ("already", "relative", "path", "sha256"):
             self.assertIn(key, error["description"].lower(), error)
@@ -249,14 +247,13 @@ class DuplicateGenericContentUnit(unittest.TestCase):
 
         # create first content unit.
         response = self.content_api.create(**attrs)
-        created_resources = monitor_task(response.task)
+        created_resources = monitor_task(response.task).created_resources
         self.content_api.read(created_resources[0])
 
         # using the same attrs used to create the first content unit.
         response = self.content_api.create(**attrs)
         with self.assertRaises(PulpTaskError) as exc:
             monitor_task(response.task)
-        self.assertEqual(exc.exception.task.state, "failed")
         error = exc.exception.task.error
         for key in ("already", "relative", "path", "sha256"):
             self.assertIn(key, error["description"].lower(), error)
@@ -275,14 +272,14 @@ class DuplicateGenericContentUnit(unittest.TestCase):
 
         # create first content unit.
         response = self.content_api.create(**attrs)
-        created_resources = monitor_task(response.task)
+        created_resources = monitor_task(response.task).created_resources
         content_unit = self.content_api.read(created_resources[0])
 
         # Packages types only validate the filename, so we can prepend something to the path.
         attrs["relative_path"] = "moved-" + content_unit.relative_path
         # create second content unit.
         response = self.content_api.create(**attrs)
-        created_resources = monitor_task(response.task)
+        created_resources = monitor_task(response.task).created_resources
         content_unit = self.content_api.read(created_resources[0])
 
 

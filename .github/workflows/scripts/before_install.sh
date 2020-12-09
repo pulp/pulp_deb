@@ -91,23 +91,16 @@ cd ..
 
 
 
-# When building a (release) tag, we don't need the development modules for the
-# build (they will be installed as dependencies of the plugin).
-if [ "${TAG_BUILD}" = "1" ]; then
+git clone --depth=1 https://github.com/pulp/pulp-smash.git
 
-  git clone --depth=1 https://github.com/pulp/pulp-smash.git
-
-  if [ -n "$PULP_SMASH_PR_NUMBER" ]; then
-    cd pulp-smash
-    git fetch --depth=1 origin pull/$PULP_SMASH_PR_NUMBER/head:$PULP_SMASH_PR_NUMBER
-    git checkout $PULP_SMASH_PR_NUMBER
-    cd ..
-  fi
-
-  # pulp-smash already got installed via test_requirements.txt
-  pip install --upgrade --force-reinstall ./pulp-smash
-
+if [ -n "$PULP_SMASH_PR_NUMBER" ]; then
+  cd pulp-smash
+  git fetch --depth=1 origin pull/$PULP_SMASH_PR_NUMBER/head:$PULP_SMASH_PR_NUMBER
+  git checkout $PULP_SMASH_PR_NUMBER
+  cd ..
 fi
+
+pip install --upgrade --force-reinstall ./pulp-smash
 
 
 # Intall requirements for ansible playbooks

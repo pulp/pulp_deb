@@ -6,6 +6,7 @@ from random import choice
 from urllib.parse import urljoin
 
 from pulp_smash import config, utils
+from pulp_smash.pulp3.bindings import monitor_task
 from pulp_smash.pulp3.utils import download_content_unit, gen_distribution, gen_repo
 
 from pulp_deb.tests.functional.constants import DEB_FIXTURE_URL, DOWNLOAD_POLICIES
@@ -18,7 +19,6 @@ from pulp_deb.tests.functional.utils import (
     gen_deb_remote,
     get_deb_content_unit_paths,
     get_deb_verbatim_content_unit_paths,
-    monitor_task,
 )
 from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 
@@ -97,14 +97,14 @@ class DownloadContentTestCase(unittest.TestCase):
         # Create a publication.
         publish_data = self.Meta.Publication(repository=repo.pulp_href)
         publish_response = publication_api.create(publish_data)
-        publication_href = monitor_task(publish_response.task)[0]
+        publication_href = monitor_task(publish_response.task).created_resources[0]
         self.addCleanup(publication_api.delete, publication_href)
 
         # Create a distribution.
         body = gen_distribution()
         body["publication"] = publication_href
         distribution_response = distribution_api.create(body)
-        distribution_href = monitor_task(distribution_response.task)[0]
+        distribution_href = monitor_task(distribution_response.task).created_resources[0]
         distribution = distribution_api.read(distribution_href)
         self.addCleanup(distribution_api.delete, distribution.pulp_href)
 

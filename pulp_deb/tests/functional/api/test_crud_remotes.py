@@ -4,12 +4,12 @@ from random import choice
 import unittest
 
 from pulp_smash import utils
+from pulp_smash.pulp3.bindings import monitor_task
 
 from pulp_deb.tests.functional.constants import DOWNLOAD_POLICIES, DEB_SIGNING_KEY
 from pulp_deb.tests.functional.utils import (
     deb_remote_api,
     gen_deb_remote,
-    monitor_task,
     skip_if,
 )
 from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
