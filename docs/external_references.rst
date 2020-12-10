@@ -37,9 +37,9 @@
 .. _try OpenAPI generator:
    https://openapi-generator.tech/#try
 .. _signing service setup script:
-   https://github.com/pulp/pulp_deb/blob/master/pulp_deb/tests/functional/setup_signing_service.py
+   https://github.com/pulp/pulp_deb/blob/main/pulp_deb/tests/functional/setup_signing_service.py
 .. _signing service script example:
-   https://github.com/pulp/pulp_deb/blob/master/pulp_deb/tests/functional/sign_deb_release.sh
+   https://github.com/pulp/pulp_deb/blob/main/pulp_deb/tests/functional/sign_deb_release.sh
 .. _pulp plugin template:
    https://github.com/pulp/plugin_template
 .. _pulplift:
