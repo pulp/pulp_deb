@@ -90,6 +90,15 @@ cmd_prefix bash -c "PULP_DATABASES__default__USER=postgres django-admin test --n
 # Run functional tests
 export PYTHONPATH=$REPO_ROOT:$REPO_ROOT/../pulpcore${PYTHONPATH:+:${PYTHONPATH}}
 
+if [[ "$TEST" == "performance" ]]; then
+  if [[ -z ${PERFORMANCE_TEST+x} ]]; then
+    pytest -vv -r sx --color=yes --pyargs --capture=no --durations=0 pulp_deb.tests.performance
+  else
+    pytest -vv -r sx --color=yes --pyargs --capture=no --durations=0 pulp_deb.tests.performance.test_$PERFORMANCE_TEST
+  fi
+  exit
+fi
+
 if [ -f $FUNC_TEST_SCRIPT ]; then
   source $FUNC_TEST_SCRIPT
 else
