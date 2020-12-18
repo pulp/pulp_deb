@@ -2,20 +2,20 @@
 #
 
 # You can set these variables from the command line.
-SPHINXOPTS    = -W -n
-SPHINXBUILD   = sphinx-build
-PAPER         =
-BUILDDIR      = _build
-DIAGRAM_BUILD_DIR    = _diagrams
-DIAGRAM_SOURCE_DIR    = diagrams_src
-PULP_URL      = "http://localhost:24817"
+SPHINXOPTS = -W -n
+SPHINXBUILD = sphinx-build
+PAPER =
+BUILDDIR = _build
+DIAGRAM_BUILD_DIR = _diagrams
+DIAGRAM_SOURCE_DIR = diagrams_src
+PULP_URL = "http://localhost:24817"
 
 # Internal variables.
-PAPEROPT_a4     = -D latex_paper_size=a4
+PAPEROPT_a4 = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
-ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
+ALLSPHINXOPTS = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 # the i18n builder cannot share the environment and doctrees with the others
-I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
+I18NSPHINXOPTS = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
 .PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest gettext
 
@@ -43,20 +43,21 @@ help:
 
 clean:
 	-rm -rf $(BUILDDIR)/*
+	-rm -rf $(DIAGRAM_BUILD_DIR)/*
 
 diagrams:
 ifneq ($(wildcard $(DIAGRAM_SOURCE_DIR)), )
 	mkdir -p $(DIAGRAM_BUILD_DIR)
-	python3 -m plantuml diagrams_src/*.dot
+	python3 -m plantuml $(DIAGRAM_SOURCE_DIR)/*.dot
 	# cp + rm = mv  workaround https://pulp.plan.io/issues/4791#note-3
-	cp diagrams_src/*.png $(DIAGRAM_BUILD_DIR)/
-	rm diagrams_src/*.png
+	cp $(DIAGRAM_SOURCE_DIR)/*.png $(DIAGRAM_BUILD_DIR)/
+	rm $(DIAGRAM_SOURCE_DIR)/*.png
 else
-	@echo "Did not find diagrams_src."
+	@echo "Did not find $(DIAGRAM_SOURCE_DIR)."
 endif
 
 html:
-	curl -o _static/api.json "$(PULP_URL)/pulp/api/v3/docs/api.json?plugin=pulp_deb"
+	curl --fail -o _static/api.json "$(PULP_URL)/pulp/api/v3/docs/api.json?plugin=pulp_deb&include_html=1"
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
@@ -85,7 +86,7 @@ htmlhelp:
 	$(SPHINXBUILD) -b htmlhelp $(ALLSPHINXOPTS) $(BUILDDIR)/htmlhelp
 	@echo
 	@echo "Build finished; now you can run HTML Help Workshop with the" \
-	      ".hhp project file in $(BUILDDIR)/htmlhelp."
+		  ".hhp project file in $(BUILDDIR)/htmlhelp."
 
 epub:
 	$(SPHINXBUILD) -b epub $(ALLSPHINXOPTS) $(BUILDDIR)/epub
@@ -97,7 +98,7 @@ latex:
 	@echo
 	@echo "Build finished; the LaTeX files are in $(BUILDDIR)/latex."
 	@echo "Run \`make' in that directory to run these through (pdf)latex" \
-	      "(use \`make latexpdf' here to do that automatically)."
+		  "(use \`make latexpdf' here to do that automatically)."
 
 latexpdf:
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
@@ -120,7 +121,7 @@ texinfo:
 	@echo
 	@echo "Build finished. The Texinfo files are in $(BUILDDIR)/texinfo."
 	@echo "Run \`make' in that directory to run these through makeinfo" \
-	      "(use \`make info' here to do that automatically)."
+		  "(use \`make info' here to do that automatically)."
 
 info:
 	$(SPHINXBUILD) -b texinfo $(ALLSPHINXOPTS) $(BUILDDIR)/texinfo
@@ -142,9 +143,9 @@ linkcheck:
 	$(SPHINXBUILD) -b linkcheck $(ALLSPHINXOPTS) $(BUILDDIR)/linkcheck
 	@echo
 	@echo "Link check complete; look for any errors in the above output " \
-	      "or in $(BUILDDIR)/linkcheck/output.txt."
+		  "or in $(BUILDDIR)/linkcheck/output.txt."
 
 doctest:
 	$(SPHINXBUILD) -b doctest $(ALLSPHINXOPTS) $(BUILDDIR)/doctest
 	@echo "Testing of doctests in the sources finished, look at the " \
-	      "results in $(BUILDDIR)/doctest/output.txt."
+		  "results in $(BUILDDIR)/doctest/output.txt."

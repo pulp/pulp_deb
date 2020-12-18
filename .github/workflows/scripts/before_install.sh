@@ -67,7 +67,7 @@ fi
 
 cd ..
 
-git clone https://github.com/pulp/pulp-openapi-generator.git
+git clone --depth=1 https://github.com/pulp/pulp-openapi-generator.git
 if [ -n "$PULP_OPENAPI_GENERATOR_PR_NUMBER" ]; then
   cd pulp-openapi-generator
   git fetch origin pull/$PULP_OPENAPI_GENERATOR_PR_NUMBER/head:$PULP_OPENAPI_GENERATOR_PR_NUMBER
