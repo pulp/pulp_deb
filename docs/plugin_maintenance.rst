@@ -45,7 +45,19 @@ The `pulp plugin template`_ is used to collect changes relevant to all Pulp plug
 When there are new changes, the plugin template can then be used to automatically apply those changes to plugins that do not yet include them.
 
 To use the plugin template, make sure you have cloned the Git repository to the same folder as the ``pulp_deb`` repository.
-Then you can issue the following commands within the root of the plugin template repository.
+You can then issue the below template commands within the root of the plugin template repository to apply changes.
+
+.. note::
+   It is generally fine to check out the latest ``master`` branch of the plugin template to apply changes.
+   Alternatively, use the latest tag the plugin template has received.
+   It is a good idea to reference the point in the plugin template history used in any commit messages, so others can reproduce what was done.
+
+.. important::
+   Not all plugin template commands cleanly destinguish between things needed to bootstrap a new plugin and things that should be applied to existing plugins again and again.
+   As a result it is essential to manually go through any changes applied by the template, and only committing those that actually make sense.
+   Changes from the ``--generate-config`` and ``--github`` commands can mostly be committed in full (check for `master` versus `main` branch naming), while changes from the ``--docs`` and ``--bootstrap`` commands may overwrite a lot of existing plugin code, but may sometimes add useful changes.
+
+--------------------------------------------------------------------------------
 
 To generate an up to date ``template_config.yml`` file in the base of the ``pulp_deb`` repository, use:
 
@@ -53,7 +65,10 @@ To generate an up to date ``template_config.yml`` file in the base of the ``pulp
 
    ./plugin-template --generate-config pulp_deb
 
-You can adjust the configuration in the ``template_config.yml`` file to affect the other plugin template commands.
+You can adjust this configuration to affect the other plugin template commands.
+For documentation on each parameter, see the `pulp plugin template README`_.
+
+--------------------------------------------------------------------------------
 
 In order to apply the latest GitHub actions pipeline changes use:
 
@@ -61,15 +76,21 @@ In order to apply the latest GitHub actions pipeline changes use:
 
    ./plugin-template --github pulp_deb
 
+--------------------------------------------------------------------------------
+
+In order to apply the latest documentation changes from the template use:
+
+.. code-block:: none
+
+   ./plugin-template --docs pulp_deb
+
+--------------------------------------------------------------------------------
+
 In order to apply a full plugin skeleton from the plugin template use:
 
 .. code-block:: none
 
    ./plugin-template --bootstrap pulp_deb
-
-.. note::
-   Bootstrapping the plugin will revert many files in the ``pulp_deb`` plugin to a skeletal version.
-   When using the ``--bootstrap`` option one must carefully select and commit only those changes one really wants.
 
 
 Plugin Release Process
