@@ -81,7 +81,7 @@ It may need to be amended to reflect changes in the release process for pulpcore
 .. note::
    The plugin is released to pypi.org as the `pulp_deb python package`_.
    In addition a new `pulp-deb-client package`_ and `pulp_deb_client Ruby Gem`_ will be released.
-   Client packages based on the latest plugin master branch are also released daily.
+   Client packages based on the latest plugin ``main`` branch are also released daily.
    See the :ref:`plugin template <using_the_plugin_template>` and the ``template_config.yml`` file for more information on those independent releases.
 
 .. note::
@@ -138,11 +138,11 @@ For a ``X`` or a ``Y`` release, perform the following steps (the example assumes
       This presupposes that we have already removed any dependencies on any deprecations announced for pulpcore ``3.8``.
       See `pulpcore plugin API deprecation policy`_ for more information.
 
-      The lower bound should be changed directly in master whenever some change actually requires a newer pulpcore version.
-      Therefore it should not normally be necessary to raise this at release time (beyond what it already was in master).
+      The lower bound should be changed directly in the ``main`` branch whenever some change actually requires a newer pulpcore version.
+      Therefore it should not normally be necessary to raise this at release time (beyond what it already was in the ``main`` branch).
 
 #. Create a PR for the ``release_2.8.0`` branch generated in step 2.
-#. Review and merge the PR to ``master`` (make sure the tests on ``master`` turn green post merge).
+#. Review and merge the PR to ``main`` (make sure the tests on ``main`` turn green post merge).
 #. Create the ``2.8`` release branch (with the ``Releasing 2.8.0`` commit checked out).
    The branch needs to be pushed directly into the upstream repository.
 #. On the ``2.8`` release branch, manually bump the version from ``2.8.0`` to ``2.8.1.dev`` in ``.bumpversion.cfg``, ``pulp_deb/__init__.py``, and  ``setup.py``.
@@ -179,10 +179,10 @@ For a ``Z`` release, perform the following steps (the example assumes we are rel
    For the release script to do the right thing, they need to be provided, even though they should not be changed for ``Z`` releases.
 
 #. Create a PR for the ``release_2.8.1`` branch generated in step 2.
-   It needs to go into the ``2.8`` branch, not ``master``!
+   It needs to go into the ``2.8`` branch, not ``main``!
 #. Review and merge the PR.
-#. Switch back to ``master``, and ``git cherry-pick -x`` the ``Building changelog for 2.8.1`` commit from the ``2.8`` release branch.
-   Push directly to master or create and merge a PR for it.
+#. Switch back to ``main``, and ``git cherry-pick -x`` the ``Building changelog for 2.8.1`` commit from the ``2.8`` release branch.
+   Push directly to ``main`` or create and merge a PR for it.
 #. Trigger the release by creating and pushing the ``2.8.1`` release tag at the ``Releasing 2.8.1`` commit (on the ``2.8`` release branch).
 #. Check the `pulp_deb GitHub actions pipelines`_, the `pulp_deb python package`_, the `pulp-deb-client package`_, and the `pulp_deb_client Ruby Gem`_ to see if everything has released correctly.
    Also check the :ref:`changelog <changelog>` of this documentation to make sure it was also updated.
