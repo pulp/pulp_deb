@@ -15,6 +15,14 @@
         },
         "x-logo": {
             "url": "https://pulp.plan.io/attachments/download/517478/pulp_logo_word_rectangle.svg"
+        },
+        "x-pulp-app-versions": {
+            "pulpcore": "3.9.1.dev0",
+            "pulp_deb": "2.9.0.dev0",
+            "pulp_container": "2.2.0.post0",
+            "pulp_rpm": "3.8.0",
+            "pulp_file": "1.4.1.dev0",
+            "pulp_2to3_migration": "0.7.0.dev0"
         }
     },
     "paths": {
@@ -4688,7 +4696,7 @@
             },
             "delete": {
                 "operationId": "repositories_deb_apt_versions_delete",
-                "description": "Trigger an asynchronous task to delete a repositroy version.",
+                "description": "Trigger an asynchronous task to delete a repository version.",
                 "summary": "Delete a repository version",
                 "parameters": [
                     {
@@ -4728,7 +4736,7 @@
         "{deb_apt_repository_version_href}repair/": {
             "post": {
                 "operationId": "repositories_deb_apt_versions_repair",
-                "description": "Trigger an asynchronous task to repair a repositroy version.",
+                "description": "Trigger an asynchronous task to repair a repository version.",
                 "parameters": [
                     {
                         "in": "path",
@@ -5332,6 +5340,34 @@
                         "default": "immediate",
                         "description": "The policy to use when downloading content. The possible values include: 'immediate', 'on_demand', and 'streamed'. 'immediate' is the default."
                     },
+                    "total_timeout": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true,
+                        "description": "aiohttp.ClientTimeout.total (q.v.) for download-connections.",
+                        "minimum": 0.0
+                    },
+                    "connect_timeout": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true,
+                        "description": "aiohttp.ClientTimeout.connect (q.v.) for download-connections.",
+                        "minimum": 0.0
+                    },
+                    "sock_connect_timeout": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true,
+                        "description": "aiohttp.ClientTimeout.sock_connect (q.v.) for download-connections.",
+                        "minimum": 0.0
+                    },
+                    "sock_read_timeout": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true,
+                        "description": "aiohttp.ClientTimeout.sock_read (q.v.) for download-connections.",
+                        "minimum": 0.0
+                    },
                     "distributions": {
                         "type": "string",
                         "description": "Whitespace separated list of distributions to sync.\nThe distribution is the path from the repository root to the \"Release\" file you want to access. This is often, but not always, equal to either the codename or the suite of the release you want to sync. If the repository you are trying to sync uses \"flat repository format\", the distribution must end with a \"/\". Based on \"/etc/apt/sources.list\" syntax."
@@ -5687,6 +5723,34 @@
                         "default": "immediate",
                         "description": "The policy to use when downloading content. The possible values include: 'immediate', 'on_demand', and 'streamed'. 'immediate' is the default."
                     },
+                    "total_timeout": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true,
+                        "description": "aiohttp.ClientTimeout.total (q.v.) for download-connections.",
+                        "minimum": 0.0
+                    },
+                    "connect_timeout": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true,
+                        "description": "aiohttp.ClientTimeout.connect (q.v.) for download-connections.",
+                        "minimum": 0.0
+                    },
+                    "sock_connect_timeout": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true,
+                        "description": "aiohttp.ClientTimeout.sock_connect (q.v.) for download-connections.",
+                        "minimum": 0.0
+                    },
+                    "sock_read_timeout": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true,
+                        "description": "aiohttp.ClientTimeout.sock_read (q.v.) for download-connections.",
+                        "minimum": 0.0
+                    },
                     "distributions": {
                         "type": "string",
                         "description": "Whitespace separated list of distributions to sync.\nThe distribution is the path from the repository root to the \"Release\" file you want to access. This is often, but not always, equal to either the codename or the suite of the release you want to sync. If the repository you are trying to sync uses \"flat repository format\", the distribution must end with a \"/\". Based on \"/etc/apt/sources.list\" syntax."
@@ -5805,6 +5869,34 @@
                         ],
                         "default": "immediate",
                         "description": "The policy to use when downloading content. The possible values include: 'immediate', 'on_demand', and 'streamed'. 'immediate' is the default."
+                    },
+                    "total_timeout": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true,
+                        "description": "aiohttp.ClientTimeout.total (q.v.) for download-connections.",
+                        "minimum": 0.0
+                    },
+                    "connect_timeout": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true,
+                        "description": "aiohttp.ClientTimeout.connect (q.v.) for download-connections.",
+                        "minimum": 0.0
+                    },
+                    "sock_connect_timeout": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true,
+                        "description": "aiohttp.ClientTimeout.sock_connect (q.v.) for download-connections.",
+                        "minimum": 0.0
+                    },
+                    "sock_read_timeout": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true,
+                        "description": "aiohttp.ClientTimeout.sock_read (q.v.) for download-connections.",
+                        "minimum": 0.0
                     },
                     "distributions": {
                         "type": "string",
