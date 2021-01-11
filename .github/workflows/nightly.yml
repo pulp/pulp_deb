@@ -23,6 +23,7 @@ jobs:
           - TEST: pulp
           - TEST: docs
           - TEST: s3
+          - TEST: plugin-from-pypi
 
     steps:
       - uses: actions/checkout@v2
