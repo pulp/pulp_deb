@@ -45,7 +45,19 @@ The `pulp plugin template`_ is used to collect changes relevant to all Pulp plug
 When there are new changes, the plugin template can then be used to automatically apply those changes to plugins that do not yet include them.
 
 To use the plugin template, make sure you have cloned the Git repository to the same folder as the ``pulp_deb`` repository.
-Then you can issue the following commands within the root of the plugin template repository.
+You can then issue the below template commands within the root of the plugin template repository to apply changes.
+
+.. note::
+   It is generally fine to check out the latest ``master`` branch of the plugin template to apply changes.
+   Alternatively, use the latest tag the plugin template has received.
+   It is a good idea to reference the point in the plugin template history used in any commit messages, so others can reproduce what was done.
+
+.. important::
+   Not all plugin template commands cleanly destinguish between things needed to bootstrap a new plugin and things that should be applied to existing plugins again and again.
+   As a result it is essential to manually go through any changes applied by the template, and only committing those that actually make sense.
+   Changes from the ``--generate-config`` and ``--github`` commands can mostly be committed in full (check for `master` versus `main` branch naming), while changes from the ``--docs`` and ``--bootstrap`` commands may overwrite a lot of existing plugin code, but may sometimes add useful changes.
+
+--------------------------------------------------------------------------------
 
 To generate an up to date ``template_config.yml`` file in the base of the ``pulp_deb`` repository, use:
 
@@ -53,7 +65,10 @@ To generate an up to date ``template_config.yml`` file in the base of the ``pulp
 
    ./plugin-template --generate-config pulp_deb
 
-You can adjust the configuration in the ``template_config.yml`` file to affect the other plugin template commands.
+You can adjust this configuration to affect the other plugin template commands.
+For documentation on each parameter, see the `pulp plugin template README`_.
+
+--------------------------------------------------------------------------------
 
 In order to apply the latest GitHub actions pipeline changes use:
 
@@ -61,15 +76,45 @@ In order to apply the latest GitHub actions pipeline changes use:
 
    ./plugin-template --github pulp_deb
 
+--------------------------------------------------------------------------------
+
+In order to apply the latest documentation changes from the template use:
+
+.. code-block:: none
+
+   ./plugin-template --docs pulp_deb
+
+--------------------------------------------------------------------------------
+
 In order to apply a full plugin skeleton from the plugin template use:
 
 .. code-block:: none
 
    ./plugin-template --bootstrap pulp_deb
 
-.. note::
-   Bootstrapping the plugin will revert many files in the ``pulp_deb`` plugin to a skeletal version.
-   When using the ``--bootstrap`` option one must carefully select and commit only those changes one really wants.
+
+Updating the API docs
+--------------------------------------------------------------------------------
+
+Unlike the rest of this documentation, the `pulp_deb REST API documentation <restapi.html>`_ is auto generated.
+Most of the actual content comes from the ``docs/_static/api.json`` file within this repository.
+This file can be requested from the API of a running pulp instance, and will contain various docstrings from the plugin code as deployed to the running instance.
+
+To commit an up to date version of ``docs/_static/api.json`` to source, you will therefore need a fully functional development environment with a running instance using the version of the plugin code you want reflected in the API docs.
+
+In particular this can be done within a ``pulp3-source-*`` vagrant box from the ``pulp_installer`` repository, that has the ``pulp_deb`` plugin installed.
+Within such a box run the following commands:
+
+.. code-block:: none
+
+   cd /home/vagrant/devel/pulp_deb/docs/
+   make html
+
+You now have any changes to ``docs/_static/api.json`` in your local ``pulp_deb`` repository.
+Commit, push, and merge these changes as needed.
+
+You will also have a built version of this documentation at ``docs/_build/html/index.html``.
+You can open this locally built documentation in a browser, but you will not be able to view the API docs, since those make use of an external service, that obviously has no access to your local build.
 
 
 Plugin Release Process

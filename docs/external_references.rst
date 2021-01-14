@@ -42,6 +42,8 @@
    https://github.com/pulp/pulp_deb/blob/main/pulp_deb/tests/functional/sign_deb_release.sh
 .. _pulp plugin template:
    https://github.com/pulp/plugin_template
+.. _pulp plugin template README:
+   https://github.com/pulp/plugin_template/blob/master/README.md
 .. _pulplift:
    https://github.com/pulp/pulplift
 .. _pulp installer:
