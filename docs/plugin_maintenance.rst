@@ -93,16 +93,14 @@ In order to apply a full plugin skeleton from the plugin template use:
    ./plugin-template --bootstrap pulp_deb
 
 
-Updating the API docs
+Building the docs and API docs
 --------------------------------------------------------------------------------
 
-Unlike the rest of this documentation, the `pulp_deb REST API documentation <restapi.html>`_ is auto generated.
-Most of the actual content comes from the ``docs/_static/api.json`` file within this repository.
-This file can be requested from the API of a running pulp instance, and will contain various docstrings from the plugin code as deployed to the running instance.
+The content for the `pulp_deb REST API documentation <restapi.html>`_ is extracted via API call to a running pulp instance.
+It will contain various docstrings from the plugin code as deployed to that instance.
+As a result, building the docs can only be done via the CI pipelines or a full fledged development environment.
 
-To commit an up to date version of ``docs/_static/api.json`` to source, you will therefore need a fully functional development environment with a running instance using the version of the plugin code you want reflected in the API docs.
-
-In particular this can be done within a ``pulp3-source-*`` vagrant box from the ``pulp_installer`` repository, that has the ``pulp_deb`` plugin installed.
+This can be done within a ``pulp3-source-*`` vagrant box from the ``pulp_installer`` repository, that has the ``pulp_deb`` plugin installed.
 Within such a box run the following commands:
 
 .. code-block:: none
@@ -110,11 +108,10 @@ Within such a box run the following commands:
    cd /home/vagrant/devel/pulp_deb/docs/
    make html
 
-You now have any changes to ``docs/_static/api.json`` in your local ``pulp_deb`` repository.
-Commit, push, and merge these changes as needed.
+You can now find the built documentation at ``docs/_build/html/index.html`` within your local ``pulp_deb`` repository.
+You can also find the API doc contents within ``docs/_static/api.json``.
 
-You will also have a built version of this documentation at ``docs/_build/html/index.html``.
-You can open this locally built documentation in a browser, but you will not be able to view the API docs, since those make use of an external service, that obviously has no access to your local build.
+You can open the locally built documentation in a browser, but you will not be able to view the API docs, since those make use of an external service, that obviously has no access to your local build.
 
 
 Plugin Release Process
@@ -264,7 +261,7 @@ Example announcement email:
 
    [0] https://pypi.org/project/pulp-deb/2.8.0/
    [1] https://www.redhat.com/archives/pulp-list/2020-November/msg00004.html
-   [2] https://pulp-deb.readthedocs.io/en/latest/changes.html#id1
+   [2] https://docs.pulpproject.org/pulp_deb/changes.html#id1
    [3] https://pulp.plan.io/projects/pulp_deb/issues
    [4] https://pypi.org/project/pulp-deb-client/2.8.0/
    [5] https://rubygems.org/gems/pulp_deb_client/versions/2.8.0/
