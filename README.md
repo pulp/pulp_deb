@@ -22,7 +22,7 @@ The most important places:
 * The [pulp-deb-client Ruby Gem][7] (contains API bindings for Ruby).
 
 [1]: https://pulpproject.org
-[2]: https://pulp-deb.readthedocs.io/en/latest/
+[2]: https://docs.pulpproject.org/pulp_deb/
 [3]: https://pulp.plan.io/projects/pulp_deb/issues/
 [4]: https://github.com/pulp/pulp_deb
 [5]: https://pypi.org/project/pulp-deb/
