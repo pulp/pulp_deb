@@ -10,6 +10,8 @@
    https://docs.pulpproject.org/installation/index.html
 .. _pulpcore plugin API deprecation policy:
    https://docs.pulpproject.org/pulpcore/plugins/plugin-writer/concepts/index.html#plugin-api-stability-and-deprecation-policy
+.. _pulp_deb issue tracker:
+   https://pulp.plan.io/projects/pulp_deb/issues/
 .. _pulp_deb milestone:
    https://pulp.plan.io/projects/pulp_deb/roadmap
 .. _pulpcore release guide:
@@ -36,6 +38,8 @@
    https://openapi-generator.tech/docs/generators
 .. _try OpenAPI generator:
    https://openapi-generator.tech/#try
+.. _pulp_deb source repository:
+   https://github.com/pulp/pulp_deb
 .. _signing service setup script:
    https://github.com/pulp/pulp_deb/blob/main/pulp_deb/tests/functional/setup_signing_service.py
 .. _signing service script example:
