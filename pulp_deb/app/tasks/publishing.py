@@ -26,6 +26,7 @@ from pulp_deb.app.models import (
     ReleaseComponent,
     VerbatimPublication,
     AptReleaseSigningService,
+    AptPublishSettings,
 )
 from pulp_deb.app.serializers import Package822Serializer
 
@@ -52,10 +53,19 @@ def publish_verbatim(repository_version_pk):
         with VerbatimPublication.create(repo_version, pass_through=True) as publication:
             pass
 
-    log.info(_("Publication (verbatim): {publication} created").format(publication=publication.pk))
+        log.info(
+            _("Publication (verbatim): {publication} created").format(publication=publication.pk)
+        )
+        return publication
 
 
-def publish(repository_version_pk, simple=False, structured=False, signing_service_pk=None):
+def publish(
+    repository_version_pk,
+    publish_settings_pk=None,
+    simple=False,
+    structured=False,
+    signing_service_pk=None,
+):
     """
     Use provided publisher to create a Publication based on a RepositoryVersion.
 
@@ -67,10 +77,23 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
 
     """
     repo_version = RepositoryVersion.objects.get(pk=repository_version_pk)
-    if signing_service_pk:
-        signing_service = AptReleaseSigningService.objects.get(pk=signing_service_pk)
+
+    # TODO: we can't make publish_settings_pk mandatory due to the migration plugin
+    # calling publish() directly, therefore we need a lot of compatibility shims.
+    # Try to remove these in the future once it's no longer a concern.
+
+    if publish_settings_pk:
+        publish_settings = AptPublishSettings.objects.get(pk=publish_settings_pk)
     else:
-        signing_service = None
+        if signing_service_pk:
+            signing_service = AptReleaseSigningService.objects.get(pk=signing_service_pk)
+        else:
+            signing_service = None
+        publish_settings = AptPublishSettings.objects.get_or_create(
+            simple=simple,
+            structured=structured,
+            signing_service=signing_service,
+        )
 
     log.info(
         _(
@@ -78,18 +101,20 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
         ).format(  # noqa
             repo=repo_version.repository.name,
             ver=repo_version.number,
-            simple=simple,
-            structured=structured,
+            simple=publish_settings.simple,
+            structured=publish_settings.structured,
         )
     )
     with WorkingDirectory():
-        with AptPublication.create(repo_version, pass_through=False) as publication:
-            publication.simple = simple
-            publication.structured = structured
-            publication.signing_service = signing_service
+        with AptPublication.create(
+            repo_version, publish_settings, pass_through=False
+        ) as publication:
+            publication.simple = publish_settings.simple
+            publication.structured = publish_settings.structured
+            publication.signing_service = publish_settings.signing_service
             repository = repo_version.repository
 
-            if simple:
+            if publish_settings.simple:
                 codename = "default"
                 distribution = "default"
                 component = "all"
@@ -120,7 +145,7 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                     release_helper.components[component].add_package(package)
                 release_helper.finish()
 
-            if structured:
+            if publish_settings.structured:
                 for release in Release.objects.filter(
                     pk__in=repo_version.content.order_by("-pulp_created"),
                 ):
@@ -159,7 +184,8 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                             continue
                     release_helper.finish()
 
-    log.info(_("Publication: {publication} created").format(publication=publication.pk))
+            log.info(_("Publication: {publication} created").format(publication=publication.pk))
+            return publication
 
 
 class _ComponentHelper:

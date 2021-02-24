@@ -14,7 +14,7 @@ from .content import (
     ReleaseFile,
 )
 
-from .publication import AptDistribution, AptPublication, VerbatimPublication
+from .publication import AptDistribution, AptPublication, VerbatimPublication, AptPublishSettings
 
 from .remote import AptRemote
 

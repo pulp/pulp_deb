@@ -103,7 +103,7 @@ def synchronize(remote_pk, repository_pk, mirror):
         raise ValueError(_("A remote must have a url specified to synchronize."))
 
     first_stage = DebFirstStage(remote)
-    DebDeclarativeVersion(first_stage, repository, mirror=mirror).create()
+    return DebDeclarativeVersion(first_stage, repository, mirror=mirror).create()
 
 
 class DeclarativeFailsafeArtifact(DeclarativeArtifact):
@@ -196,7 +196,9 @@ class DebUpdateReleaseFileAttributes(Stage):
 
         Update release content with information obtained from its artifact.
         """
-        with ProgressReport(message="Update ReleaseFile units", code="update.release_file") as pb:
+        with ProgressReport(
+            message="Update ReleaseFile units", code="sync.update.release_file"
+        ) as pb:
             async for d_content in self.items():
                 if isinstance(d_content.content, ReleaseFile):
                     release_file = d_content.content
@@ -278,7 +280,9 @@ class DebUpdatePackageIndexAttributes(Stage):  # TODO: Needs a new name
 
         Ensure, that an uncompressed artifact is available.
         """
-        with ProgressReport(message="Update PackageIndex units", code="update.packageindex") as pb:
+        with ProgressReport(
+            message="Update PackageIndex units", code="sync.update.packageindex"
+        ) as pb:
             async for d_content in self.items():
                 if isinstance(d_content.content, PackageIndex):
                     if not d_content.d_artifacts:

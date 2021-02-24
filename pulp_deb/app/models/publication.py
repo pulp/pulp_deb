@@ -2,7 +2,7 @@ from logging import getLogger
 
 from django.db import models
 
-from pulpcore.plugin.models import Publication, PublicationDistribution
+from pulpcore.plugin.models import Publication, PublicationDistribution, PublishSettings
 
 from pulp_deb.app.models.signing_service import AptReleaseSigningService
 
@@ -22,6 +22,28 @@ class VerbatimPublication(Publication):
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
+
+
+class AptPublishSettings(PublishSettings):
+    """
+    Publish Settings for "deb" content.
+    """
+
+    TYPE = "apt-publish_settings"
+
+    simple = models.BooleanField(default=False)
+    structured = models.BooleanField(default=False)
+    signing_service = models.ForeignKey(
+        AptReleaseSigningService, on_delete=models.PROTECT, null=True
+    )
+
+    class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
+        unique_together = [
+            "simple",
+            "structured",
+            "signing_service",
+        ]
 
 
 class AptPublication(Publication):
