@@ -4,6 +4,7 @@
 additional_plugins: []
 black: true
 check_commit_message: true
+check_gettext: true
 check_manifest: true
 check_stray_pulpcore_imports: true
 coverage: false
@@ -32,6 +33,8 @@ pydocstyle: true
 pypi_username: pulp
 redmine_project: pulp_deb
 test_bindings: false
+test_cli: false
+test_fips_nightly: false
 test_performance: false
 test_released_plugin_with_next_pulpcore_release: true
 test_s3: true
