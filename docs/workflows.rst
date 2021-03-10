@@ -18,6 +18,7 @@ This chapter is structured into the following subsections:
 .. toctree::
    :maxdepth: 2
 
+   workflows/checksums
    workflows/sync
    workflows/upload
    workflows/publish

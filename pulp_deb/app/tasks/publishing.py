@@ -5,8 +5,10 @@ from datetime import datetime, timezone
 from debian import deb822
 from gzip import GzipFile
 
+from django.conf import settings
 from django.core.files import File
 from django.db.utils import IntegrityError
+from django.forms.models import model_to_dict
 
 from pulpcore.plugin.models import (
     PublishedArtifact,
@@ -25,7 +27,13 @@ from pulp_deb.app.models import (
     VerbatimPublication,
     AptReleaseSigningService,
 )
+
 from pulp_deb.app.serializers import Package822Serializer
+
+from pulp_deb.constants import (
+    NO_MD5_WARNING_MESSAGE,
+    CHECKSUM_MAP,
+)
 
 
 import logging
@@ -67,6 +75,9 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
         signing_service_pk (str): Use this SigningService to sign the Release files.
 
     """
+    if "md5" not in settings.ALLOWED_CONTENT_CHECKSUMS and settings.FORBIDDEN_CHECKSUM_WARNINGS:
+        log.warning(_(NO_MD5_WARNING_MESSAGE))
+
     repo_version = RepositoryVersion.objects.get(pk=repository_version_pk)
     if signing_service_pk:
         signing_service = AptReleaseSigningService.objects.get(pk=signing_service_pk)
@@ -244,10 +255,10 @@ class _ReleaseHelper:
         self.release["Components"] = ""  # Will be set later
         if description:
             self.release["Description"] = description
-        self.release["MD5sum"] = []
-        self.release["SHA1"] = []
-        self.release["SHA256"] = []
-        self.release["SHA512"] = []
+
+        for checksum_type, deb_field in CHECKSUM_MAP.items():
+            if checksum_type in settings.ALLOWED_CONTENT_CHECKSUMS:
+                self.release[deb_field] = []
 
         self.architectures = architectures
         self.components = {component: _ComponentHelper(self, component) for component in components}
@@ -258,18 +269,15 @@ class _ReleaseHelper:
         release_file_folder = os.path.join("dists", self.distribution)
         release_file_relative_path = os.path.relpath(metadata.relative_path, release_file_folder)
 
-        self.release["MD5sum"].append(
-            {"md5sum": artifact.md5, "size": artifact.size, "name": release_file_relative_path}
-        )
-        self.release["SHA1"].append(
-            {"sha1": artifact.sha1, "size": artifact.size, "name": release_file_relative_path}
-        )
-        self.release["SHA256"].append(
-            {"sha256": artifact.sha256, "size": artifact.size, "name": release_file_relative_path}
-        )
-        self.release["SHA512"].append(
-            {"sha512": artifact.sha512, "size": artifact.size, "name": release_file_relative_path}
-        )
+        for checksum_type, deb_field in CHECKSUM_MAP.items():
+            if checksum_type in settings.ALLOWED_CONTENT_CHECKSUMS:
+                self.release[deb_field].append(
+                    {
+                        deb_field.lower(): model_to_dict(artifact)[checksum_type],
+                        "size": artifact.size,
+                        "name": release_file_relative_path,
+                    }
+                )
 
     def finish(self):
         # Publish Packages files
