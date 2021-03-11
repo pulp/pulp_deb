@@ -77,7 +77,7 @@ deb_distribution_api = DistributionsAptApi(deb_client)
 def set_up_module():
     """Skip tests Pulp 3 isn't under test or if pulp_deb isn't installed."""
     require_pulp_3(SkipTest)
-    require_pulp_plugins({"pulp_deb"}, SkipTest)
+    require_pulp_plugins({"deb"}, SkipTest)
 
 
 def gen_deb_client():
