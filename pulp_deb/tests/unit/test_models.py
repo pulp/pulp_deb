@@ -38,8 +38,6 @@ class TestPackage(TestCase):
             md5="aabb",
             sha1="ccdd",
             sha256="eeff",
-            sha224="gghh",
-            sha384="iijj",
             sha512="kkll",
             file=SimpleUploadedFile("test_filename", b"test content"),
         )

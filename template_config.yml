@@ -25,7 +25,12 @@ plugin_dash_short: deb
 plugin_name: pulp_deb
 plugin_snake: pulp_deb
 publish_docs_to_pulpprojectdotorg: true
-pulp_settings: null
+pulp_settings:
+  allowed_content_checksums:
+  - md5
+  - sha1
+  - sha256
+  - sha512
 pulpcore_branch: master
 pulpcore_pip_version_specifier: null
 pulpprojectdotorg_key_id: aa499d7938ed
