@@ -10,6 +10,16 @@ If you are just getting started with the plugin, read the high level :ref:`featu
 See :ref:`workflows <workflows>` for detailed usage examples.
 See the :ref:`REST API <rest_api>` documentation for an exhaustive feature reference.
 
+The most important places relating to this project:
+
+* The `Pulp Project`_ homepage.
+* The `pulpcore documentation`_.
+* The `pulp_deb issue tracker`_.
+* The `pulp_deb source repository`_.
+* The `pulp_deb python package`_.
+* The `pulp-deb-client package`_ (contains API bindings for Python).
+* The `pulp_deb_client Ruby Gem`_ (contains API bindings for Ruby).
+
 
 Table of Contents
 --------------------------------------------------------------------------------
