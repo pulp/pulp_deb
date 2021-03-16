@@ -24,7 +24,6 @@ class AptReleaseSigningService(SigningService):
             "inline": "<relative_path>/InRelease",
             "detached": "<relative_path>/Release.gpg",
           }
-          "public_key" : "<relative_path>/public.key"
         }
 
         It will also ensure that the so returned files do indeed provide valid signatures as
@@ -41,12 +40,7 @@ class AptReleaseSigningService(SigningService):
                 test_file.flush()
                 return_value = self.sign(test_release_path)
 
-                public_key_path = return_value.get("public_key")
                 signatures = return_value.get("signatures")
-
-                if not public_key_path:
-                    message = "The signing service script must report a 'public_key' field!"
-                    raise RuntimeError(message)
 
                 if not signatures:
                     message = "The signing service script must report a 'signatures' field!"
@@ -76,8 +70,18 @@ class AptReleaseSigningService(SigningService):
 
                 # Prepare GPG:
                 gpg = gnupg.GPG(gnupghome=temp_directory_name)
-                with open(public_key_path, "rb") as key:
-                    gpg.import_keys(key.read())
+                gpg.import_keys(self.public_key)
+                imported_keys = gpg.list_keys()
+
+                if len(imported_keys) != 1:
+                    message = "We have imported more than one key! Aborting validation!"
+                    raise RuntimeError(message)
+
+                if imported_keys[0]["fingerprint"] != self.pubkey_fingerprint:
+                    message = (
+                        "The signing service fingerprint does not appear to match its public key!"
+                    )
+                    raise RuntimeError(message)
 
                 # Verify InRelease file
                 inline_path = signatures.get("inline")
@@ -92,6 +96,10 @@ class AptReleaseSigningService(SigningService):
                         verified = gpg.verify_file(inline)
                         if not verified.valid:
                             message = "GPG Verification of the inline file '{}' failed!"
+                            raise RuntimeError(message.format(inline_path))
+
+                        if verified.pubkey_fingerprint != self.pubkey_fingerprint:
+                            message = "'{}' appears to have been signed using the wrong key!"
                             raise RuntimeError(message.format(inline_path))
 
                     # Also check that the non-signature part of the InRelease file is the same as
@@ -124,4 +132,8 @@ class AptReleaseSigningService(SigningService):
                         verified = gpg.verify_file(detached, test_release_path)
                         if not verified.valid:
                             message = "GPG Verification of the detached file '{}' failed!"
+                            raise RuntimeError(message.format(detached_path))
+
+                        if verified.pubkey_fingerprint != self.pubkey_fingerprint:
+                            message = "'{}' appears to have been signed using the wrong key!"
                             raise RuntimeError(message.format(detached_path))
