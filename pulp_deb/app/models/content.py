@@ -1,12 +1,9 @@
 import os
 
-from logging import getLogger
-
 from django.db import models
 
 from pulpcore.plugin.models import Content
 
-logger = getLogger(__name__)
 
 BOOL_CHOICES = [(True, "yes"), (False, "no")]
 

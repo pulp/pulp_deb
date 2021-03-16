@@ -1,5 +1,4 @@
 from gettext import gettext as _
-from logging import getLogger
 
 import os
 
@@ -29,9 +28,6 @@ from pulp_deb.app.models import (
     ReleaseComponent,
     ReleaseFile,
 )
-
-
-log = getLogger(__name__)
 
 
 class YesNoField(Field):
