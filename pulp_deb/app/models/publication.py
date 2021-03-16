@@ -1,12 +1,9 @@
-from logging import getLogger
-
 from django.db import models
 
 from pulpcore.plugin.models import Publication, PublicationDistribution
 
 from pulp_deb.app.models.signing_service import AptReleaseSigningService
 
-logger = getLogger(__name__)
 
 BOOL_CHOICES = [(True, "yes"), (False, "no")]
 

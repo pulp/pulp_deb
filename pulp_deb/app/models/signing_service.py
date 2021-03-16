@@ -2,11 +2,7 @@ import os
 import gnupg
 import tempfile
 
-from logging import getLogger
-
 from pulpcore.plugin.models import SigningService
-
-logger = getLogger(__name__)
 
 
 class AptReleaseSigningService(SigningService):

@@ -1,5 +1,3 @@
-from logging import getLogger
-
 from pulpcore.plugin.models import Repository
 
 from pulpcore.plugin.repo_version_utils import remove_duplicates, validate_repo_version
@@ -16,8 +14,6 @@ from pulp_deb.app.models import (
     ReleaseComponent,
     PackageReleaseComponent,
 )
-
-logger = getLogger(__name__)
 
 
 class AptRepository(Repository):

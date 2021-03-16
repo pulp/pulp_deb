@@ -1,10 +1,6 @@
-from logging import getLogger
-
 from django.db import models
 
 from pulpcore.plugin.models import Remote
-
-logger = getLogger(__name__)
 
 
 class AptRemote(Remote):

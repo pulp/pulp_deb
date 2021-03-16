@@ -1,7 +1,5 @@
 import os
 import shutil
-import logging
-from gettext import gettext as _
 
 from datetime import datetime, timezone
 from debian import deb822
@@ -29,6 +27,9 @@ from pulp_deb.app.models import (
 )
 from pulp_deb.app.serializers import Package822Serializer
 
+
+import logging
+from gettext import gettext as _
 
 log = logging.getLogger(__name__)
 

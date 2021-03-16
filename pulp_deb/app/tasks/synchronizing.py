@@ -1,5 +1,3 @@
-from gettext import gettext as _
-import logging
 import asyncio
 import aiohttp
 import os
@@ -8,6 +6,7 @@ import bz2
 import gzip
 import lzma
 import gnupg
+
 from collections import defaultdict
 from tempfile import NamedTemporaryFile
 
@@ -47,6 +46,9 @@ from pulp_deb.app.models import (
 
 from pulp_deb.app.serializers import InstallerPackage822Serializer, Package822Serializer
 
+
+import logging
+from gettext import gettext as _
 
 log = logging.getLogger(__name__)
 
@@ -120,12 +122,12 @@ class DeclarativeFailsafeArtifact(DeclarativeArtifact):
         except aiohttp.client_exceptions.ClientResponseError as e:
             if e.code == 404:
                 self.artifact = None
-                log.info("Artifact not found. Ignored")
+                log.info(_("Artifact not found. Ignored"))
             else:
                 raise
         except DigestValidationError:
             self.artifact = None
-            log.info("Artifact digest not matched. Ignored")
+            log.info(_("Artifact digest not matched. Ignored"))
 
 
 class DebDeclarativeVersion(DeclarativeVersion):
@@ -187,7 +189,7 @@ class DebUpdateReleaseFileAttributes(Stage):
             self.gpg = gnupg.GPG(gpgbinary="/usr/bin/gpg", gnupghome=gnupghome)
             import_res = self.gpg.import_keys(self.gpgkey)
             if import_res.count == 0:
-                log.warn("Key import failed.")
+                log.warning(_("Key import failed."))
             pass
 
     async def run(self):
@@ -213,11 +215,11 @@ class DebUpdateReleaseFileAttributes(Stage):
                                         da_names["Release.gpg"].artifact.file, tmp_file.name
                                     )
                                 if verified.valid:
-                                    log.info("Verification of Release successful.")
+                                    log.info(_("Verification of Release successful."))
                                     release_file_artifact = da_names["Release"].artifact
                                     release_file.relative_path = da_names["Release"].relative_path
                                 else:
-                                    log.warn("Verification of Release failed. Dropping it.")
+                                    log.warning(_("Verification of Release failed. Dropping it."))
                                     d_content.d_artifacts.remove(da_names.pop("Release"))
                                     d_content.d_artifacts.remove(da_names.pop("Release.gpg"))
                             else:
@@ -238,11 +240,11 @@ class DebUpdateReleaseFileAttributes(Stage):
                         if self.gpgkey:
                             verified = self.gpg.verify_file(da_names["InRelease"].artifact.file)
                             if verified.valid:
-                                log.info("Verification of InRelease successful.")
+                                log.info(_("Verification of InRelease successful."))
                                 release_file_artifact = da_names["InRelease"].artifact
                                 release_file.relative_path = da_names["InRelease"].relative_path
                             else:
-                                log.warn("Verification of InRelease failed. Dropping it.")
+                                log.warning(_("Verification of InRelease failed. Dropping it."))
                                 d_content.d_artifacts.remove(da_names.pop("InRelease"))
                         else:
                             release_file_artifact = da_names["InRelease"].artifact
@@ -260,9 +262,9 @@ class DebUpdateReleaseFileAttributes(Stage):
                         release_file.suite = release_file_dict["Suite"]
                     release_file.components = release_file_dict["Components"]
                     release_file.architectures = release_file_dict["Architectures"]
-                    log.debug("Codename: {}".format(release_file.codename))
-                    log.debug("Components: {}".format(release_file.components))
-                    log.debug("Architectures: {}".format(release_file.architectures))
+                    log.debug(_("Codename: {}").format(release_file.codename))
+                    log.debug(_("Components: {}").format(release_file.components))
+                    log.debug(_("Architectures: {}").format(release_file.architectures))
                     pb.increment()
                 await self.put(d_content)
 
@@ -302,11 +304,6 @@ class DebUpdatePackageIndexAttributes(Stage):  # TODO: Needs a new name
                         )
                         d_content.d_artifacts.append(da)
                         da.artifact.save()
-                        log.info(
-                            "*** Expected: {} *** Uncompressed: {} ***".format(
-                                content.sha256, da.artifact.sha256
-                            )
-                        )
 
                     pb.increment()
                 await self.put(d_content)
@@ -322,7 +319,7 @@ def _uncompress_artifact(d_artifacts, relative_dir):
         elif ext == ".xz":
             compressor = lzma
         else:
-            log.info("Compression algorithm unknown for extension '{}'.".format(ext))
+            log.info(_("Compression algorithm unknown for extension '{}'.").format(ext))
             continue
         # At this point we have found a file that can be decompressed
         with NamedTemporaryFile(delete=False) as f_out:
@@ -407,7 +404,7 @@ class DebFirstStage(Stage):
         )
 
     async def _handle_distribution(self, distribution):
-        log.info('Downloading Release file for distribution: "{}"'.format(distribution))
+        log.info(_('Downloading Release file for distribution: "{}"').format(distribution))
         # Create release_file
         if distribution[-1] == "/":
             release_file_dir = distribution.strip("/")
@@ -436,7 +433,7 @@ class DebFirstStage(Stage):
             )
             await self.put(release_architecture_dc)
         # Parse release file
-        log.info('Parsing Release file at distribution="{}"'.format(distribution))
+        log.info(_('Parsing Release file at distribution="{}"').format(distribution))
         release_file_dict = deb822.Release(release_file.main_artifact.file)
         # collect file references in new dict
         file_references = defaultdict(deb822.Deb822Dict)
@@ -521,7 +518,7 @@ class DebFirstStage(Stage):
         if not d_artifacts:
             # No reference here, skip this component architecture combination
             return
-        log.info("Downloading: {}/Packages".format(package_index_dir))
+        log.info(_("Downloading: {}/Packages").format(package_index_dir))
         content_unit = PackageIndex(
             release=release_file,
             component=release_component.component,
@@ -534,7 +531,7 @@ class DebFirstStage(Stage):
         )
         if not package_index:
             if self.remote.ignore_missing_package_indices:
-                log.info(f"No packages index for architecture {architecture}. Skipping.")
+                log.info(_("No packages index for architecture {}. Skipping.").format(architecture))
                 return
             else:
                 relative_dir = os.path.join(release_base_path, package_index_dir)
@@ -553,7 +550,7 @@ class DebFirstStage(Stage):
                 elif package_relpath.endswith(".udeb"):
                     package_class = InstallerPackage
                     serializer_class = InstallerPackage822Serializer
-                log.debug("Downloading package {}".format(package_paragraph["Package"]))
+                log.debug(_("Downloading package {}").format(package_paragraph["Package"]))
                 serializer = serializer_class.from822(data=package_paragraph)
                 serializer.is_valid(raise_exception=True)
                 package_content_unit = package_class(
@@ -575,7 +572,7 @@ class DebFirstStage(Stage):
                 package_futures.append(package_dc)
                 await self.put(package_dc)
             except KeyError:
-                log.warning("Ignoring invalid package paragraph. {}".format(package_paragraph))
+                log.warning(_("Ignoring invalid package paragraph. {}").format(package_paragraph))
         # Assign packages to this release_component
         for package_future in package_futures:
             package = await package_future.resolution()
@@ -608,7 +605,7 @@ class DebFirstStage(Stage):
                 d_artifacts.append(self._to_d_artifact(relative_path, file_references[path]))
         if not d_artifacts:
             return
-        log.info("Downloading installer files from {}".format(installer_file_index_dir))
+        log.info(_("Downloading installer files from {}").format(installer_file_index_dir))
         content_unit = InstallerFileIndex(
             release=release_file,
             component=release_component.component,
