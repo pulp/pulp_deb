@@ -9,13 +9,19 @@ import gnupg
 
 from collections import defaultdict
 from tempfile import NamedTemporaryFile
-
 from debian import deb822
-
 from urllib.parse import urlparse, urlunparse
+from django.conf import settings
 
 from pulpcore.plugin.exceptions import DigestValidationError
-from pulpcore.plugin.models import Artifact, ProgressReport, Remote, Repository
+
+from pulpcore.plugin.models import (
+    Artifact,
+    ProgressReport,
+    Remote,
+    Repository,
+)
+
 from pulpcore.plugin.stages import (
     DeclarativeArtifact,
     DeclarativeContent,
@@ -44,7 +50,15 @@ from pulp_deb.app.models import (
     AptRemote,
 )
 
-from pulp_deb.app.serializers import InstallerPackage822Serializer, Package822Serializer
+from pulp_deb.app.serializers import (
+    InstallerPackage822Serializer,
+    Package822Serializer,
+)
+
+from pulp_deb.constants import (
+    NO_MD5_WARNING_MESSAGE,
+    CHECKSUM_MAP,
+)
 
 
 import logging
@@ -383,6 +397,9 @@ class DebFirstStage(Stage):
         """
         Build and emit `DeclarativeContent` from the Release data.
         """
+        if "md5" not in settings.ALLOWED_CONTENT_CHECKSUMS and settings.FORBIDDEN_CHECKSUM_WARNINGS:
+            log.warning(_(NO_MD5_WARNING_MESSAGE))
+
         await asyncio.gather(
             *[self._handle_distribution(distribution) for distribution in self.distributions]
         )
@@ -669,12 +686,7 @@ class DebFirstStage(Stage):
 
 def _get_checksums(unit_dict):
     return {
-        k: unit_dict[v]
-        for k, v in {
-            "sha512": "SHA512",
-            "sha256": "SHA256",
-            "sha1": "SHA1",
-            "md5": "MD5sum",
-        }.items()
-        if v in unit_dict
+        checksum_type: unit_dict[deb_field]
+        for checksum_type, deb_field in CHECKSUM_MAP.items()
+        if checksum_type in settings.ALLOWED_CONTENT_CHECKSUMS and deb_field in unit_dict
     }
