@@ -138,7 +138,7 @@ Preparing the Release Environment
    Before performing a major release, it may be worth checking if the :ref:`plugin template <using_the_plugin_template>` has new changes for this script.
 
 Creating a release uses the ``.ci/scripts/release.py`` python script.
-Running this script locally, requires the python dependencies from ``.ci/scripts/release_requirements.txt``.
+Running this script locally, requires the python dependencies from ``.ci/assets/release_requirements.txt``.
 
 Since the script will be creating commits, you should run it somewhere with a configured Git identity (i.e. not from within a ``pulplift`` development box).
 As a result, a local python virtual environment is recommended.
@@ -146,7 +146,7 @@ This can be created as follows:
 
 .. code-block:: none
 
-   mkvirtualenv -r .ci/scripts/release_requirements.txt pulp_release
+   mkvirtualenv -r .ci/assets/release_requirements.txt pulp_release
 
 You can then reenter this venv later using ``workon pulp_release``.
 

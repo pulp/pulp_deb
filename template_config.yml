@@ -22,6 +22,7 @@ plugin_caps: PULP_DEB
 plugin_caps_short: DEB
 plugin_dash: pulp-deb
 plugin_dash_short: deb
+plugin_default_branch: main
 plugin_name: pulp_deb
 plugin_snake: pulp_deb
 publish_docs_to_pulpprojectdotorg: true
