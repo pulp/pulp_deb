@@ -13,6 +13,37 @@ Changelog
 
 .. towncrier release notes start
 
+2.10.0 (2021-03-17)
+===================
+
+Compatible with: ``pulpcore>=3.10,<3.12``
+
+Bugfixes
+--------
+
+- Ensured the plugin respects the ALLOWED_CONTENT_CHECKSUMS setting.
+  `#8388 <https://pulp.plan.io/issues/8388>`_
+
+
+Improved Documentation
+----------------------
+
+- The plugin documentation was moved from https://pulp-deb.readthedocs.io/ to https://docs.pulpproject.org/pulp_deb/.
+  `#8113 <https://pulp.plan.io/issues/8113>`_
+- Added workflow documentation on checksum handling configuration.
+  `#8388 <https://pulp.plan.io/issues/8388>`_
+
+
+Removals
+--------
+
+- Update AptReleaseSigningService validation to respect new base class requirements.
+  `#8307 <https://pulp.plan.io/issues/8307>`_
+
+
+----
+
+
 2.9.0 (2021-01-14)
 ==================
 
