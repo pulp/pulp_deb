@@ -16,8 +16,6 @@ class TestPackage(TestCase):
         "Essential: yes\n"
         "Maintainer: Utgardloki\n"
         "Description: A sea jötunn associated with the ocean.\n"
-        "MD5sum: aabb\n"
-        "SHA1: ccdd\n"
         "SHA256: eeff\n"
         "Size: 42\n"
         "Filename: pool/a/aegir/aegir_0.1-edda0_sea.deb\n"
@@ -36,8 +34,6 @@ class TestPackage(TestCase):
         self.package1.save()
         self.artifact1 = Artifact(
             size=42,
-            md5="aabb",
-            sha1="ccdd",
             sha256="eeff",
             sha512="kkll",
             file=SimpleUploadedFile("test_filename", b"test content"),
@@ -69,8 +65,6 @@ class TestPackage(TestCase):
         self.assertEqual(package_dict["architecture"], self.package1.architecture)
         self.assertEqual(package_dict["maintainer"], self.package1.maintainer)
         self.assertEqual(package_dict["description"], self.package1.description)
-        self.assertEqual(package_dict["md5sum"], self.artifact1.md5)
-        self.assertEqual(package_dict["sha1"], self.artifact1.sha1)
         self.assertEqual(package_dict["sha256"], self.artifact1.sha256)
         self.assertEqual(package_dict["filename"], self.package1.filename("joetunn"))
 

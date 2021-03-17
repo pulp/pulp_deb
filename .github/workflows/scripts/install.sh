@@ -69,7 +69,7 @@ VARSYAML
 fi
 
 cat >> vars/main.yaml << VARSYAML
-pulp_settings: {"allowed_content_checksums": ["md5", "sha1", "sha256", "sha512"]}
+pulp_settings: {"allowed_content_checksums": ["sha256", "sha512"]}
 pulp_scheme: https
 
 pulp_container_tag: https
