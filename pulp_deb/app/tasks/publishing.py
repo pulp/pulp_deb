@@ -4,6 +4,7 @@ import shutil
 from datetime import datetime, timezone
 from debian import deb822
 from gzip import GzipFile
+import tempfile
 
 from django.conf import settings
 from django.core.files import File
@@ -15,7 +16,6 @@ from pulpcore.plugin.models import (
     PublishedMetadata,
     RepositoryVersion,
 )
-from pulpcore.plugin.tasking import WorkingDirectory
 
 from pulp_deb.app.models import (
     AptPublication,
@@ -57,7 +57,7 @@ def publish_verbatim(repository_version_pk):
             repo=repo_version.repository.name, ver=repo_version.number
         )
     )
-    with WorkingDirectory():
+    with tempfile.TemporaryDirectory("."):
         with VerbatimPublication.create(repo_version, pass_through=True) as publication:
             pass
 
@@ -94,7 +94,7 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
             structured=structured,
         )
     )
-    with WorkingDirectory():
+    with tempfile.TemporaryDirectory("."):
         with AptPublication.create(repo_version, pass_through=False) as publication:
             publication.simple = simple
             publication.structured = structured
