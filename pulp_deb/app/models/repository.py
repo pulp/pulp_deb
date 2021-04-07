@@ -3,6 +3,7 @@ from pulpcore.plugin.models import Repository
 from pulpcore.plugin.repo_version_utils import remove_duplicates, validate_repo_version
 
 from pulp_deb.app.models import (
+    AptRemote,
     GenericContent,
     InstallerFileIndex,
     InstallerPackage,
@@ -33,6 +34,9 @@ class AptRepository(Repository):
         ReleaseArchitecture,
         ReleaseComponent,
         ReleaseFile,
+    ]
+    REMOTE_TYPES = [
+        AptRemote,
     ]
 
     class Meta:
