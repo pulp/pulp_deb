@@ -654,7 +654,7 @@ class DebFirstStage(Stage):
         paths = [path for path in file_references.keys() if path.startswith(translation_dir)]
         translations = {}
         for path in paths:
-            relative_path = os.path.join(os.path.dirname(release_file.relative_path))
+            relative_path = os.path.join(os.path.dirname(release_file.relative_path), path)
             d_artifact = self._to_d_artifact(relative_path, file_references[path])
             key, ext = os.path.splitext(relative_path)
             if key not in translations:
