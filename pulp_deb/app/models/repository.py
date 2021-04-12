@@ -3,16 +3,17 @@ from pulpcore.plugin.models import Repository
 from pulpcore.plugin.repo_version_utils import remove_duplicates, validate_repo_version
 
 from pulp_deb.app.models import (
+    AptRemote,
     GenericContent,
-    ReleaseFile,
-    PackageIndex,
     InstallerFileIndex,
-    Package,
     InstallerPackage,
+    Package,
+    PackageIndex,
+    PackageReleaseComponent,
     Release,
     ReleaseArchitecture,
     ReleaseComponent,
-    PackageReleaseComponent,
+    ReleaseFile,
 )
 
 
@@ -24,15 +25,18 @@ class AptRepository(Repository):
     TYPE = "deb"
     CONTENT_TYPES = [
         GenericContent,
-        ReleaseFile,
-        PackageIndex,
         InstallerFileIndex,
-        Package,
         InstallerPackage,
+        Package,
+        PackageIndex,
+        PackageReleaseComponent,
         Release,
         ReleaseArchitecture,
         ReleaseComponent,
-        PackageReleaseComponent,
+        ReleaseFile,
+    ]
+    REMOTE_TYPES = [
+        AptRemote,
     ]
 
     class Meta:

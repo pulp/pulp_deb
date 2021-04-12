@@ -44,11 +44,13 @@ class AptRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin):
         Dispatches a sync task.
         """
         repository = self.get_object()
-        serializer = RepositorySyncURLSerializer(data=request.data, context={"request": request})
+        serializer = RepositorySyncURLSerializer(
+            data=request.data, context={"request": request, "repository_pk": pk}
+        )
 
         # Validate synchronously to return 400 errors.
         serializer.is_valid(raise_exception=True)
-        remote = serializer.validated_data.get("remote")
+        remote = serializer.validated_data.get("remote", repository.remote)
         mirror = serializer.validated_data.get("mirror", True)
 
         result = enqueue_with_reservation(
