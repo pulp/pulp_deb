@@ -87,6 +87,22 @@ Removals
 ----
 
 
+2.9.1 (2021-04-14)
+==================
+
+Compatible with: ``pulpcore>=3.7,<3.11``
+
+Bugfixes
+--------
+
+- Fixed the relative paths for translation files, which were causing sync failures and missing translation files.
+  (Backported from https://pulp.plan.io/issues/8410)
+  `#8559 <https://pulp.plan.io/issues/8559>`_
+
+
+----
+
+
 2.9.0 (2021-01-14)
 ==================
 
