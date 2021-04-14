@@ -13,12 +13,44 @@ Changelog
 
 .. towncrier release notes start
 
+2.11.1 (2021-04-14)
+===================
+
+Compatible with: ``pulpcore>=3.10,<3.13``
+
+Bugfixes
+--------
+
+- Fixed the relative paths for translation files, which were causing sync failures and missing translation files.
+  (Backported from https://pulp.plan.io/issues/8410)
+  `#8556 <https://pulp.plan.io/issues/8556>`_
+
+
+----
+
+
 2.11.0 (2021-03-30)
 ===================
 
 Compatible with: ``pulpcore>=3.10,<3.13``
 
 No significant changes.
+
+
+----
+
+
+2.10.1 (2021-04-14)
+===================
+
+Compatible with: ``pulpcore>=3.10,<3.12``
+
+Bugfixes
+--------
+
+- Fixed the relative paths for translation files, which were causing sync failures and missing translation files.
+  (Backported from https://pulp.plan.io/issues/8410)
+  `#8558 <https://pulp.plan.io/issues/8558>`_
 
 
 ----
@@ -50,6 +82,22 @@ Removals
 
 - Update AptReleaseSigningService validation to respect new base class requirements.
   `#8307 <https://pulp.plan.io/issues/8307>`_
+
+
+----
+
+
+2.9.1 (2021-04-14)
+==================
+
+Compatible with: ``pulpcore>=3.7,<3.11``
+
+Bugfixes
+--------
+
+- Fixed the relative paths for translation files, which were causing sync failures and missing translation files.
+  (Backported from https://pulp.plan.io/issues/8410)
+  `#8559 <https://pulp.plan.io/issues/8559>`_
 
 
 ----
