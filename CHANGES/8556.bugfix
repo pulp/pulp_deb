@@ -1,2 +1,0 @@
-Fixed the relative paths for translation files, which were causing sync failures and missing translation files.
-(Backported from https://pulp.plan.io/issues/8410)
