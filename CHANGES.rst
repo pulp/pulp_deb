@@ -40,6 +40,22 @@ No significant changes.
 ----
 
 
+2.10.1 (2021-04-14)
+===================
+
+Compatible with: ``pulpcore>=3.10,<3.12``
+
+Bugfixes
+--------
+
+- Fixed the relative paths for translation files, which were causing sync failures and missing translation files.
+  (Backported from https://pulp.plan.io/issues/8410)
+  `#8558 <https://pulp.plan.io/issues/8558>`_
+
+
+----
+
+
 2.10.0 (2021-03-17)
 ===================
 
