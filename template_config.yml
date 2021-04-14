@@ -2,6 +2,7 @@
 # were not present before running plugin-template have been added with their default values.
 
 additional_plugins: []
+additional_repos: []
 black: true
 check_commit_message: true
 check_gettext: true
@@ -15,6 +16,7 @@ deploy_daily_client_to_rubygems: true
 deploy_to_pypi: true
 docker_fixtures: true
 docs_test: true
+issue_tracker: redmine
 plugin_app_label: deb
 plugin_camel: PulpDeb
 plugin_camel_short: Deb

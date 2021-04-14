@@ -168,7 +168,7 @@ jobs:
       - name: Publish client to pypi
         run: bash .ci/scripts/publish_client_pypi.sh
       - name: Publish docs to pulpproject.org
-        run: .ci/scripts/publish_docs.sh tag ${GITHUB_REF##*/}
+        run: .ci/scripts/publish_docs.sh tag ${{ github.event.inputs.release }}
       - name: Update Redmine
         run: bash .ci/scripts/update_redmine.sh
 
