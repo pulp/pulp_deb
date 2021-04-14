@@ -10,7 +10,7 @@ ADD {{ item.source }} {{ item.source }}
 # Install python packages
 # Hacking botocore (https://github.com/boto/botocore/pull/1990)
 
-RUN pip3 install --use-feature=2020-resolver \
+RUN pip3 install \
 {%- if s3_test | default(false) -%}
 {{ " " }}django-storages[boto3] git+https://github.com/fabricio-aguiar/botocore.git@fix-100-continue
 {%- endif -%}

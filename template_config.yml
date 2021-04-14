@@ -21,12 +21,13 @@ plugin_caps: PULP_DEB
 plugin_caps_short: DEB
 plugin_dash: pulp-deb
 plugin_dash_short: deb
+plugin_default_branch: main
 plugin_name: pulp_deb
 plugin_snake: pulp_deb
 publish_docs_to_pulpprojectdotorg: true
 pulp_settings: null
-pulpcore_branch: master
-pulpcore_pip_version_specifier: null
+pulpcore_branch: '3.9'
+pulpcore_pip_version_specifier: ~=3.9.0
 pulpprojectdotorg_key_id: aa499d7938ed
 pydocstyle: true
 pypi_username: pulp
