@@ -57,6 +57,9 @@ jobs:
       - name: Check for pulpcore imports outside of pulpcore.plugin
         run: sh .ci/scripts/check_pulpcore_imports.sh
 
+      - name: Check for gettext problems
+        run: sh .ci/scripts/check_gettext.sh
+
   test:
     runs-on: ubuntu-latest
     # run only after lint finishes
@@ -124,3 +127,4 @@ jobs:
           docker logs pulp || true
           docker exec pulp ls -latr /etc/yum.repos.d/ || true
           docker exec pulp cat /etc/yum.repos.d/* || true
+          docker exec pulp pip3 list

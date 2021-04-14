@@ -14,7 +14,7 @@ cd "$(dirname "$(realpath -e "$0")")"/../..
 
 pip install twine
 
-export REPORTED_VERSION=$(http pulp/pulp/api/v3/status/ | jq --arg plugin pulp_deb -r '.versions[] | select(.component == $plugin) | .version')
+export REPORTED_VERSION=$(http pulp/pulp/api/v3/status/ | jq --arg plugin deb --arg legacy_plugin pulp_deb -r '.versions[] | select(.component == $plugin or .component == $legacy_plugin) | .version')
 export DESCRIPTION="$(git describe --all --exact-match `git rev-parse HEAD`)"
 if [[ $DESCRIPTION == 'tags/'$REPORTED_VERSION ]]; then
   export VERSION=${REPORTED_VERSION}
@@ -32,6 +32,7 @@ export response=$(curl --write-out %{http_code} --silent --output /dev/null http
 
 if [ "$response" == "200" ];
 then
+  echo "pulp_deb $VERSION has already been released. Skipping."
   exit
 fi
 
