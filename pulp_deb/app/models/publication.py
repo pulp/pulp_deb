@@ -1,6 +1,6 @@
 from django.db import models
 
-from pulpcore.plugin.models import Publication, PublicationDistribution
+from pulpcore.plugin.models import Publication, Distribution
 
 from pulp_deb.app.models.signing_service import AptReleaseSigningService
 
@@ -40,7 +40,7 @@ class AptPublication(Publication):
         default_related_name = "%(app_label)s_%(model_name)s"
 
 
-class AptDistribution(PublicationDistribution):
+class AptDistribution(Distribution):
     """
     A Distribution for DebContent.
     """

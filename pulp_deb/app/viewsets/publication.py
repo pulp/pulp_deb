@@ -5,7 +5,7 @@ from drf_spectacular.utils import extend_schema
 from pulpcore.plugin.serializers import AsyncOperationResponseSerializer
 from pulpcore.plugin.tasking import enqueue_with_reservation
 from pulpcore.plugin.viewsets import (
-    BaseDistributionViewSet,
+    DistributionViewSet,
     OperationPostponedResponse,
     PublicationViewSet,
 )
@@ -84,21 +84,22 @@ class AptPublicationViewSet(PublicationViewSet):
         simple = serializer.validated_data.get("simple")
         structured = serializer.validated_data.get("structured")
         signing_service = serializer.validated_data.get("signing_service")
+        signing_service_pk = getattr(signing_service, "pk", None)
 
         result = enqueue_with_reservation(
             tasks.publish,
             [repository_version.repository],
             kwargs={
-                "repository_version_pk": repository_version.pk,
+                "repository_version_pk": str(repository_version.pk),
                 "simple": simple,
                 "structured": structured,
-                "signing_service_pk": getattr(signing_service, "pk", None),
+                "signing_service_pk": str(signing_service_pk) if signing_service_pk else None,
             },
         )
         return OperationPostponedResponse(result, request)
 
 
-class AptDistributionViewSet(BaseDistributionViewSet):
+class AptDistributionViewSet(DistributionViewSet):
     # The doc string is a top level element of the user facing REST API documentation:
     """
     An AptDistribution is just an AptPublication made available via the content app.

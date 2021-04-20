@@ -1,5 +1,10 @@
 from rest_framework.serializers import BooleanField, ValidationError, HyperlinkedRelatedField
-from pulpcore.plugin.serializers import PublicationDistributionSerializer, PublicationSerializer
+from pulpcore.plugin.models import Publication
+from pulpcore.plugin.serializers import (
+    DistributionSerializer,
+    PublicationSerializer,
+    DetailRelatedField,
+)
 
 from pulp_deb.app.models import (
     AptDistribution,
@@ -51,11 +56,19 @@ class AptPublicationSerializer(PublicationSerializer):
         model = AptPublication
 
 
-class AptDistributionSerializer(PublicationDistributionSerializer):
+class AptDistributionSerializer(DistributionSerializer):
     """
     Serializer for AptDistributions.
     """
 
+    publication = DetailRelatedField(
+        required=False,
+        help_text="Publication to be served",
+        view_name_pattern=r"publications(-.*/.*)?-detail",
+        queryset=Publication.objects.exclude(complete=False),
+        allow_null=True,
+    )
+
     class Meta:
-        fields = PublicationDistributionSerializer.Meta.fields
+        fields = DistributionSerializer.Meta.fields + ("publication",)
         model = AptDistribution
