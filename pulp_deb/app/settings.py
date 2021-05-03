@@ -6,3 +6,7 @@ Check `Plugin Writer's Guide`_ for more details.
 """
 
 FORBIDDEN_CHECKSUM_WARNINGS = True
+
+# Defines which publishers should be used for autopublish (along with which options) for
+# repositories with autopublish=True but no defined autopubish_modes.
+DEFAULT_AUTOPUBLISH_MODES = "simple structured verbatim"
