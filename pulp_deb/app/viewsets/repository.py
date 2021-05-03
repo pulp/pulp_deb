@@ -56,7 +56,11 @@ class AptRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin):
         result = enqueue_with_reservation(
             tasks.synchronize,
             [repository, remote],
-            kwargs={"remote_pk": remote.pk, "repository_pk": repository.pk, "mirror": mirror},
+            kwargs={
+                "remote_pk": str(remote.pk),
+                "repository_pk": str(repository.pk),
+                "mirror": mirror,
+            },
         )
         return OperationPostponedResponse(result, request)
 
