@@ -6,6 +6,7 @@ SPHINXOPTS = -W -n
 SPHINXBUILD = sphinx-build
 PAPER =
 BUILDDIR = _build
+STATIC_BUILD_DIR = _static
 DIAGRAM_BUILD_DIR = _diagrams
 DIAGRAM_SOURCE_DIR = diagrams_src
 PULP_URL = "http://localhost:24817"
@@ -57,7 +58,8 @@ else
 endif
 
 html:
-	curl --fail -o _static/api.json "$(PULP_URL)/pulp/api/v3/docs/api.json?plugin=pulp_deb&include_html=1"
+	mkdir -p $(STATIC_BUILD_DIR)
+	curl --fail -o $(STATIC_BUILD_DIR)/api.json "$(PULP_URL)/pulp/api/v3/docs/api.json?plugin=pulp_deb&include_html=1"
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."

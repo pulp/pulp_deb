@@ -7,6 +7,7 @@ black: true
 check_commit_message: true
 check_gettext: true
 check_manifest: true
+check_openapi_schema: true
 check_stray_pulpcore_imports: true
 coverage: false
 deploy_client_to_pypi: true
