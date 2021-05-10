@@ -13,6 +13,35 @@ Changelog
 
 .. towncrier release notes start
 
+2.12.0 (2021-05-10)
+===================
+
+Compatible with: ``pulpcore>=3.12,<3.14``
+
+Features
+--------
+
+- APT repositories may now reference an APT remote, that will automatically be used for syncs.
+  `#8520 <https://pulp.plan.io/issues/8520>`_
+
+
+Bugfixes
+--------
+
+- Fixed the relative paths for translation files, which were causing sync failures and missing translation files.
+  `#8410 <https://pulp.plan.io/issues/8410>`_
+
+
+Misc
+----
+
+- Migrated to new Distribution model for pulpcore 3.13 compatibility.
+  `#8682 <https://pulp.plan.io/issues/8682>`_
+
+
+----
+
+
 2.11.1 (2021-04-14)
 ===================
 
