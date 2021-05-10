@@ -3,7 +3,7 @@ from gettext import gettext as _  # noqa
 from drf_spectacular.utils import extend_schema
 
 from pulpcore.plugin.serializers import AsyncOperationResponseSerializer
-from pulpcore.plugin.tasking import enqueue_with_reservation
+from pulpcore.plugin.tasking import dispatch
 from pulpcore.plugin.viewsets import (
     DistributionViewSet,
     OperationPostponedResponse,
@@ -43,7 +43,7 @@ class VerbatimPublicationViewSet(PublicationViewSet):
         serializer.is_valid(raise_exception=True)
         repository_version = serializer.validated_data.get("repository_version")
 
-        result = enqueue_with_reservation(
+        result = dispatch(
             tasks.publish_verbatim,
             [repository_version.repository],
             kwargs={"repository_version_pk": str(repository_version.pk)},
@@ -86,7 +86,7 @@ class AptPublicationViewSet(PublicationViewSet):
         signing_service = serializer.validated_data.get("signing_service")
         signing_service_pk = getattr(signing_service, "pk", None)
 
-        result = enqueue_with_reservation(
+        result = dispatch(
             tasks.publish,
             [repository_version.repository],
             kwargs={
