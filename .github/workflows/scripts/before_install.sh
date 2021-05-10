@@ -78,11 +78,6 @@ if [ -n "$PULP_OPENAPI_GENERATOR_PR_NUMBER" ]; then
   cd ..
 fi
 
-cd pulp-openapi-generator
-sed -i -e 's/localhost:24817/pulp/g' generate.sh
-sed -i -e 's/:24817/pulp/g' generate.sh
-cd ..
-
 
 
 git clone --depth=1 https://github.com/pulp/pulpcore.git --branch master
