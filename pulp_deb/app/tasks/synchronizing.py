@@ -55,7 +55,7 @@ from pulp_deb.app.serializers import (
     Package822Serializer,
 )
 
-from pulp_deb.constants import (
+from pulp_deb.app.constants import (
     NO_MD5_WARNING_MESSAGE,
     CHECKSUM_MAP,
 )
