@@ -410,7 +410,6 @@ class DebFirstStage(Stage):
         )
 
     async def _create_unit(self, d_content):
-        # Warning! If d_content batches, this will deadlock.
         await self.put(d_content)
         return await d_content.resolution()
 
