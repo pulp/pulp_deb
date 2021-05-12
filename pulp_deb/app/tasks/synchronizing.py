@@ -136,12 +136,20 @@ class DeclarativeFailsafeArtifact(DeclarativeArtifact):
         except aiohttp.client_exceptions.ClientResponseError as e:
             if e.code == 404:
                 self.artifact = None
-                log.info(_("Artifact not found. Ignored"))
+                log.info(
+                    _("Artifact with relative_path='{}' not found. Ignored").format(
+                        self.relative_path
+                    )
+                )
             else:
                 raise
         except DigestValidationError:
             self.artifact = None
-            log.info(_("Artifact digest not matched. Ignored"))
+            log.info(
+                _("Digest for artifact with relative_path='{}' not matched. Ignored").format(
+                    self.relative_path
+                )
+            )
 
 
 class DebDeclarativeVersion(DeclarativeVersion):
