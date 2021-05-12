@@ -506,10 +506,6 @@ class DebFirstStage(Stage):
                     for architecture in architectures
                 ]
             )
-        # Handle translation files
-        pending_tasks.append(
-            self._handle_translation_files(release_file, release_component, file_references)
-        )
         if self.remote.sync_sources:
             raise NotImplementedError("Syncing source repositories is not yet implemented.")
         await asyncio.gather(*pending_tasks)
