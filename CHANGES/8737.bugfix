@@ -1,0 +1,2 @@
+Completely disabled translation file synchronization to prevent sync failures.
+(Backported from https://pulp.plan.io/issues/8671)
