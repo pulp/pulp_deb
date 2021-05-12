@@ -32,7 +32,7 @@ from pulp_deb.app.serializers import Package822Serializer
 
 from pulp_deb.app.constants import (
     NO_MD5_WARNING_MESSAGE,
-    CHECKSUM_MAP,
+    CHECKSUM_TYPE_MAP,
 )
 
 
@@ -256,7 +256,7 @@ class _ReleaseHelper:
         if description:
             self.release["Description"] = description
 
-        for checksum_type, deb_field in CHECKSUM_MAP.items():
+        for checksum_type, deb_field in CHECKSUM_TYPE_MAP.items():
             if checksum_type in settings.ALLOWED_CONTENT_CHECKSUMS:
                 self.release[deb_field] = []
 
@@ -269,7 +269,7 @@ class _ReleaseHelper:
         release_file_folder = os.path.join("dists", self.distribution)
         release_file_relative_path = os.path.relpath(metadata.relative_path, release_file_folder)
 
-        for checksum_type, deb_field in CHECKSUM_MAP.items():
+        for checksum_type, deb_field in CHECKSUM_TYPE_MAP.items():
             if checksum_type in settings.ALLOWED_CONTENT_CHECKSUMS:
                 self.release[deb_field].append(
                     {

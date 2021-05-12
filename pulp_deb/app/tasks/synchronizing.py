@@ -57,7 +57,7 @@ from pulp_deb.app.serializers import (
 
 from pulp_deb.app.constants import (
     NO_MD5_WARNING_MESSAGE,
-    CHECKSUM_MAP,
+    CHECKSUM_TYPE_MAP,
 )
 
 
@@ -685,8 +685,21 @@ class DebFirstStage(Stage):
 
 
 def _get_checksums(unit_dict):
+    """
+    Filters the unit_dict provided to retain only checksum fields present in the
+    CHECKSUM_TYPE_MAP and permitted by ALLOWED_CONTENT_CHECKSUMS. Also translates the
+    retained keys from Debian checksum field name to Pulp checksum type name.
+
+    For example, if the following is in the unit_dict:
+        'SHA256': '0b412f7b1a25087871c3e9f2743f4d90b9b025e415f825483b6f6a197d11d409',
+
+    The return dict would contain:
+        'sha256': '0b412f7b1a25087871c3e9f2743f4d90b9b025e415f825483b6f6a197d11d409',
+
+    This key translation is defined by the CHECKSUM_TYPE_MAP.
+    """
     return {
         checksum_type: unit_dict[deb_field]
-        for checksum_type, deb_field in CHECKSUM_MAP.items()
+        for checksum_type, deb_field in CHECKSUM_TYPE_MAP.items()
         if checksum_type in settings.ALLOWED_CONTENT_CHECKSUMS and deb_field in unit_dict
     }

@@ -5,7 +5,7 @@ NO_MD5_WARNING_MESSAGE = (
 )
 
 # Maps pulpcore names onto Debian metadata field names for all supported checksums:
-CHECKSUM_MAP = {
+CHECKSUM_TYPE_MAP = {
     "md5": "MD5sum",
     "sha1": "SHA1",
     "sha256": "SHA256",
