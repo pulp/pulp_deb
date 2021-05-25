@@ -13,6 +13,22 @@ Changelog
 
 .. towncrier release notes start
 
+2.10.2 (2021-05-25)
+===================
+
+Compatible with: ``pulpcore>=3.10,<3.12``
+
+Bugfixes
+--------
+
+- Completely disabled translation file synchronization to prevent sync failures.
+  (Backported from https://pulp.plan.io/issues/8671)
+  `#8737 <https://pulp.plan.io/issues/8737>`_
+
+
+----
+
+
 2.10.1 (2021-04-14)
 ===================
 
