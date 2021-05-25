@@ -164,6 +164,22 @@ Removals
 ----
 
 
+2.9.2 (2021-05-25)
+==================
+
+Compatible with: ``pulpcore>=3.7,<3.11``
+
+Bugfixes
+--------
+
+- Completely disabled translation file synchronization to prevent sync failures.
+  (Backported from https://pulp.plan.io/issues/8671)
+  `#8738 <https://pulp.plan.io/issues/8738>`_
+
+
+----
+
+
 2.9.1 (2021-04-14)
 ==================
 
