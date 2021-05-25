@@ -12,6 +12,8 @@ set -euv
 # make sure this script runs at the repo root
 cd "$(dirname "$(realpath -e "$0")")"/../..
 
+export PULP_URL="${PULP_URL:-http://pulp}"
+
 mkdir ~/.gem || true
 touch ~/.gem/credentials
 echo "---

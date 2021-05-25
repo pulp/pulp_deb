@@ -7,6 +7,7 @@ black: true
 check_commit_message: true
 check_gettext: true
 check_manifest: true
+check_openapi_schema: false
 check_stray_pulpcore_imports: true
 coverage: false
 deploy_client_to_pypi: true
@@ -34,8 +35,8 @@ pulp_settings:
   - sha1
   - sha256
   - sha512
-pulpcore_branch: '3.10'
-pulpcore_pip_version_specifier: '~=3.10.0'
+pulpcore_branch: '3.11'
+pulpcore_pip_version_specifier: '~=3.11.0'
 pulpprojectdotorg_key_id: aa499d7938ed
 pydocstyle: true
 pypi_username: pulp
