@@ -58,6 +58,22 @@ Misc
 ----
 
 
+2.11.2 (2021-05-25)
+===================
+
+Compatible with: ``pulpcore>=3.10,<3.13``
+
+Bugfixes
+--------
+
+- Completely disabled translation file synchronization to prevent sync failures.
+  (Backported from https://pulp.plan.io/issues/8671)
+  `#8736 <https://pulp.plan.io/issues/8736>`_
+
+
+----
+
+
 2.11.1 (2021-04-14)
 ===================
 
