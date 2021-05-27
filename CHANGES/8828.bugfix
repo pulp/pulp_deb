@@ -1,1 +1,0 @@
-Fixed a bug where components from the remote were being ignored when specified as the plain component.
