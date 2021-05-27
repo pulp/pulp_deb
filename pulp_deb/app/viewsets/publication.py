@@ -46,7 +46,7 @@ class VerbatimPublicationViewSet(PublicationViewSet):
         result = dispatch(
             tasks.publish_verbatim,
             [repository_version.repository],
-            kwargs={"repository_version_pk": str(repository_version.pk)},
+            kwargs={"repository_version_pk": repository_version.pk},
         )
         return OperationPostponedResponse(result, request)
 
@@ -84,16 +84,15 @@ class AptPublicationViewSet(PublicationViewSet):
         simple = serializer.validated_data.get("simple")
         structured = serializer.validated_data.get("structured")
         signing_service = serializer.validated_data.get("signing_service")
-        signing_service_pk = getattr(signing_service, "pk", None)
 
         result = dispatch(
             tasks.publish,
             [repository_version.repository],
             kwargs={
-                "repository_version_pk": str(repository_version.pk),
+                "repository_version_pk": repository_version.pk,
                 "simple": simple,
                 "structured": structured,
-                "signing_service_pk": str(signing_service_pk) if signing_service_pk else None,
+                "signing_service_pk": getattr(signing_service, "pk", None),
             },
         )
         return OperationPostponedResponse(result, request)
