@@ -177,12 +177,23 @@ class DebDeclarativeVersion(DeclarativeVersion):
         return pipeline
 
 
-def _filter_split(values, filter_list):
-    """Filter space separated list and return iterable."""
-    value_set = set(values.split())
-    if filter_list:
-        value_set &= set(filter_list)
-    return sorted(value_set)
+def _filter_split(values, filter_values):
+    """
+    Returns the intersection of two strings of whitespace separated elements as a sorted set.
+    If an element of values.split() has a path prefix, it is still considered to be equal to an
+    element of filter_values.split() without the path prefix. E.g.: The intersection/return value
+    of values="updates/main" and filter_values="main" is considered to be set(["updates/main"]).
+    """
+    value_list = (
+        values.split()
+        if not filter_values
+        else [
+            value
+            for value in values.split()
+            if value in filter_values or os.path.basename(value) in filter_values
+        ]
+    )
+    return sorted(set(value_list))
 
 
 class DebUpdateReleaseFileAttributes(Stage):
@@ -378,20 +389,6 @@ class DebFirstStage(Stage):
         super().__init__(*args, **kwargs)
         self.remote = remote
         self.parsed_url = urlparse(remote.url)
-        self.distributions = [
-            distribution.strip() for distribution in self.remote.distributions.split()
-        ]
-        self.num_distributions = len(self.distributions)
-        self.components = (
-            None
-            if self.remote.components is None
-            else [component.strip() for component in self.remote.components.split()]
-        )
-        self.architectures = (
-            None
-            if self.remote.architectures is None
-            else [architecture.strip() for architecture in self.remote.architectures.split()]
-        )
 
     async def run(self):
         """
@@ -401,7 +398,7 @@ class DebFirstStage(Stage):
             log.warning(_(NO_MD5_WARNING_MESSAGE))
 
         await asyncio.gather(
-            *[self._handle_distribution(distribution) for distribution in self.distributions]
+            *[self._handle_distribution(dist) for dist in self.remote.distributions.split()]
         )
 
     async def _create_unit(self, d_content):
@@ -444,7 +441,7 @@ class DebFirstStage(Stage):
         release_dc = DeclarativeContent(content=release_unit)
         release = await self._create_unit(release_dc)
         # Create release architectures
-        for architecture in _filter_split(release_file.architectures, self.architectures):
+        for architecture in _filter_split(release_file.architectures, self.remote.architectures):
             release_architecture_dc = DeclarativeContent(
                 content=ReleaseArchitecture(architecture=architecture, release=release)
             )
@@ -461,7 +458,7 @@ class DebFirstStage(Stage):
         await asyncio.gather(
             *[
                 self._handle_component(component, release, release_file, file_references)
-                for component in _filter_split(release_file.components, self.components)
+                for component in _filter_split(release_file.components, self.remote.components)
             ]
         )
 
@@ -471,7 +468,7 @@ class DebFirstStage(Stage):
             content=ReleaseComponent(component=component, release=release)
         )
         release_component = await self._create_unit(release_component_dc)
-        architectures = _filter_split(release_file.architectures, self.architectures)
+        architectures = _filter_split(release_file.architectures, self.remote.architectures)
         pending_tasks = []
         # Handle package indices
         pending_tasks.extend(
