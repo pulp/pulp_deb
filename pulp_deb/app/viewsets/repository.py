@@ -57,8 +57,8 @@ class AptRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin):
             tasks.synchronize,
             [repository, remote],
             kwargs={
-                "remote_pk": str(remote.pk),
-                "repository_pk": str(repository.pk),
+                "remote_pk": remote.pk,
+                "repository_pk": repository.pk,
                 "mirror": mirror,
             },
         )
