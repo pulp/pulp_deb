@@ -13,6 +13,10 @@ from .content_serializers import (
     ReleaseArchitectureSerializer,
     ReleaseComponentSerializer,
     ReleaseFileSerializer,
+    SourceIndexSerializer,
+    DscFile822Serializer,
+    SourcePackageSerializer,
+    SourcePackageReleaseComponentSerializer,
 )
 
 from .publication_serializers import (

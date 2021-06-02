@@ -14,7 +14,6 @@ from django.db.models import JSONField
 
 from pulpcore.plugin.models import Content
 
-
 BOOL_CHOICES = [(True, "yes"), (False, "no")]
 
 
@@ -147,3 +146,172 @@ class GenericContent(Content):
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
         unique_together = (("relative_path", "sha256"),)
+
+
+class SourcePackage(Content):
+    """
+    The Debian Source Package (dsc, orig.tar.gz, debian.tar.gz... files) content type.
+
+    This model must contain all information that is needed to
+    generate the corresponding paragraph in "Souces" indices files.
+    """
+
+    TYPE = "source_package"
+
+    SUFFIX = "dsc"
+
+    relative_path = models.TextField()
+    format = models.TextField()  # the format of the source package
+    source = models.TextField()  # source package nameformat
+    binary = models.TextField(null=True)  # lists binary packages which a source package can produce
+    architecture = models.TextField(null=True)  # all, i386, ...
+    version = models.TextField()  # The format is: [epoch:]upstream_version[-debian_revision]
+    maintainer = models.TextField()
+    uploaders = models.TextField(null=True)  # Names and emails of co-maintainers
+    homepage = models.TextField(null=True)
+    vcs_browser = models.TextField(null=True)
+    vcs_arch = models.TextField(null=True)
+    vcs_bzr = models.TextField(null=True)
+    vcs_cvs = models.TextField(null=True)
+    vcs_darcs = models.TextField(null=True)
+    vcs_git = models.TextField(null=True)
+    vcs_hg = models.TextField(null=True)
+    vcs_mtn = models.TextField(null=True)
+    vcs_snv = models.TextField(null=True)
+    testsuite = models.TextField(null=True)
+    dgit = models.TextField(null=True)
+    standards_version = models.TextField()  # most recent version of the standards the pkg complies
+    build_depends = models.TextField(null=True)
+    build_depends_indep = models.TextField(null=True)
+    build_depends_arch = models.TextField(null=True)
+    build_conflicts = models.TextField(null=True)
+    build_conflicts_indep = models.TextField(null=True)
+    build_conflicts_arch = models.TextField(null=True)
+    package_list = models.TextField(
+        null=True
+    )  # all the packages that can be built from the source package
+
+    def __init__(self, *args, **kwargs):
+        """Sanatize kwargs by removing multi-lists before contructing DscFile"""
+        for kw in ["files", "checksums_sha1", "checksums_sha256", "checksums_sha512"]:
+            if kw in kwargs:
+                kwargs.pop(kw)
+        super().__init__(*args, **kwargs)
+
+    def derived_dsc_filename(self):
+        """Print a nice name for the Dsc file."""
+        return "{}_{}.{}".format(self.source, self.version, self.SUFFIX)
+
+    def derived_dir(self, component=""):
+        """Assemble full dir in pool directory."""
+        sourcename = self.source
+        prefix = sourcename[0]
+        return os.path.join(
+            "pool",
+            component,
+            prefix,
+            sourcename,
+        )
+
+    def derived_path(self, name, component=""):
+        """Assemble filename in pool directory."""
+        return os.path.join(self.derived_dir(component), name)
+
+    @property
+    def checksums_sha1(self):
+        """Generate 'Checksums-Sha1' list from content artifacts."""
+        contents = []
+        for content_artifact in self.contentartifact_set.all():
+            if content_artifact:
+                if content_artifact.artifact:
+                    sha1 = content_artifact.artifact.sha1
+                    size = content_artifact.artifact.size
+                else:
+                    remote_artifact = content_artifact.remoteartifact_set.first()
+                    sha1 = remote_artifact.sha1
+                    size = remote_artifact.size
+                # Sha1 is optional so filter out incomplete data
+                if sha1 is not None:
+                    contents.append(
+                        {
+                            "name": os.path.basename(content_artifact.relative_path),
+                            "sha1": sha1,
+                            "size": size,
+                        }
+                    )
+        return contents
+
+    @property
+    def checksums_sha256(self):
+        """Generate 'Checksums-Sha256' list from content artifacts."""
+        contents = []
+        for content_artifact in self.contentartifact_set.all():
+            if content_artifact:
+                if content_artifact.artifact:
+                    sha256 = content_artifact.artifact.sha256
+                    size = content_artifact.artifact.size
+                else:
+                    remote_artifact = content_artifact.remoteartifact_set.first()
+                    sha256 = remote_artifact.sha256
+                    size = remote_artifact.size
+                # Sha256 is required so better to not filter out incomplete data
+                contents.append(
+                    {
+                        "name": os.path.basename(content_artifact.relative_path),
+                        "sha256": sha256,
+                        "size": size,
+                    }
+                )
+        return contents
+
+    @property
+    def checksums_sha512(self):
+        """Generate 'Checksums-Sha512' list from content artifacts."""
+        contents = []
+        for content_artifact in self.contentartifact_set.all():
+            if content_artifact:
+                if content_artifact.artifact:
+                    sha512 = content_artifact.artifact.sha512
+                    size = content_artifact.artifact.size
+                else:
+                    remote_artifact = content_artifact.remoteartifact_set.first()
+                    sha512 = remote_artifact.sha512
+                    size = remote_artifact.size
+                # Sha512 is optional so filter out incomplete data
+                if sha512 is not None:
+                    contents.append(
+                        {
+                            "name": os.path.basename(content_artifact.relative_path),
+                            "sha512": sha512,
+                            "size": size,
+                        }
+                    )
+        return contents
+
+    @property
+    def files(self):
+        """Generate 'Files' list from content artifacts."""
+        contents = []
+        for content_artifact in self.contentartifact_set.all():
+            if content_artifact:
+                if content_artifact.artifact:
+                    md5 = content_artifact.artifact.md5
+                    size = content_artifact.artifact.size
+                else:
+                    remote_artifact = content_artifact.remoteartifact_set.first()
+                    md5 = remote_artifact.md5
+                    size = remote_artifact.size
+                # md5 is required so better to not filter out incomplete data
+                contents.append(
+                    {
+                        "name": os.path.basename(content_artifact.relative_path),
+                        "md5sum": md5,
+                        "size": size,
+                    }
+                )
+        return contents
+
+    repo_key_fields = ("source", "version")
+
+    class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"

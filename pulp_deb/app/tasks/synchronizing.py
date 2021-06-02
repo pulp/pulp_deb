@@ -17,6 +17,8 @@ from django.conf import settings
 from django.db.utils import IntegrityError
 
 from pulpcore.plugin.exceptions import DigestValidationError
+from rest_framework.exceptions import ValidationError
+
 
 from pulpcore.plugin.models import (
     Artifact,
@@ -51,11 +53,15 @@ from pulp_deb.app.models import (
     InstallerPackage,
     AptRemote,
     AptRepository,
+    SourceIndex,
+    SourcePackage,
+    SourcePackageReleaseComponent,
 )
 
 from pulp_deb.app.serializers import (
     InstallerPackage822Serializer,
     Package822Serializer,
+    DscFile822Serializer,
 )
 
 from pulp_deb.app.constants import (
@@ -454,7 +460,7 @@ class DebUpdatePackageIndexAttributes(Stage):  # TODO: Needs a new name
             message="Update PackageIndex units", code="update.packageindex"
         ) as pb:
             async for d_content in self.items():
-                if isinstance(d_content.content, PackageIndex):
+                if isinstance(d_content.content, (PackageIndex, SourceIndex)):
                     if not d_content.d_artifacts:
                         d_content.content = None
                         d_content.resolve()
@@ -809,8 +815,11 @@ class DebFirstStage(Stage):
                     for architecture in architectures
                 ]
             )
+        # Handle source indices
         if self.remote.sync_sources:
-            raise NotImplementedError("Syncing source repositories is not yet implemented.")
+            pending_tasks.extend(
+                [self._handle_source_index(release_file, release_component, file_references)]
+            )
         await asyncio.gather(*pending_tasks)
 
     async def _handle_flat_repo(self, file_references, release_file, distribution):
@@ -1059,6 +1068,89 @@ class DebFirstStage(Stage):
                     )
                     await self.put(release_architecture_dc)
 
+    async def _handle_source_index(self, release_file, release_component, file_references):
+        # Create source_index
+        release_base_path = os.path.dirname(release_file.relative_path)
+        if release_file.distribution[-1] == "/":
+            # Flat repo format
+            source_index_dir = ""
+        else:
+            source_index_dir = os.path.join(release_component.plain_component, "source")
+        d_artifacts = []
+        for filename in ["Sources", "Sources.gz", "Sources.xz", "Release"]:
+            path = os.path.join(source_index_dir, filename)
+            if path in file_references:
+                relative_path = os.path.join(release_base_path, path)
+                d_artifacts.append(self._to_d_artifact(relative_path, file_references[path]))
+        if not d_artifacts:
+            # No reference here, skip this component
+            return
+        log.info(_("Downloading: {}/Sources").format(source_index_dir))
+        content_unit = SourceIndex(
+            release=release_file,
+            component=release_component.component,
+            sha256=d_artifacts[0].artifact.sha256,
+            relative_path=os.path.join(release_base_path, source_index_dir, "Sources"),
+        )
+        source_index = await self._create_unit(
+            DeclarativeContent(content=content_unit, d_artifacts=d_artifacts)
+        )
+        if not source_index:
+            log.info(
+                _("No sources index for component {}. Skipping.").format(
+                    release_component.component
+                )
+            )
+            return
+        # Interpret policy to download Artifacts or not
+        deferred_download = self.remote.policy != Remote.IMMEDIATE
+
+        # parse source_index
+        source_package_content_futures = []
+        source_index_artifact = await _get_main_artifact_blocking(source_index)
+        for source_paragraph in deb822.Sources.iter_paragraphs(source_index_artifact.file):
+            try:
+                source_dir = source_paragraph["Directory"]
+                source_relpath = os.path.join(source_dir, "blah")
+                serializer = DscFile822Serializer.from822(data=source_paragraph)
+                serializer.is_valid(raise_exception=True)
+                source_content_unit = SourcePackage(
+                    relative_path=source_relpath,
+                    **serializer.validated_data,
+                )
+                # Handle the dsc file content
+                source_das = []
+                for source_file in source_paragraph["Checksums-Sha256"]:
+                    source_relpath = os.path.join(source_dir, source_file["name"])
+                    log.debug(_("Downloading dsc content file {}.").format(source_file["name"]))
+
+                    source_path = os.path.join(self.parsed_url.path, source_relpath)
+                    source_da = DeclarativeArtifact(
+                        artifact=Artifact(
+                            size=int(source_file["size"]),
+                            **_get_source_checksums(source_paragraph, source_file["name"]),
+                        ),
+                        url=urlunparse(self.parsed_url._replace(path=source_path)),
+                        relative_path=source_relpath,
+                        remote=self.remote,
+                        deferred_download=deferred_download,
+                    )
+                    source_das.append(source_da)
+                source_dc = DeclarativeContent(content=source_content_unit, d_artifacts=source_das)
+                source_package_content_futures.append(source_dc)
+                await self.put(source_dc)
+            except (KeyError, ValidationError):
+                log.warning(_("Ignoring invalid source paragraph. {}").format(source_paragraph))
+        # Assign dsc files to this release_component
+        for source_package_content_future in source_package_content_futures:
+            source_package = await source_package_content_future.resolution()
+            source_package_release_component_dc = DeclarativeContent(
+                content=SourcePackageReleaseComponent(
+                    source_package=source_package, release_component=release_component
+                )
+            )
+            await self.put(source_package_release_component_dc)
+
     async def _handle_installer_file_index(
         self, release_file, release_component, architecture, file_references
     ):
@@ -1232,4 +1324,40 @@ def _get_checksums(unit_dict):
         checksum_type: unit_dict[deb_field]
         for checksum_type, deb_field in CHECKSUM_TYPE_MAP.items()
         if checksum_type in settings.ALLOWED_CONTENT_CHECKSUMS and deb_field in unit_dict
+    }
+
+
+def _get_source_checksums(source_paragraph, name):
+    """
+    Pulls the checksums from the various source file lists in the source index file paragraph
+    and filters the result to retain only checksum fields permitted by ALLOWED_CONTENT_CHECKSUMS.
+
+    Required checksums which are missing will cause an exception to be thrown whereas optional
+    checksums will be ignored if they are not present.
+
+    The passed in name will be used to match the line item in the list as there are guarantees
+    that the order will be preserved from list to list.
+    """
+    checksums = {}
+    # Required
+    for source_file in source_paragraph["Files"]:
+        if source_file["name"] == name:
+            checksums["md5"] = source_file["md5sum"]
+    for source_file in source_paragraph["Checksums-Sha256"]:
+        if source_file["name"] == name:
+            checksums["sha256"] = source_file["sha256"]
+    # Optional
+    if "Checksums-Sha1" in source_paragraph:
+        for source_file in source_paragraph["Checksums-Sha1"]:
+            if source_file["name"] == name:
+                checksums["sha1"] = source_file["sha1"]
+    if "Checksums-Sha512" in source_paragraph:
+        for source_file in source_paragraph["Checksums-Sha512"]:
+            if source_file["name"] == name:
+                checksums["sha512"] = source_file["sha512"]
+
+    return {
+        checksum_type: checksums[checksum_type]
+        for checksum_type in settings.ALLOWED_CONTENT_CHECKSUMS
+        if checksum_type in checksums
     }
