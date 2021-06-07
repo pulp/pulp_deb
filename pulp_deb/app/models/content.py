@@ -2,6 +2,9 @@ import os
 
 from django.db import models
 
+# TODO: use django.db.models.JSONField after Django 3.1
+from django.contrib.postgres.fields import JSONField
+
 from pulpcore.plugin.models import Content
 
 
@@ -178,6 +181,8 @@ class BasePackage(Content):
     relative_path = models.TextField(null=False)
     # this digest is transferred to the content as a natural_key
     sha256 = models.TextField(null=False)
+
+    custom_fields = JSONField(null=True)
 
     @property
     def name(self):
