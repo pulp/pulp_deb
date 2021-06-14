@@ -185,23 +185,36 @@ class DebDeclarativeVersion(DeclarativeVersion):
         return pipeline
 
 
-def _filter_split(values, filter_values):
+def _filter_split(values, filter_values, value_type):
     """
     Returns the intersection of two strings of whitespace separated elements as a sorted set.
     If an element of values.split() has a path prefix, it is still considered to be equal to an
     element of filter_values.split() without the path prefix. E.g.: The intersection/return value
     of values="updates/main" and filter_values="main" is considered to be set(["updates/main"]).
+    If a filter value provided does not correspond to any value, a warning is logged.
     """
-    value_list = (
-        values.split()
-        if not filter_values
-        else [
+    value_list = values.split()
+    if not filter_values:
+        filtered_values = value_list
+    else:
+        filter_value_list = filter_values.split()
+        filtered_values = [
             value
-            for value in values.split()
-            if value in filter_values or os.path.basename(value) in filter_values
+            for value in value_list
+            if value in filter_value_list or os.path.basename(value) in filter_value_list
         ]
-    )
-    return sorted(set(value_list))
+
+        # Log any filter values that do not correspont to any value.
+        plain_value_list = [os.path.basename(value) for value in value_list]
+        for filter_value in filter_value_list:
+            if filter_value not in value_list and filter_value not in plain_value_list:
+                message = (
+                    "{0}='{1}' not amongst the release file {0}s '{2}'. "
+                    "This often indicates a misspelled {0} in the remote being used."
+                )
+                log.warning(_(message).format(value_type, filter_value, values))
+
+    return sorted(set(filtered_values))
 
 
 class DebUpdateReleaseFileAttributes(Stage):
@@ -448,7 +461,9 @@ class DebFirstStage(Stage):
         release_dc = DeclarativeContent(content=release_unit)
         release = await self._create_unit(release_dc)
         # Create release architectures
-        for architecture in _filter_split(release_file.architectures, self.remote.architectures):
+        for architecture in _filter_split(
+            release_file.architectures, self.remote.architectures, "architecture"
+        ):
             release_architecture_dc = DeclarativeContent(
                 content=ReleaseArchitecture(architecture=architecture, release=release)
             )
@@ -465,7 +480,9 @@ class DebFirstStage(Stage):
         await asyncio.gather(
             *[
                 self._handle_component(component, release, release_file, file_references)
-                for component in _filter_split(release_file.components, self.remote.components)
+                for component in _filter_split(
+                    release_file.components, self.remote.components, "component"
+                )
             ]
         )
 
@@ -475,7 +492,9 @@ class DebFirstStage(Stage):
             content=ReleaseComponent(component=component, release=release)
         )
         release_component = await self._create_unit(release_component_dc)
-        architectures = _filter_split(release_file.architectures, self.remote.architectures)
+        architectures = _filter_split(
+            release_file.architectures, self.remote.architectures, "architecture"
+        )
         pending_tasks = []
         # Handle package indices
         pending_tasks.extend(
