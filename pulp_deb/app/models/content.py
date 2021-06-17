@@ -72,10 +72,9 @@ class PackageIndex(Content):
     """
     The "PackageIndex" content type.
 
-    This model represents the Packages file for a specific
-    component - architecture combination.
-    It's artifacts should include all (non-)compressed versions
-    of the upstream Packages file.
+    This model represents the Packages file(s) for a specific component - architecture combination
+    (or an entire flat repo). The artifacts will always include the uncompressed Packages file, as
+    well as any compressed package indices using an archive format supported by pulp_deb.
     """
 
     TYPE = "package_index"

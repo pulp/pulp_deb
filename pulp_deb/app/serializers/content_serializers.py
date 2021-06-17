@@ -127,11 +127,11 @@ class PackageIndexSerializer(MultipleArtifactContentSerializer):
     """
 
     component = CharField(
-        help_text="Component of the component - architecture combination.", required=True
+        help_text="Component of the component - architecture combination.", required=False
     )
 
     architecture = CharField(
-        help_text="Architecture of the component - architecture combination.", required=True
+        help_text="Architecture of the component - architecture combination.", required=False
     )
 
     relative_path = CharField(help_text="Path of file relative to url.", required=False)

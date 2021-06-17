@@ -56,11 +56,13 @@ class FlatRepoSyncTestCase(unittest.TestCase):
             "distribution": "/",
             "codename": "ragnarok",
             "suite": "mythology",
-            "components": ["asgard"],
+            "components": ["flat-repo-component"],
             "release_file_folder_sync": "",
-            "release_file_folder_dist": "dists",
+            "release_file_folder_dist": "dists/flat-repo",
             "package_index_paths_sync": ["Packages"],
-            "package_index_paths_dist": ["dists/asgard/binary-ppc64/Packages"],
+            "package_index_paths_dist": [
+                "dists/flat-repo/flat-repo-component/binary-ppc64/Packages"
+            ],
         }
         self.do_publish(expected_values, "structured")
 
@@ -70,7 +72,7 @@ class FlatRepoSyncTestCase(unittest.TestCase):
             "distribution": "/",
             "codename": "ragnarok",
             "suite": "mythology",
-            "components": ["asgard"],
+            "components": ["flat-repo-component"],
             "release_file_folder_sync": "",
             "release_file_folder_dist": "dists/default/",
             "package_index_paths_sync": ["Packages"],
@@ -84,7 +86,7 @@ class FlatRepoSyncTestCase(unittest.TestCase):
             "distribution": "/",
             "codename": "ragnarok",
             "suite": "mythology",
-            "components": ["asgard"],
+            "components": ["flat-repo-component"],
             "release_file_folder_sync": "",
             "release_file_folder_dist": "/",
             "package_index_paths_sync": ["Packages"],
@@ -98,11 +100,13 @@ class FlatRepoSyncTestCase(unittest.TestCase):
             "distribution": "nest/fjalar/",
             "codename": "ragnarok",
             "suite": "mythology",
-            "components": ["asgard"],
+            "components": ["flat-repo-component"],
             "release_file_folder_sync": "nest/fjalar/",
             "release_file_folder_dist": "dists/nest/fjalar",
             "package_index_paths_sync": ["nest/fjalar/Packages"],
-            "package_index_paths_dist": ["dists/nest/fjalar/asgard/binary-ppc64/Packages"],
+            "package_index_paths_dist": [
+                "dists/nest/fjalar/flat-repo-component/binary-ppc64/Packages"
+            ],
         }
         self.do_publish(expected_values, "structured")
 
@@ -112,7 +116,7 @@ class FlatRepoSyncTestCase(unittest.TestCase):
             "distribution": "nest/fjalar/",
             "codename": "ragnarok",
             "suite": "mythology",
-            "components": ["asgard"],
+            "components": ["flat-repo-component"],
             "release_file_folder_sync": "nest/fjalar/",
             "release_file_folder_dist": "dists/default/",
             "package_index_paths_sync": ["nest/fjalar/Packages"],
@@ -126,7 +130,7 @@ class FlatRepoSyncTestCase(unittest.TestCase):
             "distribution": "nest/fjalar/",
             "codename": "ragnarok",
             "suite": "mythology",
-            "components": ["asgard"],
+            "components": ["flat-repo-component"],
             "release_file_folder_sync": "nest/fjalar/",
             "release_file_folder_dist": "nest/fjalar/",
             "package_index_paths_sync": ["nest/fjalar/Packages"],
