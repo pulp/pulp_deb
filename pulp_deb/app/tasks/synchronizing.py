@@ -185,36 +185,60 @@ class DebDeclarativeVersion(DeclarativeVersion):
         return pipeline
 
 
-def _filter_split(values, filter_values, value_type):
+def _filter_split_architectures(release_file_string, remote_string, distribution):
     """
-    Returns the intersection of two strings of whitespace separated elements as a sorted set.
-    If an element of values.split() has a path prefix, it is still considered to be equal to an
-    element of filter_values.split() without the path prefix. E.g.: The intersection/return value
-    of values="updates/main" and filter_values="main" is considered to be set(["updates/main"]).
-    If a filter value provided does not correspond to any value, a warning is logged.
+    Returns the set intersection of the two architectures strings provided as a sorted list. If the
+    release file includes the 'all' architecture then this is always part of the result. Any
+    architectures present in the remote, but not the release file, will result in a warning.
     """
-    value_list = values.split()
-    if not filter_values:
-        filtered_values = value_list
+    remaining_values = set(release_file_string.split())
+    if remote_string:
+        remote_architectures = set(remote_string.split())
+        for arch in remote_architectures - remaining_values:
+            message = (
+                "Architecture '{0}' is not amongst the release file architectures '{1}' for "
+                "distribution '{2}'. This could be valid, but more often indicates an error in "
+                "the architectures field of the remote being used."
+            )
+            log.warning(_(message).format(arch, release_file_string, distribution))
+
+        remote_architectures.add("all")  # Users always want the all type architecture!
+        remaining_values &= remote_architectures
+
+    return sorted(remaining_values)
+
+
+def _filter_split_components(release_file_string, remote_string, distribution):
+    """
+    Returns the set intersection of the two component strings provided as a sorted list. If a
+    component from the release file has a path prefix, it is considered equal to a component from
+    the remote, that does not. E.g.: release_file_string="updates/main updates/non-free" and
+    remote_string="main" would result in a return value of ["updates/main"]. If a component from
+    the remote does not correspond to any component in the release file, a warning is logged.
+    """
+    release_file_components = release_file_string.split()
+    if not remote_string:
+        filtered_components = release_file_components
     else:
-        filter_value_list = filter_values.split()
-        filtered_values = [
-            value
-            for value in value_list
-            if value in filter_value_list or os.path.basename(value) in filter_value_list
+        remote_components = remote_string.split()
+        filtered_components = [
+            component
+            for component in release_file_components
+            if component in remote_components or os.path.basename(component) in remote_components
         ]
 
-        # Log any filter values that do not correspont to any value.
-        plain_value_list = [os.path.basename(value) for value in value_list]
-        for filter_value in filter_value_list:
-            if filter_value not in value_list and filter_value not in plain_value_list:
+        # Log any components from the remote, that do not correspont to any release file components:
+        plain_components = [os.path.basename(component) for component in release_file_components]
+        for component in remote_components:
+            if component not in release_file_components and component not in plain_components:
                 message = (
-                    "{0}='{1}' not amongst the release file {0}s '{2}'. "
-                    "This often indicates a misspelled {0} in the remote being used."
+                    "Component '{0}' is not amongst the release file components '{1}' for "
+                    "distribution '{2}'. This could be valid, but more often indicates an error in "
+                    "the components field of the remote being used."
                 )
-                log.warning(_(message).format(value_type, filter_value, values))
+                log.warning(_(message).format(component, release_file_string, distribution))
 
-    return sorted(set(filtered_values))
+    return sorted(set(filtered_components))
 
 
 class DebUpdateReleaseFileAttributes(Stage):
@@ -461,9 +485,10 @@ class DebFirstStage(Stage):
         release_dc = DeclarativeContent(content=release_unit)
         release = await self._create_unit(release_dc)
         # Create release architectures
-        for architecture in _filter_split(
-            release_file.architectures, self.remote.architectures, "architecture"
-        ):
+        architectures = _filter_split_architectures(
+            release_file.architectures, self.remote.architectures, distribution
+        )
+        for architecture in architectures:
             release_architecture_dc = DeclarativeContent(
                 content=ReleaseArchitecture(architecture=architecture, release=release)
             )
@@ -479,22 +504,23 @@ class DebFirstStage(Stage):
                     file_references[unit["Name"]].update(unit)
         await asyncio.gather(
             *[
-                self._handle_component(component, release, release_file, file_references)
-                for component in _filter_split(
-                    release_file.components, self.remote.components, "component"
+                self._handle_component(
+                    component, release, release_file, file_references, architectures
+                )
+                for component in _filter_split_components(
+                    release_file.components, self.remote.components, distribution
                 )
             ]
         )
 
-    async def _handle_component(self, component, release, release_file, file_references):
+    async def _handle_component(
+        self, component, release, release_file, file_references, architectures
+    ):
         # Create release_component
         release_component_dc = DeclarativeContent(
             content=ReleaseComponent(component=component, release=release)
         )
         release_component = await self._create_unit(release_component_dc)
-        architectures = _filter_split(
-            release_file.architectures, self.remote.architectures, "architecture"
-        )
         pending_tasks = []
         # Handle package indices
         pending_tasks.extend(
