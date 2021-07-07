@@ -3,6 +3,8 @@
 import unittest
 import os
 
+from debian import deb822
+
 from pulp_smash import config
 from pulp_smash.pulp3.bindings import monitor_task
 from pulp_smash.pulp3.utils import (
@@ -13,6 +15,7 @@ from pulp_smash.pulp3.utils import (
     gen_distribution,
     download_content_unit,
 )
+from pulp_smash.utils import http_get
 
 from pulp_deb.tests.functional.constants import (
     DEB_COMPLEX_DISTS_FIXTURE_URL,
@@ -170,4 +173,36 @@ class ComplexDistSyncTestCase(unittest.TestCase):
         download_content_unit(cfg, distribution.to_dict(), release_file_path)
 
         for package_index_path in expected_values["package_index_paths"]:
-            download_content_unit(cfg, distribution.to_dict(), package_index_path)
+            published = download_content_unit(cfg, distribution.to_dict(), package_index_path)
+            url = "/".join([DEB_COMPLEX_DISTS_FIXTURE_URL, package_index_path])
+            remote = http_get(url)
+            self.assert_equal_package_index(remote, published, url)
+
+    def assert_equal_package_index(self, orig, new, message):
+        """In-detail check of two PackageIndex file-strings"""
+        parsed_orig = self.parse_package_index(orig)
+        parsed_new = self.parse_package_index(new)
+
+        self.assertEqual(len(parsed_orig), len(parsed_new), message)
+
+        for name, pkg in parsed_new.items():
+            orig_pkg = parsed_orig[name]
+            for k in orig_pkg.keys():
+                self.assertIn(k, pkg, "Field '{}' is missing in package '{}'".format(k, name))
+                if k == "Filename":
+                    # file-location is allowed to differ :-)
+                    continue
+                self.assertEqual(
+                    pkg[k], orig_pkg[k], "Field '{}' of package '{}' does not match".format(k, name)
+                )
+
+    def parse_package_index(self, pkg_idx):
+        """Parses PackageIndex file-string.
+        Returns a dict of the packages by '<Package>-<Version>-<Architecture>'.
+        """
+        packages = {}
+        for package in deb822.Packages.iter_paragraphs(pkg_idx):
+            packages[
+                "-".join([package["Package"], package["Version"], package["Architecture"]])
+            ] = package
+        return packages

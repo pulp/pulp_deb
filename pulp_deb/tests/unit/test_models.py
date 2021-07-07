@@ -19,6 +19,7 @@ class TestPackage(TestCase):
         "MD5sum: aabb\n"
         "SHA1: ccdd\n"
         "SHA256: eeff\n"
+        "Size: 42\n"
         "Filename: pool/a/aegir/aegir_0.1-edda0_sea.deb\n"
     )
 

@@ -280,6 +280,7 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
             if artifact.sha1:
                 ret["SHA1"] = artifact.sha1
             ret["SHA256"] = artifact.sha256
+            ret["Size"] = str(artifact.size)
         except Artifact.DoesNotExist:
             artifact = RemoteArtifact.objects.filter(sha256=self.instance.sha256).first()
             if artifact.md5:
@@ -287,6 +288,7 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
             if artifact.sha1:
                 ret["SHA1"] = artifact.sha1
             ret["SHA256"] = artifact.sha256
+            ret["Size"] = str(artifact.size)
 
         ret["Filename"] = self.instance.filename(component)
 
