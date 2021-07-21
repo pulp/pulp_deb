@@ -624,7 +624,9 @@ class DebFirstStage(Stage):
                 )
                 package_path = os.path.join(self.parsed_url.path, package_relpath)
                 package_da = DeclarativeArtifact(
-                    artifact=Artifact(**_get_checksums(package_paragraph)),
+                    artifact=Artifact(
+                        size=int(package_paragraph["Size"]), **_get_checksums(package_paragraph)
+                    ),
                     url=urlunparse(self.parsed_url._replace(path=package_path)),
                     relative_path=package_relpath,
                     remote=self.remote,
