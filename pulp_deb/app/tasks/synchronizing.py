@@ -90,9 +90,11 @@ class NoPackageIndexFile(Exception):
         """
         Exception to signal, that no file representing a package index is present.
         """
-        super().__init__(
-            "No suitable Package index file found in '{}'.".format(relative_dir), *args, **kwargs
+        message = (
+            "No suitable Package index file found in '{}'. If you are syncing from a partial "
+            "mirror, try setting ignore_missing_package_indices to 'True' on your remote."
         )
+        super().__init__(_(message).format(relative_dir), *args, **kwargs)
 
     pass
 
