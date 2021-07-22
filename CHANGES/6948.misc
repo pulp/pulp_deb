@@ -1,1 +1,0 @@
-If remotes specify components or architectures that do not exist in the synchronized Release file, a warning is now logged.
