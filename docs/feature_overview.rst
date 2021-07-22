@@ -58,7 +58,7 @@ Specifying the desired distributions is mandatory, while not specifying any comp
 .. note::
    There will not be any errors if you specify components or architectures that do not exist for a given upstream distribution.
    This allows you to filter for components and architectures that may not be present in all of the upstream distributions, but it may also lead to unexpected results.
-   For example, if you have made a typo, your desired component and/or architecture will simply be missing from your Pulp repository, without any failures or warnings.
+   For example, if you have made a typo, your desired component and/or architecture will simply be missing from your Pulp repository, with merely a log warning, to indicate what might have gone wrong.
 
 
 Signature Verification
@@ -121,7 +121,7 @@ However, unlike the :ref:`verbatim publisher <verbatim_publishing>`, the APT pub
 It will also use a default ``pool/`` folder structure regardless of the package file locations used by the upstream repositories.
 
 .. important::
-   Since synchronization is currently the only supported way to obtain the needed metadata content units, the structured publisher only makes sense if you have synchronized some upstream APT repository into your Pulp instance.
+   Since synchronization is currently the only supported way to obtain ``ReleaseComponent`` metadata content units, the structured publisher only makes sense if you have synchronized some upstream APT repository into your Pulp instance.
 
 Finally, the APT publisher (both structured and simple mode) will never append ``Architecture: all`` type packages to any architecture specific package indices.
 It will always publish dedicated ``binary-all`` package indices.
@@ -154,7 +154,7 @@ In addition to the ``pulp_deb`` plugin's main :ref:`APT publisher <simple_and_st
 The verbatim publisher will recreate the synced subset of any upstream repositories exactly.
 It could also be referred to as "mirror mode".
 If you have used :ref:`filtered synchronization <filtered_synchronization>` to obtain your repository, this reduces the synced subset as one would expect.
-The synced subset currently includes ``.deb`` packages, ``.udeb`` installer packages, any upstream ``Release`` files, package indices, installer file indices, as well as installer and translation files.
+The synced subset currently includes ``.deb`` packages, ``.udeb`` installer packages, any upstream ``Release`` files, package indices, installer file indices, as well as installer files, but not translation files.
 
 The verbatim publisher (in combination with synchronization of a suitable upstream repository) is currently the only way to create a Pulp APT repository that can be used to install hosts with the Debian installer.
 
