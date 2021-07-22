@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.04.08-77-g74c9bb3
+# generated with plugin_template@2021.04.08-82-g8378090
 
 additional_plugins: []
 additional_repos: []
