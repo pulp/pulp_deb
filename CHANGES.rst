@@ -13,6 +13,35 @@ Changelog
 
 .. towncrier release notes start
 
+2.14.0 (2021-07-22)
+===================
+
+Bugfixes
+--------
+
+- Add missing "Size" field in publications
+  `#8506 <https://pulp.plan.io/issues/8506>`_
+- Fixed a bug where arch=all package indices were not being synced when filtering by architecture.
+  `#8910 <https://pulp.plan.io/issues/8910>`_
+
+
+Removals
+--------
+
+- Dropped support for Python 3.6 and 3.7. pulp_deb now supports Python 3.8+.
+  `#9036 <https://pulp.plan.io/issues/9036>`_
+
+
+Misc
+----
+
+- If remotes specify components or architectures that do not exist in the synchronized Release file, a warning is now logged.
+  `#6948 <https://pulp.plan.io/issues/6948>`_
+
+
+----
+
+
 2.13.0 (2021-05-27)
 ===================
 
