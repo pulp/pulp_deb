@@ -1,1 +1,0 @@
-Fixed a bug where arch=all package indices were not being synced when filtering by architecture.
