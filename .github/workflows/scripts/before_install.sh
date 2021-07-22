@@ -106,7 +106,7 @@ fi
 
 
 
-git clone --depth=1 https://github.com/pulp/pulpcore.git --branch master
+git clone --depth=1 https://github.com/pulp/pulpcore.git --branch 3.14
 
 cd pulpcore
 if [ -n "$PULPCORE_PR_NUMBER" ]; then

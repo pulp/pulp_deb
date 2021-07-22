@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.04.08-77-g74c9bb3
+# generated with plugin_template@2021.04.08-82-g8378090
 
 additional_plugins: []
 additional_repos: []
@@ -39,8 +39,8 @@ pulp_settings:
   - sha1
   - sha256
   - sha512
-pulpcore_branch: master
-pulpcore_pip_version_specifier: null
+pulpcore_branch: 3.14
+pulpcore_pip_version_specifier: '~=3.14.0'
 pulpprojectdotorg_key_id: aa499d7938ed
 pydocstyle: true
 pypi_username: pulp
