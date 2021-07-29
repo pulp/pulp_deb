@@ -13,6 +13,22 @@ Changelog
 
 .. towncrier release notes start
 
+2.14.1 (2021-07-29)
+===================
+
+Misc
+----
+
+- Re-enabled Python 3.6 and 3.7 for the all 2.14.* releases.
+  `#9164 <https://pulp.plan.io/issues/9164>`_
+- Added touch statements to prevent false positives during orphan cleanup.
+  (backported from #9162)
+  `#9175 <https://pulp.plan.io/issues/9175>`_
+
+
+----
+
+
 2.14.0 (2021-07-22)
 ===================
 
