@@ -4,7 +4,7 @@ import os
 
 from debian import deb822, debfile
 
-from rest_framework.serializers import CharField, Field, ValidationError
+from rest_framework.serializers import CharField, DictField, Field, ValidationError
 from pulpcore.plugin.models import Artifact, RemoteArtifact
 from pulpcore.plugin.serializers import (
     ContentChecksumSerializer,
@@ -218,6 +218,7 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
         "provides": "Provides",
         "replaces": "Replaces",
     }
+    TRANSLATION_DICT_INV = {v: k for k, v in TRANSLATION_DICT.items()}
 
     package = CharField()
     source = CharField(required=False)
@@ -248,6 +249,7 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
     pre_depends = CharField(required=False)
     provides = CharField(required=False)
     replaces = CharField(required=False)
+    custom_fields = DictField(child=CharField(), allow_empty=True, required=False)
 
     def __init__(self, *args, **kwargs):
         """Initializer for BasePackage822Serializer."""
@@ -261,9 +263,17 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
         """
         Translate deb822.Package to a dictionary for class instatiation.
         """
-        return cls(
-            data={k: data[v] for k, v in cls.TRANSLATION_DICT.items() if v in data}, **kwargs
-        )
+        skip = ["Filename", "MD5sum", "Size", "SHA1", "SHA256", "SHA512"]
+        args = {"custom_fields": {}}
+        for k, v in data.items():
+            if k in cls.TRANSLATION_DICT_INV:
+                key = cls.TRANSLATION_DICT_INV[k]
+                args[key] = v
+            elif k not in skip:
+                # also save the fields not in TRANSLATION_DICT
+                args["custom_fields"][k] = v
+
+        return cls(data=args, **kwargs)
 
     def to822(self, component=""):
         """Create deb822.Package object from model."""
@@ -273,6 +283,10 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
             value = self.data.get(k)
             if value is not None:
                 ret[v] = value
+
+        custom_fields = self.data.get("custom_fields")
+        if custom_fields:
+            ret.update(custom_fields)
 
         try:
             artifact = self.instance._artifacts.get()
@@ -327,6 +341,7 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
             "pre_depends",
             "provides",
             "replaces",
+            "custom_fields",
         )
         model = BasePackage
 
@@ -383,6 +398,7 @@ class BasePackageSerializer(SingleArtifactContentUploadSerializer, ContentChecks
     pre_depends = CharField(read_only=True)
     provides = CharField(read_only=True)
     replaces = CharField(read_only=True)
+    custom_fields = DictField(child=CharField(), allow_empty=True, required=False)
 
     def __init__(self, *args, **kwargs):
         """Initializer for BasePackageSerializer."""
