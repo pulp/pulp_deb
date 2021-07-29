@@ -72,6 +72,7 @@ class GenericContentSerializer(SingleArtifactContentUploadSerializer, ContentChe
             sha256=data["sha256"], relative_path=data["relative_path"]
         )
         if content.exists():
+            content.first().touch()  # Orphan cleanup protection so the user has a chance to use it!
             raise ValidationError(
                 _(
                     "There is already a generic content with relative path '{path}' and sha256 "
@@ -275,6 +276,7 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
 
         try:
             artifact = self.instance._artifacts.get()
+            artifact.touch()  # Orphan cleanup protection until we are done!
             if artifact.md5:
                 ret["MD5sum"] = artifact.md5
             if artifact.sha1:
@@ -408,12 +410,14 @@ class BasePackageSerializer(SingleArtifactContentUploadSerializer, ContentChecks
         elif not os.path.basename(data["relative_path"]) == "{}.{}".format(
             self.Meta.model(**package_data).name, self.Meta.model.SUFFIX
         ):
+            data["artifact"].touch()  # Orphan cleanup protection so the user can try again!
             raise ValidationError(_("Invalid relative_path provided, filename does not match."))
 
         content = self.Meta.model.objects.filter(
             sha256=data["sha256"], relative_path=data["relative_path"]
         )
         if content.exists():
+            content.first().touch()  # Orphan cleanup protection so the user has a chance to use it!
             raise ValidationError(
                 _(
                     "There is already a deb package with relative path '{path}' and sha256 "
