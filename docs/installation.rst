@@ -36,8 +36,8 @@ Make and Run Migrations
 
 .. code-block:: bash
 
-   pulp-manager makemigrations pulp_deb
-   pulp-manager migrate pulp_deb
+   pulpcore-manager makemigrations deb
+   pulpcore-manager migrate deb
 
 
 Run Services
