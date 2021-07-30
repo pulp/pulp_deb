@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.04.08-82-g8378090
+# generated with plugin_template@2021.04.08-88-g74a0662
 
 additional_plugins: []
 additional_repos: []
@@ -44,6 +44,7 @@ pulpcore_pip_version_specifier: '~=3.14.0'
 pulpprojectdotorg_key_id: aa499d7938ed
 pydocstyle: true
 pypi_username: pulp
+python_version: '3.8'
 redmine_project: pulp_deb
 release_user: pulpbot
 sync_ci: true
