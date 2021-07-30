@@ -219,7 +219,7 @@ Example announcement email:
 
    [0] https://pypi.org/project/pulp-deb/2.8.0/
    [1] https://www.redhat.com/archives/pulp-list/2020-November/msg00004.html
-   [2] https://pulp-deb.readthedocs.io/en/latest/changes.html#id1
+   [2] https://docs.pulpproject.org/pulp_deb/changes.html#id1
    [3] https://pulp.plan.io/projects/pulp_deb/issues
    [4] https://pypi.org/project/pulp-deb-client/2.8.0/
    [5] https://rubygems.org/gems/pulp_deb_client/versions/2.8.0/
