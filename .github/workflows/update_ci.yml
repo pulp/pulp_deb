@@ -36,14 +36,13 @@ jobs:
       - name: Create Pull Request for CI files
         uses: peter-evans/create-pull-request@v3
         with:
+          token: ${{ secrets.RELEASE_TOKEN }}
           committer: pulpbot <pulp-infra@redhat.com>
           author: pulpbot <pulp-infra@redhat.com>
-          branch: ${{ github.event.inputs.release }}-update-ci-files
-          base: ${{ github.event.inputs.release }}
-          title: 'Update CI for ${{ github.event.inputs.release }}'
+          title: 'Update CI files'
           body: '[noissue]'
           commit-message: |
-            Update CI files for ${{ github.event.inputs.release }}'
+            Update CI files
 
             [noissue]
           delete-branch: true

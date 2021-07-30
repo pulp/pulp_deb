@@ -71,7 +71,9 @@ fi
 cat >> vars/main.yaml << VARSYAML
 pulp_settings: {"allowed_content_checksums": ["md5", "sha1", "sha256", "sha512"]}
 pulp_scheme: http
+
 pulp_container_tag: latest
+
 VARSYAML
 
 if [[ "$TEST" == "pulp" || "$TEST" == "performance" || "$TEST" == "upgrade" || "$TEST" == "s3" || "$TEST" == "plugin-from-pypi" ]]; then
