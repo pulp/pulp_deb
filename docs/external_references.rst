@@ -21,7 +21,11 @@
 .. _pulp_deb milestone:
    https://pulp.plan.io/projects/pulp_deb/roadmap
 .. _pulpcore release guide:
-   https://pulp.plan.io/projects/pulp/wiki/Pulp3_Release_Guide
+   https://github.com/pulp/community/wiki/Release-Guide
+.. _Pulp community GitHub announcement:
+   https://github.com/pulp/community/discussions/categories/announcements
+.. _example pulp_deb release announcement:
+   https://github.com/pulp/community/discussions/71
 .. _Pulp project:
    https://pulpproject.org
 .. _Pulp project mailing list:
@@ -54,8 +58,6 @@
    https://github.com/pulp/plugin_template
 .. _pulp plugin template README:
    https://github.com/pulp/plugin_template/blob/master/README.md
-.. _pulplift:
-   https://github.com/pulp/pulplift
 .. _pulp installer:
    https://github.com/pulp/pulp_installer
 .. _pulp_deb GitHub actions pipelines:

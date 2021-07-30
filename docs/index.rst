@@ -12,7 +12,7 @@ See the :ref:`REST API <rest_api>` documentation for an exhaustive feature refer
 
 The most important places relating to this project:
 
-* The `Pulp Project`_ homepage.
+* The `Pulp project`_ homepage.
 * The `pulpcore documentation`_.
 * The `pulp_deb issue tracker`_.
 * The `pulp_deb source repository`_.
