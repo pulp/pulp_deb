@@ -54,8 +54,6 @@
    https://github.com/pulp/plugin_template
 .. _pulp plugin template README:
    https://github.com/pulp/plugin_template/blob/master/README.md
-.. _pulplift:
-   https://github.com/pulp/pulplift
 .. _pulp installer:
    https://github.com/pulp/pulp_installer
 .. _pulp_deb GitHub actions pipelines:

@@ -53,8 +53,8 @@ Generating a client is a two step process:
 Generating a Client on dev Environment
 --------------------------------------------------------------------------------
 
-The easiest way to set up a Pulp development environment is to use `pulplift`_ and/or the `pulp installer`_.
-Development boxes from ``pulplift`` provide the ``pbindings`` alias for generating bindings (aka clients):
+The easiest way to set up a Pulp development environment is to use a Vagrant box from the `pulp installer`_ repo.
+These development boxes provide the ``pbindings`` alias for generating bindings (aka clients):
 
 For example, use the following for generating Python bindings for ``pulp_deb``:
 
