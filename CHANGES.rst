@@ -64,6 +64,22 @@ Misc
 ----
 
 
+2.13.1 (2021-08-02)
+===================
+
+Compatible with: ``pulpcore>=3.12,<3.15``
+
+Bugfixes
+--------
+
+- Add missing "Size" field in publications
+  (backported from #8506)
+  `#9167 <https://pulp.plan.io/issues/9167>`_
+
+
+----
+
+
 2.13.0 (2021-05-27)
 ===================
 
