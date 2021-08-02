@@ -2,51 +2,14 @@ Installation
 ================================================================================
 
 .. include:: external_references.rst
-.. include:: httpie_usage.rst
 
 
-Install ``pulpcore``
---------------------------------------------------------------------------------
+As with all Pulp plugins, the installation method for ``pulp_deb`` depends on your chosen ``pulpcore`` installation method.
+There are multiple `pulpcore installation options`_.
+The default recommendation is to use the `Pulp Ansible installer`_, which is documented via the `Pulp Ansible installer documentation`_.
 
-Please see the `pulpcore installation`_ instructions.
+Using the Pulp Ansible installer as our example, adding the ``pulp_deb`` plugin to your installation is as easy as uncommenting ``# pulp-deb: {}`` in the example playbook, and then re-running that playbook.
+This will both work for entirely new Pulp installations, as well as to add the ``pulp_deb`` plugin to a already completed Pulp installation.
 
-
-Install ``pulp_deb`` Plugin
---------------------------------------------------------------------------------
-
-This document assumes that you have used the `pulpcore installation`_ to install pulpcore into a the virtual environment ``pulpvenv``.
-
-Users should install from **either** PyPI or source.
-
-
-From Source
-********************************************************************************
-
-.. code-block:: bash
-
-   sudo -u pulp -i
-   source ~/pulpvenv/bin/activate
-   cd pulp_deb
-   pip install -e .
-   django-admin runserver 24817
-
-
-Make and Run Migrations
---------------------------------------------------------------------------------
-
-.. code-block:: bash
-
-   pulpcore-manager makemigrations deb
-   pulpcore-manager migrate deb
-
-
-Run Services
---------------------------------------------------------------------------------
-
-.. code-block:: bash
-
-   pulp-manager runserver
-   gunicorn pulpcore.content:server --bind 'localhost:24816' --worker-class 'aiohttp.GunicornWebWorker' -w 2
-   sudo systemctl restart pulpcore-resource-manager
-   sudo systemctl restart pulpcore-worker@1
-   sudo systemctl restart pulpcore-worker@2
+If you need more help with advanced installation scenarios you can either consult the documentation referenced above, or else join the ``pulp`` Matrix/IRC channel for interactive help.
+See the `Pulp project help page`_ for more information and additional ways on how to get in contact with the Pulp community.

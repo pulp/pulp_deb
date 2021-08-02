@@ -8,7 +8,7 @@
    https://docs.pulpproject.org/workflows/signed-metadata.html
 .. _pulpcore upload documentation:
    https://docs.pulpproject.org/workflows/upload-publish.html
-.. _pulpcore installation:
+.. _pulpcore installation options:
    https://docs.pulpproject.org/installation/index.html
 .. _pulpcore configuration documentation:
    https://docs.pulpproject.org/pulpcore/installation/configuration.html
@@ -28,6 +28,8 @@
    https://github.com/pulp/community/discussions/71
 .. _Pulp project:
    https://pulpproject.org
+.. _Pulp project help page:
+   https://pulpproject.org/help/
 .. _Pulp project mailing list:
    https://www.redhat.com/mailman/listinfo/pulp-list
 .. _Pulp project development mailing list:
@@ -54,12 +56,14 @@
    https://github.com/pulp/pulp_deb/blob/main/pulp_deb/tests/functional/setup_signing_service.py
 .. _signing service script example:
    https://github.com/pulp/pulp_deb/blob/main/pulp_deb/tests/functional/sign_deb_release.sh
-.. _pulp plugin template:
+.. _Pulp plugin template:
    https://github.com/pulp/plugin_template
-.. _pulp plugin template README:
+.. _Pulp plugin template README:
    https://github.com/pulp/plugin_template/blob/master/README.md
-.. _pulp installer:
+.. _Pulp Ansible installer:
    https://github.com/pulp/pulp_installer
+.. _Pulp Ansible installer documentation:
+   https://docs.pulpproject.org/pulp_installer/
 .. _pulp_deb GitHub actions pipelines:
    https://github.com/pulp/pulp_deb/actions
 .. _httpie:

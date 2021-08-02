@@ -41,7 +41,7 @@ A ``Z`` version release, signifies the following:
 Using the Plugin Template
 --------------------------------------------------------------------------------
 
-The `pulp plugin template`_ is used to collect changes relevant to all Pulp plugins.
+The `Pulp plugin template`_ is used to collect changes relevant to all Pulp plugins.
 When there are new changes, the plugin template can then be used to automatically apply those changes to plugins that do not yet include them.
 
 To use the plugin template, make sure you have cloned the Git repository to the same folder as the ``pulp_deb`` repository.
@@ -66,7 +66,7 @@ To generate an up to date ``template_config.yml`` file in the base of the ``pulp
    ./plugin-template --generate-config pulp_deb
 
 You can adjust this configuration to affect the other plugin template commands.
-For documentation on each parameter, see the `pulp plugin template README`_.
+For documentation on each parameter, see the `Pulp plugin template README`_.
 
 --------------------------------------------------------------------------------
 
