@@ -27,10 +27,25 @@ else
   BRANCH="${GITHUB_REF##refs/tags/}"
 fi
 
+COMMIT_MSG=$(git log --format=%B --no-merges -1)
+export COMMIT_MSG
+
+if [[ "$TEST" == "upgrade" ]]; then
+  git checkout -b ci_upgrade_test
+  cp -R .github /tmp/.github
+  cp -R .ci /tmp/.ci
+  git checkout $FROM_PULP_DEB_BRANCH
+  rm -rf .ci .github
+  cp -R /tmp/.github .
+  cp -R /tmp/.ci .
+  # Pin deps
+  sed -i "s/~/=/g" requirements.txt
+fi
+
 if [[ "$TEST" == "plugin-from-pypi" ]]; then
   COMPONENT_VERSION=$(http https://pypi.org/pypi/pulp-deb/json | jq -r '.info.version')
 else
-  COMPONENT_VERSION=$(sed -ne "s/\s*version=['\"]\(.*\)['\"][\s,]*/\1/p" setup.py)
+  COMPONENT_VERSION=$(sed -ne "s/\s*version.*=.*['\"]\(.*\)['\"][\s,]*/\1/p" setup.py)
 fi
 mkdir .ci/ansible/vars || true
 echo "---" > .ci/ansible/vars/main.yaml
@@ -40,9 +55,6 @@ echo "component_version: '${COMPONENT_VERSION}'" >> .ci/ansible/vars/main.yaml
 
 export PRE_BEFORE_INSTALL=$PWD/.github/workflows/scripts/pre_before_install.sh
 export POST_BEFORE_INSTALL=$PWD/.github/workflows/scripts/post_before_install.sh
-
-COMMIT_MSG=$(git log --format=%B --no-merges -1)
-export COMMIT_MSG
 
 if [ -f $PRE_BEFORE_INSTALL ]; then
   source $PRE_BEFORE_INSTALL
@@ -68,7 +80,21 @@ else
   export CI_BASE_IMAGE=
 fi
 
+
 cd ..
+
+
+git clone --depth=1 https://github.com/pulp/pulp-smash.git
+
+if [ -n "$PULP_SMASH_PR_NUMBER" ]; then
+  cd pulp-smash
+  git fetch --depth=1 origin pull/$PULP_SMASH_PR_NUMBER/head:$PULP_SMASH_PR_NUMBER
+  git checkout $PULP_SMASH_PR_NUMBER
+  cd ..
+fi
+
+pip install --upgrade --force-reinstall ./pulp-smash
+
 
 git clone --depth=1 https://github.com/pulp/pulp-openapi-generator.git
 if [ -n "$PULP_OPENAPI_GENERATOR_PR_NUMBER" ]; then
@@ -77,11 +103,6 @@ if [ -n "$PULP_OPENAPI_GENERATOR_PR_NUMBER" ]; then
   git checkout $PULP_OPENAPI_GENERATOR_PR_NUMBER
   cd ..
 fi
-
-cd pulp-openapi-generator
-sed -i -e 's/localhost:24817/pulp/g' generate.sh
-sed -i -e 's/:24817/pulp/g' generate.sh
-cd ..
 
 
 
@@ -95,17 +116,6 @@ fi
 cd ..
 
 
-
-git clone --depth=1 https://github.com/pulp/pulp-smash.git
-
-if [ -n "$PULP_SMASH_PR_NUMBER" ]; then
-  cd pulp-smash
-  git fetch --depth=1 origin pull/$PULP_SMASH_PR_NUMBER/head:$PULP_SMASH_PR_NUMBER
-  git checkout $PULP_SMASH_PR_NUMBER
-  cd ..
-fi
-
-pip install --upgrade --force-reinstall ./pulp-smash
 
 
 # Intall requirements for ansible playbooks
