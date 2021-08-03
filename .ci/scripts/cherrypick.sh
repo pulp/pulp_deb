@@ -9,6 +9,11 @@
 
 set -e
 
+if [ ! -d CHANGES ]; then
+  echo "Error: no CHANGES directory detected. This script must be run from the project root."
+  exit 1
+fi
+
 if [ $# -lt 3 ]
 then
   echo "Usage: .ci/scripts/cherrypick.sh [commit-hash] [original-issue-id] [backport-issue-id]"
@@ -23,9 +28,9 @@ issue="$2"
 backport="$3"
 commit_message=$(git log --format=%B -n 1 $commit)
 
-if ! echo $commit_message | grep -q "\[noissue\]"
+if ! echo $commit_message | tr '[:upper:]' '[:lower:]' | grep -q "\[noissue\]"
 then
-  if ! echo $commit_message | grep -q -E "(fixes|closes).*#$issue"
+  if ! echo $commit_message | tr '[:upper:]' '[:lower:]' | grep -q -E "(fixes|closes).*#$issue"
   then
     echo "Error: issue $issue not detected in commit message." && exit 1
   fi
@@ -53,7 +58,7 @@ do
   git add "$newfile"
 done
 
-commit_message="$(printf "$commit_message" | sed -E 's/(fixes|closes)/backports/')"
+commit_message="$(printf "$commit_message" | sed -E 's/(fixes|closes)/backports/i')"
 commit_message="$commit_message
 
 fixes #$backport

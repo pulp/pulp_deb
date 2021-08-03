@@ -15,13 +15,6 @@ set -euv
 
 source .github/workflows/scripts/utils.sh
 
-if [ "${GITHUB_REF##refs/tags/}" = "${GITHUB_REF}" ]
-then
-  TAG_BUILD=0
-else
-  TAG_BUILD=1
-fi
-
 if [[ "$TEST" = "docs" || "$TEST" = "publish" ]]; then
   pip install -r ../pulpcore/doc_requirements.txt
   pip install -r doc_requirements.txt
@@ -34,10 +27,12 @@ cd .ci/ansible/
 TAG=ci_build
 if [[ "$TEST" == "plugin-from-pypi" ]]; then
   PLUGIN_NAME=pulp_deb
+elif [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
+  PLUGIN_NAME=./pulp_deb/dist/pulp_deb-$PLUGIN_VERSION-py3-none-any.whl
 else
   PLUGIN_NAME=./pulp_deb
 fi
-if [ "${TAG_BUILD}" = "1" ]; then
+if [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
   # Install the plugin only and use published PyPI packages for the rest
   # Quoting ${TAG} ensures Ansible casts the tag as a string.
   cat >> vars/main.yaml << VARSYAML
@@ -75,9 +70,13 @@ fi
 
 cat >> vars/main.yaml << VARSYAML
 pulp_settings: {"allowed_content_checksums": ["md5", "sha1", "sha256", "sha512"]}
+pulp_scheme: http
+
+pulp_container_tag: python36
+
 VARSYAML
 
-if [[ "$TEST" == "pulp" || "$TEST" == "performance" || "$TEST" == "s3" || "$TEST" == "plugin-from-pypi" ]]; then
+if [[ "$TEST" == "pulp" || "$TEST" == "performance" || "$TEST" == "upgrade" || "$TEST" == "s3" || "$TEST" == "plugin-from-pypi" ]]; then
   sed -i -e '/^services:/a \
   - name: pulp-fixtures\
     image: docker.io/pulp/pulp-fixtures:latest\
