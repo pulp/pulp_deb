@@ -10,9 +10,6 @@ on:
   pull_request:
     branches:
       - '*'
-  push:
-    branches:
-      - '*'
 
 jobs:
 
@@ -28,7 +25,7 @@ jobs:
 
       - uses: actions/setup-python@v2
         with:
-          python-version: "3.7"
+          python-version: "3.6"
 
         # dev_requirements contains tools needed for flake8, etc.
       - name: Install requirements
@@ -81,7 +78,7 @@ jobs:
 
       - uses: actions/setup-python@v2
         with:
-          python-version: "3.7"
+          python-version: "3.6"
 
       - name: Install httpie
         run: |
@@ -102,6 +99,13 @@ jobs:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
         shell: bash
+
+      - name: Install Python client
+        run: .github/workflows/scripts/install_python_client.sh
+
+      - name: Install Ruby client
+        if: ${{ env.TEST == 'bindings' }}
+        run: .github/workflows/scripts/install_ruby_client.sh
 
       - name: Before Script
         run: |
