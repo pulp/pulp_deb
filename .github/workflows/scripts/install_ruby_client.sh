@@ -10,24 +10,15 @@
 set -euv
 
 # make sure this script runs at the repo root
-cd "$(dirname "$(realpath -e "$0")")"/../..
+cd "$(dirname "$(realpath -e "$0")")"/../../..
 
-mkdir ~/.gem || true
-touch ~/.gem/credentials
-echo "---
-:rubygems_api_key: $RUBYGEMS_API_KEY" > ~/.gem/credentials
-sudo chmod 600 ~/.gem/credentials
+export PULP_URL="${PULP_URL:-http://pulp}"
 
-export REPORTED_VERSION=$(http pulp/pulp/api/v3/status/ | jq --arg plugin deb -r '.versions[] | select(.component == $plugin) | .version')
+export REPORTED_VERSION=$(http $PULP_URL/pulp/api/v3/status/ | jq --arg plugin deb --arg legacy_plugin pulp_deb -r '.versions[] | select(.component == $plugin or .component == $legacy_plugin) | .version')
 export DESCRIPTION="$(git describe --all --exact-match `git rev-parse HEAD`)"
 if [[ $DESCRIPTION == 'tags/'$REPORTED_VERSION ]]; then
   export VERSION=${REPORTED_VERSION}
 else
-  # Daily publishing of development version (ends in ".dev" reported as ".dev0")
-  if [ "${REPORTED_VERSION%.dev*}" == "${REPORTED_VERSION}" ]; then
-    echo "Refusing to publish bindings. $REPORTED_VERSION does not contain 'dev'."
-    exit 1
-  fi
   export EPOCH="$(date +%s)"
   export VERSION=${REPORTED_VERSION}${EPOCH}
 fi
@@ -36,14 +27,17 @@ export response=$(curl --write-out %{http_code} --silent --output /dev/null http
 
 if [ "$response" == "200" ];
 then
-  echo "pulp_deb $VERSION has already been released. Skipping."
+  echo "pulp_deb client $VERSION has already been released. Installing from RubyGems.org."
+  gem install pulp_deb_client -v $VERSION
+  touch pulp_deb_client-$VERSION.gem
+  tar cvf ruby-client.tar ./pulp_deb_client-$VERSION.gem
   exit
 fi
 
 cd ../pulp-openapi-generator
-
+rm -rf pulp_deb-client
 ./generate.sh pulp_deb ruby $VERSION
 cd pulp_deb-client
 gem build pulp_deb_client
-GEM_FILE="$(ls pulp_deb_client-*)"
-gem push ${GEM_FILE}
+gem install --both ./pulp_deb_client-$VERSION.gem
+tar cvf ../../pulp_deb/ruby-client.tar ./pulp_deb_client-$VERSION.gem
