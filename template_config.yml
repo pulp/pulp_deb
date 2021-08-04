@@ -1,6 +1,8 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
+# generated with plugin_template@2021.04.08-88-g74a0662
+
 additional_plugins: []
 additional_repos: []
 black: true
@@ -17,6 +19,7 @@ deploy_daily_client_to_rubygems: true
 deploy_to_pypi: true
 docker_fixtures: true
 docs_test: true
+flake8: true
 issue_tracker: redmine
 plugin_app_label: deb
 plugin_camel: PulpDeb
@@ -29,6 +32,7 @@ plugin_default_branch: main
 plugin_name: pulp_deb
 plugin_snake: pulp_deb
 publish_docs_to_pulpprojectdotorg: true
+pulp_scheme: http
 pulp_settings:
   allowed_content_checksums:
   - md5
@@ -40,7 +44,10 @@ pulpcore_pip_version_specifier: '~=3.11.0'
 pulpprojectdotorg_key_id: aa499d7938ed
 pydocstyle: true
 pypi_username: pulp
+python_version: '3.6'
 redmine_project: pulp_deb
+release_user: pulpbot
+sync_ci: true
 test_bindings: false
 test_cli: false
 test_fips_nightly: false
@@ -48,4 +55,5 @@ test_performance: false
 test_released_plugin_with_next_pulpcore_release: true
 test_s3: true
 update_redmine: true
+upgrade_range: []
 
