@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.04.08-88-g74a0662
+# generated with plugin_template@2021.04.08-91-gc8d45ff
 
 additional_plugins: []
 additional_repos: []
@@ -11,6 +11,8 @@ check_gettext: true
 check_manifest: true
 check_openapi_schema: true
 check_stray_pulpcore_imports: true
+ci_trigger: '{pull_request: {branches: [''*'']}}'
+core_import_allowed: []
 coverage: false
 deploy_client_to_pypi: true
 deploy_client_to_rubygems: true
@@ -31,6 +33,8 @@ plugin_dash_short: deb
 plugin_default_branch: main
 plugin_name: pulp_deb
 plugin_snake: pulp_deb
+post_job_template: null
+pre_job_template: null
 publish_docs_to_pulpprojectdotorg: true
 pulp_scheme: https
 pulp_settings:
