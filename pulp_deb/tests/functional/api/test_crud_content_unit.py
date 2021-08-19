@@ -5,8 +5,7 @@ import unittest
 from tempfile import NamedTemporaryFile
 
 from pulp_smash import utils
-from pulp_smash.pulp3.bindings import monitor_task, PulpTaskError
-from pulp_smash.pulp3.utils import delete_orphans
+from pulp_smash.pulp3.bindings import monitor_task, PulpTaskError, delete_orphans
 
 from pulp_deb.tests.functional.constants import (
     DEB_GENERIC_CONTENT_URL,

@@ -3,11 +3,10 @@
 import unittest
 
 from pulp_smash import config
-from pulp_smash.pulp3.bindings import monitor_task
+from pulp_smash.pulp3.bindings import monitor_task, delete_orphans
 from pulp_smash.pulp3.utils import (
     gen_repo,
     get_content,
-    delete_orphans,
     get_versions,
     gen_distribution,
     download_content_unit,
