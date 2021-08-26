@@ -4,6 +4,7 @@
 # './plugin-template --github pulp_deb' to update this file.
 #
 # For more info visit https://github.com/pulp/plugin_template
+
 ---
 name: Create New Release Branch
 on:
@@ -41,6 +42,7 @@ jobs:
           echo ::endgroup::
 
       - name: Setting secrets
+        
         run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
