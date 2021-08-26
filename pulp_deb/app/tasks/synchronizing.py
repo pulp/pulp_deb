@@ -7,11 +7,13 @@ import gzip
 import lzma
 import gnupg
 
+from asgiref.sync import sync_to_async
 from collections import defaultdict
 from tempfile import NamedTemporaryFile
 from debian import deb822
 from urllib.parse import urlparse, urlunparse
 from django.conf import settings
+from django.db.utils import IntegrityError
 
 from pulpcore.plugin.exceptions import DigestValidationError
 
@@ -270,7 +272,9 @@ class DebUpdateReleaseFileAttributes(Stage):
 
         Update release content with information obtained from its artifact.
         """
-        with ProgressReport(message="Update ReleaseFile units", code="update.release_file") as pb:
+        async with ProgressReport(
+            message="Update ReleaseFile units", code="update.release_file"
+        ) as pb:
             async for d_content in self.items():
                 if isinstance(d_content.content, ReleaseFile):
                     release_file = d_content.content
@@ -337,7 +341,7 @@ class DebUpdateReleaseFileAttributes(Stage):
                     log.debug(_("Codename: {}").format(release_file.codename))
                     log.debug(_("Components: {}").format(release_file.components))
                     log.debug(_("Architectures: {}").format(release_file.architectures))
-                    pb.increment()
+                    await pb.aincrement()
                 await self.put(d_content)
 
 
@@ -352,7 +356,9 @@ class DebUpdatePackageIndexAttributes(Stage):  # TODO: Needs a new name
 
         Ensure, that an uncompressed artifact is available.
         """
-        with ProgressReport(message="Update PackageIndex units", code="update.packageindex") as pb:
+        async with ProgressReport(
+            message="Update PackageIndex units", code="update.packageindex"
+        ) as pb:
             async for d_content in self.items():
                 if isinstance(d_content.content, PackageIndex):
                     if not d_content.d_artifacts:
@@ -375,9 +381,8 @@ class DebUpdatePackageIndexAttributes(Stage):  # TODO: Needs a new name
                             d_content.d_artifacts[0].remote,
                         )
                         d_content.d_artifacts.append(da)
-                        da.artifact.save()
-
-                    pb.increment()
+                        await _save_artifact_blocking(da)
+                    await pb.aincrement()
                 await self.put(d_content)
 
 
@@ -497,7 +502,8 @@ class DebFirstStage(Stage):
             await self.put(release_architecture_dc)
         # Parse release file
         log.info(_('Parsing Release file at distribution="{}"').format(distribution))
-        release_file_dict = deb822.Release(release_file.main_artifact.file)
+        release_artifact = await _get_main_artifact_blocking(release_file)
+        release_file_dict = deb822.Release(release_artifact.file)
         # collect file references in new dict
         file_references = defaultdict(deb822.Deb822Dict)
         for digest_name in ["SHA512", "SHA256", "SHA1", "MD5sum"]:
@@ -604,7 +610,8 @@ class DebFirstStage(Stage):
         deferred_download = self.remote.policy != Remote.IMMEDIATE
         # parse package_index
         package_futures = []
-        for package_paragraph in deb822.Packages.iter_paragraphs(package_index.main_artifact.file):
+        package_index_artifact = await _get_main_artifact_blocking(package_index)
+        for package_paragraph in deb822.Packages.iter_paragraphs(package_index_artifact.file):
             try:
                 package_relpath = os.path.normpath(package_paragraph["Filename"])
                 package_sha256 = package_paragraph["sha256"]
@@ -731,6 +738,23 @@ class DebFirstStage(Stage):
             await self.put(
                 DeclarativeContent(content=content_unit, d_artifacts=translation["d_artifacts"])
             )
+
+
+@sync_to_async
+def _get_main_artifact_blocking(content):
+    return content.main_artifact
+
+
+@sync_to_async
+def _save_artifact_blocking(d_artifact):
+    """
+    Call with await!
+    """
+    try:
+        d_artifact.artifact.save()
+    except IntegrityError:
+        d_artifact.artifact = Artifact.objects.get(sha256=d_artifact.artifact.sha256)
+        d_artifact.artifact.touch()
 
 
 def _get_checksums(unit_dict):
