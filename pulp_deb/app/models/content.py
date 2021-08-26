@@ -2,8 +2,7 @@ import os
 
 from django.db import models
 
-# TODO: use django.db.models.JSONField after Django 3.1
-from django.contrib.postgres.fields import JSONField
+from django.db.models import JSONField
 
 from pulpcore.plugin.models import Content
 
