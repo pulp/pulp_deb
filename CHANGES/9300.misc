@@ -1,0 +1,1 @@
+Replaced deprecated JSONField model from contrib with the one available with Django 3.
