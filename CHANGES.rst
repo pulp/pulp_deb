@@ -13,6 +13,42 @@ Changelog
 
 .. towncrier release notes start
 
+2.15.0 (2021-08-26)
+===================
+
+Features
+--------
+
+- Add custom_fields to hold non-standard PackageIndex fields
+  `#8232 <https://pulp.plan.io/issues/8232>`_
+
+
+Bugfixes
+--------
+
+- The plugins async pipeline was made Django 3 compatible in anticipation of pulpcore 3.15.
+  `#9299 <https://pulp.plan.io/issues/9299>`_
+
+
+Improved Documentation
+----------------------
+
+- Reworked the plugin installation docs to be helpful to new users.
+  `#9186 <https://pulp.plan.io/issues/9186>`_
+
+
+Misc
+----
+
+- Added touch statements to prevent false positives during orphan cleanup.
+  `#9162 <https://pulp.plan.io/issues/9162>`_
+- Replaced deprecated JSONField model from contrib with the one available with Django 3.
+  `#9300 <https://pulp.plan.io/issues/9300>`_
+
+
+----
+
+
 2.14.1 (2021-07-29)
 ===================
 
