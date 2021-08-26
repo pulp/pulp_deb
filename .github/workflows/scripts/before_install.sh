@@ -105,7 +105,7 @@ fi
 
 
 
-git clone --depth=1 https://github.com/pulp/pulpcore.git --branch master
+git clone --depth=1 https://github.com/pulp/pulpcore.git --branch 3.15
 
 cd pulpcore
 
