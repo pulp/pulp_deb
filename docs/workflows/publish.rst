@@ -126,7 +126,7 @@ To host a publication which makes it consumable by a package manager, users crea
 
 .. code-block:: bash
 
-   http post $BASE_ADDR/pulp/api/v3/distributions/deb/apt/ name="nginx" base_path="nginx" publication=$BASE_ADDR/pulp/api/v3/publications/deb/apt/ecf87d05-978c-4327-8fe8-f50dc523b1a8/
+   http post $BASE_ADDR/pulp/api/v3/distributions/deb/apt/ name="nginx" base_path="nginx" publication=/pulp/api/v3/publications/deb/apt/ecf87d05-978c-4327-8fe8-f50dc523b1a8/
 
 This will return a ``202 Accepted`` response:
 
@@ -208,3 +208,9 @@ This returns a ``200 OK`` response:
            </html>
 
 You may use this url (``base_url``) to access Debian content from Pulp via a package manager like apt, i.e. in your ``/etc/apt/sources.list`` file.
+
+An example apt source file could be like,
+
+.. code-block:: ini
+
+   deb [trusted=yes arch=amd64 ] http://pulp3-source-debian10.hostname.example.com/pulp/content/nginx/ default  all
