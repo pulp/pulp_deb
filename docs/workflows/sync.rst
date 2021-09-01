@@ -169,4 +169,9 @@ This will return a ``200 OK`` response:
 
 Notice that when the synchronize task completes, it creates a new version, which is specified in ``created_resources``.
 
+.. note::
+
+    To set up a regular sync task, use one of the external tools that deal with periodic background jobs.
+    Learn more about scheduling tasks `here <https://docs.pulpproject.org/pulpcore/workflows/scheduling-tasks.html>`_.
+
 Continue with :doc:`publish` to make your synced repository consumable.
