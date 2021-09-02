@@ -29,6 +29,12 @@ from pulp_deb.app.models import (
     ReleaseFile,
 )
 
+from pulp_deb.app.models.content import BOOL_CHOICES
+
+import logging
+
+log = logging.getLogger(__name__)
+
 
 class YesNoField(Field):
     """
@@ -272,6 +278,45 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
             elif k not in skip:
                 # also save the fields not in TRANSLATION_DICT
                 args["custom_fields"][k] = v
+
+        # Delete package fields with values of incorrect type
+        if "installed_size" in args:
+            try:
+                int(args["installed_size"])
+            except (TypeError, ValueError):
+                log.warn(
+                    _(
+                        "Dropping 'Installed-Size' field from '{}', "
+                        "since the value '{}' is of incorrect type."
+                    ).format(args["package"], args["installed_size"])
+                )
+                del args["installed_size"]
+        message = (
+            "Dropping '{}' field from package '{}', "
+            "since the value '{}' is not in the allowed values list '{}'"
+        )
+        bool_values = [value[1] for value in BOOL_CHOICES]
+        if "essential" in args and args["essential"] not in bool_values:
+            log.warn(
+                _(message).format("Essential", args["package"], args["essential"], bool_values)
+            )
+            del args["essential"]
+        if "build_essential" in args and args["build_essential"] not in bool_values:
+            log.warn(
+                _(message).format(
+                    "Build-Essential", args["package"], args["build_essential"], bool_values
+                )
+            )
+            del args["build_essential"]
+        if "multi_arch" in args:
+            allowed_values = [value[1] for value in BasePackage.MULTIARCH_CHOICES]
+            if args["multi_arch"] not in allowed_values:
+                log.warn(
+                    _(message).format(
+                        "Multi-Arch", args["package"], args["multi_arch"], allowed_values
+                    )
+                )
+                del args["multi_arch"]
 
         return cls(data=args, **kwargs)
 
