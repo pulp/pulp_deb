@@ -101,6 +101,19 @@ class NoPackageIndexFile(Exception):
     pass
 
 
+class MissingReleaseFileField(Exception):
+    """
+    Exception signifying that the upstream release file is missing a required field.
+    """
+
+    def __init__(self, distribution, field, *args, **kwargs):
+        """
+        The upstream release file is missing a required field.
+        """
+        message = "The release file for distribution '{}' is missing the required field '{}'."
+        super().__init__(_(message).format(distribution, field), *args, **kwargs)
+
+
 def synchronize(remote_pk, repository_pk, mirror):
     """
     Sync content from the remote repository.
@@ -336,8 +349,34 @@ class DebUpdateReleaseFileAttributes(Stage):
                         release_file.codename = release_file_dict["Codename"]
                     if "suite" in release_file_dict:
                         release_file.suite = release_file_dict["Suite"]
-                    release_file.components = release_file_dict["Components"]
-                    release_file.architectures = release_file_dict["Architectures"]
+
+                    if "components" in release_file_dict:
+                        release_file.components = release_file_dict["Components"]
+                    elif release_file.distribution[-1] == "/":
+                        message = (
+                            "The Release file for distribution '{}' contains no 'Components' "
+                            "field, but since we are dealing with a flat repo, we can continue "
+                            "regardless."
+                        )
+                        log.warning(_(message).format(release_file.distribution))
+                        # TODO: Consider not setting the field at all (requires migrations).
+                        release_file.components = ""
+                    else:
+                        raise MissingReleaseFileField(release_file.distribution, "Components")
+
+                    if "architectures" in release_file_dict:
+                        release_file.architectures = release_file_dict["Architectures"]
+                    elif release_file.distribution[-1] == "/":
+                        message = (
+                            "The Release file for distribution '{}' contains no 'Architectures' "
+                            "field, but since we are dealing with a flat repo, we can extract them "
+                            "from the repos single Package index later."
+                        )
+                        log.warning(_(message).format(release_file.distribution))
+                        release_file.architectures = ""
+                    else:
+                        raise MissingReleaseFileField(release_file.distribution, "Architectures")
+
                     log.debug(_("Codename: {}").format(release_file.codename))
                     log.debug(_("Components: {}").format(release_file.components))
                     log.debug(_("Architectures: {}").format(release_file.architectures))
@@ -492,9 +531,18 @@ class DebFirstStage(Stage):
         release_dc = DeclarativeContent(content=release_unit)
         release = await self._create_unit(release_dc)
         # Create release architectures
-        architectures = _filter_split_architectures(
-            release_file.architectures, self.remote.architectures, distribution
-        )
+        if release_file.architectures:
+            architectures = _filter_split_architectures(
+                release_file.architectures, self.remote.architectures, distribution
+            )
+        elif distribution[-1] == "/":
+            message = (
+                "The ReleaseFile content unit architecrures are unset for the flat repo with "
+                "distribution '{}'. ReleaseArchitecture content creation is deferred!"
+            )
+            log.warning(_(message).format(distribution))
+            architectures = []
+
         for architecture in architectures:
             release_architecture_dc = DeclarativeContent(
                 content=ReleaseArchitecture(architecture=architecture, release=release)
@@ -510,8 +558,13 @@ class DebFirstStage(Stage):
             if digest_name in release_file_dict:
                 for unit in release_file_dict[digest_name]:
                     file_references[unit["Name"]].update(unit)
-        await asyncio.gather(
-            *[
+
+        if distribution[-1] == "/":
+            # Handle flat repo
+            sub_tasks = [self._handle_flat_repo(file_references, release_file, release)]
+        else:
+            # Handle components
+            sub_tasks = [
                 self._handle_component(
                     component, release, release_file, file_references, architectures
                 )
@@ -519,7 +572,7 @@ class DebFirstStage(Stage):
                     release_file.components, self.remote.components, distribution
                 )
             ]
-        )
+        await asyncio.gather(*sub_tasks)
 
     async def _handle_component(
         self, component, release, release_file, file_references, architectures
@@ -567,18 +620,48 @@ class DebFirstStage(Stage):
             raise NotImplementedError("Syncing source repositories is not yet implemented.")
         await asyncio.gather(*pending_tasks)
 
+    async def _handle_flat_repo(self, file_references, release_file, release):
+        # We are creating a component so the flat repo can be published as a structured repo!
+        release_component_dc = DeclarativeContent(
+            content=ReleaseComponent(component="flat-repo-component", release=release)
+        )
+        release_component = await self._create_unit(release_component_dc)
+        pending_tasks = []
+
+        # Handle single package index
+        pending_tasks.append(
+            self._handle_package_index(
+                file_references=file_references,
+                release_file=release_file,
+                release=release,
+                release_component=release_component,
+                architecture="",
+            )
+        )
+
+        # Handle source package index
+        if self.remote.sync_sources:
+            raise NotImplementedError("Syncing source repositories is not yet implemented.")
+
+        # Await all tasks
+        await asyncio.gather(*pending_tasks)
+
     async def _handle_package_index(
-        self, release_file, release_component, architecture, file_references, infix=""
+        self,
+        release_file,
+        release_component,
+        architecture,
+        file_references,
+        infix="",
+        release=None,
     ):
         # Create package_index
         release_base_path = os.path.dirname(release_file.relative_path)
-        if release_file.distribution[-1] == "/":
-            # Flat repo format
-            package_index_dir = ""
-        else:
-            package_index_dir = os.path.join(
-                release_component.plain_component, infix, "binary-{}".format(architecture)
-            )
+        package_index_dir = (
+            os.path.join(release_component.plain_component, infix, "binary-{}".format(architecture))
+            if release_file.distribution[-1] != "/"
+            else ""
+        )
         d_artifacts = []
         for filename in ["Packages", "Packages.gz", "Packages.xz", "Release"]:
             path = os.path.join(package_index_dir, filename)
@@ -586,15 +669,17 @@ class DebFirstStage(Stage):
                 relative_path = os.path.join(release_base_path, path)
                 d_artifacts.append(self._to_d_artifact(relative_path, file_references[path]))
         if not d_artifacts:
-            # No reference here, skip this component architecture combination
+            log.warning(_('No package index file found in "{}"!').format(package_index_dir))
+            # No package index, nothing to do.
             return
-        log.info(_("Downloading: {}/Packages").format(package_index_dir))
+        relative_path = os.path.join(release_base_path, package_index_dir, "Packages")
+        log.info(_('Creating PackageIndex unit with relative_path="{}".').format(relative_path))
         content_unit = PackageIndex(
             release=release_file,
             component=release_component.component,
             architecture=architecture,
             sha256=d_artifacts[0].artifact.sha256,
-            relative_path=os.path.join(release_base_path, package_index_dir, "Packages"),
+            relative_path=relative_path,
         )
         package_index = await self._create_unit(
             DeclarativeContent(content=content_unit, d_artifacts=d_artifacts)
@@ -612,6 +697,25 @@ class DebFirstStage(Stage):
         package_futures = []
         package_index_artifact = await _get_main_artifact_blocking(package_index)
         for package_paragraph in deb822.Packages.iter_paragraphs(package_index_artifact.file):
+            if (
+                self.remote.architectures
+                and release_file.distribution[-1] == "/"
+                and package_paragraph["Architecture"] != "all"
+                and package_paragraph["Architecture"] not in self.remote.architectures.split()
+            ):
+                message = (
+                    "Omitting package '{}' with architecture '{}' from flat repo distribution '{}'"
+                    ", since we are filtering for architectures '{}'!"
+                )
+                log.debug(
+                    _(message).format(
+                        package_paragraph["Filename"],
+                        package_paragraph["Architecture"],
+                        release_file.distribution,
+                        self.remote.architectures,
+                    )
+                )
+                continue
             try:
                 package_relpath = os.path.normpath(package_paragraph["Filename"])
                 package_sha256 = package_paragraph["sha256"]
@@ -647,6 +751,7 @@ class DebFirstStage(Stage):
             except KeyError:
                 log.warning(_("Ignoring invalid package paragraph. {}").format(package_paragraph))
         # Assign packages to this release_component
+        package_architectures = set([])
         for package_future in package_futures:
             package = await package_future.resolution()
             if not isinstance(package, Package):
@@ -658,6 +763,47 @@ class DebFirstStage(Stage):
                 )
             )
             await self.put(package_release_component_dc)
+            if release_file.distribution[-1] == "/":
+                package_architectures.add(package.architecture)
+
+        # For flat repos we may still need to create ReleaseArchitecture content:
+        if release_file.distribution[-1] == "/":
+            if release_file.architectures:
+                for architecture in package_architectures:
+                    if architecture not in release_file.architectures.split():
+                        message = (
+                            "The flat repo with distribution '{}' contains packages with "
+                            "architecture '{}' but this is not included in the ReleaseFile's "
+                            "architectures field '{}'!"
+                        )
+                        log.warning(
+                            _(message).format(
+                                release_file.distribution, architecture, release_file.architectures
+                            )
+                        )
+                        message = "Creating additional ReleaseArchitecture for architecture '{}'!"
+                        log.warning(_(message).format(architecture))
+                        release_architecture_dc = DeclarativeContent(
+                            content=ReleaseArchitecture(architecture=architecture, release=release)
+                        )
+                        await self.put(release_architecture_dc)
+            else:
+                package_architectures_string = " ".join(package_architectures)
+                message = (
+                    "The ReleaseFile of the flat repo with distribution '{}' has an empty "
+                    "architectures field!"
+                )
+                log.warning(_(message).format(release_file.distribution))
+                message = (
+                    "Creating ReleaseArchitecture content for architectures '{}', extracted from "
+                    "the synced packages."
+                )
+                log.warning(_(message).format(package_architectures_string))
+                for architecture in package_architectures:
+                    release_architecture_dc = DeclarativeContent(
+                        content=ReleaseArchitecture(architecture=architecture, release=release)
+                    )
+                    await self.put(release_architecture_dc)
 
     async def _handle_installer_file_index(
         self, release_file, release_component, architecture, file_references

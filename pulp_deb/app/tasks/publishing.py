@@ -184,7 +184,7 @@ class _ComponentHelper:
         for architecture in self.parent.architectures:
             package_index_path = os.path.join(
                 "dists",
-                self.parent.distribution.strip("/"),
+                self.parent.dists_subfolder,
                 self.plain_component,
                 "binary-{}".format(architecture),
                 "Packages",
@@ -240,6 +240,10 @@ class _ReleaseHelper:
     ):
         self.publication = publication
         self.distribution = distribution
+        self.dists_subfolder = distribution.strip("/") if distribution != "/" else "flat-repo"
+        if distribution[-1] == "/":
+            message = "Using dists subfolder '{}' for structured publish of originally flat repo!"
+            log.info(_(message).format(self.dists_subfolder))
         # Note: The order in which fields are added to self.release is retained in the
         # published Release file. As a "nice to have" for human readers, we try to use
         # the same order of fields that official Debian repositories use.
@@ -249,7 +253,9 @@ class _ReleaseHelper:
         if suite:
             self.release["Suite"] = suite
         self.release["Version"] = version
-        self.release["Codename"] = codename or distribution.split("/")[0]
+        if not codename:
+            codename = distribution.split("/")[0] if distribution != "/" else "flat-repo"
+        self.release["Codename"] = codename
         self.release["Date"] = datetime.now(tz=timezone.utc).strftime("%a, %d %b %Y %H:%M:%S %z")
         self.release["Architectures"] = " ".join(architectures)
         self.release["Components"] = ""  # Will be set later
@@ -266,7 +272,7 @@ class _ReleaseHelper:
 
     def add_metadata(self, metadata):
         artifact = metadata._artifacts.get()
-        release_file_folder = os.path.join("dists", self.distribution)
+        release_file_folder = os.path.join("dists", self.dists_subfolder)
         release_file_relative_path = os.path.relpath(metadata.relative_path, release_file_folder)
 
         for checksum_type, deb_field in CHECKSUM_TYPE_MAP.items():
@@ -285,9 +291,9 @@ class _ReleaseHelper:
             component.finish()
         # Publish Release file
         self.release["Components"] = " ".join(self.components.keys())
-        release_dir = os.path.join("dists", self.distribution.strip("/"))
+        release_dir = os.path.join("dists", self.dists_subfolder)
+        os.makedirs(release_dir, exist_ok=True)
         release_path = os.path.join(release_dir, "Release")
-        os.makedirs(os.path.dirname(release_path), exist_ok=True)
         with open(release_path, "wb") as release_file:
             self.release.dump(release_file)
         release_metadata = PublishedMetadata.create_from_file(
