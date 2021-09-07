@@ -54,8 +54,9 @@ class AptRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin):
         mirror = serializer.validated_data.get("mirror", True)
 
         result = dispatch(
-            tasks.synchronize,
-            [repository, remote],
+            func=tasks.synchronize,
+            exclusive_resources=[repository],
+            shared_resources=[remote],
             kwargs={
                 "remote_pk": remote.pk,
                 "repository_pk": repository.pk,
