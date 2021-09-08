@@ -44,8 +44,8 @@ class VerbatimPublicationViewSet(PublicationViewSet):
         repository_version = serializer.validated_data.get("repository_version")
 
         result = dispatch(
-            tasks.publish_verbatim,
-            [repository_version.repository],
+            func=tasks.publish_verbatim,
+            shared_resources=[repository_version.repository],
             kwargs={"repository_version_pk": repository_version.pk},
         )
         return OperationPostponedResponse(result, request)
@@ -86,8 +86,8 @@ class AptPublicationViewSet(PublicationViewSet):
         signing_service = serializer.validated_data.get("signing_service")
 
         result = dispatch(
-            tasks.publish,
-            [repository_version.repository],
+            func=tasks.publish,
+            shared_resources=[repository_version.repository],
             kwargs={
                 "repository_version_pk": repository_version.pk,
                 "simple": simple,
