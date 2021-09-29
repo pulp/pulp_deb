@@ -177,9 +177,8 @@ If you find any mistakes in the wiki article, start a community discussion to su
 Release Announcements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Currently, releases are primarily announced as a `Pulp community GitHub announcement`_.
+Currently, release announcements are posted as `Pulp community forum announcements`_.
 The easiest thing to do is to copy and amend an existing announcement like this `example pulp_deb release announcement`_.
-If you do not have permissions to select the "announcement" category, simply choose "general" and ask someone on the pulp-dev matrix/IRC channel to change it to "announcement".
 
 Also send an email to the `Pulp project mailing list`_ (not to be confused with the `Pulp project development mailing list`_), that simply references the community announcement as follows:
 

@@ -21,11 +21,11 @@
 .. _pulp_deb milestone:
    https://pulp.plan.io/projects/pulp_deb/roadmap
 .. _pulpcore release guide:
-   https://github.com/pulp/community/wiki/Release-Guide
-.. _Pulp community GitHub announcement:
-   https://github.com/pulp/community/discussions/categories/announcements
+   https://pulp.plan.io/projects/pulp/wiki/Release_Guide
+.. _Pulp community forum announcements:
+   https://discourse.pulpproject.org/c/announcements/6
 .. _example pulp_deb release announcement:
-   https://github.com/pulp/community/discussions/71
+   https://discourse.pulpproject.org/t/pulp-deb-2-15-0-is-generally-available/95
 .. _Pulp project:
    https://pulpproject.org
 .. _Pulp project help page:
