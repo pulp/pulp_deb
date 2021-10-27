@@ -1,0 +1,2 @@
+Amended dispatch arguments deprecated by pulpcore in anticipation of removal.
+(backported from #9349)
