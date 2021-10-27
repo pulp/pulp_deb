@@ -217,8 +217,8 @@ jobs:
           name: docs.tar
           path: docs/docs.tar
 
-      - name: After failure
-        if: failure()
+      - name: Logs
+        if: always()
         run: |
           echo "Need to debug? Please check: https://github.com/marketplace/actions/debugging-with-tmate"
           http --timeout 30 --check-status --pretty format --print hb https://pulp/pulp/api/v3/status/ || true
