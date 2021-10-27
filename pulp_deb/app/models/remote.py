@@ -10,9 +10,9 @@ class AptRemote(Remote):
 
     TYPE = "apt-remote"
 
-    distributions = models.CharField(max_length=255, null=True)
-    components = models.CharField(max_length=255, null=True)
-    architectures = models.CharField(max_length=255, null=True)
+    distributions = models.TextField(null=True)
+    components = models.TextField(null=True)
+    architectures = models.TextField(null=True)
     sync_sources = models.BooleanField(default=False)
     sync_udebs = models.BooleanField(default=False)
     sync_installer = models.BooleanField(default=False)

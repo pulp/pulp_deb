@@ -1,0 +1,1 @@
+Fixed a bug causing syncs to fail if upstream repos have more than 256 characters worth of distributions, components, or architectures.

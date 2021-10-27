@@ -41,8 +41,8 @@ class ReleaseFile(Content):
     codename = models.CharField(max_length=255)
     suite = models.CharField(max_length=255)
     distribution = models.CharField(max_length=255)
-    components = models.CharField(max_length=255, blank=True)
-    architectures = models.CharField(max_length=255, blank=True)
+    components = models.TextField(blank=True)
+    architectures = models.TextField(blank=True)
     relative_path = models.TextField()
     sha256 = models.CharField(max_length=255)
 
