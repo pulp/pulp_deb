@@ -13,6 +13,20 @@ Changelog
 
 .. towncrier release notes start
 
+2.15.1 (2021-10-27)
+===================
+
+Misc
+----
+
+- Amended dispatch arguments deprecated by pulpcore in anticipation of removal.
+  (backported from #9349)
+  `#9505 <https://pulp.plan.io/issues/9505>`_
+
+
+----
+
+
 2.15.0 (2021-08-26)
 ===================
 
