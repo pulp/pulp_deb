@@ -99,6 +99,24 @@ In general, uploading content works the same way as for any other Pulp plugin, s
    (This latter case can only happen if users attempt to add several colliding packages in a single API call.)
 
 
+.. _advanced_copy:
+
+Advanced Copy (EXPERIMENTAL)
+--------------------------------------------------------------------------------
+
+.. warning::
+   This paragraph describes an experimental feature.
+   It may not work as intended for every corner case, or break unexpectedly.
+   The API may still change in non-backwards compatible ways.
+
+The plugin provides a special API endpoint at ``pulp/api/v3/deb/copy/`` providing advanced copy operations when moving packages between repositories.
+When specifying a set of packages to be copied from one repository into another (using the default ``structured=True`` setting), this copy operation will automatically add any metadata content associated with the packages in question.
+That way, the repository version created in the target repository, can be meaningfully published using :ref:`structured mode <simple_and_structured_publishing>`.
+
+We are planning to add a dependency solving mechanism in a future release.
+The idea is for the copy operation to automatically add any dependencies of any user supplied packages as part of the copy operation.
+
+
 .. _simple_and_structured_publishing:
 
 Simple and Structured Publishing
