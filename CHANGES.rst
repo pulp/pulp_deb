@@ -13,6 +13,30 @@ Changelog
 
 .. towncrier release notes start
 
+2.16.0 (2021-10-28)
+===================
+
+Bugfixes
+--------
+
+- Flat repo syncs were made more robust with respect to minimal release files.
+  `#7673 <https://pulp.plan.io/issues/7673>`_
+- Fixed a bug causing syncs to fail if upstream repos have more than 256 characters worth of distributions, components, or architectures.
+  `#9277 <https://pulp.plan.io/issues/9277>`_
+- Added fix to delete package fields with values of an incorrect type.
+  `#9333 <https://pulp.plan.io/issues/9333>`_
+
+
+Misc
+----
+
+- Amended dispatch arguments deprecated by pulpcore in anticipation of removal.
+  `#9349 <https://pulp.plan.io/issues/9349>`_
+
+
+----
+
+
 2.15.1 (2021-10-27)
 ===================
 
