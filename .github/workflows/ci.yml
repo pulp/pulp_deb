@@ -91,11 +91,13 @@ jobs:
       - name: Install httpie
         run: |
           echo ::group::HTTPIE
-          sudo apt-get update -yq
-          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
+          pip install httpie
           echo ::endgroup::
-          echo "TEST=${{ matrix.env.TEST }}" >> $GITHUB_ENV
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
+
+      - name: Set environment variables
+        run: |
+          echo "TEST=${{ matrix.env.TEST }}" >> $GITHUB_ENV
 
       - name: Before Install
         
