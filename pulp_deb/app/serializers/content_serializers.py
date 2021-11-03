@@ -270,55 +270,83 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
         Translate deb822.Package to a dictionary for class instatiation.
         """
         skip = ["Filename", "MD5sum", "Size", "SHA1", "SHA256", "SHA512"]
-        args = {"custom_fields": {}}
+        package_fields = {}
+        custom_fields = {}
         for k, v in data.items():
             if k in cls.TRANSLATION_DICT_INV:
                 key = cls.TRANSLATION_DICT_INV[k]
-                args[key] = v
+                package_fields[key] = v
             elif k not in skip:
                 # also save the fields not in TRANSLATION_DICT
-                args["custom_fields"][k] = v
+                custom_fields[k] = v
+
+        unique_package_name = "{}_{}_{}".format(
+            package_fields["package"],
+            package_fields["version"],
+            package_fields["architecture"],
+        )
+
+        # Drop keys with empty values
+        empty_fields = [k for k, v in package_fields.items() if not v]
+        for key in empty_fields:
+            message = _('Dropping empty "{}" field from "{}" package!').format(
+                key, unique_package_name
+            )
+            log.warning(message)
+            del package_fields[key]
 
         # Delete package fields with values of incorrect type
-        if "installed_size" in args:
+        if "installed_size" in package_fields:
             try:
-                int(args["installed_size"])
+                int(package_fields["installed_size"])
             except (TypeError, ValueError):
                 log.warn(
                     _(
                         "Dropping 'Installed-Size' field from '{}', "
                         "since the value '{}' is of incorrect type."
-                    ).format(args["package"], args["installed_size"])
+                    ).format(unique_package_name, package_fields["installed_size"])
                 )
-                del args["installed_size"]
-        message = (
+                del package_fields["installed_size"]
+        message = _(
             "Dropping '{}' field from package '{}', "
             "since the value '{}' is not in the allowed values list '{}'"
         )
         bool_values = [value[1] for value in BOOL_CHOICES]
-        if "essential" in args and args["essential"] not in bool_values:
+        if "essential" in package_fields and package_fields["essential"] not in bool_values:
             log.warn(
-                _(message).format("Essential", args["package"], args["essential"], bool_values)
-            )
-            del args["essential"]
-        if "build_essential" in args and args["build_essential"] not in bool_values:
-            log.warn(
-                _(message).format(
-                    "Build-Essential", args["package"], args["build_essential"], bool_values
+                message.format(
+                    "Essential", unique_package_name, package_fields["essential"], bool_values
                 )
             )
-            del args["build_essential"]
-        if "multi_arch" in args:
+            del package_fields["essential"]
+        if (
+            "build_essential" in package_fields
+            and package_fields["build_essential"] not in bool_values
+        ):
+            log.warn(
+                message.format(
+                    "Build-Essential",
+                    unique_package_name,
+                    package_fields["build_essential"],
+                    bool_values,
+                )
+            )
+            del package_fields["build_essential"]
+        if "multi_arch" in package_fields:
             allowed_values = [value[1] for value in BasePackage.MULTIARCH_CHOICES]
-            if args["multi_arch"] not in allowed_values:
+            if package_fields["multi_arch"] not in allowed_values:
                 log.warn(
-                    _(message).format(
-                        "Multi-Arch", args["package"], args["multi_arch"], allowed_values
+                    message.format(
+                        "Multi-Arch",
+                        unique_package_name,
+                        package_fields["multi_arch"],
+                        allowed_values,
                     )
                 )
-                del args["multi_arch"]
+                del package_fields["multi_arch"]
 
-        return cls(data=args, **kwargs)
+        package_fields["custom_fields"] = custom_fields
+        return cls(data=package_fields, **kwargs)
 
     def to822(self, component=""):
         """Create deb822.Package object from model."""
