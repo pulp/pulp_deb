@@ -6,3 +6,4 @@ Check `Plugin Writer's Guide`_ for more details.
 """
 
 FORBIDDEN_CHECKSUM_WARNINGS = True
+FORCE_IGNORE_MISSING_PACKAGE_INDICES = False
