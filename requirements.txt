@@ -1,3 +1,2 @@
 pulpcore>=3.7,<3.11
-python-debian>=0.1.36
-python-debian<0.1.42
+python-debian>=0.1.36,<0.1.42
