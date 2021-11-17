@@ -78,6 +78,11 @@ This will return a ``201 Created`` response:
    Conversely, a distribution string provided for a repository not using flat repository format must not end with ``/``!
    It is not recommended to provide more than one distribution when synchronizing a flat repository.
 
+.. note::
+   By default, syncs will fail if the upstream repo is missing package indices that are present in the Release file.
+   This breaks synchronization from partial mirrors, and can be overriden by setting `ignore_missing_package_indices=True` on the remote.
+   Alternatively, use FORCE_IGNORE_MISSING_PACKAGE_INDICES=True in your Pulp configuration file, to force this behaviour for all remotes.
+
 
 Sync Repository with Remote
 --------------------------------------------------------------------------------

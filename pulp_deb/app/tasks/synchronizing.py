@@ -94,7 +94,9 @@ class NoPackageIndexFile(Exception):
         """
         message = (
             "No suitable Package index file found in '{}'. If you are syncing from a partial "
-            "mirror, try setting ignore_missing_package_indices to 'True' on your remote."
+            "mirror, you can ignore this error for individual remotes "
+            "(ignore_missing_package_indices='True') or system wide "
+            "(FORCE_IGNORE_MISSING_PACKAGE_INDICES setting)."
         )
         super().__init__(_(message).format(relative_dir), *args, **kwargs)
 
@@ -685,7 +687,10 @@ class DebFirstStage(Stage):
             DeclarativeContent(content=content_unit, d_artifacts=d_artifacts)
         )
         if not package_index:
-            if self.remote.ignore_missing_package_indices:
+            if (
+                settings.FORCE_IGNORE_MISSING_PACKAGE_INDICES
+                or self.remote.ignore_missing_package_indices
+            ):
                 log.info(_("No packages index for architecture {}. Skipping.").format(architecture))
                 return
             else:
