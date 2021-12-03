@@ -105,7 +105,7 @@ fi
 
 
 
-git clone --depth=1 https://github.com/pulp/pulpcore.git --branch master
+git clone --depth=1 https://github.com/pulp/pulpcore.git --branch main
 
 cd pulpcore
 
@@ -130,8 +130,6 @@ then
   echo "Failed to install amazon.aws"
   exit $s
 fi
-
-sed -i -e 's/DEBUG = False/DEBUG = True/' pulpcore/pulpcore/app/settings.py
 # Patch DJANGO_ALLOW_ASYNC_UNSAFE out of the pulpcore tasking_system
 # Don't let it fail. Be opportunistic.
 sed -i -e '/DJANGO_ALLOW_ASYNC_UNSAFE/d' pulpcore/pulpcore/tasking/entrypoint.py || true
