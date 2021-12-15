@@ -1,6 +1,5 @@
 # pulp_deb
 
-![main branch status](https://github.com/pulp/pulp_deb/workflows/Pulp%20CI/badge.svg)
 ![release status](https://github.com/pulp/pulp_deb/workflows/Pulp%20Release%20CI/CD/badge.svg)
 ![nightly status](https://github.com/pulp/pulp_deb/workflows/Pulp%20Nightly%20CI/CD/badge.svg)
 ![python versions](https://img.shields.io/pypi/pyversions/pulp_deb.svg)
