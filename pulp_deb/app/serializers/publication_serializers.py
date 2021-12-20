@@ -1,6 +1,7 @@
-from rest_framework.serializers import BooleanField, ValidationError, HyperlinkedRelatedField
+from rest_framework.serializers import BooleanField, ValidationError
 from pulpcore.plugin.models import Publication
 from pulpcore.plugin.serializers import (
+    RelatedField,
     DistributionSerializer,
     PublicationSerializer,
     DetailRelatedField,
@@ -34,7 +35,7 @@ class AptPublicationSerializer(PublicationSerializer):
         default=False,
     )
     structured = BooleanField(help_text="Activate structured publishing mode.", default=False)
-    signing_service = HyperlinkedRelatedField(
+    signing_service = RelatedField(
         help_text="Sign Release files with this signing key",
         many=False,
         queryset=AptReleaseSigningService.objects.all(),
