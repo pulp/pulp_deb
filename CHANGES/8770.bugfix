@@ -1,1 +1,0 @@
-Fixed a bug causing package validation to fail, when the package paragraph contains keys without values.
