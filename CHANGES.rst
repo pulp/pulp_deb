@@ -13,6 +13,30 @@ Changelog
 
 .. towncrier release notes start
 
+2.17.0 (2022-01-11)
+===================
+
+Features
+--------
+
+- Users can now use the FORCE_IGNORE_MISSING_PACKAGE_INDICES setting to define the corresponding behaviour for all remotes.
+  `#9555 <https://pulp.plan.io/issues/9555>`_
+
+
+Bugfixes
+--------
+
+- Fixed mirrored metadata handling when creating a new repository version.
+  `#8756 <https://pulp.plan.io/issues/8756>`_
+- Fixed a bug causing package validation to fail, when the package paragraph contains keys without values.
+  `#8770 <https://pulp.plan.io/issues/8770>`_
+- Fixed a bug causing publications to reference any ``AptReleaseSigningService`` via a full URL instead of just a ``pulp_href``.
+  `#9563 <https://pulp.plan.io/issues/9563>`_
+
+
+----
+
+
 2.16.0 (2021-10-28)
 ===================
 
