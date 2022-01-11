@@ -1,10 +1,11 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-20-gefc11dd
+# generated with plugin_template@2021.08.26-51-g538d663
 
 additional_plugins: []
 additional_repos: []
+aiohttp_fixtures_origin: 172.18.0.1
 black: true
 check_commit_message: true
 check_gettext: true
@@ -20,10 +21,11 @@ deploy_client_to_rubygems: true
 deploy_daily_client_to_pypi: true
 deploy_daily_client_to_rubygems: true
 deploy_to_pypi: true
+disabled_redis_runners: []
 docker_fixtures: true
 docs_test: true
 flake8: true
-issue_tracker: redmine
+issue_tracker: github
 noissue_marker: '[noissue]'
 plugin_app_label: deb
 plugin_camel: PulpDeb
@@ -65,6 +67,6 @@ test_fips_nightly: false
 test_performance: false
 test_released_plugin_with_next_pulpcore_release: false
 test_s3: true
-update_redmine: true
+update_redmine: false
 upgrade_range: []
 
