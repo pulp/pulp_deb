@@ -13,6 +13,23 @@ Changelog
 
 .. towncrier release notes start
 
+2.16.1 (2022-01-13)
+===================
+
+Bugfixes
+--------
+
+- Fixed a bug causing package validation to fail, when the package paragraph contains keys without values.
+  (backported from #8770)
+  `#432 <https://github.com/pulp/pulp_deb/issues/432>`_
+- Fixed a bug causing publications to reference any ``AptReleaseSigningService`` via a full URL instead of just a ``pulp_href``.
+  (backported from #9563)
+  `#433 <https://github.com/pulp/pulp_deb/issues/433>`_
+
+
+----
+
+
 2.16.0 (2021-10-28)
 ===================
 
