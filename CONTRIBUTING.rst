@@ -2,7 +2,7 @@ Contributing
 ================================================================================
 
 .. _towncrier tool: https://github.com/hawkowl/towncrier
-.. _pulp_deb issue tracker: https://pulp.plan.io/projects/pulp_deb/issues/
+.. _pulp_deb issue tracker: https://github.com/pulp/pulp_deb/issues
 
 To contribute to the ``pulp_deb`` plugin follow this process:
 

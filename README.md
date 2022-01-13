@@ -23,7 +23,7 @@ The most important places:
 
 [1]: https://pulpproject.org
 [2]: https://docs.pulpproject.org/pulp_deb/
-[3]: https://pulp.plan.io/projects/pulp_deb/issues/
+[3]: https://github.com/pulp/pulp_deb/issues
 [4]: https://github.com/pulp/pulp_deb
 [5]: https://pypi.org/project/pulp-deb/
 [6]: https://pypi.org/project/pulp-deb-client/
