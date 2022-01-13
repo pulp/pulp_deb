@@ -1,0 +1,2 @@
+Fixed a bug causing publications to reference any ``AptReleaseSigningService`` via a full URL instead of just a ``pulp_href``.
+(backported from #9563)
