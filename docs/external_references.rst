@@ -17,7 +17,7 @@
 .. _pulpcore plugin API deprecation policy:
    https://docs.pulpproject.org/pulpcore/plugins/plugin-writer/concepts/index.html#plugin-api-stability-and-deprecation-policy
 .. _pulp_deb issue tracker:
-   https://pulp.plan.io/projects/pulp_deb/issues/
+   https://github.com/pulp/pulp_deb/issues
 .. _pulp_deb milestone:
    https://pulp.plan.io/projects/pulp_deb/roadmap
 .. _pulpcore release guide:
