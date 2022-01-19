@@ -34,7 +34,8 @@ def __check_status(issue):
         sys.exit(f"Error: issue #{issue} is a pull request.")
     if gi.closed_at and "cherry picked from commit" not in message:
         warnings.warn(
-            "When backporting, make sure to have 'cherry picked from commit' in the commit message."
+            "When backporting, use the -x flag to append a line that says "
+            "'(cherry picked from commit ...)' to the original commit message."
         )
         sys.exit(f"Error: issue #{issue} is closed.")
 
