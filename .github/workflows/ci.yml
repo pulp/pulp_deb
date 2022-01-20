@@ -191,8 +191,6 @@ jobs:
           docker exec pulp ls -latr /etc/yum.repos.d/ || true
           docker exec pulp cat /etc/yum.repos.d/* || true
           docker exec pulp pip3 list
-
-
   deprecations:
     runs-on: ubuntu-latest
     if: always()
@@ -209,6 +207,5 @@ jobs:
           echo "${{ needs.test.outputs.deprecations-pulp }}" | base64 -d
           echo "${{ needs.test.outputs.deprecations-azure }}" | base64 -d
           echo "${{ needs.test.outputs.deprecations-s3 }}" | base64 -d
-
 
 
