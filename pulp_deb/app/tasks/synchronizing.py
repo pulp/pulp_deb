@@ -659,14 +659,17 @@ class DebFirstStage(Stage):
     ):
         # Create package_index
         release_base_path = os.path.dirname(release_file.relative_path)
-        package_index_dir = (
+        # Package index directory relative to the release file:
+        release_file_package_index_dir = (
             os.path.join(release_component.plain_component, infix, "binary-{}".format(architecture))
             if release_file.distribution[-1] != "/"
             else ""
         )
+        # Package index directory relative to the repository root:
+        package_index_dir = os.path.join(release_base_path, release_file_package_index_dir)
         d_artifacts = []
         for filename in ["Packages", "Packages.gz", "Packages.xz", "Release"]:
-            path = os.path.join(package_index_dir, filename)
+            path = os.path.join(release_file_package_index_dir, filename)
             if path in file_references:
                 relative_path = os.path.join(release_base_path, path)
                 d_artifacts.append(self._to_d_artifact(relative_path, file_references[path]))
@@ -674,7 +677,7 @@ class DebFirstStage(Stage):
             log.warning(_('No package index file found in "{}"!').format(package_index_dir))
             # No package index, nothing to do.
             return
-        relative_path = os.path.join(release_base_path, package_index_dir, "Packages")
+        relative_path = os.path.join(package_index_dir, "Packages")
         log.info(_('Creating PackageIndex unit with relative_path="{}".').format(relative_path))
         content_unit = PackageIndex(
             release=release_file,
@@ -694,33 +697,53 @@ class DebFirstStage(Stage):
                 log.info(_("No packages index for architecture {}. Skipping.").format(architecture))
                 return
             else:
-                relative_dir = os.path.join(release_base_path, package_index_dir)
-                raise NoPackageIndexFile(relative_dir=relative_dir)
+                raise NoPackageIndexFile(relative_dir=package_index_dir)
         # Interpret policy to download Artifacts or not
         deferred_download = self.remote.policy != Remote.IMMEDIATE
         # parse package_index
         package_futures = []
         package_index_artifact = await _get_main_artifact_blocking(package_index)
         for package_paragraph in deb822.Packages.iter_paragraphs(package_index_artifact.file):
-            if (
-                self.remote.architectures
-                and release_file.distribution[-1] == "/"
-                and package_paragraph["Architecture"] != "all"
-                and package_paragraph["Architecture"] not in self.remote.architectures.split()
-            ):
+            # Sanity check the architecture from the package paragraph:
+            package_paragraph_architecture = package_paragraph["Architecture"]
+            if release_file.distribution[-1] == "/":
+                if (
+                    self.remote.architectures
+                    and package_paragraph_architecture != "all"
+                    and package_paragraph_architecture not in self.remote.architectures.split()
+                ):
+                    message = (
+                        "Omitting package '{}' with architecture '{}' from flat repo distribution "
+                        "'{}', since we are filtering for architectures '{}'!"
+                    )
+                    log.debug(
+                        _(message).format(
+                            package_paragraph["Filename"],
+                            package_paragraph_architecture,
+                            release_file.distribution,
+                            self.remote.architectures,
+                        )
+                    )
+                    continue
+            # We drop packages if the package_paragraph_architecture != architecture unless that
+            # architecture is "all" in a "mixed" (containing all as well as architecture specific
+            # packages) package index:
+            elif (
+                architecture != "all" or "all" in release_file.architecures.split()
+            ) and package_paragraph_architecture != architecture:
                 message = (
-                    "Omitting package '{}' with architecture '{}' from flat repo distribution '{}'"
-                    ", since we are filtering for architectures '{}'!"
+                    "The upstream package index in '{}' contains package '{}' with wrong "
+                    "architecture '{}'. Skipping!"
                 )
-                log.debug(
+                log.warning(
                     _(message).format(
+                        package_index_dir,
                         package_paragraph["Filename"],
-                        package_paragraph["Architecture"],
-                        release_file.distribution,
-                        self.remote.architectures,
+                        package_paragraph_architecture,
                     )
                 )
                 continue
+
             try:
                 package_relpath = os.path.normpath(package_paragraph["Filename"])
                 package_sha256 = package_paragraph["sha256"]
