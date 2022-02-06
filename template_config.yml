@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-62-gfaa6635
+# generated with plugin_template@2021.08.26-71-g2d3b35c
 
 additional_plugins: []
 additional_repos: []
@@ -72,4 +72,5 @@ test_s3: true
 update_github: true
 update_redmine: false
 upgrade_range: []
+use_issue_template: true
 

@@ -113,8 +113,13 @@ if [ -f $FUNC_TEST_SCRIPT ]; then
   source $FUNC_TEST_SCRIPT
 else
 
-    pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulp_deb.tests.functional -m parallel -n 8
-    pytest -v -r sx --color=yes --pyargs pulp_deb.tests.functional -m "not parallel"
+    if [[ "$GITHUB_EVENT_NAME" == "schedule" ]]; then
+        pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulp_deb.tests.functional -m parallel -n 8
+        pytest -v -r sx --color=yes --pyargs pulp_deb.tests.functional -m "not parallel"
+    else
+        pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulp_deb.tests.functional -m "parallel and not nightly" -n 8
+        pytest -v -r sx --color=yes --pyargs pulp_deb.tests.functional -m "not parallel and not nightly"
+    fi
 
 fi
 
