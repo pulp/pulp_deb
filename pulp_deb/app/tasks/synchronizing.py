@@ -729,7 +729,8 @@ class DebFirstStage(Stage):
             # architecture is "all" in a "mixed" (containing all as well as architecture specific
             # packages) package index:
             elif (
-                architecture != "all" or "all" in release_file.architecures.split()
+                package_paragraph_architecture != "all"
+                or "all" in release_file.architectures.split()
             ) and package_paragraph_architecture != architecture:
                 message = (
                     "The upstream package index in '{}' contains package '{}' with wrong "
