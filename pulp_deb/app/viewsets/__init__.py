@@ -17,4 +17,4 @@ from .publication import AptDistributionViewSet, AptPublicationViewSet, Verbatim
 
 from .remote import AptRemoteViewSet
 
-from .repository import AptRepositoryVersionViewSet, AptRepositoryViewSet
+from .repository import AptRepositoryVersionViewSet, AptRepositoryViewSet, CopyViewSet

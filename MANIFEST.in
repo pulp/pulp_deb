@@ -3,6 +3,7 @@ include COMMITMENT
 include COPYRIGHT
 include functest_requirements.txt
 include LICENSE
+include pulp_deb/app/schema/*
 include pulp_deb/tests/functional/sign_deb_release.sh
 include pyproject.toml
 include requirements.txt
