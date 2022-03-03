@@ -249,10 +249,12 @@ class _ReleaseHelper:
         # the same order of fields that official Debian repositories use.
         self.release = deb822.Release()
         self.release["Origin"] = "Pulp 3"
-        self.release["Label"] = label
+        if settings.PUBLISH_RELEASE_FILE_LABEL:
+            self.release["Label"] = label
         if suite:
             self.release["Suite"] = suite
-        self.release["Version"] = version
+        if settings.PUBLISH_RELEASE_FILE_VERSION:
+            self.release["Version"] = version
         if not codename:
             codename = distribution.split("/")[0] if distribution != "/" else "flat-repo"
         self.release["Codename"] = codename
