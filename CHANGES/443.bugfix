@@ -1,0 +1,2 @@
+Changed the release file publication behaviour of the APT publisher to prevent a design clash with apt-secure.
+You may set PUBLISH_RELEASE_FILE_LABEL and PUBLISH_RELEASE_FILE_VERSION to True to revert to the old behaviour.
