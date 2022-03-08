@@ -136,7 +136,7 @@ class SyncInvalidTestCase(unittest.TestCase):
         with self.assertRaises(PulpTaskError) as exc:
             self.do_test(url=DEB_INVALID_FIXTURE_URL, architectures="ppc64")
         error = exc.exception.task.error
-        self.assertIn("No suitable Package index file", error["description"])
+        self.assertIn("No suitable package index files", error["description"])
         self.assertIn("ppc64", error["description"])
 
     def test_missing_package_indices_2(self):
@@ -149,7 +149,7 @@ class SyncInvalidTestCase(unittest.TestCase):
         with self.assertRaises(PulpTaskError) as exc:
             self.do_test(url=DEB_INVALID_FIXTURE_URL, architectures="armeb")
         error = exc.exception.task.error
-        self.assertIn("No suitable Package index file", error["description"])
+        self.assertIn("No suitable package index files", error["description"])
         self.assertIn("armeb", error["description"])
 
     def test_invalid_signature(self):

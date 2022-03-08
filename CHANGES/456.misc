@@ -1,0 +1,2 @@
+Reworked the sync handling for upstream repos using ``No-Support-for-Architecture-all: Packages`` format.
+This was needed to avoid clashes with the new arch filtering introduced in `#422 <https://github.com/pulp/pulp_deb/issues/422>`_.
