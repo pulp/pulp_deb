@@ -363,6 +363,18 @@ Removals
 ----
 
 
+2.9.3 (2021-11-16)
+==================
+
+Misc
+----
+
+- Added an upper bound of ``<0.1.42`` to the ``python-debian`` dependency to prevent breakage against python ``<3.7``.
+
+
+----
+
+
 2.9.2 (2021-05-25)
 ==================
 
