@@ -674,8 +674,21 @@ class DebFirstStage(Stage):
                 relative_path = os.path.join(release_base_path, path)
                 d_artifacts.append(self._to_d_artifact(relative_path, file_references[path]))
         if not d_artifacts:
-            log.warning(_('No package index file found in "{}"!').format(package_index_dir))
-            # No package index, nothing to do.
+            # This case will happen if it is not the case that 'path in file_references' for any of
+            # ["Packages", "Packages.gz", "Packages.xz", "Release"]. The only case where this is
+            # known to occur is when the remote uses 'sync_udebs = True', but the upstream repo does
+            # not contain any debian-installer indices.
+            message = (
+                "Looking for package indices in '{}', but the Release file does not reference any! "
+                "Ignoring."
+            )
+            log.warning(_(message).format(package_index_dir))
+            if "debian-installer" in package_index_dir and self.remote.sync_udebs:
+                message = (
+                    "It looks like the remote is using 'sync_udebs=True', but there is no "
+                    "installer package index."
+                )
+                log.info(_(message))
             return
         relative_path = os.path.join(package_index_dir, "Packages")
         log.info(_('Creating PackageIndex unit with relative_path="{}".').format(relative_path))
