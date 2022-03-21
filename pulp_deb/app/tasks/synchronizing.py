@@ -92,8 +92,9 @@ class NoPackageIndexFile(Exception):
         """
         Exception to signal, that no file representing a package index is present.
         """
+        self.relative_dir = relative_dir
         message = (
-            "No suitable Package index file found in '{}'. If you are syncing from a partial "
+            "No suitable package index files found in '{}'. If you are syncing from a partial "
             "mirror, you can ignore this error for individual remotes "
             "(ignore_missing_package_indices='True') or system wide "
             "(FORCE_IGNORE_MISSING_PACKAGE_INDICES setting)."
@@ -114,6 +115,25 @@ class MissingReleaseFileField(Exception):
         """
         message = "The release file for distribution '{}' is missing the required field '{}'."
         super().__init__(_(message).format(distribution, field), *args, **kwargs)
+
+
+class UnknownNoSupportForArchitectureAllValue(Exception):
+    """
+    Exception Signifying that the Release file contains the 'No-Support-for-Architecture-all' field,
+    but with a value other than 'Packages'. We interpret this as an error since this would likely
+    signify some unknown repo format, that pulp_deb is more likely to get wrong than right!
+    """
+
+    def __init__(self, release_file_path, unknown_value, *args, **kwargs):
+        message = (
+            "The Release file at '{}' contains the 'No-Support-for-Architecture-all' field, with "
+            "unknown value '{}'! pulp_deb currently only understands the value 'Packages' for "
+            "this field, please open an issue at https://github.com/pulp/pulp_deb/issues "
+            "specifying the remote you are attempting to sync, so that we can improve pulp_deb!"
+        )
+        super().__init__(_(message).format(unknown_value), *args, **kwargs)
+
+    pass
 
 
 def synchronize(remote_pk, repository_pk, mirror):
@@ -554,6 +574,21 @@ class DebFirstStage(Stage):
         log.info(_('Parsing Release file at distribution="{}"').format(distribution))
         release_artifact = await _get_main_artifact_blocking(release_file)
         release_file_dict = deb822.Release(release_artifact.file)
+
+        # Retrieve and interpret any 'No-Support-for-Architecture-all' value:
+        # We will refer to the presence of 'No-Support-for-Architecture-all: Packages' in a Release
+        # file as indicating "hybrid format". For more info, see:
+        # https://wiki.debian.org/DebianRepository/Format#No-Support-for-Architecture-all
+        no_support_for_arch_all = release_file_dict.get("No-Support-for-Architecture-all", "")
+        if no_support_for_arch_all.strip() == "Packages":
+            hybrid_format = True
+        elif not no_support_for_arch_all:
+            hybrid_format = False
+        else:
+            raise UnknownNoSupportForArchitectureAllValue(
+                release_file.relative_path, no_support_for_arch_all
+            )
+
         # collect file references in new dict
         file_references = defaultdict(deb822.Deb822Dict)
         for digest_name in ["SHA512", "SHA256", "SHA1", "MD5sum"]:
@@ -568,7 +603,12 @@ class DebFirstStage(Stage):
             # Handle components
             sub_tasks = [
                 self._handle_component(
-                    component, release, release_file, file_references, architectures
+                    component,
+                    release,
+                    release_file,
+                    file_references,
+                    architectures,
+                    hybrid_format,
                 )
                 for component in _filter_split_components(
                     release_file.components, self.remote.components, distribution
@@ -577,19 +617,57 @@ class DebFirstStage(Stage):
         await asyncio.gather(*sub_tasks)
 
     async def _handle_component(
-        self, component, release, release_file, file_references, architectures
+        self,
+        component,
+        release,
+        release_file,
+        file_references,
+        architectures,
+        hybrid_format,
     ):
         # Create release_component
         release_component_dc = DeclarativeContent(
             content=ReleaseComponent(component=component, release=release)
         )
         release_component = await self._create_unit(release_component_dc)
+
+        # If we are dealing with a "hybrid format", try handling any architecture='all' indices
+        # first. That way, we can recover the special case, where a partial mirror does not mirror
+        # this index inspite of indicating "hybrid format" in the mirrored metadata.
+        if hybrid_format and "all" in architectures:
+            architectures.remove("all")
+            try:
+                await self._handle_package_index(
+                    release_file=release_file,
+                    release_component=release_component,
+                    architecture="all",
+                    file_references=file_references,
+                    hybrid_format=hybrid_format,
+                )
+            except NoPackageIndexFile as exception:
+                message = (
+                    "The Release file at '{}' advertised 'No-Support-for-Architecture-all: "
+                    "Packages', however the binary-all index at '{}' appears to be missing! "
+                    "Defaulting back to old style repo format handling."
+                )
+                log.warning(_(message).format(release_file.relative_path, exception.relative_dir))
+                # We flip hybrid_format to False, and remove 'all' from the list of architectures to
+                # signal "old style repo format" to the rest of the sync:
+                hybrid_format = False
+                release_file.architectures = " ".join(
+                    [x for x in release_file.architectures.split() if x != "all"]
+                )
+
         pending_tasks = []
         # Handle package indices
         pending_tasks.extend(
             [
                 self._handle_package_index(
-                    release_file, release_component, architecture, file_references
+                    release_file=release_file,
+                    release_component=release_component,
+                    architecture=architecture,
+                    file_references=file_references,
+                    hybrid_format=hybrid_format,
                 )
                 for architecture in architectures
             ]
@@ -599,11 +677,11 @@ class DebFirstStage(Stage):
             pending_tasks.extend(
                 [
                     self._handle_package_index(
-                        release_file,
-                        release_component,
-                        architecture,
-                        file_references,
-                        "debian-installer",
+                        release_file=release_file,
+                        release_component=release_component,
+                        architecture=architecture,
+                        file_references=file_references,
+                        infix="debian-installer",
                     )
                     for architecture in architectures
                 ]
@@ -633,11 +711,11 @@ class DebFirstStage(Stage):
         # Handle single package index
         pending_tasks.append(
             self._handle_package_index(
-                file_references=file_references,
                 release_file=release_file,
-                release=release,
                 release_component=release_component,
                 architecture="",
+                file_references=file_references,
+                release=release,
             )
         )
 
@@ -656,6 +734,7 @@ class DebFirstStage(Stage):
         file_references,
         infix="",
         release=None,
+        hybrid_format=False,
     ):
         # Create package_index
         release_base_path = os.path.dirname(release_file.relative_path)
@@ -706,11 +785,13 @@ class DebFirstStage(Stage):
             if (
                 settings.FORCE_IGNORE_MISSING_PACKAGE_INDICES
                 or self.remote.ignore_missing_package_indices
-            ):
-                log.info(_("No packages index for architecture {}. Skipping.").format(architecture))
+            ) and architecture != "all":
+                message = "No suitable package index files found in '{}'. Skipping."
+                log.info(_(message).format(package_index_dir))
                 return
             else:
                 raise NoPackageIndexFile(relative_dir=package_index_dir)
+
         # Interpret policy to download Artifacts or not
         deferred_download = self.remote.policy != Remote.IMMEDIATE
         # parse package_index
@@ -745,17 +826,18 @@ class DebFirstStage(Stage):
                 package_paragraph_architecture != "all"
                 or "all" in release_file.architectures.split()
             ) and package_paragraph_architecture != architecture:
-                message = (
-                    "The upstream package index in '{}' contains package '{}' with wrong "
-                    "architecture '{}'. Skipping!"
-                )
-                log.warning(
-                    _(message).format(
-                        package_index_dir,
-                        package_paragraph["Filename"],
-                        package_paragraph_architecture,
+                if not hybrid_format:
+                    message = (
+                        "The upstream package index in '{}' contains package '{}' with wrong "
+                        "architecture '{}'. Skipping!"
                     )
-                )
+                    log.warning(
+                        _(message).format(
+                            package_index_dir,
+                            package_paragraph["Filename"],
+                            package_paragraph_architecture,
+                        )
+                    )
                 continue
 
             try:
