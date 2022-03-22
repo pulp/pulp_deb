@@ -37,19 +37,11 @@ if [[ "$GITHUB_WORKFLOW" == "Deb changelog update" ]]; then
   exit
 fi
 
-# Building python bindings
-export PULP_URL="${PULP_URL:-https://pulp}"
-VERSION=$(http $PULP_URL/pulp/api/v3/status/ | jq --arg plugin deb --arg legacy_plugin pulp_deb -r '.versions[] | select(.component == $plugin or .component == $legacy_plugin) | .version')
-cd ../pulp-openapi-generator
-rm -rf pulp_deb-client
-./generate.sh pulp_deb python $VERSION
-cd pulp_deb-client
+pip install mkdocs pymdown-extensions
 
-# Adding mkdocs
-find ./docs/* -exec sed -i 's/README//g' {} \;
-cp README.md docs/index.md
-sed -i 's/docs\///g' docs/index.md
-find ./docs/* -exec sed -i 's/\.md//g' {} \;
+mkdir -p ../bindings
+tar -xvf python-client-docs.tar --directory ../bindings
+cd ../bindings
 cat >> mkdocs.yml << DOCSYAML
 ---
 site_name: PulpDeb Client
@@ -60,8 +52,6 @@ repo_name: pulp/pulp_deb
 repo_url: https://github.com/pulp/pulp_deb
 theme: readthedocs
 DOCSYAML
-
-pip install mkdocs pymdown-extensions
 
 # Building the bindings docs
 mkdocs build
