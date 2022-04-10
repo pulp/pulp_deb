@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-49-g3fa3da6
+# generated with plugin_template@2021.08.26-106-g556224f
 
 additional_plugins: []
 additional_repos: []
@@ -25,8 +25,11 @@ disabled_redis_runners: []
 docker_fixtures: true
 docs_test: true
 flake8: true
+github_org: pulp
 issue_tracker: github
+keep_ci_update_since_branch: null
 noissue_marker: '[noissue]'
+parallel_test_workers: 8
 plugin_app_label: deb
 plugin_camel: PulpDeb
 plugin_camel_short: Deb
@@ -48,7 +51,7 @@ pulp_settings:
   - sha256
   - sha512
 pulpcore_branch: 3.17
-pulpcore_pip_version_specifier: '~=3.17.0'
+pulpcore_pip_version_specifier: ~=3.17.0
 pulpcore_revision: null
 pulpprojectdotorg_key_id: aa499d7938ed
 pydocstyle: true
@@ -63,10 +66,14 @@ tasking_allow_async_unsafe: false
 test_azure: true
 test_bindings: false
 test_cli: false
+test_deprecations: true
 test_fips_nightly: false
 test_performance: false
 test_released_plugin_with_next_pulpcore_release: false
+test_reroute: true
 test_s3: true
+update_github: true
 update_redmine: false
 upgrade_range: []
+use_issue_template: true
 
