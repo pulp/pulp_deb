@@ -206,6 +206,13 @@ jobs:
           name: python-client.tar
           path: python-client.tar
 
+      - name: Upload python client docs
+        if: ${{ env.TEST == 'bindings' || env.TEST == 'generate-bindings' }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: python-client-docs.tar
+          path: python-client-docs.tar
+
       - name: Upload ruby client packages
         if: ${{ env.TEST == 'bindings' || env.TEST == 'generate-bindings' }}
         uses: actions/upload-artifact@v2
@@ -282,7 +289,7 @@ jobs:
       - name: Install python dependencies
         run: |
           echo ::group::PYDEPS
-          pip install gitpython python-redmine
+          pip install gitpython python-redmine requests packaging
           echo ::endgroup::
 
       - name: Push branch and tag to GitHub
@@ -291,6 +298,11 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: docs.tar
+
+      - name: Download Python client docs
+        uses: actions/download-artifact@v2
+        with:
+          name: python-client-docs.tar
 
       - name: Publish docs to pulpproject.org
         run: |
@@ -321,11 +333,21 @@ jobs:
 
       
 
+      - name: Update GitHub
+        continue-on-error: true
+        run: |
+          set -euv
+          export COMMIT_MSG=$(git log --format=%B --no-merges -1)
+          export GH_ISSUES=$(echo $COMMIT_MSG | grep -o "GH Issues: .*" | awk '{print $3}')
+
+          echo "GH Issues $GH_ISSUES"
+          python .ci/scripts/update_github.py
+
       - name: Create release on GitHub
         run: bash .github/workflows/scripts/create_release_from_tag.sh ${{ github.event.inputs.release }}
 
       - name: Cleanup repository before making changelog PR
-        run: rm -rf .lock generation pulp_deb_client* *-client.tar pulp_deb.tar todo web docs.tar
+        run: rm -rf .lock generation pulp_deb_client* *-client.tar pulp_deb.tar todo web *docs.tar
 
       - name: Stage changelog for main branch
         run: python .github/workflows/scripts/stage-changelog-for-default-branch.py ${{ github.event.inputs.release }}
