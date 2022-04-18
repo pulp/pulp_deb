@@ -29,6 +29,10 @@ export PULP_SETTINGS=$PWD/.ci/ansible/settings/settings.py
 export PULP_URL="https://pulp"
 
 if [[ "$TEST" = "docs" ]]; then
+  if [[ "$GITHUB_WORKFLOW" == "Deb CI" ]]; then
+    pip install towncrier==19.9.0
+    towncrier --yes --version 4.0.0.ci
+  fi
   cd docs
   make PULP_URL="$PULP_URL" diagrams html
   tar -cvf docs.tar ./_build
@@ -93,7 +97,7 @@ cmd_prefix bash -c "django-admin makemigrations --check --dry-run"
 
 if [[ "$TEST" != "upgrade" ]]; then
   # Run unit tests.
-  cmd_prefix bash -c "PULP_DATABASES__default__USER=postgres django-admin test --noinput /usr/local/lib/python3.8/site-packages/pulp_deb/tests/unit/"
+  cmd_prefix bash -c "PULP_DATABASES__default__USER=postgres pytest -v -r sx --color=yes --pyargs pulp_deb.tests.unit"
 fi
 
 # Run functional tests
