@@ -100,7 +100,7 @@ cmd_prefix bash -c "django-admin makemigrations --check --dry-run"
 
 if [[ "$TEST" != "upgrade" ]]; then
   # Run unit tests.
-  cmd_prefix bash -c "PULP_DATABASES__default__USER=postgres django-admin test --noinput /usr/local/lib/python3.8/site-packages/pulp_deb/tests/unit/"
+  cmd_prefix bash -c "PULP_DATABASES__default__USER=postgres pytest -v -r sx --color=yes --pyargs pulp_deb.tests.unit"
 fi
 
 # Run functional tests
