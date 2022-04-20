@@ -485,8 +485,18 @@ class BasePackageSerializer(SingleArtifactContentUploadSerializer, ContentChecks
 
         try:
             package_paragraph = debfile.DebFile(fileobj=data["artifact"].file).debcontrol()
-        except Exception:  # TODO: Be more specific
-            raise ValidationError(_("Unable to read Deb Package"))
+        except debfile.DebError as e:
+            if "[Errno 2] No such file or directory: 'unzstd'" in "{}".format(e):
+                message = (
+                    "The package file provided uses zstd compression, but the unzstd binary is not "
+                    "available! Make sure the zstd package (depending on your package manager) is "
+                    "installed."
+                )
+            else:
+                message = (
+                    "python-debian was unable to read the provided package file! The error is '{}'."
+                )
+            raise ValidationError(_(message).format(e))
 
         from822_serializer = self.Meta.from822_serializer.from822(data=package_paragraph)
         from822_serializer.is_valid(raise_exception=True)

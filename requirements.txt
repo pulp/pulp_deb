@@ -1,2 +1,2 @@
 pulpcore>=3.20.0.dev
-python-debian>=0.1.36,<0.2.0
+python-debian>=0.1.44,<0.2.0
