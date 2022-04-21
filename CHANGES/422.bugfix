@@ -1,1 +1,0 @@
-Made the sync workflow robust with respect to upstream package indices containing packages with a wrong architecture.
