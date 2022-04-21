@@ -44,6 +44,30 @@ Misc
 ----
 
 
+2.17.1 (2022-04-21)
+===================
+
+Bugfixes
+--------
+
+- Made the sync workflow robust with respect to upstream package indices containing packages with a wrong architecture.
+  `#422 <https://github.com/pulp/pulp_deb/issues/422>`__
+- Changed the release file publication behaviour of the APT publisher to prevent a design clash with apt-secure.
+  You may set PUBLISH_RELEASE_FILE_LABEL and PUBLISH_RELEASE_FILE_VERSION to True to revert to the old behaviour.
+  `#443 <https://github.com/pulp/pulp_deb/issues/443>`__
+
+
+Misc
+----
+
+- Reworked the sync handling for upstream repos using ``No-Support-for-Architecture-all: Packages`` format.
+  This was needed to avoid clashes with the new arch filtering introduced in `#422 <https://github.com/pulp/pulp_deb/issues/422>`_.
+  `#456 <https://github.com/pulp/pulp_deb/issues/456>`__
+
+
+----
+
+
 2.17.0 (2022-01-11)
 ===================
 
