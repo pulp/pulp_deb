@@ -6,4 +6,4 @@ class PulpDebPluginAppConfig(PulpPluginAppConfig):
 
     name = "pulp_deb.app"
     label = "deb"
-    version = "2.16.2"
+    version = "2.16.3.dev"
