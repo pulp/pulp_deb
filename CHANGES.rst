@@ -13,6 +13,37 @@ Changelog
 
 .. towncrier release notes start
 
+2.18.0 (2022-04-21)
+===================
+
+Features
+--------
+
+- Added experimental advanced copy API with support for structured copying.
+  `#396 <https://github.com/pulp/pulp_deb/issues/396>`_
+
+
+Bugfixes
+--------
+
+- Made the sync workflow robust with respect to upstream package indices containing packages with a wrong architecture.
+  `#422 <https://github.com/pulp/pulp_deb/issues/422>`_
+- Changed the release file publication behaviour of the APT publisher to prevent a design clash with apt-secure.
+  You may set PUBLISH_RELEASE_FILE_LABEL and PUBLISH_RELEASE_FILE_VERSION to True to revert to the old behaviour.
+  `#443 <https://github.com/pulp/pulp_deb/issues/443>`_
+
+
+Misc
+----
+
+- Reworked the sync handling for upstream repos using ``No-Support-for-Architecture-all: Packages`` format.
+  This was needed to avoid clashes with the new arch filtering introduced in `#422 <https://github.com/pulp/pulp_deb/issues/422>`_.
+  `#456 <https://github.com/pulp/pulp_deb/issues/456>`_
+
+
+----
+
+
 2.17.0 (2022-01-11)
 ===================
 
