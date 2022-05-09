@@ -38,11 +38,6 @@ if [[ "$TEST" = "docs" ]]; then
   tar -cvf docs.tar ./_build
   cd ..
 
-  echo "Validating OpenAPI schema..."
-  cat $PWD/.ci/scripts/schema.py | cmd_stdin_prefix bash -c "cat > /tmp/schema.py"
-  cmd_prefix bash -c "python3 /tmp/schema.py"
-  cmd_prefix bash -c "pulpcore-manager spectacular --file pulp_schema.yml --validate"
-
   if [ -f $POST_DOCS_TEST ]; then
     source $POST_DOCS_TEST
   fi
@@ -124,9 +119,19 @@ else
     if [[ "$GITHUB_WORKFLOW" == "Deb Nightly CI/CD" ]]; then
         pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulp_deb.tests.functional -m parallel -n 8
         pytest -v -r sx --color=yes --pyargs pulp_deb.tests.functional -m "not parallel"
+
+    
+        pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulpcore.tests.functional -m "from_pulpcore_for_all_plugins and parallel" -n  8
+        pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulpcore.tests.functional -m "from_pulpcore_for_all_plugins and not parallel"
+    
     else
         pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulp_deb.tests.functional -m "parallel and not nightly" -n 8
         pytest -v -r sx --color=yes --pyargs pulp_deb.tests.functional -m "not parallel and not nightly"
+
+    
+        pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulpcore.tests.functional -m "from_pulpcore_for_all_plugins and not nightly and parallel" -n  8
+        pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulpcore.tests.functional -m "from_pulpcore_for_all_plugins and not nightly and not parallel"
+    
     fi
 
 fi
