@@ -434,12 +434,12 @@ class DebUpdatePackageIndexAttributes(Stage):  # TODO: Needs a new name
                         relative_dir = os.path.dirname(d_content.content.relative_path)
                         filename = _uncompress_artifact(d_content.d_artifacts, relative_dir)
                         da = DeclarativeArtifact(
-                            Artifact.init_and_validate(
+                            artifact=Artifact.init_and_validate(
                                 filename, expected_digests={"sha256": content.sha256}
                             ),
-                            filename,
-                            content.relative_path,
-                            d_content.d_artifacts[0].remote,
+                            url=filename,
+                            relative_path=content.relative_path,
+                            remote=d_content.d_artifacts[0].remote,
                         )
                         d_content.d_artifacts.append(da)
                         await _save_artifact_blocking(da)
@@ -522,10 +522,10 @@ class DebFirstStage(Stage):
         artifact = Artifact(**_get_checksums(data or {}))
         url_path = os.path.join(self.parsed_url.path, relative_path)
         return DeclarativeFailsafeArtifact(
-            artifact,
-            urlunparse(self.parsed_url._replace(path=url_path)),
-            relative_path,
-            self.remote,
+            artifact=artifact,
+            url=urlunparse(self.parsed_url._replace(path=url_path)),
+            relative_path=relative_path,
+            remote=self.remote,
             deferred_download=False,
         )
 
