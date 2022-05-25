@@ -1,11 +1,12 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-121-gf49381d
+# generated with plugin_template@2021.08.26-135-gf245075
 
 additional_plugins: []
 additional_repos: []
 aiohttp_fixtures_origin: 172.18.0.1
+api_root: /pulp/
 black: true
 check_commit_message: true
 check_gettext: true
@@ -60,7 +61,12 @@ python_version: '3.8'
 redmine_project: pulp_deb
 release_email: pulp-infra@redhat.com
 release_user: pulpbot
+run_pulpcore_tests_for_plugins: false
 single_commit_check: false
+stalebot: true
+stalebot_days_until_close: 30
+stalebot_days_until_stale: 90
+stalebot_limit_to_pulls: true
 sync_ci: true
 tasking_allow_async_unsafe: false
 test_azure: true
