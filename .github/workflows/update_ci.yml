@@ -15,6 +15,11 @@ on:
     - cron: '30 2 * * 0'
   
   workflow_dispatch:
+    inputs:
+      all_branches:
+        description: "Run on all branches"
+        default: 'no'
+        required: false
 
 jobs:
   update:
@@ -49,11 +54,7 @@ jobs:
         id: vars
         run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
 
-      - name: Dispatching
-        if: github.event_name == 'schedule'
-        run: python .ci/scripts/update_ci_branches.py None
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+      
 
       - name: Run update
         run: |
