@@ -38,9 +38,9 @@ class ReleaseFile(Content):
 
     TYPE = "release_file"
 
-    codename = models.CharField(max_length=255)
-    suite = models.CharField(max_length=255)
-    distribution = models.CharField(max_length=255)
+    codename = models.TextField()
+    suite = models.TextField()
+    distribution = models.TextField()
     components = models.TextField(blank=True)
     architectures = models.TextField(blank=True)
     relative_path = models.TextField()
@@ -80,8 +80,8 @@ class PackageIndex(Content):
     TYPE = "package_index"
 
     release = models.ForeignKey(ReleaseFile, on_delete=models.CASCADE)
-    component = models.CharField(max_length=255)
-    architecture = models.CharField(max_length=255)
+    component = models.TextField()
+    architecture = models.TextField()
     relative_path = models.TextField()
     sha256 = models.CharField(max_length=255)
 
@@ -113,8 +113,8 @@ class InstallerFileIndex(Content):
     FILE_ALGORITHM = {"SHA256SUMS": "sha256", "MD5SUMS": "md5"}  # Are there more?
 
     release = models.ForeignKey(ReleaseFile, on_delete=models.CASCADE)
-    component = models.CharField(max_length=255)
-    architecture = models.CharField(max_length=255)
+    component = models.TextField()
+    architecture = models.TextField()
     relative_path = models.TextField()
     sha256 = models.CharField(max_length=255)
 
@@ -252,9 +252,9 @@ class Release(Content):
 
     TYPE = "release"
 
-    codename = models.CharField(max_length=255)
-    suite = models.CharField(max_length=255)
-    distribution = models.CharField(max_length=255)
+    codename = models.TextField()
+    suite = models.TextField()
+    distribution = models.TextField()
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
@@ -270,7 +270,7 @@ class ReleaseArchitecture(Content):
 
     TYPE = "release_architecture"
 
-    architecture = models.CharField(max_length=255)
+    architecture = models.TextField()
     release = models.ForeignKey(Release, on_delete=models.CASCADE)
 
     class Meta:
@@ -287,7 +287,7 @@ class ReleaseComponent(Content):
 
     TYPE = "release_component"
 
-    component = models.CharField(max_length=255)
+    component = models.TextField()
     release = models.ForeignKey(Release, on_delete=models.CASCADE)
 
     @property
