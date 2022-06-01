@@ -29,6 +29,7 @@ Table of Contents
 
    installation
    feature_overview
+   quickstart
    workflows
    rest_api
    bindings
