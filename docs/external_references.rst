@@ -52,8 +52,6 @@
    https://openapi-generator.tech/#try
 .. _pulp_deb source repository:
    https://github.com/pulp/pulp_deb
-.. _signing service setup script:
-   https://github.com/pulp/pulp_deb/blob/main/pulp_deb/tests/functional/setup_signing_service.py
 .. _signing service script example:
    https://github.com/pulp/pulp_deb/blob/main/pulp_deb/tests/functional/sign_deb_release.sh
 .. _Pulp plugin template:
