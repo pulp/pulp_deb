@@ -28,6 +28,7 @@ pip install -r functest_requirements.txt
 cd .ci/ansible/
 
 TAG=ci_build
+PULPCORE=./pulpcore
 if [[ "$TEST" == "plugin-from-pypi" ]]; then
   PLUGIN_NAME=pulp_deb
 elif [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
@@ -57,7 +58,7 @@ plugins:
   - name: pulp_deb
     source: "${PLUGIN_NAME}"
   - name: pulpcore
-    source: ./pulpcore
+    source: "${PULPCORE}"
 VARSYAML
 fi
 
