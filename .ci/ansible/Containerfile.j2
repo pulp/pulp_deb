@@ -7,6 +7,12 @@ ADD {{ item.source }} {{ item.source }}
 {% endif %}
 {% endfor %}
 
+{%- for item in plugins -%}
+{%- if item.name == "pulp_container" -%}
+RUN dnf install -y podman
+{%- endif -%}
+{%- endfor %}
+
 # Install python packages
 # Hacking botocore (https://github.com/boto/botocore/pull/1990)
 
