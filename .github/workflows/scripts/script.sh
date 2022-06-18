@@ -61,30 +61,28 @@ if [[ "$TEST" == "plugin-from-pypi" ]]; then
   git checkout ${COMPONENT_VERSION} -- pulp_deb/tests/
 fi
 
-cd ../pulp-openapi-generator
-./generate.sh pulpcore python
-pip install ./pulpcore-client
-rm -rf ./pulpcore-client
-if [[ "$TEST" = 'bindings' ]]; then
-  ./generate.sh pulpcore ruby 0
-  cd pulpcore-client
-  gem build pulpcore_client.gemspec
-  gem install --both ./pulpcore_client-0.gem
-fi
-cd $REPO_ROOT
-
-if [[ "$TEST" = 'bindings' ]]; then
-  if [ -f $REPO_ROOT/.ci/assets/bindings/test_bindings.py ]; then
-    python $REPO_ROOT/.ci/assets/bindings/test_bindings.py
-  fi
-  if [ -f $REPO_ROOT/.ci/assets/bindings/test_bindings.rb ]; then
-    ruby $REPO_ROOT/.ci/assets/bindings/test_bindings.rb
-  fi
-  exit
-fi
+echo "machine pulp
+login admin
+password password
+" | cmd_stdin_prefix bash -c "cat > /root/.netrc"
 
 cat unittest_requirements.txt | cmd_stdin_prefix bash -c "cat > /tmp/unittest_requirements.txt"
+cat functest_requirements.txt | cmd_stdin_prefix bash -c "cat > /tmp/functest_requirements.txt"
 cmd_prefix pip3 install -r /tmp/unittest_requirements.txt
+cmd_prefix pip3 install -r /tmp/functest_requirements.txt
+cmd_prefix pip3 install --upgrade ../pulp-smash
+
+cd ../pulp-openapi-generator
+./generate.sh pulp_deb python
+cmd_prefix pip3 install /root/pulp-openapi-generator/pulp_deb-client
+sudo rm -rf ./pulp_deb-client
+./generate.sh pulpcore python
+cmd_prefix pip3 install /root/pulp-openapi-generator/pulpcore-client
+sudo rm -rf ./pulpcore-client
+cd $REPO_ROOT
+
+CERTIFI=$(cmd_prefix python3 -c 'import certifi; print(certifi.where())')
+cmd_prefix bash -c "cat /etc/pulp/certs/pulp_webserver.crt  | tee -a "$CERTIFI" > /dev/null"
 
 # check for any uncommitted migrations
 echo "Checking for uncommitted migrations..."
@@ -96,13 +94,11 @@ if [[ "$TEST" != "upgrade" ]]; then
 fi
 
 # Run functional tests
-export PYTHONPATH=$REPO_ROOT${PYTHONPATH:+:${PYTHONPATH}}
-
 if [[ "$TEST" == "performance" ]]; then
   if [[ -z ${PERFORMANCE_TEST+x} ]]; then
-    pytest -vv -r sx --color=yes --pyargs --capture=no --durations=0 pulp_deb.tests.performance
+    cmd_prefix bash -c "pytest -vv -r sx --color=yes --pyargs --capture=no --durations=0 pulp_deb.tests.performance"
   else
-    pytest -vv -r sx --color=yes --pyargs --capture=no --durations=0 pulp_deb.tests.performance.test_$PERFORMANCE_TEST
+    cmd_prefix bash -c "pytest -vv -r sx --color=yes --pyargs --capture=no --durations=0 pulp_deb.tests.performance.test_$PERFORMANCE_TEST"
   fi
   exit
 fi
@@ -112,13 +108,13 @@ if [ -f $FUNC_TEST_SCRIPT ]; then
 else
 
     if [[ "$GITHUB_WORKFLOW" == "Deb Nightly CI/CD" ]]; then
-        pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulp_deb.tests.functional -m parallel -n 8  --nightly
-        pytest -v -r sx --color=yes --pyargs pulp_deb.tests.functional -m "not parallel"  --nightly
+        cmd_prefix bash -c "pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulp_deb.tests.functional -m parallel -n 8 --nightly"
+        cmd_prefix bash -c "pytest -v -r sx --color=yes --pyargs pulp_deb.tests.functional -m 'not parallel' --nightly"
 
     
     else
-        pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulp_deb.tests.functional -m parallel -n 8
-        pytest -v -r sx --color=yes --pyargs pulp_deb.tests.functional -m "not parallel"
+        cmd_prefix bash -c "pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulp_deb.tests.functional -m parallel -n 8"
+        cmd_prefix bash -c "pytest -v -r sx --color=yes --pyargs pulp_deb.tests.functional -m 'not parallel'"
 
     
     fi
