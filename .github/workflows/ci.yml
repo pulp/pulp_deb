@@ -139,11 +139,6 @@ jobs:
         run: .github/workflows/scripts/install_python_client.sh
         shell: bash
 
-      - name: Install Ruby client
-        if: ${{ env.TEST == 'bindings' }}
-        run: .github/workflows/scripts/install_ruby_client.sh
-        shell: bash
-
       - name: Before Script
         
         run: .github/workflows/scripts/before_script.sh

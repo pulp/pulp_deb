@@ -22,9 +22,6 @@ if [[ "$TEST" = "docs" || "$TEST" = "publish" ]]; then
   pip install -r doc_requirements.txt
 fi
 
-pip install -e ../pulpcore
-pip install -r functest_requirements.txt
-
 cd .ci/ansible/
 
 TAG=ci_build
@@ -48,6 +45,8 @@ plugins:
     source: pulpcore~=3.16.0
   - name: pulp_deb
     source:  "${PLUGIN_NAME}"
+  - name: pulp-smash
+    source: ./pulp-smash
 VARSYAML
 else
   cat >> vars/main.yaml << VARSYAML
@@ -59,6 +58,8 @@ plugins:
     source: "${PLUGIN_NAME}"
   - name: pulpcore
     source: "${PULPCORE}"
+  - name: pulp-smash
+    source: ./pulp-smash
 VARSYAML
 fi
 
@@ -69,6 +70,8 @@ services:
     volumes:
       - ./settings:/etc/pulp
       - ./ssh:/keys/
+      - ~/.config:/root/.config
+      - ../../../pulp-openapi-generator:/root/pulp-openapi-generator
 VARSYAML
 
 cat >> vars/main.yaml << VARSYAML
