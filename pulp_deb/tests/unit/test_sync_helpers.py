@@ -1,6 +1,53 @@
 from django.test import TestCase
+from unittest import mock
 
-from pulp_deb.app.tasks.synchronizing import _filter_split_architectures, _filter_split_components
+from pulp_deb.app.tasks.synchronizing import (
+    _filter_split_architectures,
+    _filter_split_components,
+    _get_artifact_set_sha256,
+)
+
+
+class TestArtifactSetSha256Generation(TestCase):
+    """
+    Tests the _get_artifact_set_sha256() helper function.
+
+    IMPORTANT:  _get_artifact_set_sha256()is used to generate uniqueness constraints for ReleaseFile
+    and PackageIndex content. It must not be altered lightly!
+    """
+
+    d_artifact1 = mock.Mock()
+    d_artifact1.relative_path = "dists/default/all/binary-amd64/Packages.xz"
+    d_artifact1.artifact.sha256 = "1e4ee5542231148c5ca39533ff19d93848ec1829cbf7d269f7ebabef856e184b"
+
+    d_artifact2 = mock.Mock()
+    d_artifact2.relative_path = "dists/default/all/binary-amd64/Packages"
+    d_artifact2.artifact.sha256 = "a55e0fbdaa6ea8a849398d89b8581f00318a6ce6d0c2ab8d875e22f0513771ca"
+
+    d_content = mock.Mock()
+    d_content.d_artifacts = [d_artifact1, d_artifact2]
+
+    expected_hash = "0013ba371fba7f563a476ce55648ab745241295c71b481d3e60a9414162aab41"
+
+    def test_expected_artifact_set_hash(self):
+        """
+        This test ensures that _get_artifact_set_sha256 delivers the expected hash for a mocked
+        example declarative content for a PackageIndex.
+        """
+        artifact_list = ["Packages", "Packages.gz", "Packages.xz", "Release"]
+        self.assertEqual(
+            _get_artifact_set_sha256(self.d_content, artifact_list), self.expected_hash
+        )
+
+    def test_altered_artifact_list(self):
+        """
+        This test ensures that supplying _get_artifact_set_sha256 with an expanded artifact list,
+        but unchanged declarative content, does NOT result in a changed hash!
+        """
+        new_artifact_list = ["Something.new", "Packages", "Packages.xz", "Release"]
+        self.assertEqual(
+            _get_artifact_set_sha256(self.d_content, new_artifact_list), self.expected_hash
+        )
 
 
 class TestArchitectureFiltering(TestCase):

@@ -6,6 +6,7 @@ import bz2
 import gzip
 import lzma
 import gnupg
+import hashlib
 
 from asgiref.sync import sync_to_async
 from collections import defaultdict
@@ -366,6 +367,9 @@ class DebUpdateReleaseFileAttributes(Stage):
                         raise NoReleaseFile(distribution=release_file.distribution)
 
                     release_file.sha256 = release_file_artifact.sha256
+                    release_file.artifact_set_sha256 = _get_artifact_set_sha256(
+                        d_content, ReleaseFile.SUPPORTED_ARTIFACTS
+                    )
                     release_file_dict = deb822.Release(release_file_artifact.file)
                     if "codename" in release_file_dict:
                         release_file.codename = release_file_dict["Codename"]
@@ -443,6 +447,9 @@ class DebUpdatePackageIndexAttributes(Stage):  # TODO: Needs a new name
                         )
                         d_content.d_artifacts.append(da)
                         await _save_artifact_blocking(da)
+                    content.artifact_set_sha256 = _get_artifact_set_sha256(
+                        d_content, PackageIndex.SUPPORTED_ARTIFACTS
+                    )
                     await pb.aincrement()
                 await self.put(d_content)
 
@@ -540,7 +547,7 @@ class DebFirstStage(Stage):
             content=ReleaseFile(distribution=distribution),
             d_artifacts=[
                 self._to_d_artifact(os.path.join(release_file_dir, filename))
-                for filename in ["Release", "InRelease", "Release.gpg"]
+                for filename in ReleaseFile.SUPPORTED_ARTIFACTS
             ],
         )
         release_file = await self._create_unit(release_file_dc)
@@ -747,16 +754,16 @@ class DebFirstStage(Stage):
         # Package index directory relative to the repository root:
         package_index_dir = os.path.join(release_base_path, release_file_package_index_dir)
         d_artifacts = []
-        for filename in ["Packages", "Packages.gz", "Packages.xz", "Release"]:
+        for filename in PackageIndex.SUPPORTED_ARTIFACTS:
             path = os.path.join(release_file_package_index_dir, filename)
             if path in file_references:
                 relative_path = os.path.join(release_base_path, path)
                 d_artifacts.append(self._to_d_artifact(relative_path, file_references[path]))
         if not d_artifacts:
             # This case will happen if it is not the case that 'path in file_references' for any of
-            # ["Packages", "Packages.gz", "Packages.xz", "Release"]. The only case where this is
-            # known to occur is when the remote uses 'sync_udebs = True', but the upstream repo does
-            # not contain any debian-installer indices.
+            # PackageIndex.SUPPORTED_ARTIFACTS. The only case where this is known to occur is when
+            # the remote uses 'sync_udebs = True', but the upstream repo does not contain any
+            # debian-installer indices.
             message = (
                 "Looking for package indices in '{}', but the Release file does not reference any! "
                 "Ignoring."
@@ -1025,6 +1032,23 @@ def _save_artifact_blocking(d_artifact):
     except IntegrityError:
         d_artifact.artifact = Artifact.objects.get(sha256=d_artifact.artifact.sha256)
         d_artifact.artifact.touch()
+
+
+def _get_artifact_set_sha256(d_content, supported_artifacts):
+    """
+    Get the checksum of checksums for a set of artifacts associated with a multi artifact
+    declarative content.
+    """
+    sha256_dict = {}
+    for da in d_content.d_artifacts:
+        filename = os.path.basename(da.relative_path)
+        sha256 = da.artifact.sha256
+        sha256_dict[filename] = sha256
+    hash_string = ""
+    for filename in supported_artifacts:
+        if filename in sha256_dict:
+            hash_string = hash_string + filename + "," + sha256_dict[filename] + "\n"
+    return hashlib.sha256(hash_string.encode("utf-8")).hexdigest()
 
 
 def _get_checksums(unit_dict):
