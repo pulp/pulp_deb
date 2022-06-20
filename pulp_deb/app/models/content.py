@@ -37,6 +37,7 @@ class ReleaseFile(Content):
     """
 
     TYPE = "release_file"
+    SUPPORTED_ARTIFACTS = ["Release", "InRelease", "Release.gpg"]
 
     codename = models.TextField()
     suite = models.TextField()
@@ -45,6 +46,7 @@ class ReleaseFile(Content):
     architectures = models.TextField(blank=True)
     relative_path = models.TextField()
     sha256 = models.CharField(max_length=255)
+    artifact_set_sha256 = models.CharField(max_length=255)
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
@@ -57,6 +59,7 @@ class ReleaseFile(Content):
                 "architectures",
                 "relative_path",
                 "sha256",
+                "artifact_set_sha256",
             ),
         )
 
@@ -78,17 +81,19 @@ class PackageIndex(Content):
     """
 
     TYPE = "package_index"
+    SUPPORTED_ARTIFACTS = ["Packages", "Packages.gz", "Packages.xz", "Release"]
 
     release = models.ForeignKey(ReleaseFile, on_delete=models.CASCADE)
     component = models.TextField()
     architecture = models.TextField()
     relative_path = models.TextField()
     sha256 = models.CharField(max_length=255)
+    artifact_set_sha256 = models.CharField(max_length=255)
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
         verbose_name_plural = "PackageIndices"
-        unique_together = (("relative_path", "sha256"),)
+        unique_together = (("relative_path", "sha256", "artifact_set_sha256"),)
 
     @property
     def main_artifact(self):
