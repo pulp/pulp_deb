@@ -5,7 +5,7 @@
 
 additional_plugins: []
 additional_repos: []
-aiohttp_fixtures_origin: 172.18.0.1
+aiohttp_fixtures_origin: 172.0.0.1
 api_root: /pulp/
 black: true
 check_commit_message: true
