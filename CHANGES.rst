@@ -13,6 +13,28 @@ Changelog
 
 .. towncrier release notes start
 
+2.19.0 (2022-06-23)
+===================
+
+Bugfixes
+--------
+
+- Added support for uploading zstd compressed packages.
+  `#459 <https://github.com/pulp/pulp_deb/issues/459>`_
+- Fixed a bug causing inconsistent verbatim publications in combination with rare circumstances and streamed syncs.
+  `#549 <https://github.com/pulp/pulp_deb/issues/549>`_
+
+
+Misc
+----
+
+- Converted CharField to TextField for pulp_deb models.
+  `#532 <https://github.com/pulp/pulp_deb/issues/532>`_
+
+
+----
+
+
 2.18.0 (2022-04-21)
 ===================
 
