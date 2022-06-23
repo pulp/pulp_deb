@@ -50,8 +50,8 @@ pulp_settings:
   - sha1
   - sha256
   - sha512
-pulpcore_branch: main
-pulpcore_pip_version_specifier: null
+pulpcore_branch: '3.20'
+pulpcore_pip_version_specifier: ~=3.20.0
 pulpcore_revision: null
 pulpprojectdotorg_key_id: aa499d7938ed
 pydocstyle: true
