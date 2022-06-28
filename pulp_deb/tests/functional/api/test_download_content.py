@@ -15,7 +15,7 @@ from pulp_deb.tests.functional.utils import (
     get_deb_verbatim_content_unit_paths,
 )
 
-from pulpcore.client.pulp_deb import RepositorySyncURL, DebAptPublication, DebVerbatimPublication
+from pulpcore.client.pulp_deb import AptRepositorySyncURL, DebAptPublication, DebVerbatimPublication
 
 
 @pytest.mark.parametrize(
@@ -125,7 +125,7 @@ def gen_repository_with_synced_remote(
     def _gen_repository_with_synced_remote():
         repo = gen_object_with_cleanup(apt_repository_api, gen_repo())
         remote = gen_object_with_cleanup(apt_remote_api, gen_deb_remote())
-        repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
+        repository_sync_data = AptRepositorySyncURL(remote=remote.pulp_href)
         sync_response = apt_repository_api.sync(repo.pulp_href, repository_sync_data)
         monitor_task(sync_response.task)
         return apt_repository_api.read(repo.pulp_href)

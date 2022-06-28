@@ -22,7 +22,6 @@ from pulpcore.plugin.models import (
     Artifact,
     ProgressReport,
     Remote,
-    Repository,
 )
 
 from pulpcore.plugin.stages import (
@@ -51,6 +50,7 @@ from pulp_deb.app.models import (
     PackageReleaseComponent,
     InstallerPackage,
     AptRemote,
+    AptRepository,
 )
 
 from pulp_deb.app.serializers import (
@@ -137,7 +137,7 @@ class UnknownNoSupportForArchitectureAllValue(Exception):
     pass
 
 
-def synchronize(remote_pk, repository_pk, mirror):
+def synchronize(remote_pk, repository_pk, mirror, optimize):
     """
     Sync content from the remote repository.
 
@@ -147,18 +147,20 @@ def synchronize(remote_pk, repository_pk, mirror):
         remote_pk (str): The remote PK.
         repository_pk (str): The repository PK.
         mirror (bool): True for mirror mode, False for additive.
+        optimize (bool): Optimize mode.
 
     Raises:
         ValueError: If the remote does not specify a URL to sync
 
     """
     remote = AptRemote.objects.get(pk=remote_pk)
-    repository = Repository.objects.get(pk=repository_pk)
+    repository = AptRepository.objects.get(pk=repository_pk)
+    previous_repo_version = repository.latest_version()
 
     if not remote.url:
         raise ValueError(_("A remote must have a url specified to synchronize."))
 
-    first_stage = DebFirstStage(remote)
+    first_stage = DebFirstStage(remote, optimize, mirror, previous_repo_version)
     DebDeclarativeVersion(first_stage, repository, mirror=mirror).create()
 
 
@@ -209,6 +211,7 @@ class DebDeclarativeVersion(DeclarativeVersion):
             list: List of :class:`~pulpcore.plugin.stages.Stage` instances
 
         """
+        self.first_stage.new_version = new_version
         pipeline = [
             self.first_stage,
             QueryExistingArtifacts(),
@@ -498,17 +501,32 @@ class DebFirstStage(Stage):
     The first stage of a pulp_deb sync pipeline.
     """
 
-    def __init__(self, remote, *args, **kwargs):
+    def __init__(self, remote, optimize, mirror, previous_repo_version, *args, **kwargs):
         """
         The first stage of a pulp_deb sync pipeline.
 
         Args:
-            remote (FileRemote): The remote data to be used when syncing
-
+            remote (AptRemote): The remote data to be used when syncing
+            optimize (Boolean): If optimize mode is enabled or not
+            previous_repo_version repository (RepositoryVersion): The previous RepositoryVersion.
         """
         super().__init__(*args, **kwargs)
         self.remote = remote
+        self.optimize = optimize
+        self.previous_repo_version = previous_repo_version
+        self.previous_sync_info = defaultdict(dict, previous_repo_version.info)
+        self.sync_info = defaultdict()
+        self.sync_info["remote_options"] = self._gen_remote_options()
+        self.sync_info["sync_options"] = {
+            "optimize": optimize,
+            "mirror": mirror,
+        }
         self.parsed_url = urlparse(remote.url)
+        self.sync_options_unchanged = (
+            self.previous_sync_info["remote_options"] == self.sync_info["remote_options"]
+            and self.previous_sync_info["sync_options"]["mirror"]
+            == self.sync_info["sync_options"]["mirror"]
+        )
 
     async def run(self):
         """
@@ -520,6 +538,8 @@ class DebFirstStage(Stage):
         await asyncio.gather(
             *[self._handle_distribution(dist) for dist in self.remote.distributions.split()]
         )
+
+        self.new_version.info = self.sync_info
 
     async def _create_unit(self, d_content):
         await self.put(d_content)
@@ -535,6 +555,19 @@ class DebFirstStage(Stage):
             remote=self.remote,
             deferred_download=False,
         )
+
+    def _gen_remote_options(self):
+        return {
+            "distributions": self.remote.distributions,
+            "components": self.remote.components,
+            "architectures": self.remote.architectures,
+            "policy": self.remote.policy,
+            "sync_sources": self.remote.sync_sources,
+            "sync_udebs": self.remote.sync_udebs,
+            "sync_installer": self.remote.sync_installer,
+            "gpgkey": self.remote.gpgkey,
+            "ignore_missing_package_indices": self.remote.ignore_missing_package_indices,
+        }
 
     async def _handle_distribution(self, distribution):
         log.info(_('Downloading Release file for distribution: "{}"').format(distribution))
@@ -553,7 +586,23 @@ class DebFirstStage(Stage):
         release_file = await self._create_unit(release_file_dc)
         if release_file is None:
             return
-        # Create release object
+        if self.optimize and self.sync_options_unchanged:
+            previous_release_file = await _get_previous_release_file(
+                self.previous_repo_version, distribution
+            )
+            if previous_release_file.artifact_set_sha256 == release_file.artifact_set_sha256:
+                await _readd_previous_package_indices(
+                    self.previous_repo_version, self.new_version, distribution
+                )
+                message = 'ReleaseFile has not changed for distribution="{}". Skipping.'
+                log.info(_(message).format(distribution))
+                async with ProgressReport(
+                    message="Skipping ReleaseFile sync (no change from previous sync)",
+                    code="sync.release_file.was_skipped",
+                ) as pb:
+                    await pb.aincrement()
+                return
+
         release_unit = Release(
             codename=release_file.codename, suite=release_file.suite, distribution=distribution
         )
@@ -799,6 +848,20 @@ class DebFirstStage(Stage):
             else:
                 raise NoPackageIndexFile(relative_dir=package_index_dir)
 
+        if self.optimize and self.sync_options_unchanged:
+            previous_package_index = await _get_previous_package_index(
+                self.previous_repo_version, relative_path
+            )
+            if previous_package_index.artifact_set_sha256 == package_index.artifact_set_sha256:
+                message = 'PackageIndex has not changed for relative_path="{}". Skipped.'
+                log.info(_(message).format(relative_path))
+                async with ProgressReport(
+                    message="Skipping PackageIndex processing (no change from previous sync)",
+                    code="sync.package_index.was_skipped",
+                ) as pb:
+                    await pb.aincrement()
+                return
+
         # Interpret policy to download Artifacts or not
         deferred_download = self.remote.policy != Remote.IMMEDIATE
         # parse package_index
@@ -1015,6 +1078,42 @@ class DebFirstStage(Stage):
             await self.put(
                 DeclarativeContent(content=content_unit, d_artifacts=translation["d_artifacts"])
             )
+
+
+@sync_to_async
+def _readd_previous_package_indices(previous_version, new_version, distribution):
+    new_version.add_content(
+        previous_version.get_content(
+            PackageIndex.objects.filter(relative_path__contains=distribution)
+        )
+    )
+    new_version.add_content(
+        previous_version.get_content(
+            InstallerFileIndex.objects.filter(relative_path__contains=distribution)
+        )
+    )
+
+
+@sync_to_async
+def _get_previous_release_file(previous_version, distribution):
+    previous_release_file_qs = previous_version.get_content(
+        ReleaseFile.objects.filter(distribution=distribution)
+    )
+    if previous_release_file_qs.count() > 1:
+        message = "Previous ReleaseFile count: {}. There should only be one."
+        raise Exception(message.format(previous_release_file_qs.count()))
+    return previous_release_file_qs.first()
+
+
+@sync_to_async
+def _get_previous_package_index(previous_version, relative_path):
+    previous_package_index_qs = previous_version.get_content(
+        PackageIndex.objects.filter(relative_path=relative_path)
+    )
+    if previous_package_index_qs.count() > 1:
+        message = "Previous PackageIndex count: {}. There should only be one."
+        raise Exception(message.format(previous_package_index_qs.count()))
+    return previous_package_index_qs.first()
 
 
 @sync_to_async

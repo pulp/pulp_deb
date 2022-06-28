@@ -27,7 +27,7 @@ from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa
 
 from pulpcore.client.pulp_deb import (
     DebAptPublication,
-    RepositorySyncURL,
+    AptRepositorySyncURL,
 )
 
 
@@ -98,7 +98,7 @@ class SyncPublishDownloadPolicyTestCase(unittest.TestCase):
 
         # Sync the repository.
         self.assertEqual(repo.latest_version_href, f"{repo.pulp_href}versions/0/")
-        repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
+        repository_sync_data = AptRepositorySyncURL(remote=remote.pulp_href)
         sync_response = repo_api.sync(repo.pulp_href, repository_sync_data)
         monitor_task(sync_response.task)
         repo = repo_api.read(repo.pulp_href)
@@ -129,7 +129,7 @@ class SyncPublishDownloadPolicyTestCase(unittest.TestCase):
         remote = remote_api.create(body)
         self.addCleanup(remote_api.delete, remote.pulp_href)
 
-        repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
+        repository_sync_data = AptRepositorySyncURL(remote=remote.pulp_href)
         sync_response = repo_api.sync(repo.pulp_href, repository_sync_data)
         monitor_task(sync_response.task)
         repo = repo_api.read(repo.pulp_href)
@@ -188,7 +188,7 @@ class LazySyncedContentAccessTestCase(unittest.TestCase):
 
         # Sync the repository.
         self.assertEqual(repo.latest_version_href, f"{repo.pulp_href}versions/0/")
-        repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
+        repository_sync_data = AptRepositorySyncURL(remote=remote.pulp_href)
         sync_response = repo_api.sync(repo.pulp_href, repository_sync_data)
         monitor_task(sync_response.task)
         repo = repo_api.read(repo.pulp_href)
@@ -245,7 +245,7 @@ class SwitchDownloadPolicyTestCase(unittest.TestCase):
         self.addCleanup(remote_api.delete, remote.pulp_href)
 
         # Sync the repository using a lazy download policy
-        repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
+        repository_sync_data = AptRepositorySyncURL(remote=remote.pulp_href)
         sync_response = repo_api.sync(repo.pulp_href, repository_sync_data)
         monitor_task(sync_response.task)
         artifacts = artifact_api.list()
@@ -258,7 +258,7 @@ class SwitchDownloadPolicyTestCase(unittest.TestCase):
         self.assertEqual(remote.policy, "immediate")
 
         # Sync using immediate download policy
-        repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
+        repository_sync_data = AptRepositorySyncURL(remote=remote.pulp_href)
         sync_response = repo_api.sync(repo.pulp_href, repository_sync_data)
         monitor_task(sync_response.task)
 

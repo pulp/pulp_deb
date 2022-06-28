@@ -31,7 +31,7 @@ from pulp_deb.tests.functional.utils import (
 )
 
 from pulpcore.client.pulp_deb import (
-    RepositorySyncURL,
+    AptRepositorySyncURL,
     DebAptPublication,
     DebVerbatimPublication,
 )
@@ -160,7 +160,7 @@ class FlatRepoSyncTestCase(unittest.TestCase):
         self.addCleanup(deb_remote_api.delete, remote.pulp_href)
 
         # Sync the repository:
-        repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
+        repository_sync_data = AptRepositorySyncURL(remote=remote.pulp_href)
         sync_response = deb_repository_api.sync(repo.pulp_href, repository_sync_data)
         monitor_task(sync_response.task)
         repo = deb_repository_api.read(repo.pulp_href)

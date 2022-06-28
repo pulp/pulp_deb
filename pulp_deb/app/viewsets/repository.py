@@ -5,11 +5,10 @@ from rest_framework.decorators import action
 from rest_framework import viewsets
 from rest_framework.serializers import ValidationError as DRFValidationError
 
+from pulp_deb.app.serializers import AptRepositorySyncURLSerializer
+
 from pulpcore.plugin.actions import ModifyRepositoryActionMixin
-from pulpcore.plugin.serializers import (
-    AsyncOperationResponseSerializer,
-    RepositorySyncURLSerializer,
-)
+from pulpcore.plugin.serializers import AsyncOperationResponseSerializer
 from pulpcore.plugin.models import RepositoryVersion
 from pulpcore.plugin.tasking import dispatch
 from pulpcore.plugin.viewsets import (
@@ -42,13 +41,13 @@ class AptRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin):
         summary="Sync from remote",
         responses={202: AsyncOperationResponseSerializer},
     )
-    @action(detail=True, methods=["post"], serializer_class=RepositorySyncURLSerializer)
+    @action(detail=True, methods=["post"], serializer_class=AptRepositorySyncURLSerializer)
     def sync(self, request, pk):
         """
         Dispatches a sync task.
         """
         repository = self.get_object()
-        serializer = RepositorySyncURLSerializer(
+        serializer = AptRepositorySyncURLSerializer(
             data=request.data, context={"request": request, "repository_pk": pk}
         )
 
@@ -56,6 +55,7 @@ class AptRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin):
         serializer.is_valid(raise_exception=True)
         remote = serializer.validated_data.get("remote", repository.remote)
         mirror = serializer.validated_data.get("mirror", True)
+        optimize = serializer.validated_data.get("optimize")
 
         result = dispatch(
             func=tasks.synchronize,
@@ -65,6 +65,7 @@ class AptRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin):
                 "remote_pk": remote.pk,
                 "repository_pk": repository.pk,
                 "mirror": mirror,
+                "optimize": optimize,
             },
         )
         return OperationPostponedResponse(result, request)
