@@ -25,7 +25,7 @@ from pulp_deb.tests.functional.utils import (
     deb_repository_api,
 )
 
-from pulpcore.client.pulp_deb import RepositorySyncURL
+from pulpcore.client.pulp_deb import AptRepositorySyncURL
 
 
 class BasicSyncTestCase(unittest.TestCase):
@@ -80,7 +80,7 @@ class BasicSyncTestCase(unittest.TestCase):
 
         # Sync the repository.
         self.assertEqual(repo.latest_version_href, f"{repo.pulp_href}versions/0/")
-        repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
+        repository_sync_data = AptRepositorySyncURL(remote=remote.pulp_href)
         sync_response = repo_api.sync(repo.pulp_href, repository_sync_data)
         monitor_task(sync_response.task)
         repo = repo_api.read(repo.pulp_href)
@@ -91,7 +91,7 @@ class BasicSyncTestCase(unittest.TestCase):
 
         # Sync the repository again.
         latest_version_href = repo.latest_version_href
-        repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
+        repository_sync_data = AptRepositorySyncURL(remote=remote.pulp_href)
         sync_response = repo_api.sync(repo.pulp_href, repository_sync_data)
         monitor_task(sync_response.task)
         repo = repo_api.read(repo.pulp_href)
@@ -177,6 +177,6 @@ class SyncInvalidTestCase(unittest.TestCase):
         remote = remote_api.create(body)
         self.addCleanup(remote_api.delete, remote.pulp_href)
 
-        repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
+        repository_sync_data = AptRepositorySyncURL(remote=remote.pulp_href)
         sync_response = repo_api.sync(repo.pulp_href, repository_sync_data)
         return monitor_task(sync_response.task)

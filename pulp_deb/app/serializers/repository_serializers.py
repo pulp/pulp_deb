@@ -1,5 +1,9 @@
 from gettext import gettext as _
-from pulpcore.plugin.serializers import RepositorySerializer, validate_unknown_fields
+from pulpcore.plugin.serializers import (
+    RepositorySerializer,
+    RepositorySyncURLSerializer,
+    validate_unknown_fields,
+)
 
 from pulp_deb.app.models import AptRepository
 
@@ -16,6 +20,24 @@ class AptRepositorySerializer(RepositorySerializer):
     class Meta:
         fields = RepositorySerializer.Meta.fields
         model = AptRepository
+
+
+class AptRepositorySyncURLSerializer(RepositorySyncURLSerializer):
+    """
+    A Serializer for AptRepository Sync.
+    """
+
+    optimize = serializers.BooleanField(
+        help_text=_(
+            "Using optimize sync, will skip the processing of metadata if the checksum has not "
+            "changed since the last sync. This greately improves re-sync performance in such "
+            "situations. If you feel the sync is missing something that has changed about the "
+            "remote repository you are syncing, try using optimize=False for a full re-sync. "
+            "Consider opening an issue on why we should not optimize in your use case."
+        ),
+        required=False,
+        default=True,
+    )
 
 
 class CopySerializer(serializers.Serializer):

@@ -51,7 +51,14 @@ VERBATIM_PUBLICATION_PATH = urljoin(BASE_PUBLICATION_PATH, "deb/verbatim/")
 DEB_SINGLE_REQUEST_UPLOAD_PATH = urljoin(BASE_PATH, "deb/upload/")
 
 DEB_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, "debian/")
+DEB_FIXTURE_URL_UPDATE = urljoin(PULP_FIXTURES_BASE_URL, "debian_update/")
 DEB_FIXTURE_DISTRIBUTIONS = "ragnarok nosuite"
+DEB_FIXTURE_SINGLE_DIST = "ragnarok"
+DEB_FIXTURE_MULTI_DIST = "ragnarok ginnungagap"
+DEB_FIXTURE_COMPONENT = "asgard"
+DEB_FIXTURE_COMPONENT_UPDATE = "jotunheimr"
+DEB_FIXTURE_ARCH = "ppc64"
+DEB_FIXTURE_ARCH_UPDATE = "armeb"
 
 DEB_FIXTURE_SUMMARY = _clean_dict(
     {
@@ -84,6 +91,9 @@ DEB_FULL_FIXTURE_SUMMARY = _clean_dict(
 )
 
 DEB_FIXTURE_PACKAGE_COUNT = DEB_FIXTURE_SUMMARY.get(DEB_PACKAGE_NAME, 0)
+
+DEB_REPORT_CODE_SKIP_RELEASE = "sync.release_file.was_skipped"
+DEB_REPORT_CODE_SKIP_PACKAGE = "sync.package_index.was_skipped"
 
 DEB_PACKAGE_RELPATH = "pool/asgard/o/odin/odin_1.0_ppc64.deb"
 DEB_PACKAGE_URL = urljoin(DEB_FIXTURE_URL, DEB_PACKAGE_RELPATH)

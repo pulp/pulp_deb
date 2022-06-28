@@ -26,7 +26,7 @@ from pulpcore.client.pulpcore import (
 
 from pulpcore.client.pulp_deb import (
     RepositoriesAptApi,
-    RepositorySyncURL,
+    AptRepositorySyncURL,
     RemotesAptApi,
 )
 
@@ -49,7 +49,7 @@ class BaseExporterCase(PulpTestCase):
         # give it a remote and sync it
         body = gen_deb_remote()
         remote = cls.remote_api.create(body)
-        repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
+        repository_sync_data = AptRepositorySyncURL(remote=remote.pulp_href)
         sync_response = cls.repo_api.sync(a_repo.pulp_href, repository_sync_data)
         monitor_task(sync_response.task)
         # remember it
