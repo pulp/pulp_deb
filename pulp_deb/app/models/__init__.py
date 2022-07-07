@@ -3,16 +3,18 @@
 from .content import (
     BasePackage,
     GenericContent,
-    InstallerFileIndex,
     InstallerPackage,
     Package,
-    PackageIndex,
-    PackageReleaseComponent,
+)
+
+from .structure_content import (
     Release,
     ReleaseArchitecture,
     ReleaseComponent,
-    ReleaseFile,
+    PackageReleaseComponent,
 )
+
+from .metadata_content import ReleaseFile, PackageIndex, InstallerFileIndex
 
 from .publication import AptDistribution, AptPublication, VerbatimPublication
 
