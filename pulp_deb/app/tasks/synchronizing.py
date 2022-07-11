@@ -11,7 +11,7 @@ from asgiref.sync import sync_to_async
 from collections import defaultdict
 from tempfile import NamedTemporaryFile
 from debian import deb822
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import quote, urlparse, urlunparse
 from django.conf import settings
 from django.db.utils import IntegrityError
 
@@ -520,7 +520,7 @@ class DebFirstStage(Stage):
 
     def _to_d_artifact(self, relative_path, data=None):
         artifact = Artifact(**_get_checksums(data or {}))
-        url_path = os.path.join(self.parsed_url.path, relative_path)
+        url_path = quote(os.path.join(self.parsed_url.path, relative_path), safe=":/")
         return DeclarativeFailsafeArtifact(
             artifact,
             urlunparse(self.parsed_url._replace(path=url_path)),
@@ -857,7 +857,7 @@ class DebFirstStage(Stage):
                     sha256=package_sha256,
                     **serializer.validated_data,
                 )
-                package_path = os.path.join(self.parsed_url.path, package_relpath)
+                package_path = quote(os.path.join(self.parsed_url.path, package_relpath), safe=":/")
                 package_da = DeclarativeArtifact(
                     artifact=Artifact(
                         size=int(package_paragraph["Size"]), **_get_checksums(package_paragraph)
@@ -977,7 +977,7 @@ class DebFirstStage(Stage):
 
         for filename, digests in file_list.items():
             relpath = os.path.join(installer_file_index.relative_path, filename)
-            urlpath = os.path.join(self.parsed_url.path, relpath)
+            urlpath = quote(os.path.join(self.parsed_url.path, relpath), safe=":/")
             content_unit = GenericContent(sha256=digests["sha256"], relative_path=relpath)
             d_artifact = DeclarativeArtifact(
                 artifact=Artifact(**digests),
