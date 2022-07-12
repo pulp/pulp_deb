@@ -627,7 +627,7 @@ class ReleaseArchitectureSerializer(NoArtifactContentSerializer):
         help_text="Release this architecture is contained in.",
         many=False,
         queryset=Release.objects.all(),
-        view_name="deb-release-detail",
+        view_name="content-deb/releases-detail",
     )
 
     class Meta(NoArtifactContentSerializer.Meta):
@@ -645,7 +645,7 @@ class ReleaseComponentSerializer(NoArtifactContentSerializer):
         help_text="Release this component is contained in.",
         many=False,
         queryset=Release.objects.all(),
-        view_name="deb-release-detail",
+        view_name="content-deb/releases-detail",
     )
 
     class Meta(NoArtifactContentSerializer.Meta):
@@ -661,14 +661,14 @@ class PackageReleaseComponentSerializer(NoArtifactContentSerializer):
     package = DetailRelatedField(
         help_text="Package that is contained in release_comonent.",
         many=False,
-        queryset=ReleaseComponent.objects.all(),
-        view_name="deb-release_component-detail",
+        queryset=Package.objects.all(),
+        view_name="content-deb/packages-detail",
     )
     release_component = DetailRelatedField(
         help_text="ReleaseComponent this package is contained in.",
         many=False,
         queryset=ReleaseComponent.objects.all(),
-        view_name="deb-release_component-detail",
+        view_name="content-deb/release_components-detail",
     )
 
     class Meta(NoArtifactContentSerializer.Meta):
