@@ -22,3 +22,4 @@ This chapter is structured into the following subsections:
    workflows/sync
    workflows/upload
    workflows/publish
+   workflows/structured_repo
