@@ -13,6 +13,22 @@ Changelog
 
 .. towncrier release notes start
 
+2.19.1 (2022-07-25)
+===================
+
+Bugfixes
+--------
+
+- Fixed handling of download URLs containing special characters in the path part.
+  `#571 <https://github.com/pulp/pulp_deb/issues/571>`_
+- Fixed several serializer bugs preventing the manual creation of structure content of type
+  ``ReleaseArchitecture``, ``ReleaseComponent``, and ``PackageReleaseComponent``.
+  `#575 <https://github.com/pulp/pulp_deb/issues/575>`_
+
+
+----
+
+
 2.19.0 (2022-06-23)
 ===================
 
