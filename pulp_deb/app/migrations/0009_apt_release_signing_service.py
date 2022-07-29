@@ -7,7 +7,6 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0022_rename_last_version'),
         ('deb', '0008_debremote_gpgkey'),
     ]
 

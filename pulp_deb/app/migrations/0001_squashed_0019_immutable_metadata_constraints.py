@@ -11,11 +11,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('core', '0011_relative_path'),
-        ('core', '0014_remove_repository_plugin_managed'),
-        ('core', '0062_add_new_distribution_mastermodel'),
-        ('core', '0004_add_duplicated_reserved_resources'),
-        ('core', '0022_rename_last_version'),
+        ('core', '0091_systemid'),
     ]
 
     operations = [
@@ -86,7 +82,7 @@ class Migration(migrations.Migration):
                 ('architectures', models.TextField(blank=True)),
                 ('relative_path', models.TextField()),
                 ('sha256', models.CharField(max_length=255)),
-                ('artifact_set_sha256', models.CharField(default='', max_length=255)),
+                ('artifact_set_sha256', models.CharField(max_length=255)),
             ],
             options={
                 'default_related_name': '%(app_label)s_%(model_name)s',
@@ -120,7 +116,7 @@ class Migration(migrations.Migration):
                 ('relative_path', models.TextField()),
                 ('sha256', models.CharField(max_length=255)),
                 ('release', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='deb_packageindex', to='deb.releasefile')),
-                ('artifact_set_sha256', models.CharField(default='', max_length=255)),
+                ('artifact_set_sha256', models.CharField(max_length=255)),
             ],
             options={
                 'verbose_name_plural': 'PackageIndices',

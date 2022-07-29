@@ -7,7 +7,6 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0014_remove_repository_plugin_managed'),
         ('deb', '0005_rename_release_file'),
     ]
 

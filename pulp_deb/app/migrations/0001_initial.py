@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('core', '0004_add_duplicated_reserved_resources'),
+        ('core', '0091_systemid'),
     ]
 
     operations = [
