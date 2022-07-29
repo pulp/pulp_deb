@@ -5,12 +5,13 @@ import os
 import stat
 
 from pulp_smash.utils import execute_pulpcore_python, uuid4
-from pulp_deb.tests.functional.constants import DEB_FIXTURE_URL, DEB_FIXTURE_DISTRIBUTIONS
 from pulp_deb.tests.functional.utils import gen_deb_remote
 
 from pulpcore.client.pulp_deb import (
     ApiClient,
     AptRepositorySyncURL,
+    ContentPackagesApi,
+    DebAptPublication,
     DistributionsAptApi,
     PublicationsAptApi,
     PublicationsVerbatimApi,
@@ -58,8 +59,25 @@ def apt_distribution_api(apt_client):
 
 
 @pytest.fixture
+def apt_package_api(apt_client):
+    """Fixture for APT package API."""
+    return ContentPackagesApi(apt_client)
+
+
+@pytest.fixture
+def deb_gen_publication(apt_publication_api, gen_object_with_cleanup):
+    """Fixture that generates a deb publication with cleanup from a given repository."""
+
+    def _deb_gen_publication(repo, **kwargs):
+        publication_data = DebAptPublication(repository=repo.pulp_href, **kwargs)
+        return gen_object_with_cleanup(apt_publication_api, publication_data)
+
+    return _deb_gen_publication
+
+
+@pytest.fixture
 def deb_gen_repository(apt_repository_api, gen_object_with_cleanup):
-    """Generates a semi-random repository with cleanup."""
+    """Fixture that generates a deb repository with cleanup."""
 
     def _deb_gen_repository():
         return gen_object_with_cleanup(apt_repository_api, gen_repo())
@@ -69,17 +87,64 @@ def deb_gen_repository(apt_repository_api, gen_object_with_cleanup):
 
 @pytest.fixture
 def deb_gen_remote(apt_remote_api, gen_object_with_cleanup):
-    """Fixture that generates a remote with cleanup.
+    """Fixture that generates a deb remote with cleanup."""
 
-    Also allows for parameters to be set manually.
-    """
-
-    def _deb_gen_remote(url=DEB_FIXTURE_URL, distributions=DEB_FIXTURE_DISTRIBUTIONS, **kwargs):
-        return gen_object_with_cleanup(
-            apt_remote_api, gen_deb_remote(url=url, distributions=distributions, **kwargs)
-        )
+    def _deb_gen_remote(**kwargs):
+        return gen_object_with_cleanup(apt_remote_api, gen_deb_remote(**kwargs))
 
     return _deb_gen_remote
+
+
+@pytest.fixture
+def deb_get_repository_by_href(apt_repository_api):
+    """Fixture that returns the deb repository of a given pulp_href."""
+
+    def _deb_get_repository_by_href(href):
+        return apt_repository_api.read(href)
+
+    return _deb_get_repository_by_href
+
+
+@pytest.fixture
+def deb_get_remote_by_href(apt_remote_api):
+    """Fixture that returns the deb remote of a given pulp_href."""
+
+    def _deb_get_remote_by_href(href):
+        return apt_remote_api.read(href)
+
+    return _deb_get_remote_by_href
+
+
+@pytest.fixture
+def deb_get_remotes_by_name(apt_remote_api):
+    """Fixture that returns the deb remotes of a given name."""
+
+    def _deb_get_remotes_by_name(name):
+        return apt_remote_api.list(name=name)
+
+    return _deb_get_remotes_by_name
+
+
+@pytest.fixture
+def deb_delete_remote(apt_remote_api):
+    """Fixture that will delete a deb remote."""
+
+    def _deb_delete_remote(remote):
+        response = apt_remote_api.delete(remote.pulp_href)
+        return monitor_task(response.task)
+
+    return _deb_delete_remote
+
+
+@pytest.fixture
+def deb_patch_remote(apt_remote_api):
+    """Fixture that will partially update a deb remote."""
+
+    def _deb_patch_remote(remote, content):
+        response = apt_remote_api.partial_update(remote.pulp_href, content)
+        return monitor_task(response.task)
+
+    return _deb_patch_remote
 
 
 @pytest.fixture
@@ -97,9 +162,8 @@ def deb_sync_repository(apt_repository_api):
 
 
 @pytest.fixture(scope="session")
-def signing_script_filename(signing_gpg_homedir_path):
+def deb_signing_script_path(signing_gpg_homedir_path):
     """A fixture for a script that is suited for signing packages."""
-
     dir_path = os.path.dirname(__file__)
     file_path = os.path.join(dir_path, "sign_deb_release.sh")
 
@@ -119,36 +183,34 @@ def signing_script_filename(signing_gpg_homedir_path):
 
 
 @pytest.fixture
-def apt_signing_service(
+def deb_gen_signing_service(
     cli_client,
+    deb_signing_script_path,
     signing_gpg_metadata,
-    signing_script_filename,
     signing_service_api_client,
 ):
     """A fixture for the debian signing service."""
-    st = os.stat(signing_script_filename)
-    os.chmod(signing_script_filename, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-
+    st = os.stat(deb_signing_script_path)
+    os.chmod(deb_signing_script_path, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
     gpg, fingerprint, keyid = signing_gpg_metadata
-
     service_name = uuid4()
     cmd = (
         "pulpcore-manager",
         "add-signing-service",
         service_name,
-        signing_script_filename,
+        deb_signing_script_path,
         keyid,
         "--class",
         "deb:AptReleaseSigningService",
         "--gnupghome",
         gpg.gnupghome,
     )
-
     response = cli_client.run(cmd)
 
     assert response.returncode == 0
 
     signing_service = signing_service_api_client.list(name=service_name).results[0]
+
     assert signing_service.pubkey_fingerprint == fingerprint
     assert signing_service.public_key == gpg.export_keys(keyid)
 
