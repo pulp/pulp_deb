@@ -4,7 +4,12 @@ import pytest
 from pulp_smash import config
 from pulp_smash.pulp3.utils import get_content, get_versions, modify_repo
 
-from pulp_deb.tests.functional.constants import DEB_GENERIC_CONTENT_NAME, DEB_PACKAGE_NAME
+from pulp_deb.tests.functional.constants import (
+    DEB_FIXTURE_DISTRIBUTIONS,
+    DEB_FIXTURE_URL,
+    DEB_GENERIC_CONTENT_NAME,
+    DEB_PACKAGE_NAME,
+)
 
 from pulpcore.client.pulp_deb.exceptions import ApiException
 from pulpcore.client.pulp_deb import (
@@ -13,19 +18,7 @@ from pulpcore.client.pulp_deb import (
 )
 
 
-@pytest.fixture
-def publish_parameters(apt_signing_service):
-    """Fixture for parameters for the publish test."""
-    params = [
-        {"simple": True},
-        {"structured": True},
-        {"simple": True, "structured": True},
-        {"simple": True, "structured": True, "signing_service": apt_signing_service.pulp_href},
-        {},
-    ]
-    return params
-
-
+@pytest.mark.parallel
 @pytest.mark.parametrize(
     "testcase_number, publication_api, Publication",
     [
@@ -75,7 +68,7 @@ def test_publish_any_repo_version(
     """
     publication_api = request.getfixturevalue(publication_api)
     cfg = config.get_config()
-    remote = deb_gen_remote()
+    remote = deb_gen_remote(url=DEB_FIXTURE_URL, distributions=DEB_FIXTURE_DISTRIBUTIONS)
     repo = deb_gen_repository()
     deb_sync_repository(remote, repo)
 
@@ -110,8 +103,21 @@ def test_publish_any_repo_version(
     assert exc.value.status == 400
 
     # Because the cleanup of the publications happens after we try to delete
-    # the signing service in the `apt_signing_service` fixture we need to
+    # the signing service in the `deb_gen_signing_service` fixture we need to
     # delete both publications explicitly here. Otherwise the signing service
     # deletion will result in a `django.db.models.deletion.ProtectedError`.
     publication_api.delete(first_publish_href)
     publication_api.delete(second_publish_href)
+
+
+@pytest.fixture
+def publish_parameters(deb_gen_signing_service):
+    """Fixture for parameters for the publish test."""
+    params = [
+        {"simple": True},
+        {"structured": True},
+        {"simple": True, "structured": True},
+        {"simple": True, "structured": True, "signing_service": deb_gen_signing_service.pulp_href},
+        {},
+    ]
+    return params
