@@ -98,6 +98,12 @@ This returns the path of the created publication:
 
    http get $BASE_ADDR/pulp/api/v3/tasks/d49e056f-a637-454a-8797-67f81648b60f/ | jq '.created_resources[0]'
 
+Similarly, you can create your publication using :ref:`pulp CLI plugin <pulp_cli_deb>`:
+
+.. code-block:: bash
+
+   pulp deb publication create --repository nginx --simple True
+
 
 Create a Distribution
 --------------------------------------------------------------------------------
@@ -214,3 +220,10 @@ An example apt source file could be like,
 .. code-block:: ini
 
    deb [trusted=yes arch=amd64 ] http://pulp3-source-debian10.hostname.example.com/pulp/content/nginx/ default  all
+
+Similarly, you can create your distribution using :ref:`pulp CLI plugin <pulp_cli_deb>`:
+
+.. code-block:: bash
+
+   pulp deb distribution create --name nginx --base-path nginx \
+      --publication "/pulp/api/v3/publications/deb/apt/fd43ed03-b477-4daf-859d-e0d8419a458b/"

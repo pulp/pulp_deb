@@ -10,6 +10,10 @@ If you are just getting started with the plugin, read the high level :ref:`featu
 See :ref:`workflows <workflows>` for detailed usage examples.
 See the :ref:`REST API <rest_api>` documentation for an exhaustive feature reference.
 
+The examples in this documentation show examples in two formats: the `httpie` HTTP queries you would make to call the 
+REST API itself, and (where implemented) a corresponding `pulp_cli_deb` pulp CLI equivalent. To read more about the
+`pulp_cli_deb` command line plugin, read :ref:`pulp CLI plugin <pulp_cli_deb>`.
+
 The most important places relating to this project:
 
 * The `Pulp project`_ homepage.
@@ -28,6 +32,7 @@ Table of Contents
    :maxdepth: 1
 
    installation
+   pulp_cli_deb
    feature_overview
    workflows
    rest_api

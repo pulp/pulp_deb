@@ -35,6 +35,13 @@ This will return a ``201 Created`` response:
        "versions_href": "/pulp/api/v3/repositories/deb/apt/1c8734dd-d4cb-4c2f-811a-87235f786444/versions/"
    }
 
+Or alternatively with the :ref:`pulp CLI plugin <pulp_cli_deb>`:
+
+. code-block:: bash
+
+   pulp deb repository create --name "nginx" --description "nginx package repository"
+
+This will output an identical JSON block to the HTTP post example.
 
 Create a Remote
 --------------------------------------------------------------------------------
@@ -83,6 +90,14 @@ This will return a ``201 Created`` response:
    This breaks synchronization from partial mirrors, and can be overriden by setting `ignore_missing_package_indices=True` on the remote.
    Alternatively, use FORCE_IGNORE_MISSING_PACKAGE_INDICES=True in your Pulp configuration file, to force this behaviour for all remotes.
 
+Or alternatively with the :ref:`pulp CLI plugin <pulp_cli_deb>`:
+
+. code-block:: bash
+
+   pulp deb remote create --name "nginx.org" --url "http://nginx.org/packages/debian" \
+       --distribution "buster"
+
+This will output an identical JSON block to the HTTP post example.
 
 Sync Repository with Remote
 --------------------------------------------------------------------------------
@@ -180,3 +195,7 @@ Notice that when the synchronize task completes, it creates a new version, which
     Learn more about scheduling tasks `here <https://docs.pulpproject.org/pulpcore/workflows/scheduling-tasks.html>`_.
 
 Continue with :doc:`publish` to make your synced repository consumable.
+
+.. note::
+
+    There is currently no :ref:`pulp CLI plugin <pulp_cli_deb>` equivalent for this operation.

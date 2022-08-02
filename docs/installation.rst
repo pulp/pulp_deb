@@ -13,3 +13,5 @@ This will both work for entirely new Pulp installations, as well as to add the `
 
 If you need more help with advanced installation scenarios you can either consult the documentation referenced above, or else join the ``pulp`` Matrix/IRC channel for interactive help.
 See the `Pulp project help page`_ for more information and additional ways on how to get in contact with the Pulp community.
+
+It is useful to note that there is a pulp CLI plugin for ``pulp_deb``, which is documented at :ref:`pulp CLI plugin <pulp_cli_deb>`.
