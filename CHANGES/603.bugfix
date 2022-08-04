@@ -1,0 +1,1 @@
+Added a better error message when users try to create a repository version containing duplicate APT distributions.
