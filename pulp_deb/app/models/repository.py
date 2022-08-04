@@ -64,5 +64,14 @@ class AptRepository(Repository):
                 finalize.
 
         """
+        from pulp_deb.app.tasks.exceptions import DuplicateDistributionException
+
         remove_duplicates(new_version)
         validate_repo_version(new_version)
+        releases = new_version.get_content(Release.objects.all())
+        distributions = []
+        for release in releases:
+            distribution = release.distribution
+            if distribution in distributions:
+                raise DuplicateDistributionException(distribution)
+            distributions.append(distribution)
