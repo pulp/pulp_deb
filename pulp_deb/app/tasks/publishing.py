@@ -136,6 +136,13 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                 for release in Release.objects.filter(
                     pk__in=repo_version.content.order_by("-pulp_created"),
                 ):
+                    if simple and release.distribution == "default":
+                        message = (
+                            'Ignoring structured "default" distribution for publication that also '
+                            "uses simple mode."
+                        )
+                        log.warning(_(message))
+                        continue
                     architectures = ReleaseArchitecture.objects.filter(
                         pk__in=repo_version.content.order_by("-pulp_created"),
                         release=release,
