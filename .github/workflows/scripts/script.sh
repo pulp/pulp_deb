@@ -33,10 +33,8 @@ if [[ "$TEST" = "docs" ]]; then
     pip install towncrier==19.9.0
     towncrier --yes --version 4.0.0.ci
   fi
-  cd docs
-  make PULP_URL="$PULP_URL" diagrams html
-  tar -cvf docs.tar ./_build
-  cd ..
+  cmd_prefix bash -c "cd pulp_deb/docs; make diagrams html; tar -cvf docs.tar ./_build"
+  docker cp pulp:/pulp_deb//docs/docs.tar docs.tar
 
   if [ -f $POST_DOCS_TEST ]; then
     source $POST_DOCS_TEST
