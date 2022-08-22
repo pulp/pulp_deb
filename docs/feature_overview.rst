@@ -117,6 +117,16 @@ We are planning to add a dependency solving mechanism in a future release.
 The idea is for the copy operation to automatically add any dependencies of any user supplied packages as part of the copy operation.
 
 
+.. _import_export:
+
+Import/Export
+--------------------------------------------------------------------------------
+
+The pulp_deb plugin implements the pulpcore Import/Export feature.
+This allows users to export content stored on one Pulp instance to a file, which can then be imported on another pulp instance.
+For more information see the `pulpcore import-export docs`_.
+
+
 .. _simple_and_structured_publishing:
 
 Simple and Structured Publishing

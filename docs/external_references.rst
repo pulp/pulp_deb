@@ -12,6 +12,8 @@
    https://docs.pulpproject.org/pulpcore/plugins/plugin-writer/concepts/index.html#plugin-api-stability-and-deprecation-policy
 .. _pulpcore settings documentation:
    https://docs.pulpproject.org/pulpcore/settings.html#pulp-settings
+.. _pulpcore import-export docs:
+   https://docs.pulpproject.org/pulpcore/workflows/import-export.html
 .. _pulpcore metadata signing docs:
    https://docs.pulpproject.org/pulpcore/workflows/signed-metadata.html
 .. _pulpcore upload documentation:
