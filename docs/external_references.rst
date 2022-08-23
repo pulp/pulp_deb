@@ -1,21 +1,23 @@
-.. _pulpcore documentation:
-   https://docs.pulpproject.org
 .. _flat repository format:
    https://wiki.debian.org/DebianRepository/Format#Flat_Repository_Format
 .. _release file format:
    https://wiki.debian.org/DebianRepository/Format#A.22Release.22_files
-.. _pulpcore metadata signing docs:
-   https://docs.pulpproject.org/workflows/signed-metadata.html
-.. _pulpcore upload documentation:
-   https://docs.pulpproject.org/workflows/upload-publish.html
-.. _pulpcore installation options:
-   https://docs.pulpproject.org/installation/index.html
+.. _pulpcore documentation:
+   https://docs.pulpproject.org/pulpcore/
 .. _pulpcore configuration documentation:
    https://docs.pulpproject.org/pulpcore/installation/configuration.html
-.. _pulpcore settings documentation:
-   https://docs.pulpproject.org/pulpcore/settings.html#pulp-settings
+.. _pulpcore installation options:
+   https://docs.pulpproject.org/pulpcore/installation/index.html
 .. _pulpcore plugin API deprecation policy:
    https://docs.pulpproject.org/pulpcore/plugins/plugin-writer/concepts/index.html#plugin-api-stability-and-deprecation-policy
+.. _pulpcore settings documentation:
+   https://docs.pulpproject.org/pulpcore/settings.html#pulp-settings
+.. _pulpcore import-export docs:
+   https://docs.pulpproject.org/pulpcore/workflows/import-export.html
+.. _pulpcore metadata signing docs:
+   https://docs.pulpproject.org/pulpcore/workflows/signed-metadata.html
+.. _pulpcore upload documentation:
+   https://docs.pulpproject.org/pulpcore/workflows/upload-publish.html
 .. _pulp_deb issue tracker:
    https://github.com/pulp/pulp_deb/issues
 .. _pulp_deb milestone:
