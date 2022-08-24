@@ -157,6 +157,12 @@ def synchronize(remote_pk, repository_pk, mirror, optimize):
     repository = AptRepository.objects.get(pk=repository_pk)
     previous_repo_version = repository.latest_version()
 
+    # TODO: The optimize feature currently does not work in combination with mirror=True! We fall
+    # back to full sync for now, until a proper fix is ready:
+    if mirror:
+        log.info(_("Falling back to optimize=False behaviour since mirror=True is set!"))
+        optimize = False
+
     if not remote.url:
         raise ValueError(_("A remote must have a url specified to synchronize."))
 
