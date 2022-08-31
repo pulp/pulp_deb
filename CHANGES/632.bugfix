@@ -1,0 +1,1 @@
+Fixed a bug preventing the synchronization of repos referencing a single package from multiple package indices.

@@ -1,6 +1,6 @@
 from pulpcore.plugin.models import Repository
 
-from pulpcore.plugin.repo_version_utils import remove_duplicates, validate_repo_version
+from pulpcore.plugin.repo_version_utils import remove_duplicates, validate_version_paths
 
 from pulp_deb.app.models import (
     AptRemote,
@@ -67,7 +67,7 @@ class AptRepository(Repository):
         from pulp_deb.app.tasks.exceptions import DuplicateDistributionException
 
         remove_duplicates(new_version)
-        validate_repo_version(new_version)
+        validate_version_paths(new_version)
         releases = new_version.get_content(Release.objects.all())
         distributions = []
         for release in releases:
