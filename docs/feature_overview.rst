@@ -168,7 +168,6 @@ The ``pulp_deb`` plugin allows you to sign the ``Release`` files created by the 
    Until we get around to writing one, you can use the following resources to help you get started:
 
    * The `pulpcore metadata signing docs`_ describe the process for creating an ``AsciiArmoredDetachedSigningService``, which is largely analagous to creating an ``AptReleaseSigningService``.
-   * The `signing service setup script`_ used by the ``pulp_deb`` test suite.
    * The `signing service script example`_ used by the ``pulp_deb`` test suite.
 
 

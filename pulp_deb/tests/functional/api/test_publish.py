@@ -1,193 +1,117 @@
-# coding=utf-8
-"""Tests that publish deb plugin repositories."""
-import unittest
 from random import choice
+import pytest
 
 from pulp_smash import config
-from pulp_smash.pulp3.bindings import monitor_task
-from pulp_smash.pulp3.utils import gen_repo, get_content, get_versions, modify_repo
+from pulp_smash.pulp3.utils import get_content, get_versions, modify_repo
 
-from pulp_deb.tests.functional.constants import (
-    DEB_GENERIC_CONTENT_NAME,
-    DEB_PACKAGE_NAME,
-)
-from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
-from pulp_deb.tests.functional.utils import (
-    gen_deb_remote,
-    deb_apt_publication_api,
-    deb_remote_api,
-    deb_repository_api,
-    deb_verbatim_publication_api,
-    signing_service_api,
-)
+from pulp_deb.tests.functional.constants import DEB_GENERIC_CONTENT_NAME, DEB_PACKAGE_NAME
 
+from pulpcore.client.pulp_deb.exceptions import ApiException
 from pulpcore.client.pulp_deb import (
-    AptRepositorySyncURL,
     DebAptPublication,
     DebVerbatimPublication,
 )
-from pulpcore.client.pulp_deb.exceptions import ApiException
 
 
-class PublishAnyRepoVersionSimpleTestCase(unittest.TestCase):
-    """Test whether a particular repository version can be published simple.
-
-    This test targets the following issues:
-
-    * `Pulp #3324 <https://pulp.plan.io/issues/3324>`_
-    * `Pulp Smash #897 <https://github.com/pulp/pulp-smash/issues/897>`_
-    """
-
-    class Meta:
-        publication_api = deb_apt_publication_api
-        Publication = DebAptPublication
-
-    def _publication_extra_args(self):
-        return {"simple": True}
-
-    def test_all(self):
-        """Test whether a particular repository version can be published.
-
-        1. Create a repository with at least 2 repository versions.
-        2. Create a publication by supplying the latest ``repository_version``.
-        3. Assert that the publication ``repository_version`` attribute points
-           to the latest repository version.
-        4. Create a publication by supplying the non-latest ``repository_version``.
-        5. Assert that the publication ``repository_version`` attribute points
-           to the supplied repository version.
-        6. Assert that an exception is raised when providing two different
-           repository versions to be published at same time.
-        """
-        cfg = config.get_config()
-        repo_api = deb_repository_api
-        remote_api = deb_remote_api
-        publication_api = self.Meta.publication_api
-
-        body = gen_deb_remote()
-        remote = remote_api.create(body)
-        self.addCleanup(remote_api.delete, remote.pulp_href)
-
-        repo = repo_api.create(gen_repo())
-        self.addCleanup(repo_api.delete, repo.pulp_href)
-
-        repository_sync_data = AptRepositorySyncURL(remote=remote.pulp_href)
-        sync_response = repo_api.sync(repo.pulp_href, repository_sync_data)
-        monitor_task(sync_response.task)
-
-        # Step 1
-        repo = repo_api.read(repo.pulp_href)
-        for deb_generic_content in get_content(repo.to_dict())[DEB_GENERIC_CONTENT_NAME]:
-            modify_repo(cfg, repo.to_dict(), remove_units=[deb_generic_content])
-        for deb_package in get_content(repo.to_dict())[DEB_PACKAGE_NAME]:
-            modify_repo(cfg, repo.to_dict(), remove_units=[deb_package])
-        version_hrefs = tuple(ver["pulp_href"] for ver in get_versions(repo.to_dict()))
-        non_latest = choice(version_hrefs[:-1])
-
-        # Step 2
-        publish_data = self.Meta.Publication(
-            repository=repo.pulp_href, **self._publication_extra_args()
-        )
-        publish_response = publication_api.create(publish_data)
-        publication_href = monitor_task(publish_response.task).created_resources[0]
-        self.addCleanup(publication_api.delete, publication_href)
-        publication = publication_api.read(publication_href)
-
-        # Step 3
-        self.assertEqual(publication.repository_version, version_hrefs[-1])
-
-        # Step 4
-        publish_data = self.Meta.Publication(
-            repository_version=non_latest, **self._publication_extra_args()
-        )
-        publish_response = publication_api.create(publish_data)
-        publication_href = monitor_task(publish_response.task).created_resources[0]
-        publication = publication_api.read(publication_href)
-
-        # Step 5
-        self.assertEqual(publication.repository_version, non_latest)
-
-        # Step 6
-        with self.assertRaises(ApiException):
-            body = {"repository": repo.pulp_href, "repository_version": non_latest}
-            publication_api.create(body)
+@pytest.fixture
+def publish_parameters(apt_signing_service):
+    """Fixture for parameters for the publish test."""
+    params = [
+        {"simple": True},
+        {"structured": True},
+        {"simple": True, "structured": True},
+        {"simple": True, "structured": True, "signing_service": apt_signing_service.pulp_href},
+        {},
+    ]
+    return params
 
 
-class PublishAnyRepoVersionStructuredTestCase(PublishAnyRepoVersionSimpleTestCase):
-    """Test whether a particular repository version can be published structured.
+@pytest.mark.parametrize(
+    "testcase_number, publication_api, Publication",
+    [
+        (0, "apt_publication_api", DebAptPublication),
+        (1, "apt_publication_api", DebAptPublication),
+        (2, "apt_publication_api", DebAptPublication),
+        (3, "apt_publication_api", DebAptPublication),
+        (4, "apt_verbatim_publication_api", DebVerbatimPublication),
+    ],
+)
+def test_publish_any_repo_version(
+    deb_gen_remote,
+    deb_gen_repository,
+    deb_sync_repository,
+    gen_object_with_cleanup,
+    publish_parameters,
+    publication_api,
+    Publication,
+    request,
+    testcase_number,
+):
+    """Test whether a particular repository version can be published.
+
+    1. Create a repository with at least 2 repository versions.
+    2. Create a publication supplying the latest ``repository_version``.
+    3. Assert that the publication ``repository_version`` attribute points
+       to the latest repository version.
+    4. Create a publication by supplying the non-latest ``repository_version``.
+    5. Assert that the publication ``repository_version`` attribute points
+       to the supplied repository version.
+    6. Assert that exception is raised when providing two different
+       repository versions to be published at same time.
+
+    The following cases are tested:
+
+    * `Publish a simple repository version.`_
+    * `Publish a structured repository version.`_
+    * `Publish a simple and structured repository version.`_
+    * `Publish a simple, structured and signed repository version.`_
+    * `Publish a repository version verbatim.`
 
     This test targets the following issues:
 
     * `Pulp #3324 <https://pulp.plan.io/issues/3324>`_
     * `Pulp Smash #897 <https://github.com/pulp/pulp-smash/issues/897>`_
-    """
-
-    class Meta:
-        publication_api = deb_apt_publication_api
-        Publication = DebAptPublication
-
-    def _publication_extra_args(self):
-        return {"structured": True}
-
-
-class PublishAnyRepoVersionCombinedTestCase(PublishAnyRepoVersionSimpleTestCase):
-    """Test whether a particular repository version can be published both simple and structured.
-
-    This test targets the following issues:
-
-    * `Pulp #3324 <https://pulp.plan.io/issues/3324>`_
-    * `Pulp Smash #897 <https://github.com/pulp/pulp-smash/issues/897>`_
-    """
-
-    class Meta:
-        publication_api = deb_apt_publication_api
-        Publication = DebAptPublication
-
-    def _publication_extra_args(self):
-        return {"simple": True, "structured": True}
-
-
-class PublishAnyRepoVersionSignedTestCase(PublishAnyRepoVersionSimpleTestCase):
-    """Test whether a particular repository version can be published with signed metadata.
-
-    This test targets the following issues:
-
     * `PulpDeb #6171 <https://pulp.plan.io/issues/6171>`_
     """
+    publication_api = request.getfixturevalue(publication_api)
+    cfg = config.get_config()
+    remote = deb_gen_remote()
+    repo = deb_gen_repository()
+    deb_sync_repository(remote, repo)
 
-    class Meta:
-        publication_api = deb_apt_publication_api
-        Publication = DebAptPublication
+    # Step 1
+    for deb_generic_content in get_content(repo.to_dict())[DEB_GENERIC_CONTENT_NAME]:
+        modify_repo(cfg, repo.to_dict(), remove_units=[deb_generic_content])
+    for deb_package in get_content(repo.to_dict())[DEB_PACKAGE_NAME]:
+        modify_repo(cfg, repo.to_dict(), remove_units=[deb_package])
+    version_hrefs = tuple(ver["pulp_href"] for ver in get_versions(repo.to_dict()))
+    non_latest = choice(version_hrefs[:-1])
 
-    def _publication_extra_args(self):
-        return {
-            "simple": True,
-            "structured": True,
-            "signing_service": self.signing_service.pulp_href,
-        }
+    # Step 2
+    publish_data = Publication(repository=repo.pulp_href, **publish_parameters[testcase_number])
+    first_publish_href = gen_object_with_cleanup(publication_api, publish_data).pulp_href
+    publication = publication_api.read(first_publish_href)
 
-    def setUp(self):
-        """Find SigningService for use in tests."""
-        response = signing_service_api.list(name="sign_deb_release")
-        if response.count == 0:
-            self.fail(
-                """No signing service setup.
-Please call pulp_deb/pulp_deb/tests/functional/setup_signing_service.py"""
-            )
-        self.signing_service = response.results[0]
+    # Step 3
+    assert publication.repository_version == version_hrefs[-1]
 
+    # Step 4
+    publish_data = Publication(repository_version=non_latest, **publish_parameters[testcase_number])
+    second_publish_href = gen_object_with_cleanup(publication_api, publish_data).pulp_href
+    publication = publication_api.read(second_publish_href)
 
-class VerbatimPublishAnyRepoVersionTestCase(PublishAnyRepoVersionSimpleTestCase):
-    """Test whether a particular repository version can be published verbatim.
+    # Step 5
+    assert publication.repository_version == non_latest
 
-    This test targets the following issues:
+    # Step 6
+    with pytest.raises(ApiException) as exc:
+        body = {"repository": repo.pulp_href, "repository_version": non_latest}
+        gen_object_with_cleanup(publication_api, body)
+    assert exc.value.status == 400
 
-    * `Pulp #3324 <https://pulp.plan.io/issues/3324>`_
-    * `Pulp Smash #897 <https://github.com/pulp/pulp-smash/issues/897>`_
-    """
-
-    class Meta:
-        publication_api = deb_verbatim_publication_api
-        Publication = DebVerbatimPublication
-
-    def _publication_extra_args(self):
-        return {}
+    # Because the cleanup of the publications happens after we try to delete
+    # the signing service in the `apt_signing_service` fixture we need to
+    # delete both publications explicitly here. Otherwise the signing service
+    # deletion will result in a `django.db.models.deletion.ProtectedError`.
+    publication_api.delete(first_publish_href)
+    publication_api.delete(second_publish_href)
