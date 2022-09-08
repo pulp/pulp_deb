@@ -17,38 +17,30 @@ from pulp_deb.tests.functional.constants import (
 
 @pytest.mark.parallel
 def test_sync_optimize_skip_unchanged_release_file(
-    deb_gen_remote,
-    deb_gen_repository,
+    deb_remote_factory,
+    deb_repository_factory,
     deb_get_repository_by_href,
-    is_sync_skipped,
     deb_sync_repository,
 ):
-    """Test whether synchronization is skipped when the ReleaseFile of a remote
-    has not been changed.
-
-    1. Create a repository and a remote.
-    2. Assert that the latest RepositoryVersion is 0.
-    3. Sync the repository.
-    4. Assert that the latest RepositoryVersion is 1.
-    5. Assert that the sync was not skipped.
-    6. Sync the repository again.
-    7. Assert that the latest RepositoryVersion is still 1.
-    8. Assert that this time the sync was skipped.
-    """
-    repo = deb_gen_repository()
-    remote = deb_gen_remote(url=DEB_FIXTURE_URL, distributions=DEB_FIXTURE_DISTRIBUTIONS)
-
+    """Test whether synchronization is skipped when a Release file remains unchanged."""
+    # Create a repository and a remote and verify latest `repository_version` is 0
+    repo = deb_repository_factory()
+    remote = deb_remote_factory(url=DEB_FIXTURE_URL, distributions=DEB_FIXTURE_DISTRIBUTIONS)
     assert repo.latest_version_href.endswith("/0/")
 
+    # Sync the repository
     task = deb_sync_repository(remote, repo)
     repo = deb_get_repository_by_href(repo.pulp_href)
 
+    # Verify latest `repository_version` is 1 and sync was not skipped
     assert repo.latest_version_href.endswith("/1/")
     assert not is_sync_skipped(task, DEB_REPORT_CODE_SKIP_RELEASE)
 
+    # Sync the repository again
     task_skip = deb_sync_repository(remote, repo)
     repo = deb_get_repository_by_href(repo.pulp_href)
 
+    # Verify that the latest `repository_version` is still1 and sync was skipped
     assert repo.latest_version_href.endswith("/1/")
     assert is_sync_skipped(task_skip, DEB_REPORT_CODE_SKIP_RELEASE)
 
@@ -72,49 +64,42 @@ def test_sync_optimize_skip_unchanged_release_file(
     ],
 )
 def test_sync_optimize_no_skip_release_file(
-    deb_gen_remote,
-    deb_gen_repository,
+    deb_remote_factory,
+    deb_repository_factory,
     deb_get_repository_by_href,
-    is_sync_skipped,
     remote_params,
     remote_diff_params,
     deb_sync_repository,
 ):
-    """Test whether repository synchronizations have not been skipped for certain conditions.
+    """Test whether synchronizations have not been skipped for certain conditions.
+
     The following cases are tested:
 
-    * `Sync a repository with same ReleaseFile but updated Components.`_
-    * `Sync a repository with same ReleaseFile but updated Architectures.`_
-    * `Sync a repository with updated ReleaseFile and updated Components.`_
-
-    1. Create a repository and a remote.
-    2. Assert that the latest RepositoryVersion is 0.
-    3. Synchronize the repository.
-    4. Assert that the latest RepositoryVersion is 1.
-    5. Assert that the synchronization was not skipped.
-    6. Create a new remote with different conditions.
-    7. Synchronize the repository with the new remote.
-    8. Asser that the latest RepositoryVersion is 2.
-    9. Assert that the synchronization was not skipped.
+    * `Sync a repository with same Release file but updated Components.`_
+    * `Sync a repository with same Release file but updated Architectures.`_
+    * `Sync a repository with updated Release file and updated Components.`_
     """
-    repo = deb_gen_repository()
-    remote = deb_gen_remote(
+    # Create a repository and a remote and verify latest `repository_version` is 0
+    repo = deb_repository_factory()
+    remote = deb_remote_factory(
         url=remote_params[0],
         distributions=remote_params[1],
         components=remote_params[2],
         architectures=remote_params[3],
     )
-
     assert repo.latest_version_href.endswith("/0/")
 
+    # Sync the repository
     task = deb_sync_repository(remote, repo)
     repo = deb_get_repository_by_href(repo.pulp_href)
 
+    # Verify latest `repository_version` is 1 and sync was not skipped
     assert repo.latest_version_href.endswith("/1/")
     assert not is_sync_skipped(task, DEB_REPORT_CODE_SKIP_RELEASE)
     assert not is_sync_skipped(task, DEB_REPORT_CODE_SKIP_PACKAGE)
 
-    remote_diff = deb_gen_remote(
+    # Create a new remote with different parameters and sync with repository
+    remote_diff = deb_remote_factory(
         url=remote_diff_params[0],
         distributions=remote_diff_params[1],
         components=remote_diff_params[2],
@@ -123,6 +108,7 @@ def test_sync_optimize_no_skip_release_file(
     task_diff = deb_sync_repository(remote_diff, repo)
     repo = deb_get_repository_by_href(repo.pulp_href)
 
+    # Verify that latest `repository_version` is 2 and sync was not skipped
     assert repo.latest_version_href.endswith("/2/")
     assert not is_sync_skipped(task_diff, DEB_REPORT_CODE_SKIP_RELEASE)
     assert not is_sync_skipped(task_diff, DEB_REPORT_CODE_SKIP_PACKAGE)
@@ -130,54 +116,42 @@ def test_sync_optimize_no_skip_release_file(
 
 @pytest.mark.parallel
 def test_sync_optimize_skip_unchanged_package_index(
-    deb_gen_remote,
-    deb_gen_repository,
+    deb_remote_factory,
+    deb_repository_factory,
     deb_get_repository_by_href,
-    is_sync_skipped,
     deb_sync_repository,
 ):
-    """Test whether a repository synchronization of PackageIndex is skipped when
-    the package has not been changed.
-
-    1. Create a repository and a remote.
-    2. Assert that the latest RepositoryVersion is 0.
-    3. Sync the repository.
-    4. Assert that the latest RepositoryVersion is 1.
-    5. Assert that the sync was not skipped.
-    6. Create a new remote with at least one updated package and one that remains the same.
-    7. Sync the repository with the new remote.
-    8. Assert that the latest RepositoryVersion is 2.
-    9. Asssert that at least one PackageIndex was skipped.
-    """
-    repo = deb_gen_repository()
-    remote = deb_gen_remote(url=DEB_FIXTURE_URL, distributions=DEB_FIXTURE_SINGLE_DIST)
-
+    """Test whether package synchronization is skipped when a package has not been changed."""
+    # Create a repository and a remote and verify latest `repository_version` is 0
+    repo = deb_repository_factory()
+    remote = deb_remote_factory(url=DEB_FIXTURE_URL, distributions=DEB_FIXTURE_SINGLE_DIST)
     assert repo.latest_version_href.endswith("/0/")
 
+    # Sync the repository
     task = deb_sync_repository(remote, repo)
     repo = deb_get_repository_by_href(repo.pulp_href)
 
+    # Verify latest `repository_version` is 1 and sync was not skipped
     assert repo.latest_version_href.endswith("/1/")
     assert not is_sync_skipped(task, DEB_REPORT_CODE_SKIP_RELEASE)
     assert not is_sync_skipped(task, DEB_REPORT_CODE_SKIP_PACKAGE)
 
-    remote_diff = deb_gen_remote(url=DEB_FIXTURE_URL_UPDATE, distributions=DEB_FIXTURE_SINGLE_DIST)
+    # Create new remote with both updated and unchanged packages and sync with repository
+    remote_diff = deb_remote_factory(
+        url=DEB_FIXTURE_URL_UPDATE, distributions=DEB_FIXTURE_SINGLE_DIST
+    )
     task_diff = deb_sync_repository(remote_diff, repo)
     repo = deb_get_repository_by_href(repo.pulp_href)
 
+    # Verify latest `repository_version` is 2, release was not skipped and package was skipped
     assert repo.latest_version_href.endswith("/2/")
     assert not is_sync_skipped(task_diff, DEB_REPORT_CODE_SKIP_RELEASE)
     assert is_sync_skipped(task_diff, DEB_REPORT_CODE_SKIP_PACKAGE)
 
 
-@pytest.fixture
-def is_sync_skipped():
+def is_sync_skipped(task, code):
     """Checks if a given task has skipped the sync based of a given code."""
-
-    def _is_sync_skipped(task, code):
-        for report in task.progress_reports:
-            if report.code == code:
-                return True
-        return False
-
-    return _is_sync_skipped
+    for report in task.progress_reports:
+        if report.code == code:
+            return True
+    return False

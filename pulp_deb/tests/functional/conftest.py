@@ -1,5 +1,5 @@
 from pulp_smash.pulp3.bindings import monitor_task
-from pulp_smash.pulp3.utils import gen_repo
+from pulp_smash.pulp3.utils import gen_distribution, gen_repo
 import pytest
 import os
 import stat
@@ -12,6 +12,7 @@ from pulpcore.client.pulp_deb import (
     AptRepositorySyncURL,
     ContentPackagesApi,
     DebAptPublication,
+    DebVerbatimPublication,
     DistributionsAptApi,
     PublicationsAptApi,
     PublicationsVerbatimApi,
@@ -65,34 +66,67 @@ def apt_package_api(apt_client):
 
 
 @pytest.fixture
-def deb_gen_publication(apt_publication_api, gen_object_with_cleanup):
+def deb_distribution_factory(apt_distribution_api, gen_object_with_cleanup):
+    """Fixture that generates a deb distribution with cleanup from a given publication."""
+
+    def _deb_distribution_factory(publication):
+        body = gen_distribution()
+        body["publication"] = publication.pulp_href
+        return gen_object_with_cleanup(apt_distribution_api, body)
+
+    return _deb_distribution_factory
+
+
+@pytest.fixture
+def deb_publication_factory(apt_publication_api, gen_object_with_cleanup):
     """Fixture that generates a deb publication with cleanup from a given repository."""
 
-    def _deb_gen_publication(repo, **kwargs):
+    def _deb_publication_factory(repo, **kwargs):
         publication_data = DebAptPublication(repository=repo.pulp_href, **kwargs)
         return gen_object_with_cleanup(apt_publication_api, publication_data)
 
-    return _deb_gen_publication
+    return _deb_publication_factory
 
 
 @pytest.fixture
-def deb_gen_repository(apt_repository_api, gen_object_with_cleanup):
+def deb_repository_factory(apt_repository_api, gen_object_with_cleanup):
     """Fixture that generates a deb repository with cleanup."""
 
-    def _deb_gen_repository():
+    def _deb_repository_factory():
         return gen_object_with_cleanup(apt_repository_api, gen_repo())
 
-    return _deb_gen_repository
+    return _deb_repository_factory
 
 
 @pytest.fixture
-def deb_gen_remote(apt_remote_api, gen_object_with_cleanup):
+def deb_remote_factory(apt_remote_api, gen_object_with_cleanup):
     """Fixture that generates a deb remote with cleanup."""
 
-    def _deb_gen_remote(**kwargs):
+    def _deb_remote_factory(**kwargs):
         return gen_object_with_cleanup(apt_remote_api, gen_deb_remote(**kwargs))
 
-    return _deb_gen_remote
+    return _deb_remote_factory
+
+
+@pytest.fixture
+def deb_remote_custom_data_factory(apt_remote_api, gen_object_with_cleanup):
+    """Fixture that generates a deb remote with cleanup using custom data."""
+
+    def _deb_remote_custom_data_factory(data):
+        return gen_object_with_cleanup(apt_remote_api, data)
+
+    return _deb_remote_custom_data_factory
+
+
+@pytest.fixture
+def deb_verbatim_publication_factory(apt_verbatim_publication_api, gen_object_with_cleanup):
+    """Fixture that generates a deb verbatim publication with cleanup from a given repository."""
+
+    def _deb_verbatim_publication_factory(repo, **kwargs):
+        publication_data = DebVerbatimPublication(repository=repo.pulp_href, **kwargs)
+        return gen_object_with_cleanup(apt_verbatim_publication_api, publication_data)
+
+    return _deb_verbatim_publication_factory
 
 
 @pytest.fixture
@@ -148,6 +182,17 @@ def deb_patch_remote(apt_remote_api):
 
 
 @pytest.fixture
+def deb_put_remote(apt_remote_api):
+    """Fixture that will update a deb remote."""
+
+    def _deb_put_remote(remote, content):
+        response = apt_remote_api.update(remote.pulp_href, content)
+        return monitor_task(response.task)
+
+    return _deb_put_remote
+
+
+@pytest.fixture
 def deb_sync_repository(apt_repository_api):
     """Fixture that synchronizes a given repository with a given remote
     and returns the monitored task.
@@ -183,7 +228,7 @@ def deb_signing_script_path(signing_gpg_homedir_path):
 
 
 @pytest.fixture
-def deb_gen_signing_service(
+def deb_signing_service_factory(
     cli_client,
     deb_signing_script_path,
     signing_gpg_metadata,
