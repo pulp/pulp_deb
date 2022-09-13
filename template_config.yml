@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-150-gc95d3f2
+# generated with plugin_template@2021.08.26-168-g5c80b54
 
 additional_plugins: []
 additional_repos: []
@@ -25,6 +25,7 @@ disabled_redis_runners: []
 docker_fixtures: true
 docs_test: true
 flake8: true
+flake8_ignore: []
 github_org: pulp
 issue_tracker: github
 keep_ci_update_since_branch: '2.16'
