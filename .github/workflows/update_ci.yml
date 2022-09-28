@@ -53,10 +53,9 @@ jobs:
       - name: Set short_ref
         id: vars
         run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
-
       - name: Dispatching
         if: github.event_name == 'schedule' || github.event.inputs.all_branches == 'yes'
-        run: python .ci/scripts/update_ci_branches.py 2.16
+        run: python .ci/scripts/update_ci_branches.py 2.16 2.17 2.18 2.19
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
 
