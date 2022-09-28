@@ -48,7 +48,7 @@ class FilterWithHelpMessage(Filter):
         """
         Args:
             qs (django.db.models.query.QuerySet): The Content Queryset
-            value (string): The ReleaseComponent uuid to filter by
+            value (string): The value to filter by
         """
         if value is None:
             # user didn't supply a value
