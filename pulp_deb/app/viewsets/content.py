@@ -1,8 +1,9 @@
 from gettext import gettext as _  # noqa
 
+from django_filters import Filter
 from pulpcore.plugin.viewsets import (
-    ContentViewSet,
     ContentFilter,
+    ContentViewSet,
     SingleArtifactContentUploadViewSet,
 )
 
@@ -36,10 +37,57 @@ class GenericContentViewSet(SingleArtifactContentUploadViewSet):
     filterset_class = GenericContentFilter
 
 
+class PackageToReleaseComponentFilter(Filter):
+    """
+    Filter Packages by a ReleaseComponent.
+    """
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("help_text", _("(uuid) Filter results where Package in ReleaseComponent"))
+        super().__init__(*args, **kwargs)
+
+    def filter(self, qs, value):
+        """
+        Args:
+            qs (django.db.models.query.QuerySet): The Content Queryset
+            value (string): The ReleaseComponent uuid to filter by
+        """
+        if value is None:
+            # user didn't supply a value
+            return qs
+
+        return qs.filter(deb_packagereleasecomponent__release_component=value)
+
+
+class PackageToReleaseFilter(Filter):
+    """
+    Filter Packages by a Release.
+    """
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("help_text", _("(uuid) Filter results where Package in Release"))
+        super().__init__(*args, **kwargs)
+
+    def filter(self, qs, value):
+        """
+        Args:
+            qs (django.db.models.query.QuerySet): The Content Queryset
+            value (string): The Release uuid to filter by
+        """
+        if value is None:
+            # user didn't supply a value
+            return qs
+
+        return qs.filter(deb_packagereleasecomponent__release_component__release=value)
+
+
 class PackageFilter(ContentFilter):
     """
     FilterSet for Package.
     """
+
+    release_component = PackageToReleaseComponentFilter()
+    release = PackageToReleaseFilter()
 
     class Meta:
         model = models.Package
