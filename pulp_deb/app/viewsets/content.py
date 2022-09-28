@@ -37,13 +37,11 @@ class GenericContentViewSet(SingleArtifactContentUploadViewSet):
     filterset_class = GenericContentFilter
 
 
-class PackageToReleaseComponentFilter(Filter):
-    """
-    Filter Packages by a ReleaseComponent.
-    """
+class FilterWithHelpMessage(Filter):
+    HELP = "Override with your help message"
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault("help_text", _("(uuid) Filter results where Package in ReleaseComponent"))
+        kwargs.setdefault("help_text", _(self.HELP))
         super().__init__(*args, **kwargs)
 
     def filter(self, qs, value):
@@ -56,28 +54,23 @@ class PackageToReleaseComponentFilter(Filter):
             # user didn't supply a value
             return qs
 
+        return self._filter(qs, value)
+
+    def _filter(self, qs, value):
+        raise NotImplementedError
+
+
+class PackageToReleaseComponentFilter(FilterWithHelpMessage):
+    HELP = "(uuid) Filter results where Package in ReleaseComponent"
+
+    def _filter(self, qs, value):
         return qs.filter(deb_packagereleasecomponent__release_component=value)
 
 
-class PackageToReleaseFilter(Filter):
-    """
-    Filter Packages by a Release.
-    """
+class PackageToReleaseFilter(FilterWithHelpMessage):
+    HELP = "(uuid) Filter results where Package in Release"
 
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault("help_text", _("(uuid) Filter results where Package in Release"))
-        super().__init__(*args, **kwargs)
-
-    def filter(self, qs, value):
-        """
-        Args:
-            qs (django.db.models.query.QuerySet): The Content Queryset
-            value (string): The Release uuid to filter by
-        """
-        if value is None:
-            # user didn't supply a value
-            return qs
-
+    def _filter(self, qs, value):
         return qs.filter(deb_packagereleasecomponent__release_component__release=value)
 
 
@@ -263,10 +256,19 @@ class InstallerFileIndexViewSet(ContentViewSet):
     filterset_class = InstallerFileIndexFilter
 
 
+class ReleaseToPackageFilter(FilterWithHelpMessage):
+    HELP = "(uuid) Filter results where Release contains Package"
+
+    def _filter(self, qs, value):
+        return qs.filter(deb_releasecomponent__deb_packagereleasecomponent__package=value)
+
+
 class ReleaseFilter(ContentFilter):
     """
     FilterSet for Release.
     """
+
+    package = ReleaseToPackageFilter()
 
     class Meta:
         model = models.Release
@@ -320,10 +322,19 @@ class ReleaseArchitectureViewSet(ContentViewSet):
     filterset_class = ReleaseArchitectureFilter
 
 
+class ReleaseComponentToPackageFilter(FilterWithHelpMessage):
+    HELP = "(uuid) Filter results where ReleaseComponent contains Package"
+
+    def _filter(self, qs, value):
+        return qs.filter(deb_packagereleasecomponent__package=value)
+
+
 class ReleaseComponentFilter(ContentFilter):
     """
     FilterSet for ReleaseComponent.
     """
+
+    package = ReleaseComponentToPackageFilter()
 
     class Meta:
         model = models.ReleaseComponent
