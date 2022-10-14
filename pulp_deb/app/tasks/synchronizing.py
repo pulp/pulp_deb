@@ -410,6 +410,14 @@ class DebUpdateReleaseFileAttributes(Stage):
                         release_file.codename = release_file_dict["Codename"]
                     if "suite" in release_file_dict:
                         release_file.suite = release_file_dict["Suite"]
+                    if "version" in release_file_dict and self.remote.sync_extra_release_fields:
+                        release_file.version = release_file_dict["Version"]
+                    if "origin" in release_file_dict and self.remote.sync_extra_release_fields:
+                        release_file.origin = release_file_dict["Origin"]
+                    if "label" in release_file_dict and self.remote.sync_extra_release_fields:
+                        release_file.label = release_file_dict["Label"]
+                    if "description" in release_file_dict and self.remote.sync_extra_release_fields:
+                        release_file.description = release_file_dict["Description"]
 
                     if "components" in release_file_dict:
                         release_file.components = release_file_dict["Components"]
@@ -599,6 +607,7 @@ class DebFirstStage(Stage):
             "sync_installer": self.remote.sync_installer,
             "gpgkey": self.remote.gpgkey,
             "ignore_missing_package_indices": self.remote.ignore_missing_package_indices,
+            "sync_extra_release_fields": self.remote.sync_extra_release_fields,
         }
 
     async def _handle_distribution(self, distribution):
@@ -643,7 +652,17 @@ class DebFirstStage(Stage):
             "suite": release_file.suite,
             "distribution": distribution,
         }
-        await self.put(DeclarativeContent(content=Release(**distribution_dict)))
+        dist_fields = distribution_dict.copy()
+        if self.remote.sync_extra_release_fields:
+            dist_fields.update(
+                {
+                    "version": release_file.version,
+                    "origin": release_file.origin,
+                    "label": release_file.label,
+                    "description": release_file.description,
+                }
+            )
+        await self.put(DeclarativeContent(content=Release(**dist_fields)))
         # Create release architectures
         if release_file.architectures:
             architectures = _filter_split_architectures(

@@ -18,6 +18,7 @@ class AptRemote(Remote):
     sync_installer = models.BooleanField(default=False)
     gpgkey = models.TextField(null=True)
     ignore_missing_package_indices = models.BooleanField(default=False)
+    sync_extra_release_fields = models.BooleanField(default=True)
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"

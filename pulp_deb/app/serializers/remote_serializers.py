@@ -64,6 +64,12 @@ class AptRemoteSerializer(RemoteSerializer):
         required=False,
     )
 
+    sync_extra_release_fields = BooleanField(
+        help_text="Previously, pulp_deb only synced the fields distribution, codename, and suite."
+        "Enabling this option will also sync fields version, origin, label, and description.",
+        required=False,
+    )
+
     policy = ChoiceField(
         help_text="The policy to use when downloading content. The possible values include: "
         "'immediate', 'on_demand', and 'streamed'. 'immediate' is the default.",
@@ -81,5 +87,6 @@ class AptRemoteSerializer(RemoteSerializer):
             "sync_installer",
             "gpgkey",
             "ignore_missing_package_indices",
+            "sync_extra_release_fields",
         )
         model = AptRemote

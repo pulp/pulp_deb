@@ -11,3 +11,6 @@ CHECKSUM_TYPE_MAP = {
     "sha256": "SHA256",
     "sha512": "SHA512",
 }
+
+# Represents null values since nulls can't be used in unique indexes in postgres < 15
+NULL_VALUE = "__!!!NULL VALUE!!!__"

@@ -19,6 +19,7 @@ from pulpcore.plugin.models import (
     RepositoryVersion,
 )
 
+from pulp_deb.app.constants import NULL_VALUE
 from pulp_deb.app.models import (
     AptPublication,
     Package,
@@ -126,6 +127,7 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                     description=repository.description,
                     label=repository.name,
                     version=str(repo_version.number),
+                    origin="Pulp 3",
                 )
 
                 for package in Package.objects.filter(
@@ -181,16 +183,34 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                     components = list(
                         release_components.distinct("component").values_list("component", flat=True)
                     )
+
+                    description = repository.description
+                    if release.description != NULL_VALUE:
+                        description = release.description
+
+                    label = repository.name
+                    if release.label != NULL_VALUE:
+                        label = release.label
+
+                    version = str(repo_version.number)
+                    if release.version != NULL_VALUE:
+                        version = release.version
+
+                    origin = "Pulp 3"
+                    if release.origin != NULL_VALUE:
+                        origin = release.origin
+
                     release_helper = _ReleaseHelper(
                         publication=publication,
                         codename=release.codename,
                         distribution=distribution,
                         components=components,
                         architectures=architectures,
-                        description=repository.description,
-                        label=repository.name,
-                        version=str(repo_version.number),
+                        description=description,
+                        label=label,
+                        version=version,
                         suite=release.suite,
+                        origin=origin,
                     )
 
                     for prc in PackageReleaseComponent.objects.filter(
@@ -279,6 +299,7 @@ class _ReleaseHelper:
         version,
         description=None,
         suite=None,
+        origin=None,
     ):
         self.publication = publication
         self.distribution = distribution
@@ -290,7 +311,7 @@ class _ReleaseHelper:
         # published Release file. As a "nice to have" for human readers, we try to use
         # the same order of fields that official Debian repositories use.
         self.release = deb822.Release()
-        self.release["Origin"] = "Pulp 3"
+        self.release["Origin"] = origin
         if settings.PUBLISH_RELEASE_FILE_LABEL:
             self.release["Label"] = label
         if suite:

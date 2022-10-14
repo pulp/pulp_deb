@@ -222,7 +222,7 @@ class ReleaseFilter(ContentFilter):
 
     class Meta:
         model = models.Release
-        fields = ["codename", "suite", "distribution"]
+        fields = ["codename", "suite", "distribution", "version", "label", "origin"]
 
 
 class ReleaseViewSet(ContentViewSet):

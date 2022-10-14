@@ -7,6 +7,7 @@ exclusively used for verbatim publications.
 from django.db import models
 
 from pulpcore.plugin.models import Content
+from pulp_deb.app.constants import NULL_VALUE
 
 
 BOOL_CHOICES = [(True, "yes"), (False, "no")]
@@ -25,6 +26,10 @@ class ReleaseFile(Content):
     codename = models.TextField()
     suite = models.TextField()
     distribution = models.TextField()
+    version = models.TextField(default=NULL_VALUE)
+    origin = models.TextField(default=NULL_VALUE)
+    label = models.TextField(default=NULL_VALUE)
+    description = models.TextField(default=NULL_VALUE)
     components = models.TextField(blank=True)
     architectures = models.TextField(blank=True)
     relative_path = models.TextField()
@@ -38,6 +43,10 @@ class ReleaseFile(Content):
                 "codename",
                 "suite",
                 "distribution",
+                "version",
+                "origin",
+                "label",
+                "description",
                 "components",
                 "architectures",
                 "relative_path",
