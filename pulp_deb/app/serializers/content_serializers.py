@@ -21,6 +21,7 @@ from pulp_deb.app.constants import (
     PACKAGE_UPLOAD_DEFAULT_DISTRIBUTION,
 )
 
+from pulp_deb.app.constants import NULL_VALUE
 from pulp_deb.app.models import (
     BasePackage,
     GenericContent,
@@ -69,6 +70,42 @@ class YesNoField(Field):
             raise ValidationError('Value must be "yes" or "no".')
 
 
+class NullableCharField(CharField):
+    """
+    A serializer that accepts null values but saves them as the NULL_VALUE str.
+    """
+
+    def to_representation(self, value):
+        """
+        Translate str to str or None.
+        """
+        if value == NULL_VALUE:
+            return None
+        else:
+            return value
+
+    def to_internal_value(self, data):
+        """
+        Translate None to NULL_VALUE str.
+        """
+        if data is None:
+            return NULL_VALUE
+        else:
+            return data
+
+    def validate_empty_values(self, data):
+        """
+        Translate None to NULL_VALUE str.
+
+        This is needed when user input is not set, it defaults to None and the to_internal_value
+        method never gets called.
+        """
+        (is_empty_value, data) = super().validate_empty_values(data)
+        if is_empty_value and data is None:
+            return is_empty_value, NULL_VALUE
+        return is_empty_value, data
+
+
 class GenericContentSerializer(SingleArtifactContentUploadSerializer, ContentChecksumSerializer):
     """
     A serializer for GenericContent.
@@ -102,12 +139,12 @@ class ReleaseFileSerializer(MultipleArtifactContentSerializer):
     A serializer for ReleaseFile.
     """
 
-    codename = CharField(help_text='Codename of the release, i.e. "buster".', required=False)
+    codename = CharField(help_text='Codename of the release, e.g. "buster".', required=False)
 
-    suite = CharField(help_text='Suite of the release, i.e. "stable".', required=False)
+    suite = CharField(help_text='Suite of the release, e.g. "stable".', required=False)
 
     distribution = CharField(
-        help_text='Distribution of the release, i.e. "stable/updates".', required=True
+        help_text='Distribution of the release, e.g. "stable/updates".', required=True
     )
 
     relative_path = CharField(help_text="Path of file relative to url.", required=False)
@@ -660,10 +697,22 @@ class ReleaseSerializer(NoArtifactContentSerializer):
     codename = CharField()
     suite = CharField()
     distribution = CharField()
+    version = NullableCharField(required=False, allow_null=True, default=None)
+    origin = NullableCharField(required=False, allow_null=True, default=None)
+    label = NullableCharField(required=False, allow_null=True, default=None)
+    description = NullableCharField(required=False, allow_null=True, default=None)
 
     class Meta(NoArtifactContentSerializer.Meta):
         model = Release
-        fields = NoArtifactContentSerializer.Meta.fields + ("codename", "suite", "distribution")
+        fields = NoArtifactContentSerializer.Meta.fields + (
+            "codename",
+            "suite",
+            "distribution",
+            "version",
+            "origin",
+            "label",
+            "description",
+        )
 
 
 class ReleaseArchitectureSerializer(NoArtifactContentSerializer):

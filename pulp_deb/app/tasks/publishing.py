@@ -19,6 +19,7 @@ from pulpcore.plugin.models import (
     RepositoryVersion,
 )
 
+from pulp_deb.app.constants import NULL_VALUE
 from pulp_deb.app.models import (
     AptPublication,
     AptRepository,
@@ -105,8 +106,15 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
             repository = AptRepository.objects.get(pk=repo_version.repository.pk)
 
             if simple:
-                codename = "default"
-                distribution = "default"
+                release = Release(
+                    distribution="default",
+                    codename="default",
+                    suite="default",
+                    origin="Pulp 3",
+                )
+                if repository.description:
+                    release.description = repository.description
+
                 component = "all"
                 architectures = (
                     Package.objects.filter(
@@ -118,13 +126,12 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                 architectures = list(architectures)
                 if "all" not in architectures:
                     architectures.append("all")
+
                 release_helper = _ReleaseHelper(
                     publication=publication,
-                    codename=codename,
-                    distribution=distribution,
+                    release=release,
                     components=[component],
                     architectures=architectures,
-                    description=repository.description,
                     signing_service=repository.signing_service,
                 )
 
@@ -171,8 +178,13 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                     if not release:
                         codename = distribution.strip("/").split("/")[0]
                         release = Release(
-                            distribution=distribution, codename=codename, suite=codename
+                            distribution=distribution,
+                            codename=codename,
+                            suite=codename,
+                            origin="Pulp 3",
                         )
+                        if repository.description:
+                            release.description = repository.description
 
                     release_components = ReleaseComponent.objects.filter(
                         pk__in=repo_version.content.order_by("-pulp_created"),
@@ -181,14 +193,12 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                     components = list(
                         release_components.distinct("component").values_list("component", flat=True)
                     )
+
                     release_helper = _ReleaseHelper(
                         publication=publication,
-                        codename=release.codename,
-                        distribution=distribution,
                         components=components,
                         architectures=architectures,
-                        description=repository.description,
-                        suite=release.suite,
+                        release=release,
                         signing_service=repository.release_signing_service(release),
                     )
 
@@ -270,18 +280,13 @@ class _ReleaseHelper:
     def __init__(
         self,
         publication,
-        codename,
-        distribution,
         components,
         architectures,
-        label=None,
-        version=None,
-        description=None,
-        suite=None,
+        release,
         signing_service=None,
     ):
         self.publication = publication
-        self.distribution = distribution
+        self.distribution = distribution = release.distribution
         self.dists_subfolder = distribution.strip("/") if distribution != "/" else "flat-repo"
         if distribution[-1] == "/":
             message = "Using dists subfolder '{}' for structured publish of originally flat repo!"
@@ -290,21 +295,22 @@ class _ReleaseHelper:
         # published Release file. As a "nice to have" for human readers, we try to use
         # the same order of fields that official Debian repositories use.
         self.release = deb822.Release()
-        self.release["Origin"] = "Pulp 3"
-        if label:
-            self.release["Label"] = label
-        if suite:
-            self.release["Suite"] = suite
-        if version:
-            self.release["Version"] = version
-        if not codename:
-            codename = distribution.split("/")[0] if distribution != "/" else "flat-repo"
-        self.release["Codename"] = codename
+        if release.origin != NULL_VALUE:
+            self.release["Origin"] = release.origin
+        if release.label != NULL_VALUE:
+            self.release["Label"] = release.label
+        if release.suite:
+            self.release["Suite"] = release.suite
+        if release.version != NULL_VALUE:
+            self.release["Version"] = release.version
+        if not release.codename:
+            release.codename = distribution.split("/")[0] if distribution != "/" else "flat-repo"
+        self.release["Codename"] = release.codename
         self.release["Date"] = datetime.now(tz=timezone.utc).strftime("%a, %d %b %Y %H:%M:%S %z")
         self.release["Architectures"] = " ".join(architectures)
         self.release["Components"] = ""  # Will be set later
-        if description:
-            self.release["Description"] = description
+        if release.description != NULL_VALUE:
+            self.release["Description"] = release.description
 
         for checksum_type, deb_field in CHECKSUM_TYPE_MAP.items():
             if checksum_type in settings.ALLOWED_CONTENT_CHECKSUMS:
