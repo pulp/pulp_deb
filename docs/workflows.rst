@@ -7,7 +7,7 @@ This chapter assumes you have a working pulp :doc:`installation <../installation
 
 .. include:: httpie_usage.rst
 
-In order to make the workflows usable via copy and paster, we make use of environmental variables in all examples:
+In order to make the workflows usable via copy and paste, we make use of environmental variables in all examples:
 
 .. code-block:: bash
 
