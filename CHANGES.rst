@@ -13,6 +13,28 @@ Changelog
 
 .. towncrier release notes start
 
+2.19.2 (2022-10-18)
+===================
+
+Bugfixes
+--------
+
+- Added handling for the special case when publishing an upstream repo containing a distribution named "default" using both simple and structured publish modes.
+  `#601 <https://github.com/pulp/pulp_deb/issues/601>`_
+- Added a better error message when users try to create a repository version containing duplicate APT distributions.
+  `#603 <https://github.com/pulp/pulp_deb/issues/603>`_
+
+
+Improved Documentation
+----------------------
+
+- Added workflow docs on manually creating structured repos.
+  `#586 <https://github.com/pulp/pulp_deb/issues/586>`_
+
+
+----
+
+
 2.19.1 (2022-07-25)
 ===================
 
@@ -46,6 +68,19 @@ Misc
 
 - Converted CharField to TextField for pulp_deb models.
   `#532 <https://github.com/pulp/pulp_deb/issues/532>`_
+
+
+----
+
+
+2.18.2 (2022-10-18)
+===================
+
+Bugfixes
+--------
+
+- Added a better error message when users try to create a repository version containing duplicate APT distributions.
+  `#603 <https://github.com/pulp/pulp_deb/issues/603>`_
 
 
 ----
@@ -100,6 +135,26 @@ Misc
 ----
 
 
+2.17.2 (2022-10-18)
+===================
+
+Bugfixes
+--------
+
+- Fixed handling of download URLs containing special characters in the path part.
+  `#571 <https://github.com/pulp/pulp_deb/issues/571>`__
+- Fixed several serializer bugs preventing the manual creation of structure content of type
+  ``ReleaseArchitecture``, ``ReleaseComponent``, and ``PackageReleaseComponent``.
+  `#575 <https://github.com/pulp/pulp_deb/issues/575>`__
+- Added handling for the special case when publishing an upstream repo containing a distribution named "default" using both simple and structured publish modes.
+  `#601 <https://github.com/pulp/pulp_deb/issues/601>`__
+- Added a better error message when users try to create a repository version containing duplicate APT distributions.
+  `#603 <https://github.com/pulp/pulp_deb/issues/603>`__
+
+
+----
+
+
 2.17.1 (2022-04-21)
 ===================
 
@@ -143,6 +198,26 @@ Bugfixes
   `#8770 <https://pulp.plan.io/issues/8770>`_
 - Fixed a bug causing publications to reference any ``AptReleaseSigningService`` via a full URL instead of just a ``pulp_href``.
   `#9563 <https://pulp.plan.io/issues/9563>`_
+
+
+----
+
+
+2.16.3 (2022-10-18)
+===================
+
+Bugfixes
+--------
+
+- Fixed handling of download URLs containing special characters in the path part.
+  `#571 <https://github.com/pulp/pulp_deb/issues/571>`__
+- Fixed several serializer bugs preventing the manual creation of structure content of type
+  ``ReleaseArchitecture``, ``ReleaseComponent``, and ``PackageReleaseComponent``.
+  `#575 <https://github.com/pulp/pulp_deb/issues/575>`__
+- Added handling for the special case when publishing an upstream repo containing a distribution named "default" using both simple and structured publish modes.
+  `#601 <https://github.com/pulp/pulp_deb/issues/601>`__
+- Added a better error message when users try to create a repository version containing duplicate APT distributions.
+  `#603 <https://github.com/pulp/pulp_deb/issues/603>`__
 
 
 ----
