@@ -13,6 +13,28 @@ Changelog
 
 .. towncrier release notes start
 
+2.19.2 (2022-10-18)
+===================
+
+Bugfixes
+--------
+
+- Added handling for the special case when publishing an upstream repo containing a distribution named "default" using both simple and structured publish modes.
+  `#601 <https://github.com/pulp/pulp_deb/issues/601>`_
+- Added a better error message when users try to create a repository version containing duplicate APT distributions.
+  `#603 <https://github.com/pulp/pulp_deb/issues/603>`_
+
+
+Improved Documentation
+----------------------
+
+- Added workflow docs on manually creating structured repos.
+  `#586 <https://github.com/pulp/pulp_deb/issues/586>`_
+
+
+----
+
+
 2.19.1 (2022-07-25)
 ===================
 
