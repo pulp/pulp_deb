@@ -51,6 +51,19 @@ Misc
 ----
 
 
+2.18.2 (2022-10-18)
+===================
+
+Bugfixes
+--------
+
+- Added a better error message when users try to create a repository version containing duplicate APT distributions.
+  `#603 <https://github.com/pulp/pulp_deb/issues/603>`_
+
+
+----
+
+
 2.18.1 (2022-08-16)
 ===================
 
