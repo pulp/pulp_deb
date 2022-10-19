@@ -13,6 +13,53 @@ Changelog
 
 .. towncrier release notes start
 
+2.20.0 (2022-10-19)
+===================
+
+Features
+--------
+
+- Added the option to synchronize repositories using an optimized mode (enabled by default).
+  `#564 <https://github.com/pulp/pulp_deb/issues/564>`_
+- Added feature to import/export pulp_deb content
+  `#605 <https://github.com/pulp/pulp_deb/issues/605>`_
+
+
+Bugfixes
+--------
+
+- Fixed handling of download URLs containing special characters in the path part.
+  `#571 <https://github.com/pulp/pulp_deb/issues/571>`_
+- Fixed several serializer bugs preventing the manual creation of structure content of type
+  ``ReleaseArchitecture``, ``ReleaseComponent``, and ``PackageReleaseComponent``.
+  `#575 <https://github.com/pulp/pulp_deb/issues/575>`_
+- Added handling for the special case when publishing an upstream repo containing a distribution named "default" using both simple and structured publish modes.
+  `#601 <https://github.com/pulp/pulp_deb/issues/601>`_
+- Added a better error message when users try to create a repository version containing duplicate APT distributions.
+  `#603 <https://github.com/pulp/pulp_deb/issues/603>`_
+- Fixed a bug preventing the synchronization of repos referencing a single package from multiple package indices.
+  `#632 <https://github.com/pulp/pulp_deb/issues/632>`_
+
+
+Improved Documentation
+----------------------
+
+- Added workflow docs on manually creating structured repos.
+  `#586 <https://github.com/pulp/pulp_deb/issues/586>`_
+- Added feature overview documentation for the new Import/Export feature.
+  `#624 <https://github.com/pulp/pulp_deb/issues/624>`_
+
+
+Misc
+----
+
+- Add a proper local SigningService setup for tests using pytest.
+  `#402 <https://github.com/pulp/pulp_deb/issues/402>`_
+
+
+----
+
+
 2.19.2 (2022-10-18)
 ===================
 
