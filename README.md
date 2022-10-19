@@ -15,8 +15,10 @@ The most important places:
 * The [plugin documentation][2].
 * The [plugin issue tracker][3].
 * The [plugin source repository][4].
+* The [pulp_deb plugin for Pulp CLI source repository][9].
 * The [plugin GitHub actions page][8].
 * Released [python packages on pypi.org][5].
+* Released [python packages for the deb Pulp CLI plugin][10].
 * The [pulp-deb-client Python package][6] (contains API bindings for Python).
 * The [pulp-deb-client Ruby Gem][7] (contains API bindings for Ruby).
 
@@ -28,3 +30,5 @@ The most important places:
 [6]: https://pypi.org/project/pulp-deb-client/
 [7]: https://rubygems.org/gems/pulp_deb_client
 [8]: https://github.com/pulp/pulp_deb/actions
+[9]: https://github.com/pulp/pulp-cli-deb
+[10]: https://pypi.org/project/pulp-cli-deb/
