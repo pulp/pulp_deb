@@ -1,2 +1,0 @@
-Fixed several serializer bugs preventing the manual creation of structure content of type
-``ReleaseArchitecture``, ``ReleaseComponent``, and ``PackageReleaseComponent``.
