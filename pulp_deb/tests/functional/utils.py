@@ -4,6 +4,7 @@ import os
 from functools import partial
 from unittest import SkipTest
 from tempfile import NamedTemporaryFile
+from pathlib import Path
 
 from pulp_smash import api, config, selectors, utils
 from pulp_smash.utils import uuid4
@@ -308,3 +309,14 @@ def gen_artifact(url):
         temp_file.flush()
         artifact = ArtifactsApi(core_client).create(file=temp_file.name)
         return artifact.to_dict()
+
+
+def get_local_package_absolute_path(package_name):
+    """Looks up the local package of the given name under the relative path
+    'data/packages/' and returns the absolute path.
+
+    :param package_name: Name of the package to look up.
+    :returns: The absolute path to the package.
+    """
+    p = Path(__file__).parent.absolute()
+    return p.joinpath(f"data/packages/{package_name}")

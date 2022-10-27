@@ -74,19 +74,14 @@ class GenericContentSerializer(SingleArtifactContentUploadSerializer, ContentChe
 
         data["sha256"] = data["artifact"].sha256
 
-        content = GenericContent.objects.filter(
-            sha256=data["sha256"], relative_path=data["relative_path"]
-        )
-        if content.exists():
-            content.first().touch()  # Orphan cleanup protection so the user has a chance to use it!
-            raise ValidationError(
-                _(
-                    "There is already a generic content with relative path '{path}' and sha256 "
-                    "'{sha256}'."
-                ).format(path=data["relative_path"], sha256=data["sha256"])
-            )
-
         return data
+
+    def retrieve(self, validated_data):
+        content = GenericContent.objects.filter(
+            sha256=validated_data["sha256"], relative_path=validated_data["relative_path"]
+        )
+
+        return content.first()
 
     class Meta(SingleArtifactContentUploadSerializer.Meta):
         fields = (
@@ -496,19 +491,14 @@ class BasePackageSerializer(SingleArtifactContentUploadSerializer, ContentChecks
             data["artifact"].touch()  # Orphan cleanup protection so the user can try again!
             raise ValidationError(_("Invalid relative_path provided, filename does not match."))
 
-        content = self.Meta.model.objects.filter(
-            sha256=data["sha256"], relative_path=data["relative_path"]
-        )
-        if content.exists():
-            content.first().touch()  # Orphan cleanup protection so the user has a chance to use it!
-            raise ValidationError(
-                _(
-                    "There is already a deb package with relative path '{path}' and sha256 "
-                    "'{sha256}'."
-                ).format(path=data["relative_path"], sha256=data["sha256"])
-            )
-
         return data
+
+    def retrieve(self, validated_data):
+        content = self.Meta.model.objects.filter(
+            sha256=validated_data["sha256"], relative_path=validated_data["relative_path"]
+        )
+
+        return content.first()
 
     class Meta(SingleArtifactContentUploadSerializer.Meta):
         fields = (
