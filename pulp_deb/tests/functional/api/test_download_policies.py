@@ -9,7 +9,6 @@ from pulp_smash.pulp3.utils import (
 from pulp_deb.tests.functional.constants import DEB_FIXTURE_PACKAGE_COUNT, DEB_FIXTURE_SUMMARY
 
 
-@pytest.mark.parallel
 @pytest.mark.parametrize("policy", ["on_demand", "streamed"])
 def test_download_policy(
     apt_package_api,
