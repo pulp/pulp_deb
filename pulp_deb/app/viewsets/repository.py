@@ -54,7 +54,7 @@ class AptRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin):
         # Validate synchronously to return 400 errors.
         serializer.is_valid(raise_exception=True)
         remote = serializer.validated_data.get("remote", repository.remote)
-        mirror = serializer.validated_data.get("mirror", True)
+        mirror = serializer.validated_data.get("mirror")
         optimize = serializer.validated_data.get("optimize")
 
         result = dispatch(
