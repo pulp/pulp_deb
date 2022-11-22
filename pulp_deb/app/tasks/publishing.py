@@ -1,5 +1,6 @@
 import os
 import shutil
+from contextlib import suppress
 
 from datetime import datetime, timezone
 from debian import deb822
@@ -170,12 +171,9 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                         pk__in=repo_version.content.order_by("-pulp_created"),
                         release_component__in=components,
                     ):
-                        try:
-                            release_helper.components[prc.release_component.component].add_package(
-                                prc.package
-                            )
-                        except IntegrityError:
-                            continue
+                        release_helper.components[prc.release_component.component].add_package(
+                            prc.package
+                        )
                     release_helper.finish()
 
     log.info(_("Publication: {publication} created").format(publication=publication.pk))
@@ -203,12 +201,13 @@ class _ComponentHelper:
             )
 
     def add_package(self, package):
-        published_artifact = PublishedArtifact(
-            relative_path=package.filename(self.component),
-            publication=self.parent.publication,
-            content_artifact=package.contentartifact_set.get(),
-        )
-        published_artifact.save()
+        with suppress(IntegrityError):
+            published_artifact = PublishedArtifact(
+                relative_path=package.filename(self.component),
+                publication=self.parent.publication,
+                content_artifact=package.contentartifact_set.get(),
+            )
+            published_artifact.save()
         package_serializer = Package822Serializer(package, context={"request": None})
         package_serializer.to822(self.component).dump(
             self.package_index_files[package.architecture][0]
