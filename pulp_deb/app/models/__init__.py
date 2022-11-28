@@ -8,6 +8,8 @@ from .content.content import (
     Package,
 )
 
+from .signing_service import AptReleaseSigningService
+
 from .content.metadata import (
     Release,
 )
@@ -24,6 +26,4 @@ from .publication import AptDistribution, AptPublication, VerbatimPublication
 
 from .remote import AptRemote
 
-from .repository import AptRepository
-
-from .signing_service import AptReleaseSigningService
+from .repository import AptRepository, AptRepositoryReleaseServiceOverride

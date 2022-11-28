@@ -187,7 +187,12 @@ The short version:
 
    ``/pulp/api/v3/signing-services/``
    
-6. And use it when you Publish content. ``pulp_deb`` will call out to your script to sign the ``Release`` file and publish the signatures as part of the Publish action.
+6. And use it when you Publish content. ``pulp_deb`` will call out to your script to sign the ``Release`` file and publish the signatures as part of the Publish action. The three ways you can specify the Signing Service are:
+
+   1. If you specify ``signing_service`` when creating the Publication, that service will sign all the Releases in the Publication.
+   2. You can specify that particular Release in a Repository use particular SigningServices by setting the ``signing_service_release_overrides`` field on the Repository. For example:
+      ``signing_service_release_overrides = {"bionic": "/pulp/api/v3/signing-services/433a1f70-c589-4413-a803-c50b842ea9b5/"}``
+   3. Finally, if you have set a ``signing_service`` on a Repository then the other Releases in that Repo will use that Service.
 
 .. _verbatim_publishing:
 
