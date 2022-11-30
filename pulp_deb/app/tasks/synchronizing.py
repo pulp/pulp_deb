@@ -635,7 +635,6 @@ class DebFirstStage(Stage):
         # first. That way, we can recover the special case, where a partial mirror does not mirror
         # this index inspite of indicating "hybrid format" in the mirrored metadata.
         if hybrid_format and "all" in architectures:
-            architectures.remove("all")
             try:
                 await self._handle_package_index(
                     release_file=release_file,
@@ -657,6 +656,14 @@ class DebFirstStage(Stage):
                 release_file.architectures = " ".join(
                     [x for x in release_file.architectures.split() if x != "all"]
                 )
+
+        # Putting this here because it fixes an issue where debian packages with the parameter
+        # architectures='all' are missing after sync/publish. It is not really clear why and
+        # needs investigation once there are tests for this issue. Best guess it hasis something do
+        # with the asynchronous handling of the tasks and removing something from a dict without
+        # a copy.
+        if hybrid_format and "all" in architectures:
+            architectures.remove("all")
 
         pending_tasks = []
         # Handle package indices
