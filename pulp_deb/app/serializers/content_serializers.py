@@ -255,7 +255,7 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
     pre_depends = CharField(required=False)
     provides = CharField(required=False)
     replaces = CharField(required=False)
-    custom_fields = DictField(child=CharField(), allow_empty=True, required=False)
+    custom_fields = DictField(child=CharField(allow_blank=True), allow_empty=True, required=False)
 
     def __init__(self, *args, **kwargs):
         """Initializer for BasePackage822Serializer."""
