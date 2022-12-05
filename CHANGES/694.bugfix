@@ -1,0 +1,1 @@
+Fix bug where sync failed if "Build-Depends" field in Package index was blank.
