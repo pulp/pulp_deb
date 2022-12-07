@@ -1,1 +1,0 @@
-Fixed a bug where architecture "all" packages were missing when syncing Debian 11 style repositories.
