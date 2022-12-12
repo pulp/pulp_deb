@@ -13,6 +13,22 @@ Changelog
 
 .. towncrier release notes start
 
+2.20.1 (2022-12-07)
+===================
+
+Bugfixes
+--------
+
+- Fixed a bug where architecture "all" packages were missing when syncing Debian 11 style repositories.
+  `#612 <https://github.com/pulp/pulp_deb/issues/612>`_
+- Fixed a bug where packages were only showing up in one Packages index file if they belonged to two
+  or more releases.
+  `#674 <https://github.com/pulp/pulp_deb/issues/674>`_
+
+
+----
+
+
 2.20.0 (2022-10-19)
 ===================
 
@@ -55,6 +71,22 @@ Misc
 
 - Add a proper local SigningService setup for tests using pytest.
   `#402 <https://github.com/pulp/pulp_deb/issues/402>`_
+
+
+----
+
+
+2.19.3 (2022-12-07)
+===================
+
+Bugfixes
+--------
+
+- Fixed a bug where architecture "all" packages were missing when syncing Debian 11 style repositories.
+  `#612 <https://github.com/pulp/pulp_deb/issues/612>`_
+- Fixed a bug where packages were only showing up in one Packages index file if they belonged to two
+  or more releases.
+  `#674 <https://github.com/pulp/pulp_deb/issues/674>`_
 
 
 ----
@@ -115,6 +147,22 @@ Misc
 
 - Converted CharField to TextField for pulp_deb models.
   `#532 <https://github.com/pulp/pulp_deb/issues/532>`_
+
+
+----
+
+
+2.18.3 (2022-12-07)
+===================
+
+Bugfixes
+--------
+
+- Fixed a bug where architecture "all" packages were missing when syncing Debian 11 style repositories.
+  `#612 <https://github.com/pulp/pulp_deb/issues/612>`_
+- Fixed a bug where packages were only showing up in one Packages index file if they belonged to two
+  or more releases.
+  `#674 <https://github.com/pulp/pulp_deb/issues/674>`_
 
 
 ----
