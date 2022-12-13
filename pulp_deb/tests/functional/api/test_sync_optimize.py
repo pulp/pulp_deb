@@ -7,9 +7,9 @@ from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_COMPONENT,
     DEB_FIXTURE_COMPONENT_UPDATE,
     DEB_FIXTURE_SINGLE_DIST,
-    DEB_FIXTURE_URL,
     DEB_FIXTURE_DISTRIBUTIONS,
-    DEB_FIXTURE_URL_UPDATE,
+    DEB_FIXTURE_STANDARD_REPOSITORY_NAME,
+    DEB_FIXTURE_UPDATE_REPOSITORY_NAME,
     DEB_REPORT_CODE_SKIP_PACKAGE,
     DEB_REPORT_CODE_SKIP_RELEASE,
 )
@@ -25,7 +25,7 @@ def test_sync_optimize_skip_unchanged_release_file(
     """Test whether synchronization is skipped when a Release file remains unchanged."""
     # Create a repository and a remote and verify latest `repository_version` is 0
     repo = deb_repository_factory()
-    remote = deb_remote_factory(url=DEB_FIXTURE_URL, distributions=DEB_FIXTURE_DISTRIBUTIONS)
+    remote = deb_remote_factory(distributions=DEB_FIXTURE_DISTRIBUTIONS)
     assert repo.latest_version_href.endswith("/0/")
 
     # Sync the repository
@@ -50,16 +50,41 @@ def test_sync_optimize_skip_unchanged_release_file(
     "remote_params, remote_diff_params",
     [
         (
-            [DEB_FIXTURE_URL, DEB_FIXTURE_SINGLE_DIST, DEB_FIXTURE_COMPONENT, None],
-            [DEB_FIXTURE_URL, DEB_FIXTURE_SINGLE_DIST, DEB_FIXTURE_COMPONENT_UPDATE, None],
+            [
+                DEB_FIXTURE_STANDARD_REPOSITORY_NAME,
+                DEB_FIXTURE_SINGLE_DIST,
+                DEB_FIXTURE_COMPONENT,
+                None,
+            ],
+            [
+                DEB_FIXTURE_STANDARD_REPOSITORY_NAME,
+                DEB_FIXTURE_SINGLE_DIST,
+                DEB_FIXTURE_COMPONENT_UPDATE,
+                None,
+            ],
         ),
         (
-            [DEB_FIXTURE_URL, DEB_FIXTURE_SINGLE_DIST, None, DEB_FIXTURE_ARCH],
-            [DEB_FIXTURE_URL, DEB_FIXTURE_SINGLE_DIST, None, DEB_FIXTURE_ARCH_UPDATE],
+            [DEB_FIXTURE_STANDARD_REPOSITORY_NAME, DEB_FIXTURE_SINGLE_DIST, None, DEB_FIXTURE_ARCH],
+            [
+                DEB_FIXTURE_STANDARD_REPOSITORY_NAME,
+                DEB_FIXTURE_SINGLE_DIST,
+                None,
+                DEB_FIXTURE_ARCH_UPDATE,
+            ],
         ),
         (
-            [DEB_FIXTURE_URL, DEB_FIXTURE_SINGLE_DIST, DEB_FIXTURE_COMPONENT, None],
-            [DEB_FIXTURE_URL_UPDATE, DEB_FIXTURE_SINGLE_DIST, DEB_FIXTURE_COMPONENT_UPDATE, None],
+            [
+                DEB_FIXTURE_STANDARD_REPOSITORY_NAME,
+                DEB_FIXTURE_SINGLE_DIST,
+                DEB_FIXTURE_COMPONENT,
+                None,
+            ],
+            [
+                DEB_FIXTURE_UPDATE_REPOSITORY_NAME,
+                DEB_FIXTURE_SINGLE_DIST,
+                DEB_FIXTURE_COMPONENT_UPDATE,
+                None,
+            ],
         ),
     ],
 )
@@ -82,7 +107,7 @@ def test_sync_optimize_no_skip_release_file(
     # Create a repository and a remote and verify latest `repository_version` is 0
     repo = deb_repository_factory()
     remote = deb_remote_factory(
-        url=remote_params[0],
+        remote_params[0],
         distributions=remote_params[1],
         components=remote_params[2],
         architectures=remote_params[3],
@@ -100,7 +125,7 @@ def test_sync_optimize_no_skip_release_file(
 
     # Create a new remote with different parameters and sync with repository
     remote_diff = deb_remote_factory(
-        url=remote_diff_params[0],
+        remote_diff_params[0],
         distributions=remote_diff_params[1],
         components=remote_diff_params[2],
         architectures=remote_diff_params[3],
@@ -124,7 +149,7 @@ def test_sync_optimize_skip_unchanged_package_index(
     """Test whether package synchronization is skipped when a package has not been changed."""
     # Create a repository and a remote and verify latest `repository_version` is 0
     repo = deb_repository_factory()
-    remote = deb_remote_factory(url=DEB_FIXTURE_URL, distributions=DEB_FIXTURE_SINGLE_DIST)
+    remote = deb_remote_factory(distributions=DEB_FIXTURE_SINGLE_DIST)
     assert repo.latest_version_href.endswith("/0/")
 
     # Sync the repository
@@ -138,7 +163,7 @@ def test_sync_optimize_skip_unchanged_package_index(
 
     # Create new remote with both updated and unchanged packages and sync with repository
     remote_diff = deb_remote_factory(
-        url=DEB_FIXTURE_URL_UPDATE, distributions=DEB_FIXTURE_SINGLE_DIST
+        DEB_FIXTURE_UPDATE_REPOSITORY_NAME, distributions=DEB_FIXTURE_SINGLE_DIST
     )
     task_diff = deb_sync_repository(remote_diff, repo)
     repo = deb_get_repository_by_href(repo.pulp_href)

@@ -1,0 +1,51 @@
+Package: frigg
+Version: 1.0
+Architecture: ppc64
+Maintainer: root <root@b81c8887d23b>
+Installed-Size: 9
+Filename: ./frigg_1.0_ppc64.deb
+Size: 2004
+MD5sum: ac7605f7dbe9541b87fb9aa0d7c371fa
+SHA1: f1843d7a1350945df278f265e929f699e2a9bf63
+SHA256: 3b8aabce06339e56b69f3a7f0927adb17051281ef8b605ffdd4ae2a3524c1466
+Section: misc
+Priority: optional
+Multi-Arch: foreign
+Description: Frigg
+ Frigg is described as the wife of the god Odin.
+
+Package: odin
+Version: 1.0
+Architecture: ppc64
+Maintainer: root <root@b81c8887d23b>
+Installed-Size: 9
+Filename: ./odin_1.0_ppc64.deb
+Size: 2096
+MD5sum: 12e2fd974f985e40a3a07a2cffd05240
+SHA1: a7f4dbacd197dd45408ba9666d207c25dbbf63e4
+SHA256: aace589523b5b684da2c1ad70364341dc8189e5ee8d0f04cad79eda7f7be8b06
+Section: misc
+Priority: optional
+Multi-Arch: foreign
+Description: Odin
+ Odin is associated with wisdom, healing, death, royalty, the gallows,
+ knowledge, battle, sorcery, poetry, frenzy, and the runic alphabet, and is
+ the husband of the goddess Frigg.
+
+Package: thor
+Version: 1.0
+Architecture: ppc64
+Maintainer: root <root@b81c8887d23b>
+Installed-Size: 9
+Filename: ./thor_1.0_ppc64.deb
+Size: 2080
+MD5sum: a6245e021b25a408981a4c4d1f49d2e7
+SHA1: 621a1262ead08f779547b726c6592b2f45040b0f
+SHA256: 22dbaac106ea7646ab68f19a6aa84607ad91b8da0d50fe15959f1f4575320970
+Section: misc
+Priority: optional
+Multi-Arch: foreign
+Description: Thor
+ Thor is a hammer-wielding god associated with thunder, lightning, storms, oak
+ trees, strength, the protection of mankind, and also hallowing and fertility.
+

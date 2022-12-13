@@ -1,0 +1,31 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA256
+
+Codename: nosuite
+Date: Thu, 26 Jan 2023 14:18:52 UTC
+Architectures: ppc64
+Components: asgard
+Description: This is a valid Debian repository.
+MD5Sum:
+ 343607ad3a5cca1d7510ab7aa31a14fa 1753 asgard/binary-ppc64/Packages
+ ce2c03dc7908e4b2e71abc16dde628c5 867 asgard/binary-ppc64/Packages.gz
+ fbe88cf2b501dbd3526e5b4846a51f90 86 asgard/binary-ppc64/Release
+SHA1:
+ 617b978a822f5309568735dd20de00aaa8f4eb0c 1753 asgard/binary-ppc64/Packages
+ 3eda32c465ead90a4d0944d1208b2091b20c7793 867 asgard/binary-ppc64/Packages.gz
+ a536e2e2126e95fbb820e421ecac4d9867e5976b 86 asgard/binary-ppc64/Release
+SHA256:
+ 5af7763b54c8bb4f5abc11821a6cf7ba0d2448b1c2a471ec6da7bebe27139d3c 1753 asgard/binary-ppc64/Packages
+ 8a0c43baf1df4a20eeadc6c4857f13fe40d19c0ad32fbc08466e77faeb4e6986 867 asgard/binary-ppc64/Packages.gz
+ fc35f45c0ab9a27275b300446de5d6fa390feb6dff017bccda9f998133a7bd5e 86 asgard/binary-ppc64/Release
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAEBCAAdFiEEbt8wElZIC5uAHro9BaXm2iadnZgFAmPSi8wACgkQBaXm2iad
+nZi55wf/ZktYapdOoqDxIt0ClvmZnZT6Cx19szXRafjd4d1nMNJnroRFX5vW9Ymb
+ohNrKHD7cr/yljyfNu/8ogtU5zQxs21OkDwj15KO40gDbCxNyO1BJzWqTr+0f07X
+MERC5c/MqlOAh9zDRAF/reloIwwKzrbdpt2uzHHtJF35aBafv28lppJ+X1Ga7OYx
+BhLy6quWDieEDtFK/0tdfXS5MjksqvsQ+uNxftHhUYj3ckmtp6okgTzXszsR+fpo
+b66Kg5vcUD2APjLtb4Qi3eQLXRHp5mtz4gET85YqkTBmQRVORRdpuhjCDOlFXVhm
+WvofhtnNaySvTm6R5LBdoceIJm0/Ng==
+=LOjm
+-----END PGP SIGNATURE-----

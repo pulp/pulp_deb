@@ -1,0 +1,44 @@
+Codename: ginnungagap
+Date: Thu, 26 Jan 2023 14:18:52 UTC
+Architectures: armeb ppc64
+Components: asgard jotunheimr
+Description: This repository is valid, but contains no packages!
+MD5Sum:
+ d41d8cd98f00b204e9800998ecf8427e 0 asgard/binary-armeb/Packages
+ 7029066c27ac6f5ef18d660d5741979a 20 asgard/binary-armeb/Packages.gz
+ a5f966f70ff5c3687f287dfbbcd99611 103 asgard/binary-armeb/Release
+ d41d8cd98f00b204e9800998ecf8427e 0 asgard/binary-ppc64/Packages
+ 7029066c27ac6f5ef18d660d5741979a 20 asgard/binary-ppc64/Packages.gz
+ 4679804864ecdb63ea3dc07a51bcb757 103 asgard/binary-ppc64/Release
+ d41d8cd98f00b204e9800998ecf8427e 0 jotunheimr/binary-armeb/Packages
+ 7029066c27ac6f5ef18d660d5741979a 20 jotunheimr/binary-armeb/Packages.gz
+ 8f5f6868eb46a90248e24253ab53a0fa 107 jotunheimr/binary-armeb/Release
+ d41d8cd98f00b204e9800998ecf8427e 0 jotunheimr/binary-ppc64/Packages
+ 7029066c27ac6f5ef18d660d5741979a 20 jotunheimr/binary-ppc64/Packages.gz
+ cfb51e602fdc14ef669651ab94ab9cfe 107 jotunheimr/binary-ppc64/Release
+SHA1:
+ da39a3ee5e6b4b0d3255bfef95601890afd80709 0 asgard/binary-armeb/Packages
+ 46c6643f07aa7f6bfe7118de926b86defc5087c4 20 asgard/binary-armeb/Packages.gz
+ 1d5190dc78216b0584dfd47ccafe497827eeeb4e 103 asgard/binary-armeb/Release
+ da39a3ee5e6b4b0d3255bfef95601890afd80709 0 asgard/binary-ppc64/Packages
+ 46c6643f07aa7f6bfe7118de926b86defc5087c4 20 asgard/binary-ppc64/Packages.gz
+ ba407d9bc7dd7f2e623bf2d895ab00ded8e5c360 103 asgard/binary-ppc64/Release
+ da39a3ee5e6b4b0d3255bfef95601890afd80709 0 jotunheimr/binary-armeb/Packages
+ 46c6643f07aa7f6bfe7118de926b86defc5087c4 20 jotunheimr/binary-armeb/Packages.gz
+ 2d5dddd4002f4c441ba09d8120922f7a40e83ca4 107 jotunheimr/binary-armeb/Release
+ da39a3ee5e6b4b0d3255bfef95601890afd80709 0 jotunheimr/binary-ppc64/Packages
+ 46c6643f07aa7f6bfe7118de926b86defc5087c4 20 jotunheimr/binary-ppc64/Packages.gz
+ 4d4430e1e46e3d1c3dd374c966ac801d9eddafcc 107 jotunheimr/binary-ppc64/Release
+SHA256:
+ e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 0 asgard/binary-armeb/Packages
+ 59869db34853933b239f1e2219cf7d431da006aa919635478511fabbfc8849d2 20 asgard/binary-armeb/Packages.gz
+ b63defaa52e2ba9f4347c80935bdc7b9f59d6420b5a7e38b4cbd4fd4fa2ccbc3 103 asgard/binary-armeb/Release
+ e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 0 asgard/binary-ppc64/Packages
+ 59869db34853933b239f1e2219cf7d431da006aa919635478511fabbfc8849d2 20 asgard/binary-ppc64/Packages.gz
+ c1d5eec4a5054e079b22151f4db1735e1d7d52d6bcf0626393ee18a161af3bb7 103 asgard/binary-ppc64/Release
+ e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 0 jotunheimr/binary-armeb/Packages
+ 59869db34853933b239f1e2219cf7d431da006aa919635478511fabbfc8849d2 20 jotunheimr/binary-armeb/Packages.gz
+ e15829c346373dd6885420cad4382b5b0202a9ef76dbfb60fcfc8564f44210b0 107 jotunheimr/binary-armeb/Release
+ e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 0 jotunheimr/binary-ppc64/Packages
+ 59869db34853933b239f1e2219cf7d431da006aa919635478511fabbfc8849d2 20 jotunheimr/binary-ppc64/Packages.gz
+ 763d55994d37e31769aab14dc3411e5a6f3f87c21cae04af58b8668c837ae6b4 107 jotunheimr/binary-ppc64/Release
