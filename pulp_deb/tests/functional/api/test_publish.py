@@ -6,7 +6,6 @@ from pulp_smash.pulp3.utils import get_content, get_versions, modify_repo
 
 from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_DISTRIBUTIONS,
-    DEB_FIXTURE_URL,
     DEB_GENERIC_CONTENT_NAME,
     DEB_PACKAGE_NAME,
 )
@@ -54,7 +53,7 @@ def test_publish_any_repo_version(
     cfg = config.get_config()
 
     # Create a repository with at least two repository versions
-    remote = deb_remote_factory(url=DEB_FIXTURE_URL, distributions=DEB_FIXTURE_DISTRIBUTIONS)
+    remote = deb_remote_factory(distributions=DEB_FIXTURE_DISTRIBUTIONS)
     repo = deb_repository_factory()
     deb_sync_repository(remote, repo)
     for deb_generic_content in get_content(repo.to_dict())[DEB_GENERIC_CONTENT_NAME]:

@@ -6,8 +6,8 @@ from urllib.parse import urljoin
 
 from pulp_smash import config, utils
 from pulp_smash.pulp3.utils import download_content_unit
+from pulp_deb.tests.functional.constants import DEB_FIXTURE_STANDARD_REPOSITORY_NAME
 
-from pulp_deb.tests.functional.constants import DEB_FIXTURE_URL
 from pulp_deb.tests.functional.utils import (
     get_deb_content_unit_paths,
     get_deb_verbatim_content_unit_paths,
@@ -24,6 +24,7 @@ def test_download_content(
     deb_verbatim_publication_factory,
     deb_get_repository_by_href,
     deb_sync_repository,
+    deb_fixture_server,
     is_verbatim,
 ):
     """Verify whether content served by pulp can be downloaded.
@@ -33,7 +34,7 @@ def test_download_content(
     """
     # Create repository, remote and sync them
     repo = deb_repository_factory()
-    remote = deb_remote_factory()
+    remote = deb_remote_factory(DEB_FIXTURE_STANDARD_REPOSITORY_NAME)
     deb_sync_repository(remote, repo)
     repo = deb_get_repository_by_href(repo.pulp_href)
 
@@ -47,8 +48,9 @@ def test_download_content(
 
     # Select a random content unit from the distribution and store its checksums
     unit_paths = get_random_content_unit_path(repo, is_verbatim)
+    url = deb_fixture_server.make_url(DEB_FIXTURE_STANDARD_REPOSITORY_NAME)
     fixtures_hashes = [
-        hashlib.sha256(utils.http_get(urljoin(DEB_FIXTURE_URL, unit_path[0]))).hexdigest()
+        hashlib.sha256(utils.http_get(urljoin(url, unit_path[0]))).hexdigest()
         for unit_path in unit_paths
     ]
 

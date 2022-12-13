@@ -1,11 +1,13 @@
 from pulp_smash.pulp3.bindings import monitor_task
 from pulp_smash.pulp3.utils import gen_distribution, gen_repo
+from pathlib import Path
 import pytest
 import os
 import stat
 
+from pulp_deb.tests.functional.utils import gen_local_deb_remote
 from pulp_smash.utils import execute_pulpcore_python, uuid4
-from pulp_deb.tests.functional.utils import gen_deb_remote
+from pulp_deb.tests.functional.constants import DEB_FIXTURE_STANDARD_REPOSITORY_NAME
 
 from pulpcore.client.pulp_deb import (
     ApiClient,
@@ -99,11 +101,16 @@ def deb_repository_factory(apt_repository_api, gen_object_with_cleanup):
 
 
 @pytest.fixture
-def deb_remote_factory(apt_remote_api, gen_object_with_cleanup):
+def deb_remote_factory(
+    apt_remote_api,
+    deb_fixture_server,
+    gen_object_with_cleanup,
+):
     """Fixture that generates a deb remote with cleanup."""
 
-    def _deb_remote_factory(**kwargs):
-        return gen_object_with_cleanup(apt_remote_api, gen_deb_remote(**kwargs))
+    def _deb_remote_factory(repo_name=DEB_FIXTURE_STANDARD_REPOSITORY_NAME, **kwargs):
+        url = deb_fixture_server.make_url(repo_name)
+        return gen_object_with_cleanup(apt_remote_api, gen_local_deb_remote(url=str(url), **kwargs))
 
     return _deb_remote_factory
 
@@ -266,3 +273,21 @@ def deb_signing_service_factory(
         f"SigningService.objects.filter(name='{service_name}').delete()"
     )
     execute_pulpcore_python(cli_client, cmd)
+
+
+@pytest.fixture
+def deb_fixture_server(gen_fixture_server):
+    """A fixture that spins up a local web server to serve test data."""
+    p = Path(__file__).parent.absolute()
+    fixture_path = p.joinpath("data/")
+    yield gen_fixture_server(fixture_path, None)
+
+
+@pytest.fixture
+def deb_get_fixture_server_url(deb_fixture_server):
+    """A fixture that provides the url of the local web server."""
+
+    def _deb_get_fixture_server_url(repo_name=DEB_FIXTURE_STANDARD_REPOSITORY_NAME):
+        return deb_fixture_server.make_url(repo_name)
+
+    return _deb_get_fixture_server_url
