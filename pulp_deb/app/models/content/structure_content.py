@@ -103,6 +103,13 @@ class PackageReleaseComponent(Content):
     package = models.ForeignKey(Package, on_delete=models.CASCADE)
     release_component = models.ForeignKey(ReleaseComponent, on_delete=models.CASCADE)
 
+    repo_key_fields = (
+        "release_component",
+        "package__package",
+        "package__version",
+        "package__architecture",
+    )
+
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
         unique_together = (("package", "release_component"),)
