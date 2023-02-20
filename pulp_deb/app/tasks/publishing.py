@@ -216,7 +216,7 @@ class _ComponentHelper:
 
     def finish(self):
         # Publish Packages files
-        for (package_index_file, package_index_path) in self.package_index_files.values():
+        for package_index_file, package_index_path in self.package_index_files.values():
             package_index_file.close()
             gz_package_index_path = _zip_file(package_index_path)
             package_index = PublishedMetadata.create_from_file(
