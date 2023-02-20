@@ -6,6 +6,8 @@ drf-nested-routers
 plantuml
 pyyaml
 sphinx
-sphinx-rtd-theme
+# We need to pin sphinx-rtd-theme as a workaround for:
+# https://github.com/readthedocs/sphinx_rtd_theme/issues/1434
+sphinx-rtd-theme<1.2.0
 sphinxcontrib-openapi
 towncrier
