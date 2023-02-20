@@ -84,12 +84,14 @@ pulp_container_tag: https
 
 VARSYAML
 
-SCENARIOS=("pulp" "performance" "azure" "s3" "stream" "plugin-from-pypi" "generate-bindings" "lowerbounds")
+SCENARIOS=("pulp" "performance" "azure" "gcp" "s3" "stream" "plugin-from-pypi" "generate-bindings" "lowerbounds")
 if [[ " ${SCENARIOS[*]} " =~ " ${TEST} " ]]; then
   sed -i -e '/^services:/a \
   - name: pulp-fixtures\
     image: docker.io/pulp/pulp-fixtures:latest\
     env: {BASE_URL: "http://pulp-fixtures:8080"}' vars/main.yaml
+
+  export REMOTE_FIXTURES_ORIGIN="http://pulp-fixtures:8080"
 fi
 
 if [ "$TEST" = "s3" ]; then
