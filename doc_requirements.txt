@@ -6,6 +6,6 @@ drf-nested-routers
 plantuml
 pyyaml
 sphinx
-sphinx-rtd-theme
+sphinx-rtd-theme<1.2.0
 sphinxcontrib-openapi
 towncrier
