@@ -1,0 +1,33 @@
+Package: fafner
+Version: 1.0
+Architecture: ppc64
+Maintainer: root <root@b81c8887d23b>
+Installed-Size: 9
+Multi-Arch: foreign
+Priority: optional
+Section: misc
+Filename: pool/nidavellir/f/fafner/fafner_1.0_ppc64.deb
+Size: 2054
+SHA256: 4fa05bda492a5f6095ebd18d50e5394f91e22e03c6a87fe3914d61908550cf6b
+SHA1: 48bcd88dc09a4be2e353ae92731af3ba47e88541
+MD5sum: 8aef4af05282ff935001f2e44010bf38
+Description: Fafner
+ Fafner son of Hreidmar was a dwarf with a powerful arm and a fearless soul until
+ he was cursed and became a lindwurm.
+
+Package: regin
+Version: 1.0
+Architecture: all
+Maintainer: root <root@b81c8887d23b>
+Installed-Size: 9
+Multi-Arch: foreign
+Priority: optional
+Section: misc
+Filename: pool/nidavellir/r/regin/regin_1.0_all.deb
+Size: 2030
+SHA256: e74af9bbcfd363a8a0702f230a436bcd0f24dd6334d58747abc37dc59fe1e929
+SHA1: 03063a93ced35cdae3aae49503a4880c48f963ff
+MD5sum: 8b8898ad17c7612584d474389f27ded8
+Description: Regin
+ Regin the son of Hreidmar is the most skillful, and a dwarf of size.
+

@@ -7,13 +7,14 @@ from pulpcore.client.pulp_deb.exceptions import ApiException
 from pulp_smash import utils
 
 from pulp_deb.tests.functional.constants import DOWNLOAD_POLICIES, DEB_SIGNING_KEY
-from pulp_deb.tests.functional.utils import gen_deb_remote
+from pulp_deb.tests.functional.utils import gen_local_deb_remote
 
 
 @pytest.mark.parallel
-def test_create_remote_repository(deb_remote_custom_data_factory):
+def test_create_remote_repository(deb_remote_custom_data_factory, deb_get_fixture_server_url):
     """Test creation of the remote."""
-    data = gen_verbose_remote_data()
+    url = deb_get_fixture_server_url()
+    data = gen_verbose_remote_data(url)
     remote = deb_remote_custom_data_factory(data)
 
     for key, val in data.items():
@@ -22,9 +23,12 @@ def test_create_remote_repository(deb_remote_custom_data_factory):
 
 
 @pytest.mark.parallel
-def test_create_remote_repository_with_same_name(deb_remote_custom_data_factory):
+def test_create_remote_repository_with_same_name(
+    deb_remote_custom_data_factory, deb_get_fixture_server_url
+):
     """Verify whether it is possible to create a remote with the same name."""
-    data = gen_verbose_remote_data()
+    url = deb_get_fixture_server_url()
+    data = gen_verbose_remote_data(url)
     deb_remote_custom_data_factory(data)
 
     with pytest.raises(ApiException) as exc:
@@ -34,9 +38,12 @@ def test_create_remote_repository_with_same_name(deb_remote_custom_data_factory)
 
 
 @pytest.mark.parallel
-def test_create_remote_repository_without_url(deb_remote_custom_data_factory):
+def test_create_remote_repository_without_url(
+    deb_remote_custom_data_factory, deb_get_fixture_server_url
+):
     """Verify whether it is possible to create a remote without an URL."""
-    data = gen_verbose_remote_data()
+    url = deb_get_fixture_server_url()
+    data = gen_verbose_remote_data(url)
     del data["url"]
 
     with pytest.raises(ApiException) as exc:
@@ -47,11 +54,13 @@ def test_create_remote_repository_without_url(deb_remote_custom_data_factory):
 
 @pytest.mark.parallel
 def test_read_remote_by_href(
-    deb_remote_custom_data_factory,
+    deb_get_fixture_server_url,
     deb_get_remote_by_href,
+    deb_remote_custom_data_factory,
 ):
     """Verify whether it is possible to read a remote repository by its href."""
-    data = gen_verbose_remote_data()
+    url = deb_get_fixture_server_url()
+    data = gen_verbose_remote_data(url)
     remote = deb_remote_custom_data_factory(data)
     read_remote = deb_get_remote_by_href(remote.pulp_href)
 
@@ -61,11 +70,13 @@ def test_read_remote_by_href(
 
 @pytest.mark.parallel
 def test_read_remote_by_name(
-    deb_remote_custom_data_factory,
+    deb_get_fixture_server_url,
     deb_get_remotes_by_name,
+    deb_remote_custom_data_factory,
 ):
     """Verify whether it is possible to read a remote repository by its name."""
-    data = gen_verbose_remote_data()
+    url = deb_get_fixture_server_url()
+    data = gen_verbose_remote_data(url)
     remote = deb_remote_custom_data_factory(data)
     read_remote = deb_get_remotes_by_name(remote.name)
 
@@ -77,14 +88,16 @@ def test_read_remote_by_name(
 
 @pytest.mark.parallel
 def test_patch_remote(
-    deb_remote_custom_data_factory,
+    deb_get_fixture_server_url,
     deb_get_remote_by_href,
     deb_patch_remote,
+    deb_remote_custom_data_factory,
 ):
     """Verify whether it is possible to update a remote with PATCH."""
-    data = gen_verbose_remote_data()
+    url = deb_get_fixture_server_url()
+    data = gen_verbose_remote_data(url)
     remote = deb_remote_custom_data_factory(data)
-    patch_data = gen_verbose_remote_data()
+    patch_data = gen_verbose_remote_data(url)
     deb_patch_remote(remote, patch_data)
     patch_remote = deb_get_remote_by_href(remote.pulp_href)
 
@@ -97,14 +110,16 @@ def test_patch_remote(
 
 @pytest.mark.parallel
 def test_put_remote(
-    deb_remote_custom_data_factory,
+    deb_get_fixture_server_url,
     deb_get_remote_by_href,
     deb_put_remote,
+    deb_remote_custom_data_factory,
 ):
     """Verify whether it is possible to update a remote with PUT."""
-    data = gen_verbose_remote_data()
+    url = deb_get_fixture_server_url()
+    data = gen_verbose_remote_data(url)
     remote = deb_remote_custom_data_factory(data)
-    put_data = gen_verbose_remote_data()
+    put_data = gen_verbose_remote_data(url)
     deb_put_remote(remote, put_data)
     put_remote = deb_get_remote_by_href(remote.pulp_href)
 
@@ -118,11 +133,13 @@ def test_put_remote(
 @pytest.mark.parallel
 def test_delete_remote(
     deb_delete_remote,
-    deb_remote_custom_data_factory,
+    deb_get_fixture_server_url,
     deb_get_remote_by_href,
+    deb_remote_custom_data_factory,
 ):
     """Verify whether it is possible to delete a remote."""
-    data = gen_verbose_remote_data()
+    url = deb_get_fixture_server_url()
+    data = gen_verbose_remote_data(url)
     remote = deb_remote_custom_data_factory(data)
     deb_delete_remote(remote)
 
@@ -134,13 +151,15 @@ def test_delete_remote(
 
 @pytest.mark.parallel
 def test_remote_download_policies(
-    deb_remote_custom_data_factory,
     deb_get_remote_by_href,
+    deb_get_fixture_server_url,
     deb_patch_remote,
+    deb_remote_custom_data_factory,
 ):
     """Verify download policy behavior for valid and invalid values."""
     # Create a remote without a download policy.
-    data = gen_verbose_remote_data()
+    url = deb_get_fixture_server_url()
+    data = gen_verbose_remote_data(url)
     del data["policy"]
     remote = deb_remote_custom_data_factory(data)
 
@@ -169,7 +188,7 @@ def test_remote_download_policies(
     assert remote.policy == remote_snapshot.policy
 
 
-def gen_verbose_remote_data():
+def gen_verbose_remote_data(url):
     """Return a semi-random dict for use in defining a remote.
 
     For most tests, it's desirable to create remotes with as few attributes
@@ -178,7 +197,7 @@ def gen_verbose_remote_data():
     sense to provide as many attributes as possible.
     Note that 'username' and 'password' are write-only attributes.
     """
-    data = gen_deb_remote()
+    data = gen_local_deb_remote(url)
     data.update(
         {
             "password": utils.uuid4(),

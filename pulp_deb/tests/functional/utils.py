@@ -6,6 +6,7 @@ from unittest import SkipTest
 from tempfile import NamedTemporaryFile
 
 from pulp_smash import api, config, selectors, utils
+from pulp_smash.utils import uuid4
 from pulp_smash.pulp3.utils import (
     gen_remote,
     gen_repo,
@@ -83,6 +84,30 @@ def set_up_module():
 def gen_deb_client():
     """Return an OBJECT for deb client."""
     return deb_client
+
+
+def gen_local_deb_remote(
+    url,
+    distributions=DEB_FIXTURE_DISTRIBUTIONS,
+    sync_udebs=False,
+    gpgkey=None,
+    **kwargs,
+):
+    """Return a semi-random dict for use of creating a local test deb Remote.
+
+    :param url: The url of the fixture repository.
+    :param distributions: Names of the distributions space separated.
+    """
+    if gpgkey:
+        kwargs["gpgkey"] = gpgkey
+    data = {
+        "name": uuid4(),
+        "url": url,
+        "distributions": distributions,
+        "sync_udebs": sync_udebs,
+    }
+    data.update(kwargs)
+    return data
 
 
 def gen_deb_remote(

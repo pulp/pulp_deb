@@ -1,0 +1,7 @@
+Archive: ragnarok-backports
+Version: 18.04
+Component: jotunheimr
+Origin: pulp-fixtures
+Label: Ubuntu-backports-like-fixture
+Architecture: armeb
+Description: A fixtures repo with a structure modeled on an ubuntu-backports release.
