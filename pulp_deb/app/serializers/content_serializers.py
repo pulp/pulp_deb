@@ -136,16 +136,8 @@ class PackageIndexSerializer(MultipleArtifactContentSerializer):
 
     relative_path = CharField(help_text="Path of file relative to url.", required=False)
 
-    release = DetailRelatedField(
-        help_text="Release this index file belongs to.",
-        many=False,
-        queryset=ReleaseFile.objects.all(),
-        view_name="deb-release-file-detail",
-    )
-
     class Meta:
         fields = MultipleArtifactContentSerializer.Meta.fields + (
-            "release",
             "component",
             "architecture",
             "relative_path",
@@ -171,16 +163,8 @@ class InstallerFileIndexSerializer(MultipleArtifactContentSerializer):
         required=False,
     )
 
-    release = DetailRelatedField(
-        help_text="Release this index file belongs to.",
-        many=False,
-        queryset=ReleaseFile.objects.all(),
-        view_name="deb-release-file-detail",
-    )
-
     class Meta:
         fields = MultipleArtifactContentSerializer.Meta.fields + (
-            "release",
             "component",
             "architecture",
             "relative_path",
