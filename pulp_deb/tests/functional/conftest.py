@@ -94,8 +94,8 @@ def deb_publication_factory(apt_publication_api, gen_object_with_cleanup):
 def deb_repository_factory(apt_repository_api, gen_object_with_cleanup):
     """Fixture that generates a deb repository with cleanup."""
 
-    def _deb_repository_factory():
-        return gen_object_with_cleanup(apt_repository_api, gen_repo())
+    def _deb_repository_factory(**kwargs):
+        return gen_object_with_cleanup(apt_repository_api, gen_repo(**kwargs))
 
     return _deb_repository_factory
 

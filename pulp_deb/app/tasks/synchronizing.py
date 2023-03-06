@@ -841,7 +841,6 @@ class DebFirstStage(Stage):
         relative_path = os.path.join(package_index_dir, "Packages")
         log.info(_('Creating PackageIndex unit with relative_path="{}".').format(relative_path))
         content_unit = PackageIndex(
-            release=release_file,
             component=release_component.component,
             architecture=architecture,
             sha256=d_artifacts[0].artifact.sha256,
@@ -1033,7 +1032,6 @@ class DebFirstStage(Stage):
             return
         log.info(_("Downloading installer files from {}").format(installer_file_index_dir))
         content_unit = InstallerFileIndex(
-            release=release_file,
             component=release_component.component,
             architecture=architecture,
             sha256=d_artifacts[0].artifact.sha256,

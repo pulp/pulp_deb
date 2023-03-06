@@ -174,6 +174,44 @@ def test_sync_optimize_skip_unchanged_package_index(
     assert is_sync_skipped(task_diff, DEB_REPORT_CODE_SKIP_PACKAGE)
 
 
+def test_sync_orphan_cleanup_fail(
+    deb_remote_factory,
+    deb_repository_factory,
+    deb_get_repository_by_href,
+    deb_sync_repository,
+    orphans_cleanup_api_client,
+    monitor_task,
+):
+    """Test whether an orphan cleanup is possible after syncing where only some PackageIndices got
+    changed and older repository versions are not kept.
+
+    See: https://github.com/pulp/pulp_deb/issues/690
+    """
+    # Create a repository and only retain the latest repository version.
+    repo = deb_repository_factory(retain_repo_versions=1)
+
+    # Create a remote and sync with repo. Verify the latest `repository_version` is 1.
+    remote = deb_remote_factory(distributions=DEB_FIXTURE_SINGLE_DIST)
+    deb_sync_repository(remote, repo)
+    repo = deb_get_repository_by_href(repo.pulp_href)
+    assert repo.latest_version_href.endswith("/1/")
+
+    # Create a new remote with updated packages and sync again. Verify `repository_version` is 2.
+    remote_diff = deb_remote_factory(
+        DEB_FIXTURE_UPDATE_REPOSITORY_NAME, distributions=DEB_FIXTURE_SINGLE_DIST
+    )
+    deb_sync_repository(remote_diff, repo)
+    repo = deb_get_repository_by_href(repo.pulp_href)
+    assert repo.latest_version_href.endswith("/2/")
+
+    # Trigger orphan cleanup without protection time and verify the task completed
+    # and Content and Artifacts have been removed.
+    task = monitor_task(orphans_cleanup_api_client.cleanup({"orphan_protection_time": 0}).task)
+    assert task.state == "completed"
+    for report in task.progress_reports:
+        assert report.total == 10 if "Content" in report.message else 8
+
+
 def is_sync_skipped(task, code):
     """Checks if a given task has skipped the sync based of a given code."""
     for report in task.progress_reports:
