@@ -125,7 +125,11 @@ class SyncInvalidTestCase(unittest.TestCase):
         with self.assertRaises(PulpTaskError) as exc:
             self.do_test(distribution="no_dist")
         error = exc.exception.task.error
-        self.assertIn("No valid Release file found", error["description"])
+        self.assertIn(
+            "Could not find a Release file at '{}', try checking the 'url' and "
+            "'distributions' option on your remote".format(DEB_FIXTURE_URL + "dists/no_dist"),
+            error["description"],
+        )
 
     def test_missing_package_indices_1(self):
         """Sync a repository missing a set of Package indices.
@@ -163,7 +167,12 @@ class SyncInvalidTestCase(unittest.TestCase):
                 distribution="nosuite", url=DEB_INVALID_FIXTURE_URL, gpgkey=DEB_SIGNING_KEY
             )
         error = exc.exception.task.error
-        self.assertIn("No valid Release file found", error["description"])
+        self.assertIn(
+            "Unable to verify any Release files from '{}' using the GPG key provided.".format(
+                DEB_INVALID_FIXTURE_URL + "dists/nosuite"
+            ),
+            error["description"],
+        )
 
     def do_test(self, url=DEB_FIXTURE_URL, distribution=DEB_FIXTURE_DISTRIBUTIONS, **kwargs):
         """Sync a repository given ``url`` on the remote."""
