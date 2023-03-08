@@ -60,7 +60,6 @@ class PackageIndex(Content):
     TYPE = "package_index"
     SUPPORTED_ARTIFACTS = ["Packages", "Packages.gz", "Packages.xz", "Release"]
 
-    release = models.ForeignKey(ReleaseFile, on_delete=models.CASCADE)
     component = models.TextField()
     architecture = models.TextField()
     relative_path = models.TextField()
@@ -94,7 +93,6 @@ class InstallerFileIndex(Content):
 
     FILE_ALGORITHM = {"SHA256SUMS": "sha256", "MD5SUMS": "md5"}  # Are there more?
 
-    release = models.ForeignKey(ReleaseFile, on_delete=models.CASCADE)
     component = models.TextField()
     architecture = models.TextField()
     relative_path = models.TextField()
