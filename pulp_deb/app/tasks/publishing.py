@@ -1,3 +1,4 @@
+import asyncio
 import os
 import shutil
 from contextlib import suppress
@@ -134,6 +135,7 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                 release_helper.finish()
 
             if structured:
+                release_helpers = []
                 for release in Release.objects.filter(
                     pk__in=repo_version.content.order_by("-pulp_created"),
                 ):
@@ -174,9 +176,19 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                         release_helper.components[prc.release_component.component].add_package(
                             prc.package
                         )
-                    release_helper.finish()
+
+                    release_helper.save_unsigned_metadata()
+                    release_helpers.append(release_helper)
+
+                asyncio.run(_concurrently_sign_metadata(release_helpers))
+                for release_helper in release_helpers:
+                    release_helper.save_signed_metadata()
 
     log.info(_("Publication: {publication} created").format(publication=publication.pk))
+
+
+async def _concurrently_sign_metadata(release_helpers):
+    await asyncio.gather(*[x.sign_metadata() for x in release_helpers])
 
 
 class _ComponentHelper:
@@ -294,32 +306,47 @@ class _ReleaseHelper:
                 )
 
     def finish(self):
+        """
+        You must *either* call finish (as the simple publications still do), or you must call
+        save_unsigned_metadata, sign_metadata, and save_signed_metadata, in order. The benefit of
+        doing it the other way is that you can sign the metadata for all releases concurrently.
+        """
+        self.save_unsigned_metadata()
+        asyncio.run(self.sign_metadata())
+        self.save_signed_metadata()
+
+    def save_unsigned_metadata(self):
         # Publish Packages files
         for component in self.components.values():
             component.finish()
         # Publish Release file
         self.release["Components"] = " ".join(self.components.keys())
-        release_dir = os.path.join("dists", self.dists_subfolder)
-        os.makedirs(release_dir, exist_ok=True)
-        release_path = os.path.join(release_dir, "Release")
-        with open(release_path, "wb") as release_file:
+        self.release_dir = os.path.join("dists", self.dists_subfolder)
+        os.makedirs(self.release_dir, exist_ok=True)
+        self.release_path = os.path.join(self.release_dir, "Release")
+        with open(self.release_path, "wb") as release_file:
             self.release.dump(release_file)
         release_metadata = PublishedMetadata.create_from_file(
             publication=self.publication,
-            file=File(open(release_path, "rb")),
+            file=File(open(self.release_path, "rb")),
         )
         release_metadata.save()
+
+    async def sign_metadata(self):
+        self.signed = {"signatures": {}}
         if self.signing_service:
-            signed = self.signing_service.sign(release_path)
-            for signature_file in signed["signatures"].values():
-                file_name = os.path.basename(signature_file)
-                relative_path = os.path.join(release_dir, file_name)
-                metadata = PublishedMetadata.create_from_file(
-                    publication=self.publication,
-                    file=File(open(signature_file, "rb")),
-                    relative_path=relative_path,
-                )
-                metadata.save()
+            self.signed = await self.signing_service.asign(self.release_path)
+
+    def save_signed_metadata(self):
+        for signature_file in self.signed["signatures"].values():
+            file_name = os.path.basename(signature_file)
+            relative_path = os.path.join(self.release_dir, file_name)
+            metadata = PublishedMetadata.create_from_file(
+                publication=self.publication,
+                file=File(open(signature_file, "rb")),
+                relative_path=relative_path,
+            )
+            metadata.save()
 
 
 def _zip_file(file_path):
