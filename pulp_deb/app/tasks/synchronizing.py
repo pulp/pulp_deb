@@ -12,7 +12,7 @@ from asgiref.sync import sync_to_async
 from collections import defaultdict
 from tempfile import NamedTemporaryFile
 from debian import deb822
-from urllib.parse import quote, urlparse, urlunparse
+from urllib.parse import quote, urlparse, urlunparse, urljoin
 from django.conf import settings
 from django.db.utils import IntegrityError
 
@@ -75,12 +75,31 @@ class NoReleaseFile(Exception):
     Exception to signal, that no file representing a release is present.
     """
 
-    def __init__(self, distribution, *args, **kwargs):
+    def __init__(self, url, *args, **kwargs):
         """
         Exception to signal, that no file representing a release is present.
         """
         super().__init__(
-            "No valid Release file found for '{}'.".format(distribution), *args, **kwargs
+            "Could not find a Release file at '{}', try checking the 'url' and "
+            "'distributions' option on your remote".format(url),
+            *args,
+            **kwargs,
+        )
+
+
+class NoValidSignatureForKey(Exception):
+    """
+    Exception to signal, that verification of release file with provided GPG key fails.
+    """
+
+    def __init__(self, url, *args, **kwargs):
+        """
+        Exception to signal, that verification of release file with provided GPG key fails.
+        """
+        super().__init__(
+            "Unable to verify any Release files from '{}' using the GPG key provided.".format(url),
+            *args,
+            **kwargs,
         )
 
 
@@ -317,6 +336,7 @@ class DebUpdateReleaseFileAttributes(Stage):
 
         Update release content with information obtained from its artifact.
         """
+        dropped_count = 0
         async with ProgressReport(
             message="Update ReleaseFile units", code="update.release_file"
         ) as pb:
@@ -343,6 +363,7 @@ class DebUpdateReleaseFileAttributes(Stage):
                                     log.warning(_("Verification of Release failed. Dropping it."))
                                     d_content.d_artifacts.remove(da_names.pop("Release"))
                                     d_content.d_artifacts.remove(da_names.pop("Release.gpg"))
+                                    dropped_count += 1
                             else:
                                 release_file_artifact = da_names["Release"].artifact
                                 release_file.relative_path = da_names["Release"].relative_path
@@ -367,13 +388,18 @@ class DebUpdateReleaseFileAttributes(Stage):
                             else:
                                 log.warning(_("Verification of InRelease failed. Dropping it."))
                                 d_content.d_artifacts.remove(da_names.pop("InRelease"))
+                                dropped_count += 1
                         else:
                             release_file_artifact = da_names["InRelease"].artifact
                             release_file.relative_path = da_names["InRelease"].relative_path
 
                     if not d_content.d_artifacts:
                         # No (proper) artifacts left -> distribution not found
-                        raise NoReleaseFile(distribution=release_file.distribution)
+                        release_file_url = urljoin(self.remote.url, release_file.relative_path)
+                        if dropped_count > 0:
+                            raise NoValidSignatureForKey(url=release_file_url)
+                        else:
+                            raise NoReleaseFile(url=release_file_url)
 
                     release_file.sha256 = release_file_artifact.sha256
                     release_file.artifact_set_sha256 = _get_artifact_set_sha256(
@@ -583,7 +609,7 @@ class DebFirstStage(Stage):
         else:
             release_file_dir = os.path.join("dists", distribution)
         release_file_dc = DeclarativeContent(
-            content=ReleaseFile(distribution=distribution),
+            content=ReleaseFile(distribution=distribution, relative_path=release_file_dir),
             d_artifacts=[
                 self._to_d_artifact(os.path.join(release_file_dir, filename))
                 for filename in ReleaseFile.SUPPORTED_ARTIFACTS
