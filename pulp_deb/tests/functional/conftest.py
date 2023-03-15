@@ -12,6 +12,7 @@ from pulp_deb.tests.functional.constants import DEB_FIXTURE_STANDARD_REPOSITORY_
 from pulpcore.client.pulp_deb import (
     ApiClient,
     AptRepositorySyncURL,
+    ContentGenericContentsApi,
     ContentPackagesApi,
     DebAptPublication,
     DebVerbatimPublication,
@@ -68,6 +69,12 @@ def apt_package_api(apt_client):
 
 
 @pytest.fixture
+def apt_generic_content_api(apt_client):
+    """Fixture for APT generic content API."""
+    return ContentGenericContentsApi(apt_client)
+
+
+@pytest.fixture
 def deb_distribution_factory(apt_distribution_api, gen_object_with_cleanup):
     """Fixture that generates a deb distribution with cleanup from a given publication."""
 
@@ -77,6 +84,26 @@ def deb_distribution_factory(apt_distribution_api, gen_object_with_cleanup):
         return gen_object_with_cleanup(apt_distribution_api, body)
 
     return _deb_distribution_factory
+
+
+@pytest.fixture
+def deb_generic_content_factory(apt_generic_content_api, gen_object_with_cleanup):
+    """Fixture that generates deb generic content with cleanup."""
+
+    def _deb_generic_content_factory(**kwargs):
+        return gen_object_with_cleanup(apt_generic_content_api, **kwargs)
+
+    return _deb_generic_content_factory
+
+
+@pytest.fixture
+def deb_package_factory(apt_package_api, gen_object_with_cleanup):
+    """Fixture that generates deb package with cleanup."""
+
+    def _deb_package_factory(**kwargs):
+        return gen_object_with_cleanup(apt_package_api, **kwargs)
+
+    return _deb_package_factory
 
 
 @pytest.fixture

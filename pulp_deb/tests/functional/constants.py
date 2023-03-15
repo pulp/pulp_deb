@@ -97,8 +97,7 @@ DEB_FIXTURE_PACKAGE_COUNT = DEB_FIXTURE_SUMMARY.get(DEB_PACKAGE_NAME, 0)
 DEB_REPORT_CODE_SKIP_RELEASE = "sync.release_file.was_skipped"
 DEB_REPORT_CODE_SKIP_PACKAGE = "sync.package_index.was_skipped"
 
-DEB_PACKAGE_RELPATH = "pool/asgard/o/odin/odin_1.0_ppc64.deb"
-DEB_PACKAGE_URL = urljoin(DEB_FIXTURE_URL, DEB_PACKAGE_RELPATH)
+DEB_PACKAGE_RELPATH = "frigg_1.0_ppc64.deb"
 DEB_GENERIC_CONTENT_RELPATH = "dists/ragnarok/asgard/binary-armeb/Release"
 DEB_GENERIC_CONTENT_URL = urljoin(DEB_FIXTURE_URL, DEB_GENERIC_CONTENT_RELPATH)
 
