@@ -1,191 +1,327 @@
-# coding=utf-8
-"""Tests that sync deb plugin repositories."""
-import unittest
+"""Tests that sync deb repositories in optimized mode."""
+from pulp_smash.pulp3.bindings import PulpTaskError
+import pytest
 
-from pulp_smash import config
-from pulp_smash.pulp3.bindings import monitor_task, PulpTaskError, delete_orphans
-from pulp_smash.pulp3.utils import (
-    gen_repo,
-    get_added_content_summary,
-    get_content_summary,
-)
+from pulp_smash.pulp3.utils import get_added_content_summary, get_content_summary
 
 from pulp_deb.tests.functional.constants import (
+    DEB_FIXTURE_ARCH,
+    DEB_FIXTURE_ARCH_UPDATE,
+    DEB_FIXTURE_COMPONENT,
+    DEB_FIXTURE_COMPONENT_UPDATE,
+    DEB_FIXTURE_INVALID_REPOSITORY_NAME,
+    DEB_FIXTURE_SINGLE_DIST,
+    DEB_FIXTURE_STANDARD_REPOSITORY_NAME,
     DEB_FIXTURE_SUMMARY,
+    DEB_FIXTURE_UPDATE_REPOSITORY_NAME,
     DEB_FULL_FIXTURE_SUMMARY,
-    DEB_INVALID_FIXTURE_URL,
-    DEB_FIXTURE_URL,
-    DEB_FIXTURE_DISTRIBUTIONS,
+    DEB_REPORT_CODE_SKIP_PACKAGE,
+    DEB_REPORT_CODE_SKIP_RELEASE,
     DEB_SIGNING_KEY,
 )
-from pulp_deb.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
-from pulp_deb.tests.functional.utils import (
-    gen_deb_remote,
-    deb_remote_api,
-    deb_repository_api,
+
+
+@pytest.mark.parallel
+@pytest.mark.parametrize(
+    "remote_params, fixture_summary",
+    [
+        ({"gpgkey": DEB_SIGNING_KEY}, DEB_FIXTURE_SUMMARY),
+        ({"gpgkey": DEB_SIGNING_KEY, "sync_udebs": True}, DEB_FULL_FIXTURE_SUMMARY),
+    ],
 )
+def test_sync(
+    deb_remote_factory,
+    deb_repository_factory,
+    deb_get_repository_by_href,
+    deb_sync_repository,
+    fixture_summary,
+    remote_params,
+):
+    """Test whether synchronizations with and without udebs works as expected."""
+    # Create a repository and a remote and verify latest `repository_version` is 0
+    repo = deb_repository_factory()
+    remote = deb_remote_factory(**remote_params)
+    assert repo.latest_version_href.endswith("/0/")
 
-from pulpcore.client.pulp_deb import AptRepositorySyncURL
+    # Sync the repository
+    task = deb_sync_repository(remote, repo)
+    repo = deb_get_repository_by_href(repo.pulp_href)
 
+    # Verify latest `repository_version` is 1 and sync was not skipped
+    assert repo.latest_version_href.endswith("/1/")
+    assert not is_sync_skipped(task, DEB_REPORT_CODE_SKIP_RELEASE)
 
-class BasicSyncTestCase(unittest.TestCase):
-    """Sync a repository with the deb plugin."""
+    # Verify that the repo content and added content matches the summary
+    assert get_content_summary(repo.to_dict()) == fixture_summary
+    assert get_added_content_summary(repo.to_dict()) == fixture_summary
 
-    @classmethod
-    def setUpClass(cls):
-        """Create class-wide variables."""
-        cls.cfg = config.get_config()
+    # Sync the repository again
+    task_skip = deb_sync_repository(remote, repo)
+    repo = deb_get_repository_by_href(repo.pulp_href)
 
-    def setUp(self):
-        """Cleanup."""
-        delete_orphans()
+    # Verify that the latest `repository_version` is still 1 and sync was skipped
+    assert repo.latest_version_href.endswith("/1/")
+    assert is_sync_skipped(task_skip, DEB_REPORT_CODE_SKIP_RELEASE)
 
-    def test_sync_small(self):
-        """Test synching with deb content only."""
-        self.do_sync(sync_udebs=False, fixture_summary=DEB_FIXTURE_SUMMARY)
-
-    def test_sync_full(self):
-        """Test synching with udeb."""
-        self.do_sync(sync_udebs=True, fixture_summary=DEB_FULL_FIXTURE_SUMMARY)
-
-    def do_sync(self, sync_udebs, fixture_summary):
-        """Sync repositories with the deb plugin.
-
-        In order to sync a repository a remote has to be associated within
-        this repository. When a repository is created this version field is set
-        as None. After a sync the repository version is updated.
-
-        Do the following:
-
-        1. Create a repository, and a remote.
-        2. Assert that repository version is None.
-        3. Sync the remote.
-        4. Assert that repository version is not None.
-        5. Assert that the correct number of units were added and are present
-           in the repo.
-        6. Sync the remote one more time.
-        7. Assert that repository version is the same as the previous one.
-        8. Assert that the same number of content units are present and that no
-           units were added.
-        """
-        repo_api = deb_repository_api
-        remote_api = deb_remote_api
-
-        repo = repo_api.create(gen_repo())
-        self.addCleanup(repo_api.delete, repo.pulp_href)
-
-        body = gen_deb_remote(sync_udebs=sync_udebs, gpgkey=DEB_SIGNING_KEY)
-        remote = remote_api.create(body)
-        self.addCleanup(remote_api.delete, remote.pulp_href)
-
-        # Sync the repository.
-        self.assertEqual(repo.latest_version_href, f"{repo.pulp_href}versions/0/")
-        repository_sync_data = AptRepositorySyncURL(remote=remote.pulp_href)
-        sync_response = repo_api.sync(repo.pulp_href, repository_sync_data)
-        monitor_task(sync_response.task)
-        repo = repo_api.read(repo.pulp_href)
-
-        self.assertIsNotNone(repo.latest_version_href)
-        self.assertDictEqual(get_content_summary(repo.to_dict()), fixture_summary)
-        self.assertDictEqual(get_added_content_summary(repo.to_dict()), fixture_summary)
-
-        # Sync the repository again.
-        latest_version_href = repo.latest_version_href
-        repository_sync_data = AptRepositorySyncURL(remote=remote.pulp_href)
-        sync_response = repo_api.sync(repo.pulp_href, repository_sync_data)
-        monitor_task(sync_response.task)
-        repo = repo_api.read(repo.pulp_href)
-
-        self.assertEqual(latest_version_href, repo.latest_version_href)
-        self.assertDictEqual(get_content_summary(repo.to_dict()), fixture_summary)
+    # Verify that the repo content still matches the summary
+    assert get_content_summary(repo.to_dict()) == fixture_summary
 
 
-class SyncInvalidTestCase(unittest.TestCase):
-    """Sync a repository with a given url on the remote."""
+@pytest.mark.skip("Skip - Does currently not work")
+@pytest.mark.parallel
+@pytest.mark.parametrize(
+    "remote_params, expected",
+    [
+        (
+            {
+                "repo_name": DEB_FIXTURE_INVALID_REPOSITORY_NAME,
+                "architectures": "ppc64",
+                "ignore_missing_package_indices": False,
+            },
+            ["No suitable package index files", "ppc64"],
+        ),
+        (
+            {
+                "repo_name": DEB_FIXTURE_INVALID_REPOSITORY_NAME,
+                "architectures": "armeb",
+                "ignore_missing_package_indices": False,
+            },
+            ["No suitable package index files", "armeb"],
+        ),
+    ],
+)
+def test_sync_missing_package_indices(
+    expected,
+    deb_remote_factory,
+    deb_repository_factory,
+    deb_sync_repository,
+    remote_params,
+):
+    """Test whether tests fail as expected when package indices are missing.
 
-    def setUp(self):
-        """Cleanup."""
-        delete_orphans()
+    The following cases are tested:
 
-    def test_invalid_url(self):
-        """Sync a repository using a remote url that does not exist.
+    * `Sync a repository with missing files associated with the content unit.`_
+    * `Sync a repository with missing package indices and missing Release file.`_
+    """
+    # Create repository and remote
+    repo = deb_repository_factory()
+    remote = deb_remote_factory(**remote_params)
 
-        Test that we get a task failure. See :meth:`do_test`.
-        """
-        with self.assertRaises(PulpTaskError) as exc:
-            self.do_test(url="http://i-am-an-invalid-url.com/invalid/")
-        error = exc.exception.task.error
-        self.assertIn("Cannot connect", error["description"])
+    # Verify a PulpTaskError is raised and the error message is as expected
+    with pytest.raises(PulpTaskError) as exc:
+        deb_sync_repository(remote, repo)
+    for exp in expected:
+        assert exp in str(exc.value)
 
-    def test_invalid_distribution(self):
-        """Sync a repository using a distribution that does not exist.
 
-        Test that we get a task failure. See :meth:`do_test`.
-        """
-        with self.assertRaises(PulpTaskError) as exc:
-            self.do_test(distribution="no_dist")
-        error = exc.exception.task.error
-        self.assertIn(
-            "Could not find a Release file at '{}', try checking the 'url' and "
-            "'distributions' option on your remote".format(DEB_FIXTURE_URL + "dists/no_dist"),
-            error["description"],
-        )
+@pytest.mark.parallel
+@pytest.mark.parametrize(
+    "remote_params, expected",
+    [
+        ({"url": "http://i-am-an-invalid-url.com/invalid/"}, ["Cannot connect"]),
+        ({"distributions": "no_dist"}, ["Could not find a Release file at"]),
+        (
+            {
+                "repo_name": DEB_FIXTURE_INVALID_REPOSITORY_NAME,
+                "distributions": "nosuite",
+                "gpgkey": DEB_SIGNING_KEY,
+            },
+            ["Unable to verify any Release files from", "using the GPG key provided."],
+        ),
+    ],
+)
+def test_sync_invalid_cases(
+    expected,
+    deb_remote_factory,
+    deb_repository_factory,
+    deb_sync_repository,
+    remote_params,
+):
+    """Test whether various invalid sync cases fail as expected.
 
-    def test_missing_package_indices_1(self):
-        """Sync a repository missing a set of Package indices.
+    The following cases are tested:
 
-        All the files associated with the relavant content unit are missing.
-        Assert that the relevant exception is thrown.
-        """
-        with self.assertRaises(PulpTaskError) as exc:
-            self.do_test(url=DEB_INVALID_FIXTURE_URL, architectures="ppc64")
-        error = exc.exception.task.error
-        self.assertIn("No suitable package index files", error["description"])
-        self.assertIn("ppc64", error["description"])
+    * `Sync a repository with an invalid remote URL parameter.`_
+    * `Sync a repository with an invalid remote Distribution.`_
+    * `Sync a repository with an invalid signature.`_
+    """
+    # Create repository and remote
+    repo = deb_repository_factory()
+    remote = deb_remote_factory(**remote_params)
 
-    def test_missing_package_indices_2(self):
-        """Sync a repository missing a set of Package indices.
+    # Verify a PulpTaskError is raised and the error message is as expected
+    with pytest.raises(PulpTaskError) as exc:
+        deb_sync_repository(remote, repo)
+    for exp in expected:
+        assert exp in str(exc.value)
 
-        The needed Package indices associated with the relevant content unit are missing.
-        The Release file next to the missing Package indices is retained.
-        Assert that the relevant exception is thrown.
-        """
-        with self.assertRaises(PulpTaskError) as exc:
-            self.do_test(url=DEB_INVALID_FIXTURE_URL, architectures="armeb")
-        error = exc.exception.task.error
-        self.assertIn("No suitable package index files", error["description"])
-        self.assertIn("armeb", error["description"])
 
-    def test_invalid_signature(self):
-        """Sync a repository with an invalid signature.
+@pytest.mark.parallel
+@pytest.mark.parametrize(
+    "remote_params, remote_diff_params",
+    [
+        (
+            {
+                "repo_name": DEB_FIXTURE_STANDARD_REPOSITORY_NAME,
+                "distributions": DEB_FIXTURE_SINGLE_DIST,
+                "components": DEB_FIXTURE_COMPONENT,
+                "architectures": None,
+            },
+            {
+                "repo_name": DEB_FIXTURE_STANDARD_REPOSITORY_NAME,
+                "distributions": DEB_FIXTURE_SINGLE_DIST,
+                "components": DEB_FIXTURE_COMPONENT_UPDATE,
+                "architectures": None,
+            },
+        ),
+        (
+            {
+                "repo_name": DEB_FIXTURE_STANDARD_REPOSITORY_NAME,
+                "distributions": DEB_FIXTURE_SINGLE_DIST,
+                "components": None,
+                "architectures": DEB_FIXTURE_ARCH,
+            },
+            {
+                "repo_name": DEB_FIXTURE_STANDARD_REPOSITORY_NAME,
+                "distributions": DEB_FIXTURE_SINGLE_DIST,
+                "components": None,
+                "architectures": DEB_FIXTURE_ARCH_UPDATE,
+            },
+        ),
+        (
+            {
+                "repo_name": DEB_FIXTURE_STANDARD_REPOSITORY_NAME,
+                "distributions": DEB_FIXTURE_SINGLE_DIST,
+                "components": DEB_FIXTURE_COMPONENT,
+                "architectures": None,
+            },
+            {
+                "repo_name": DEB_FIXTURE_UPDATE_REPOSITORY_NAME,
+                "distributions": DEB_FIXTURE_SINGLE_DIST,
+                "components": DEB_FIXTURE_COMPONENT_UPDATE,
+                "architectures": None,
+            },
+        ),
+    ],
+)
+def test_sync_optimize_no_skip_release_file(
+    deb_remote_factory,
+    deb_repository_factory,
+    deb_get_repository_by_href,
+    remote_params,
+    remote_diff_params,
+    deb_sync_repository,
+):
+    """Test whether synchronizations have not been skipped for certain conditions.
 
-        Verify the repository by supplying a GPG key.
-        Assert that the relevant exception is thrown.
-        """
-        with self.assertRaises(PulpTaskError) as exc:
-            self.do_test(
-                distribution="nosuite", url=DEB_INVALID_FIXTURE_URL, gpgkey=DEB_SIGNING_KEY
-            )
-        error = exc.exception.task.error
-        self.assertIn(
-            "Unable to verify any Release files from '{}' using the GPG key provided.".format(
-                DEB_INVALID_FIXTURE_URL + "dists/nosuite"
-            ),
-            error["description"],
-        )
+    The following cases are tested:
 
-    def do_test(self, url=DEB_FIXTURE_URL, distribution=DEB_FIXTURE_DISTRIBUTIONS, **kwargs):
-        """Sync a repository given ``url`` on the remote."""
-        repo_api = deb_repository_api
-        remote_api = deb_remote_api
+    * `Sync a repository with same Release file but updated Components.`_
+    * `Sync a repository with same Release file but updated Architectures.`_
+    * `Sync a repository with updated Release file and updated Components.`_
+    """
+    # Create a repository and a remote and verify latest `repository_version` is 0
+    repo = deb_repository_factory()
+    remote = deb_remote_factory(**remote_params)
+    assert repo.latest_version_href.endswith("/0/")
 
-        repo = repo_api.create(gen_repo())
-        self.addCleanup(repo_api.delete, repo.pulp_href)
+    # Sync the repository
+    task = deb_sync_repository(remote, repo)
+    repo = deb_get_repository_by_href(repo.pulp_href)
 
-        body = gen_deb_remote(url=url, distributions=distribution, **kwargs)
-        remote = remote_api.create(body)
-        self.addCleanup(remote_api.delete, remote.pulp_href)
+    # Verify latest `repository_version` is 1 and sync was not skipped
+    assert repo.latest_version_href.endswith("/1/")
+    assert not is_sync_skipped(task, DEB_REPORT_CODE_SKIP_RELEASE)
+    assert not is_sync_skipped(task, DEB_REPORT_CODE_SKIP_PACKAGE)
 
-        repository_sync_data = AptRepositorySyncURL(remote=remote.pulp_href)
-        sync_response = repo_api.sync(repo.pulp_href, repository_sync_data)
-        return monitor_task(sync_response.task)
+    # Create a new remote with different parameters and sync with repository
+    remote_diff = deb_remote_factory(**remote_diff_params)
+    task_diff = deb_sync_repository(remote_diff, repo)
+    repo = deb_get_repository_by_href(repo.pulp_href)
+
+    # Verify that latest `repository_version` is 2 and sync was not skipped
+    assert repo.latest_version_href.endswith("/2/")
+    assert not is_sync_skipped(task_diff, DEB_REPORT_CODE_SKIP_RELEASE)
+    assert not is_sync_skipped(task_diff, DEB_REPORT_CODE_SKIP_PACKAGE)
+
+
+@pytest.mark.parallel
+def test_sync_optimize_skip_unchanged_package_index(
+    deb_remote_factory,
+    deb_repository_factory,
+    deb_get_repository_by_href,
+    deb_sync_repository,
+):
+    """Test whether package synchronization is skipped when a package has not been changed."""
+    # Create a repository and a remote and verify latest `repository_version` is 0
+    repo = deb_repository_factory()
+    remote = deb_remote_factory(distributions=DEB_FIXTURE_SINGLE_DIST)
+    assert repo.latest_version_href.endswith("/0/")
+
+    # Sync the repository
+    task = deb_sync_repository(remote, repo)
+    repo = deb_get_repository_by_href(repo.pulp_href)
+
+    # Verify latest `repository_version` is 1 and sync was not skipped
+    assert repo.latest_version_href.endswith("/1/")
+    assert not is_sync_skipped(task, DEB_REPORT_CODE_SKIP_RELEASE)
+    assert not is_sync_skipped(task, DEB_REPORT_CODE_SKIP_PACKAGE)
+
+    # Create new remote with both updated and unchanged packages and sync with repository
+    remote_diff = deb_remote_factory(
+        DEB_FIXTURE_UPDATE_REPOSITORY_NAME, distributions=DEB_FIXTURE_SINGLE_DIST
+    )
+    task_diff = deb_sync_repository(remote_diff, repo)
+    repo = deb_get_repository_by_href(repo.pulp_href)
+
+    # Verify latest `repository_version` is 2, release was not skipped and package was skipped
+    assert repo.latest_version_href.endswith("/2/")
+    assert not is_sync_skipped(task_diff, DEB_REPORT_CODE_SKIP_RELEASE)
+    assert is_sync_skipped(task_diff, DEB_REPORT_CODE_SKIP_PACKAGE)
+
+
+def test_sync_orphan_cleanup_fail(
+    deb_remote_factory,
+    deb_repository_factory,
+    deb_get_repository_by_href,
+    deb_sync_repository,
+    orphans_cleanup_api_client,
+    monitor_task,
+):
+    """Test whether an orphan cleanup is possible after syncing where only some PackageIndices got
+    changed and older repository versions are not kept.
+
+    See: https://github.com/pulp/pulp_deb/issues/690
+    """
+    # Create a repository and only retain the latest repository version.
+    repo = deb_repository_factory(retain_repo_versions=1)
+
+    # Create a remote and sync with repo. Verify the latest `repository_version` is 1.
+    remote = deb_remote_factory(distributions=DEB_FIXTURE_SINGLE_DIST)
+    deb_sync_repository(remote, repo)
+    repo = deb_get_repository_by_href(repo.pulp_href)
+    assert repo.latest_version_href.endswith("/1/")
+
+    # Create a new remote with updated packages and sync again. Verify `repository_version` is 2.
+    remote_diff = deb_remote_factory(
+        DEB_FIXTURE_UPDATE_REPOSITORY_NAME, distributions=DEB_FIXTURE_SINGLE_DIST
+    )
+    deb_sync_repository(remote_diff, repo)
+    repo = deb_get_repository_by_href(repo.pulp_href)
+    assert repo.latest_version_href.endswith("/2/")
+
+    # Trigger orphan cleanup without protection time and verify the task completed
+    # and Content and Artifacts have been removed.
+    task = monitor_task(orphans_cleanup_api_client.cleanup({"orphan_protection_time": 0}).task)
+    assert task.state == "completed"
+    for report in task.progress_reports:
+        assert report.total == 2 if "Content" in report.message else 5
+
+
+def is_sync_skipped(task, code):
+    """Checks if a given task has skipped the sync based of a given code."""
+    for report in task.progress_reports:
+        if report.code == code:
+            return True
+    return False

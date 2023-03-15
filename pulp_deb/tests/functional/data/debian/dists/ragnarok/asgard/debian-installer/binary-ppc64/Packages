@@ -1,0 +1,17 @@
+Package: mundilfari
+Version: 1.0
+Architecture: ppc64
+Maintainer: root <root@b81c8887d23b>
+Installed-Size: 9
+Multi-Arch: foreign
+Priority: optional
+Section: debian-installer
+Filename: pool/asgard/m/mundilfari/mundilfari_1.0_ppc64.udeb
+Size: 2074
+SHA256: b247bfda552ef2a5f269eec27752ae4649d58cbe7d47d6acbea7310bda39c88e
+SHA1: 33272a5711b3c0dd3d10c4558e677ddafecadfbf
+MD5sum: a1d974b0afe782b116a013e8b569c553
+Description: Mundilfari
+ In Norse mythology Mundilfari is the father of Sól, goddess associated with
+ the Sun, and Máni, associated with the Moon.
+
