@@ -1,0 +1,7 @@
+Archive: stable
+Version: 10
+Component: asgard
+Origin: pulp-fixtures
+Label: Debian-security-like-fixture
+Architecture: ppc64
+Description: A fixtures repo with a structure modeled on debian-security.

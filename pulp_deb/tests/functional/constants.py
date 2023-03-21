@@ -54,6 +54,7 @@ DEB_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, "debian/")
 DEB_FIXTURE_URL_UPDATE = urljoin(PULP_FIXTURES_BASE_URL, "debian_update/")
 DEB_FIXTURE_DISTRIBUTIONS = "ragnarok nosuite"
 DEB_FIXTURE_SINGLE_DIST = "ragnarok"
+DEB_FIXTURE_ALT_SINGLE_DIST = "ginnungagap"
 DEB_FIXTURE_MULTI_DIST = "ragnarok ginnungagap"
 DEB_FIXTURE_COMPONENT = "asgard"
 DEB_FIXTURE_COMPONENT_UPDATE = "jotunheimr"
@@ -62,6 +63,15 @@ DEB_FIXTURE_ARCH_UPDATE = "armeb"
 DEB_FIXTURE_STANDARD_REPOSITORY_NAME = "/debian/"
 DEB_FIXTURE_UPDATE_REPOSITORY_NAME = "/debian-update/"
 DEB_FIXTURE_INVALID_REPOSITORY_NAME = "/debian-invalid/"
+DEB_FIXTURE_FLAT_REPOSITORY_NAME = "/debian-flat/"
+DEB_FIXTURE_COMPLEX_REPOSITORY_NAME = "/debian-complex-dists"
+DEB_FIXTURE_MISSING_ARCHITECTURE_REPOSITORY_NAME = "/debian-missing-architecture/"
+
+# Publication Parameters
+DEB_PARAMS_PUB_SIMPLE = {"simple": True}
+DEB_PARAMS_PUB_STRUCTURED = {"structured": True}
+DEB_PARAMS_PUB_SIMPLE_AND_STRUCTURED = {"simple": True, "structured": True}
+DEB_PARAMS_PUB_ALL = {"simple": True, "structured": True, "signing_service": ""}
 
 DEB_FIXTURE_SUMMARY = _clean_dict(
     {
@@ -114,6 +124,124 @@ DEB_LARGE_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, "deb_large/")
 
 # FIXME: replace this with the actual number of content units in your test fixture
 DEB_LARGE_FIXTURE_COUNT = 25
+
+DEB_PUBLISH_COMPLEX_UBUNTU_BACKPORTS = {
+    "distribution": "ragnarok-backports",
+    "codename": "ragnarok",
+    "suite": "ragnarok-backports",
+    "components": ["asgard", "jotunheimr"],
+    "release_file_folder": "dists/ragnarok-backports/",
+    "package_index_paths": [
+        "dists/ragnarok-backports/asgard/binary-ppc64/Packages",
+        "dists/ragnarok-backports/asgard/binary-armeb/Packages",
+        "dists/ragnarok-backports/jotunheimr/binary-ppc64/Packages",
+        "dists/ragnarok-backports/jotunheimr/binary-armeb/Packages",
+    ],
+}
+
+DEB_PUBLISH_COMPLEX_DEBIAN_SECURITY = {
+    "distribution": "ragnarok/updates",
+    "codename": "ragnarok",
+    "suite": "stable",
+    "components": ["updates/asgard", "updates/jotunheimr"],
+    "release_file_folder": "dists/ragnarok/updates/",
+    "package_index_paths": [
+        "dists/ragnarok/updates/asgard/binary-ppc64/Packages",
+        "dists/ragnarok/updates/asgard/binary-armeb/Packages",
+        "dists/ragnarok/updates/jotunheimr/binary-ppc64/Packages",
+        "dists/ragnarok/updates/jotunheimr/binary-armeb/Packages",
+    ],
+}
+
+DEB_PUBLISH_FLAT_STRUCTURED = {
+    "distribution": "/",
+    "codename": "ragnarok",
+    "suite": "mythology",
+    "components": ["flat-repo-component"],
+    "release_file_folder_sync": "",
+    "release_file_folder_dist": "dists/flat-repo/",
+    "package_index_paths_sync": ["Packages"],
+    "package_index_paths_dist": ["dists/flat-repo/flat-repo-component/binary-ppc64/Packages"],
+}
+
+DEB_PUBLISH_FLAT_SIMPLE = {
+    "distribution": "/",
+    "codename": "ragnarok",
+    "suite": "mythology",
+    "components": ["flat-repo-component"],
+    "release_file_folder_sync": "",
+    "release_file_folder_dist": "dists/default/",
+    "package_index_paths_sync": ["Packages"],
+    "package_index_paths_dist": ["dists/default/all/binary-ppc64/Packages"],
+}
+
+DEB_PUBLISH_FLAT_VERBATIM = {
+    "distribution": "/",
+    "codename": "ragnarok",
+    "suite": "mythology",
+    "components": ["flat-repo-component"],
+    "release_file_folder_sync": "",
+    "release_file_folder_dist": "/",
+    "package_index_paths_sync": ["Packages"],
+    "package_index_paths_dist": ["Packages"],
+}
+
+DEB_PUBLISH_FLAT_NESTED_STRUCTURED = {
+    "distribution": "nest/fjalar/",
+    "codename": "ragnarok",
+    "suite": "mythology",
+    "components": ["flat-repo-component"],
+    "release_file_folder_sync": "nest/fjalar/",
+    "release_file_folder_dist": "dists/nest/fjalar",
+    "package_index_paths_sync": ["nest/fjalar/Packages"],
+    "package_index_paths_dist": ["dists/nest/fjalar/flat-repo-component/binary-ppc64/Packages"],
+}
+
+DEB_PUBLISH_FLAT_NESTED_SIMPLE = {
+    "distribution": "nest/fjalar/",
+    "codename": "ragnarok",
+    "suite": "mythology",
+    "components": ["flat-repo-component"],
+    "release_file_folder_sync": "nest/fjalar/",
+    "release_file_folder_dist": "dists/default/",
+    "package_index_paths_sync": ["nest/fjalar/Packages"],
+    "package_index_paths_dist": ["dists/default/all/binary-ppc64/Packages"],
+}
+
+DEB_PUBLISH_FLAT_NESTED_VERBATIM = {
+    "distribution": "nest/fjalar/",
+    "codename": "ragnarok",
+    "suite": "mythology",
+    "components": ["flat-repo-component"],
+    "release_file_folder_sync": "nest/fjalar/",
+    "release_file_folder_dist": "nest/fjalar/",
+    "package_index_paths_sync": ["nest/fjalar/Packages"],
+    "package_index_paths_dist": ["nest/fjalar/Packages"],
+}
+
+DEB_PUBLISH_MISSING_ARCHITECTURE = {
+    "distribution": "ragnarok",
+    "codename": "ragnarok",
+    "suite": "mythology",
+    "components": ["asgard", "jotunheimr"],
+    "architecture_in_release": ["armeb", "ppc64"],
+    "package_index_paths": [
+        "dists/ragnarok/asgard/binary-ppc64",
+        "dists/ragnarok/asgard/binary-armeb",
+        "dists/ragnarok/jotunheimr/binary-ppc64",
+        "dists/ragnarok/jotunheimr/binary-armeb",
+    ],
+}
+
+DEB_PUBLISH_EMPTY_REPOSITORY = {
+    "package_index_paths": [
+        "dists/ginnungagap/asgard/binary-ppc64/Packages",
+        "dists/ginnungagap/jotunheimr/binary-armeb/Packages",
+        "dists/ginnungagap/asgard/binary-armeb/Packages",
+        "dists/ginnungagap/jotunheimr/binary-ppc64/Packages",
+        "dists/default/all/binary-all/Packages",
+    ],
+}
 
 DEB_SIGNING_KEY = """-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: GnuPG v2
