@@ -18,55 +18,38 @@ source .github/workflows/scripts/utils.sh
 export PULP_API_ROOT="/pulp/"
 
 if [[ "$TEST" = "docs" || "$TEST" = "publish" ]]; then
+  cd ..
+  git clone https://github.com/pulp/pulpcore.git
+  cd -
   pip install -r ../pulpcore/doc_requirements.txt
   pip install -r doc_requirements.txt
 fi
 
 cd .ci/ansible/
 
-TAG=ci_build
-PULPCORE=./pulpcore
-if [[ "$TEST" == "plugin-from-pypi" ]]; then
-  PLUGIN_NAME=pulp_deb
-elif [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
+if [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
   PLUGIN_NAME=./pulp_deb/dist/pulp_deb-$PLUGIN_VERSION-py3-none-any.whl
 else
   PLUGIN_NAME=./pulp_deb
 fi
-if [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
-  # Install the plugin only and use published PyPI packages for the rest
-  # Quoting ${TAG} ensures Ansible casts the tag as a string.
-  cat >> vars/main.yaml << VARSYAML
+cat >> vars/main.yaml << VARSYAML
 image:
   name: pulp
-  tag: "${TAG}"
-plugins:
-  - name: pulpcore
-    source: pulpcore~=3.21.0
-  - name: pulp_deb
-    source:  "${PLUGIN_NAME}"
-  - name: pulp-smash
-    source: ./pulp-smash
-VARSYAML
-else
-  cat >> vars/main.yaml << VARSYAML
-image:
-  name: pulp
-  tag: "${TAG}"
+  tag: "ci_build"
 plugins:
   - name: pulp_deb
     source: "${PLUGIN_NAME}"
-  - name: pulpcore
-    source: "${PULPCORE}"
-  - name: pulp-smash
-    source: ./pulp-smash
+VARSYAML
+if [[ -f ../../ci_requirements.txt ]]; then
+  cat >> vars/main.yaml << VARSYAML
+    ci_requirements: true
 VARSYAML
 fi
 
 cat >> vars/main.yaml << VARSYAML
 services:
   - name: pulp
-    image: "pulp:${TAG}"
+    image: "pulp:ci_build"
     volumes:
       - ./settings:/etc/pulp
       - ./ssh:/keys/
@@ -84,7 +67,7 @@ pulp_container_tag: https
 
 VARSYAML
 
-SCENARIOS=("pulp" "performance" "azure" "gcp" "s3" "stream" "plugin-from-pypi" "generate-bindings" "lowerbounds")
+SCENARIOS=("pulp" "performance" "azure" "gcp" "s3" "stream" "generate-bindings" "lowerbounds")
 if [[ " ${SCENARIOS[*]} " =~ " ${TEST} " ]]; then
   sed -i -e '/^services:/a \
   - name: pulp-fixtures\
@@ -136,6 +119,9 @@ if [ "${PULP_API_ROOT:-}" ]; then
   sed -i -e '$a api_root: "'"$PULP_API_ROOT"'"' vars/main.yaml
 fi
 
+pulp config create --base-url https://pulp --api-root "$PULP_API_ROOT"
+
+
 ansible-playbook build_container.yaml
 ansible-playbook start_container.yaml
 
@@ -143,8 +129,8 @@ ansible-playbook start_container.yaml
 # files will likely be modified on the host by post/pre scripts.
 chmod 777 ~/.config/pulp_smash/
 chmod 666 ~/.config/pulp_smash/settings.json
-sudo chown -R 700:700 ~runner/.config
 
+sudo chown -R 700:700 ~/.config
 echo ::group::SSL
 # Copy pulp CA
 sudo docker cp pulp:/etc/pulp/certs/pulp_webserver.crt /usr/local/share/ca-certificates/pulp_webserver.crt
