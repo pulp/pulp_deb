@@ -15,6 +15,7 @@ def gen_deb_remote(
     url=None,
     distributions=DEB_FIXTURE_DISTRIBUTIONS,
     sync_udebs=False,
+    sync_sources=False,
     gpgkey=None,
     **kwargs,
 ):
@@ -30,6 +31,7 @@ def gen_deb_remote(
         "url": "" if url is None else url,
         "distributions": distributions,
         "sync_udebs": sync_udebs,
+        "sync_sources": sync_sources,
     }
     data.update(kwargs)
     return data
