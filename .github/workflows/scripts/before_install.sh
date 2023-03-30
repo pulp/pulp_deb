@@ -30,11 +30,8 @@ fi
 COMMIT_MSG=$(git log --format=%B --no-merges -1)
 export COMMIT_MSG
 
-if [[ "$TEST" == "plugin-from-pypi" ]]; then
-  COMPONENT_VERSION=$(http https://pypi.org/pypi/pulp-deb/json | jq -r '.info.version')
-else
-  COMPONENT_VERSION=$(sed -ne "s/\s*version.*=.*['\"]\(.*\)['\"][\s,]*/\1/p" setup.py)
-fi
+COMPONENT_VERSION=$(sed -ne "s/\s*version.*=.*['\"]\(.*\)['\"][\s,]*/\1/p" setup.py)
+
 mkdir .ci/ansible/vars || true
 echo "---" > .ci/ansible/vars/main.yaml
 echo "legacy_component_name: pulp_deb" >> .ci/ansible/vars/main.yaml
@@ -48,61 +45,22 @@ if [ -f $PRE_BEFORE_INSTALL ]; then
   source $PRE_BEFORE_INSTALL
 fi
 
-if [[ -n $(echo -e $COMMIT_MSG | grep -P "Required PR:.*" | grep -v "https") ]]; then
-  echo "Invalid Required PR link detected in commit message. Please use the full https url."
+if [[ -n $(echo -e $COMMIT_MSG | grep -P "Required PR:.*") ]]; then
+  echo "The Required PR mechanism has been removed. Consider adding a scm requirement to requirements.txt."
   exit 1
 fi
 
 if [ "$GITHUB_EVENT_NAME" = "pull_request" ] || [ "${BRANCH_BUILD}" = "1" -a "${BRANCH}" != "main" ]
 then
-  export PULPCORE_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulpcore\/pull\/(\d+)' | awk -F'/' '{print $7}')
-  export PULP_SMASH_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp-smash\/pull\/(\d+)' | awk -F'/' '{print $7}')
-  export PULP_OPENAPI_GENERATOR_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp-openapi-generator\/pull\/(\d+)' | awk -F'/' '{print $7}')
-  export PULP_CLI_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp-cli\/pull\/(\d+)' | awk -F'/' '{print $7}')
   echo $COMMIT_MSG | sed -n -e 's/.*CI Base Image:\s*\([-_/[:alnum:]]*:[-_[:alnum:]]*\).*/ci_base: "\1"/p' >> .ci/ansible/vars/main.yaml
-else
-  export PULPCORE_PR_NUMBER=
-  export PULP_SMASH_PR_NUMBER=
-  export PULP_OPENAPI_GENERATOR_PR_NUMBER=
-  export PULP_CLI_PR_NUMBER=
-  export CI_BASE_IMAGE=
 fi
 
 
 cd ..
-
-
-git clone --depth=1 https://github.com/pulp/pulp-smash.git
-
-if [ -n "$PULP_SMASH_PR_NUMBER" ]; then
-  cd pulp-smash
-  git fetch --depth=1 origin pull/$PULP_SMASH_PR_NUMBER/head:$PULP_SMASH_PR_NUMBER
-  git checkout $PULP_SMASH_PR_NUMBER
-  cd ..
-fi
-
-pip install --upgrade --force-reinstall ./pulp-smash
-
 
 git clone --depth=1 https://github.com/pulp/pulp-openapi-generator.git
-if [ -n "$PULP_OPENAPI_GENERATOR_PR_NUMBER" ]; then
-  cd pulp-openapi-generator
-  git fetch origin pull/$PULP_OPENAPI_GENERATOR_PR_NUMBER/head:$PULP_OPENAPI_GENERATOR_PR_NUMBER
-  git checkout $PULP_OPENAPI_GENERATOR_PR_NUMBER
-  cd ..
-fi
 
-
-
-git clone --depth=1 https://github.com/pulp/pulpcore.git --branch main
-
-cd pulpcore
-
-if [ -n "$PULPCORE_PR_NUMBER" ]; then
-  git fetch --depth=1 origin pull/$PULPCORE_PR_NUMBER/head:$PULPCORE_PR_NUMBER
-  git checkout $PULPCORE_PR_NUMBER
-fi
-cd ..
+pip install pulp-cli
 
 
 # Intall requirements for ansible playbooks
