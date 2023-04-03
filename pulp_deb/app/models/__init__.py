@@ -8,8 +8,11 @@ from .content.content import (
     Package,
 )
 
-from .content.structure_content import (
+from .content.metadata import (
     Release,
+)
+
+from .content.structure_content import (
     ReleaseArchitecture,
     ReleaseComponent,
     PackageReleaseComponent,

@@ -228,15 +228,17 @@ class ReleaseFilter(ContentFilter):
 class ReleaseViewSet(ContentViewSet):
     # The doc string is a top level element of the user facing REST API documentation:
     """
-    A Release represents a single APT release/distribution.
+    The Release contains release file fields, that are not relevant to the APT repo structure.
 
     Associated artifacts: None; contains only metadata.
 
-    Note that in the context of the "Release content", the terms "distribution" and "release"
-    are synonyms. An "APT repository release/distribution" is associated with a single 'Release'
-    file below the 'dists/' folder. The "distribution" refers to the path between 'dists/' and the
-    'Release' file. The "distribution" could be considered the name of the "release". It is often
-    (but not always) equal to the "codename" or "suite".
+    By non-structure relevant release file fields, we mean anything other than the Components and
+    Architectures fields. These are handled by their own models and are not part of this model.
+
+    Note that the distribution field is part of this model, but is not added to any published
+    release files. The "distribution" is defined as the path between 'dists/' and some 'Release'
+    file. As such, it encodes the path to the relevant release file within the APT repository.
+    It is often (but not always) equal to the "codename" or the "suite".
     """
 
     endpoint_name = "releases"
@@ -252,7 +254,7 @@ class ReleaseArchitectureFilter(ContentFilter):
 
     class Meta:
         model = models.ReleaseArchitecture
-        fields = ["architecture", "release"]
+        fields = ["architecture", "distribution", "codename", "suite"]
 
 
 class ReleaseArchitectureViewSet(ContentViewSet):
@@ -279,7 +281,7 @@ class ReleaseComponentFilter(ContentFilter):
 
     class Meta:
         model = models.ReleaseComponent
-        fields = ["component", "release"]
+        fields = ["component", "distribution", "codename", "suite"]
 
 
 class ReleaseComponentViewSet(ContentViewSet):
@@ -288,9 +290,6 @@ class ReleaseComponentViewSet(ContentViewSet):
     A ReleaseComponent represents a single APT repository component.
 
     Associated artifacts: None; contains only metadata.
-
-    Every ReleaseComponent is always associated with exactly one Release. This indicates that the
-    release/distribution in question contains this component.
     """
 
     endpoint_name = "release_components"
