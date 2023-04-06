@@ -1,10 +1,12 @@
+from contextlib import suppress
 from gettext import gettext as _
 
 import os
 
 from debian import deb822, debfile
+from django.db import IntegrityError
 
-from rest_framework.serializers import CharField, DictField, Field, ValidationError
+from rest_framework.serializers import CharField, DictField, Field, ValidationError, Serializer
 from pulpcore.plugin.models import Artifact, RemoteArtifact
 from pulpcore.plugin.serializers import (
     ContentChecksumSerializer,
@@ -13,6 +15,10 @@ from pulpcore.plugin.serializers import (
     SingleArtifactContentSerializer,
     SingleArtifactContentUploadSerializer,
     DetailRelatedField,
+)
+from pulp_deb.app.constants import (
+    PACKAGE_UPLOAD_DEFAULT_COMPONENT,
+    PACKAGE_UPLOAD_DEFAULT_DISTRIBUTION,
 )
 
 from pulp_deb.app.models import (
@@ -165,6 +171,68 @@ class InstallerFileIndexSerializer(MultipleArtifactContentSerializer):
             "relative_path",
         )
         model = InstallerFileIndex
+
+
+class SinglePackageUploadSerializer(SingleArtifactContentUploadSerializer):
+    """
+    A serializer for content_types with a single Package.
+    """
+
+    distribution = CharField(help_text="Name of the distribution.", required=False)
+    component = CharField(help_text="Name of the component.", required=False)
+
+    def create(self, validated_data):
+        distribution = (
+            validated_data.pop("distribution", None)
+            if "distribution" in validated_data
+            else PACKAGE_UPLOAD_DEFAULT_DISTRIBUTION
+        )
+        component = (
+            validated_data.pop("component", None)
+            if "component" in validated_data
+            else PACKAGE_UPLOAD_DEFAULT_COMPONENT
+        )
+
+        if validated_data.get("repository"):
+            repository = validated_data.pop("repository", None)
+            repository.cast()
+            result = super().create(validated_data)
+            content_to_add = self.Meta.model.objects.filter(pk=result.pk)
+            with suppress(IntegrityError):
+                release_component = ReleaseComponent(distribution=distribution, component=component)
+                release_component.save()
+                release_component_to_add = ReleaseComponent.objects.filter(
+                    distribution=distribution, component=component, codename="", suite=""
+                )
+                package = content_to_add[0]
+                release_arch = ReleaseArchitecture(
+                    distribution=distribution, architecture=package.architecture
+                )
+                release_arch.save()
+                release_arch_to_add = ReleaseArchitecture.objects.filter(
+                    distribution=distribution, architecture=package.architecture
+                )
+                package_release = PackageReleaseComponent(
+                    release_component=release_component, package=package
+                )
+                package_release.save()
+                package_release_to_add = PackageReleaseComponent.objects.filter(
+                    release_component=release_component, package=package
+                )
+
+                with repository.new_version() as new_version:
+                    new_version.add_content(content_to_add)
+                    new_version.add_content(release_component_to_add)
+                    new_version.add_content(release_arch_to_add)
+                    new_version.add_content(package_release_to_add)
+
+            return result
+
+        result = super().create(validated_data)
+        return result
+
+    class Meta(SingleArtifactContentUploadSerializer.Meta):
+        fields = SingleArtifactContentUploadSerializer.Meta.fields + ("distribution", "component")
 
 
 class BasePackage822Serializer(SingleArtifactContentSerializer):
@@ -416,9 +484,9 @@ class InstallerPackage822Serializer(BasePackage822Serializer):
         model = InstallerPackage
 
 
-class BasePackageSerializer(SingleArtifactContentUploadSerializer, ContentChecksumSerializer):
+class BasePackageMixin(Serializer):
     """
-    A Serializer for abstract BasePackage.
+    A Mixin Serializer for abstract BasePackage fields.
     """
 
     package = CharField(read_only=True)
@@ -500,46 +568,41 @@ class BasePackageSerializer(SingleArtifactContentUploadSerializer, ContentChecks
 
         return content.first()
 
-    class Meta(SingleArtifactContentUploadSerializer.Meta):
+    class Meta:
         fields = (
-            SingleArtifactContentUploadSerializer.Meta.fields
-            + ContentChecksumSerializer.Meta.fields
-            + (
-                "package",
-                "source",
-                "version",
-                "architecture",
-                "section",
-                "priority",
-                "origin",
-                "tag",
-                "bugs",
-                "essential",
-                "build_essential",
-                "installed_size",
-                "maintainer",
-                "original_maintainer",
-                "description",
-                "description_md5",
-                "homepage",
-                "built_using",
-                "auto_built_package",
-                "multi_arch",
-                "breaks",
-                "conflicts",
-                "depends",
-                "recommends",
-                "suggests",
-                "enhances",
-                "pre_depends",
-                "provides",
-                "replaces",
-            )
+            "package",
+            "source",
+            "version",
+            "architecture",
+            "section",
+            "priority",
+            "origin",
+            "tag",
+            "bugs",
+            "essential",
+            "build_essential",
+            "installed_size",
+            "maintainer",
+            "original_maintainer",
+            "description",
+            "description_md5",
+            "homepage",
+            "built_using",
+            "auto_built_package",
+            "multi_arch",
+            "breaks",
+            "conflicts",
+            "depends",
+            "recommends",
+            "suggests",
+            "enhances",
+            "pre_depends",
+            "provides",
+            "replaces",
         )
-        model = BasePackage
 
 
-class PackageSerializer(BasePackageSerializer):
+class PackageSerializer(BasePackageMixin, SinglePackageUploadSerializer, ContentChecksumSerializer):
     """
     A Serializer for Package.
     """
@@ -553,12 +616,19 @@ class PackageSerializer(BasePackageSerializer):
 
         return data
 
-    class Meta(BasePackageSerializer.Meta):
+    class Meta(SinglePackageUploadSerializer.Meta):
+        fields = (
+            SinglePackageUploadSerializer.Meta.fields
+            + ContentChecksumSerializer.Meta.fields
+            + BasePackageMixin.Meta.fields
+        )
         model = Package
         from822_serializer = Package822Serializer
 
 
-class InstallerPackageSerializer(BasePackageSerializer):
+class InstallerPackageSerializer(
+    BasePackageMixin, SingleArtifactContentUploadSerializer, ContentChecksumSerializer
+):
     """
     A Serializer for InstallerPackage.
     """
@@ -572,7 +642,12 @@ class InstallerPackageSerializer(BasePackageSerializer):
 
         return data
 
-    class Meta(BasePackageSerializer.Meta):
+    class Meta(SingleArtifactContentUploadSerializer.Meta):
+        fields = (
+            SingleArtifactContentUploadSerializer.Meta.fields
+            + ContentChecksumSerializer.Meta.fields
+            + BasePackageMixin.Meta.fields
+        )
         model = InstallerPackage
         from822_serializer = InstallerPackage822Serializer
 
