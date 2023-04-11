@@ -1,3 +1,9 @@
+"""Models to represent APT repository metadata as used for verbatim publications.
+
+This module contains Pulp content models that are used to represent APT repository metadata, exactly
+(down to the checksum) as it was synced from some upstream APT repostiroy. These metadata types are
+exclusively used for verbatim publications.
+"""
 from django.db import models
 
 from pulpcore.plugin.models import Content

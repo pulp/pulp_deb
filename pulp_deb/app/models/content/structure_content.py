@@ -1,3 +1,11 @@
+"""Models to represent APT repository structure.
+
+This module contains Pulp content models that are used to represent APT repository structure. In
+particular this information is used to encode what packages, belong into what package indices within
+the repo. This implies encoding the available distributions/releases, the available components and
+supported architectures within those releases, as well as the mapping of which packages belongs into
+which components.
+"""
 import os
 
 from django.db import models

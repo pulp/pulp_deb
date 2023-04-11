@@ -1,3 +1,11 @@
+"""Models to represent APT repository content (not metadata).
+
+This module contains what might be termed "normal" Pulp content models. That is content models used
+to represent files provided by APT repositories, but not APT repository metadata files. The most
+obvious example would be a model to represent .deb packages, but other examples might include things
+like language and Debian installer files. Not included are models for metadata files like Release
+files or APT repository package indices.
+"""
 import os
 
 from django.db import models

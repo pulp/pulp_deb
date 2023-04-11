@@ -29,7 +29,7 @@ from pulp_deb.app.models import (
     ReleaseFile,
 )
 
-from pulp_deb.app.models.content import BOOL_CHOICES
+from pulp_deb.app.models import BOOL_CHOICES
 
 import logging
 
