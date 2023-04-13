@@ -50,16 +50,16 @@ diagrams:
 ifneq ($(wildcard $(DIAGRAM_SOURCE_DIR)), )
 	mkdir -p $(DIAGRAM_BUILD_DIR)
 	python3 -m plantuml $(DIAGRAM_SOURCE_DIR)/*.dot
-	# cp + rm = mv  workaround https://pulp.plan.io/issues/4791#note-3
-	cp $(DIAGRAM_SOURCE_DIR)/*.png $(DIAGRAM_BUILD_DIR)/
-	rm $(DIAGRAM_SOURCE_DIR)/*.png
+	mv $(DIAGRAM_SOURCE_DIR)/*.png $(DIAGRAM_BUILD_DIR)/
 else
 	@echo "Did not find $(DIAGRAM_SOURCE_DIR)."
 endif
 
-html:
+$(STATIC_BUILD_DIR)/api.json:
 	mkdir -p $(STATIC_BUILD_DIR)
 	curl --fail -o $(STATIC_BUILD_DIR)/api.json "$(PULP_URL)/pulp/api/v3/docs/api.json?plugin=pulp_deb&include_html=1"
+
+html: $(STATIC_BUILD_DIR)/api.json
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
