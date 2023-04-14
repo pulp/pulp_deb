@@ -19,8 +19,9 @@ wait_until_task_finished $BASE_ADDR$TASK_HREF
 
 # create the necessary content (release, comp, architecture)
 RELEASE_HREF=$(http ${BASE_ADDR}/pulp/api/v3/content/deb/releases/ codename=mycodename suite=mysuite distribution=mydist | jq -r .pulp_href)
-ARCH_HREF=$(http ${BASE_ADDR}/pulp/api/v3/content/deb/release_architectures/ architecture=ppc64 release=$RELEASE_HREF | jq -r .pulp_href)
-COMP_HREF=$(http ${BASE_ADDR}/pulp/api/v3/content/deb/release_components/ component=mycomp release=$RELEASE_HREF | jq -r .pulp_href)
+# Note that creating the release is optional, but without it your published repo will use default values for the suite and the codename in the published Release file.
+ARCH_HREF=$(http ${BASE_ADDR}/pulp/api/v3/content/deb/release_architectures/ architecture=ppc64 codename=mycodename suite=mysuite distribution=mydist | jq -r .pulp_href)
+COMP_HREF=$(http ${BASE_ADDR}/pulp/api/v3/content/deb/release_components/ component=mycomp codename=mycodename suite=mysuite distribution=mydist | jq -r .pulp_href)
 PKG_COMP_HREF=$(http ${BASE_ADDR}/pulp/api/v3/content/deb/package_release_components/ package=$PACKAGE_HREF release_component=$COMP_HREF | jq -r .pulp_href)
 
 # add our content to the repository
@@ -31,5 +32,5 @@ wait_until_task_finished $BASE_ADDR$TASK_HREF
 TASK_HREF=$(http ${BASE_ADDR}/pulp/api/v3/publications/deb/apt/ repository=$REPO_HREF structured=true | jq -r .task)
 wait_until_task_finished $BASE_ADDR$TASK_HREF
 
-# check that our repo has our release
+# check that our repo has one of the package index folders we would expect
 http --check-status ${CONTENT_ADDR}/myrepo/dists/mydist/mycomp/binary-ppc64/

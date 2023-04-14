@@ -29,7 +29,7 @@ from pulp_deb.app.models import (
     ReleaseFile,
 )
 
-from pulp_deb.app.models.content import BOOL_CHOICES
+from pulp_deb.app.models import BOOL_CHOICES
 
 import logging
 
@@ -597,16 +597,16 @@ class ReleaseArchitectureSerializer(NoArtifactContentSerializer):
     """
 
     architecture = CharField(help_text="Name of the architecture.")
-    release = DetailRelatedField(
-        help_text="Release this architecture is contained in.",
-        many=False,
-        queryset=Release.objects.all(),
-        view_name="content-deb/releases-detail",
-    )
+    distribution = CharField(help_text="Name of the distribution.")
 
     class Meta(NoArtifactContentSerializer.Meta):
         model = ReleaseArchitecture
-        fields = NoArtifactContentSerializer.Meta.fields + ("architecture", "release")
+        fields = NoArtifactContentSerializer.Meta.fields + (
+            "architecture",
+            "distribution",
+            "codename",
+            "suite",
+        )
 
 
 class ReleaseComponentSerializer(NoArtifactContentSerializer):
@@ -615,16 +615,16 @@ class ReleaseComponentSerializer(NoArtifactContentSerializer):
     """
 
     component = CharField(help_text="Name of the component.")
-    release = DetailRelatedField(
-        help_text="Release this component is contained in.",
-        many=False,
-        queryset=Release.objects.all(),
-        view_name="content-deb/releases-detail",
-    )
+    distribution = CharField(help_text="Name of the distribution.")
 
     class Meta(NoArtifactContentSerializer.Meta):
         model = ReleaseComponent
-        fields = NoArtifactContentSerializer.Meta.fields + ("component", "release")
+        fields = NoArtifactContentSerializer.Meta.fields + (
+            "component",
+            "distribution",
+            "codename",
+            "suite",
+        )
 
 
 class PackageReleaseComponentSerializer(NoArtifactContentSerializer):

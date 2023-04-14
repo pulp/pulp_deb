@@ -1,20 +1,24 @@
 # flake8: noqa
 
-from .content import (
+from .content.content import (
     BasePackage,
+    BOOL_CHOICES,
     GenericContent,
     InstallerPackage,
     Package,
 )
 
-from .structure_content import (
+from .content.metadata import (
     Release,
+)
+
+from .content.structure_content import (
     ReleaseArchitecture,
     ReleaseComponent,
     PackageReleaseComponent,
 )
 
-from .metadata_content import ReleaseFile, PackageIndex, InstallerFileIndex
+from .content.verbatim_metadata import ReleaseFile, PackageIndex, InstallerFileIndex
 
 from .publication import AptDistribution, AptPublication, VerbatimPublication
 
