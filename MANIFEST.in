@@ -8,3 +8,6 @@ include pulp_deb/tests/functional/sign_deb_release.sh
 include pyproject.toml
 include requirements.txt
 include unittest_requirements.txt
+include TESTING.md
+recursive-include pulp_deb/tests/functional/data *
+recursive-include pulp_deb/tests/functional/fixtures *
