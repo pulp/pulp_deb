@@ -1,6 +1,8 @@
 """Tests that sync deb repositories in optimized mode."""
 import pytest
 
+from pulp_smash.pulp3.bindings import monitor_task
+
 from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_ARCH,
     DEB_FIXTURE_ARCH_UPDATE,
@@ -180,7 +182,6 @@ def test_sync_orphan_cleanup_fail(
     deb_get_repository_by_href,
     deb_sync_repository,
     orphans_cleanup_api_client,
-    monitor_task,
 ):
     """Test whether an orphan cleanup is possible after syncing where only some PackageIndices got
     changed and older repository versions are not kept.
