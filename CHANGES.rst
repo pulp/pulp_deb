@@ -13,6 +13,26 @@ Changelog
 
 .. towncrier release notes start
 
+2.20.2 (2023-04-26)
+===================
+
+Bugfixes
+--------
+
+- Fixed a bug that prevented orphan cleanup due to protected foreign keys.
+  `#690 <https://github.com/pulp/pulp_deb/issues/690>`_
+
+
+Misc
+----
+
+- Add precompiled test data for pytest to use in functional tests
+  `#395 <https://github.com/pulp/pulp_deb/issues/395>`_
+
+
+----
+
+
 2.20.1 (2022-12-07)
 ===================
 
