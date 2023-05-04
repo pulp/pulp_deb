@@ -3,7 +3,13 @@ from django.db.models import Q
 
 from pulpcore.plugin.models import Content, RepositoryVersion
 
-from pulp_deb.app.models import AptRepository, Package, ReleaseArchitecture, PackageReleaseComponent
+from pulp_deb.app.models import (
+    AptRepository,
+    Package,
+    PackageReleaseComponent,
+    Release,
+    ReleaseArchitecture,
+)
 
 import logging
 from gettext import gettext as _
@@ -50,9 +56,12 @@ def find_structured_publish_content(content, src_repo_version):
     # Package release components, release components, release to be copied based on packages
     for pckg in package_release_components.iterator():
         if pckg.package in packages:
-            structured_publish_content.update(
-                [pckg.pk, pckg.release_component.pk, pckg.release_component.release.pk]
-            )
+            structured_publish_content.update([pckg.pk, pckg.release_component.pk])
+            release = Release.objects.filter(
+                pk__in=src_repo_version.content, distribution=pckg.release_component.distribution
+            ).first()
+            if release:
+                structured_publish_content.update([release.pk])
 
     return Content.objects.filter(pk__in=structured_publish_content)
 
