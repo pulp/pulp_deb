@@ -1,0 +1,2 @@
+Package and generic content API endpoints no longer return errors when entities already exist.
+Instead they return the existing entities as if they had just been created.
