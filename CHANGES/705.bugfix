@@ -1,0 +1,2 @@
+Fixed bug where PackageReleaseComponents were not being automatically removed when dupes were added
+to a repo version even though the duplicate Packages they referenced were being removed.
