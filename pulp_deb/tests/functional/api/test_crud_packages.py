@@ -2,6 +2,8 @@
 import uuid
 import pytest
 
+from pulp_smash import utils
+
 from pulp_deb.tests.functional.constants import DEB_PACKAGE_RELPATH
 from pulp_deb.tests.functional.utils import get_local_package_absolute_path
 
@@ -41,9 +43,7 @@ def test_create_package(apt_package_api, deb_package_factory):
     assert "object has no attribute 'delete'" in exc.value.args[0]
 
 
-def test_same_sha256_same_relative_path_no_repo(
-    apt_package_api, deb_package_factory, orphans_cleanup_api_client
-):
+def test_same_sha256_same_relative_path_no_repo(apt_package_api, deb_package_factory):
     """Test whether uploading the same package works and that it stays unique."""
     attrs = {
         "file": get_local_package_absolute_path(DEB_PACKAGE_RELPATH),
@@ -63,5 +63,31 @@ def test_same_sha256_same_relative_path_no_repo(
     package_list = apt_package_api.list(relative_path=DEB_PACKAGE_RELPATH)
     assert package_list.count == 1
 
-    # Clean up dangling packages
-    orphans_cleanup_api_client.cleanup({"orphan_protection_time": 0})
+
+def test_structured_package_upload(
+    apt_package_api,
+    deb_get_repository_by_href,
+    deb_package_factory,
+    deb_repository_factory,
+):
+    """Test whether uploading a structured package works and creates the correct paths."""
+    attrs = {
+        "file": get_local_package_absolute_path(DEB_PACKAGE_RELPATH),
+        "relative_path": DEB_PACKAGE_RELPATH,
+        "distribution": utils.uuid4(),
+        "component": utils.uuid4(),
+    }
+
+    repository = deb_repository_factory()
+    assert repository.latest_version_href.endswith("/0/")
+    attrs["repository"] = repository.pulp_href
+
+    deb_package_factory(**attrs)
+    repository = deb_get_repository_by_href(repository.pulp_href)
+    assert repository.latest_version_href.endswith("/1/")
+
+    package_list = apt_package_api.list(relative_path=DEB_PACKAGE_RELPATH)
+    assert package_list.count == 1
+
+    results = package_list.results[0]
+    assert results.relative_path == attrs["relative_path"]

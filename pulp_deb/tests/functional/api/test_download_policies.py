@@ -17,9 +17,11 @@ def test_download_policy(
     deb_remote_factory,
     deb_repository_factory,
     deb_sync_repository,
+    orphans_cleanup_api_client,
     policy,
 ):
     """Test whether lazy synced content can be accessed with different download policies."""
+    orphans_cleanup_api_client.cleanup({"orphan_protection_time": 0})
     # Create repository and remote and verify latest `repository_version` is 0
     repo = deb_repository_factory()
     remote = deb_remote_factory(policy=policy)
