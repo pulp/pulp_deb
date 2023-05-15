@@ -32,7 +32,7 @@ except ImportError:
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.extlinks']
+extensions = ['sphinx.ext.extlinks', 'sphinxcontrib.jquery']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -127,7 +127,7 @@ html_theme = 'sphinx_rtd_theme' if sphinx_rtd_theme else 'default'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()] if sphinx_rtd_theme else []
+#html_theme_path = [sphinx_rtd_theme.get_html_theme_path()] if sphinx_rtd_theme else []
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
