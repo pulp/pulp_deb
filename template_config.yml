@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-212-g18b9346
+# generated with plugin_template@2021.08.26-214-gf2ffaa4
 
 additional_repos: []
 api_root: /pulp/
@@ -68,7 +68,7 @@ pypi_username: pulp
 python_version: '3.8'
 release_email: pulp-infra@redhat.com
 release_user: pulpbot
-run_pulpcore_tests_for_plugins: true
+run_pulpcore_tests_for_plugins: false
 single_commit_check: false
 stalebot: true
 stalebot_days_until_close: 30
