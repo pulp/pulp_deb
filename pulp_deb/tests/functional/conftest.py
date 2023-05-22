@@ -5,7 +5,7 @@ import pytest
 import os
 import stat
 
-from pulp_deb.tests.functional.utils import gen_local_deb_remote
+from pulp_deb.tests.functional.utils import gen_deb_remote, gen_local_deb_remote
 from pulp_smash.utils import execute_pulpcore_python, uuid4
 from pulp_deb.tests.functional.constants import DEB_FIXTURE_STANDARD_REPOSITORY_NAME
 
@@ -136,6 +136,8 @@ def deb_remote_factory(
     """Fixture that generates a deb remote with cleanup."""
 
     def _deb_remote_factory(repo_name=DEB_FIXTURE_STANDARD_REPOSITORY_NAME, **kwargs):
+        if "url" in kwargs:
+            return gen_object_with_cleanup(apt_remote_api, gen_deb_remote(**kwargs))
         url = deb_fixture_server.make_url(repo_name)
         return gen_object_with_cleanup(apt_remote_api, gen_local_deb_remote(url=str(url), **kwargs))
 
