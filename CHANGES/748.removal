@@ -1,2 +1,0 @@
-Replaced the ``release`` field with the triple ``distribution``, ``codename``, ``suite`` on the ``/pulp/pulp/api/v3/content/deb/release_components/`` and ``/pulp/pulp/api/v3/content/deb/release_architectures/`` API endpoints.
-As a result, the available filters where also adjusted for the new fields.
