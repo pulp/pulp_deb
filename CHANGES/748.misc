@@ -1,1 +1,0 @@
-Made repository publication structure independed of the Release model, which includes removing all foreighn key relations to the model.

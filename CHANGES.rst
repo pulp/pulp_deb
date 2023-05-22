@@ -13,6 +13,71 @@ Changelog
 
 .. towncrier release notes start
 
+2.21.0 (2023-05-22)
+===================
+
+Features
+--------
+
+- The upload of content has been changed to accept already existing debian packages. This allows multiple users to own identical files.
+  `#592 <https://github.com/pulp/pulp_deb/issues/592>`_
+- Sign the metadata for all releases in a repo concurrently, greatly speeding up the publish task in environments where signing is slow.
+  `#682 <https://github.com/pulp/pulp_deb/issues/682>`_
+- Add new parameters `component` and `distribution` to the package upload endpoint to enable a structured package upload.
+  `#743 <https://github.com/pulp/pulp_deb/issues/743>`_
+- Declare and require at least pulpcore/3.25 compatibility.
+  `#770 <https://github.com/pulp/pulp_deb/issues/770>`_
+
+
+Bugfixes
+--------
+
+- Improve the pulp_deb "No valid Release file found" error message for gpg validation fail.
+  `#399 <https://github.com/pulp/pulp_deb/issues/399>`_
+- Fixed a bug where architecture "all" packages were missing when syncing Debian 11 style repositories.
+  `#612 <https://github.com/pulp/pulp_deb/issues/612>`_
+- Fixed a bug where packages were only showing up in one Packages index file if they belonged to two
+  or more releases.
+  `#674 <https://github.com/pulp/pulp_deb/issues/674>`_
+- Fixed a bug that prevented orphan cleanup due to protected foreign keys.
+  `#690 <https://github.com/pulp/pulp_deb/issues/690>`_
+- Fixed bug where PackageReleaseComponents were not being automatically removed when dupes were added
+  to a repo version even though the duplicate Packages they referenced were being removed.
+  `#705 <https://github.com/pulp/pulp_deb/issues/705>`_
+
+
+Improved Documentation
+----------------------
+
+- Improved the documentation on metadata signing.
+  `#660 <https://github.com/pulp/pulp_deb/issues/660>`_
+- Fixed infinite loading when searching for specific terms.
+  `#765 <https://github.com/pulp/pulp_deb/issues/765>`_
+
+
+Removals
+--------
+
+- Package and generic content API endpoints no longer return errors when entities already exist.
+  Instead they return the existing entities as if they had just been created.
+  `#592 <https://github.com/pulp/pulp_deb/issues/592>`_
+- Replaced the ``release`` field with the triple ``distribution``, ``codename``, ``suite`` on the ``/pulp/pulp/api/v3/content/deb/release_components/`` and ``/pulp/pulp/api/v3/content/deb/release_architectures/`` API endpoints.
+  As a result, the available filters where also adjusted for the new fields.
+  `#748 <https://github.com/pulp/pulp_deb/issues/748>`_
+
+
+Misc
+----
+
+- Add precompiled test data for pytest to use in functional tests
+  `#395 <https://github.com/pulp/pulp_deb/issues/395>`_
+- Made repository publication structure independed of the Release model, which includes removing all foreighn key relations to the model.
+  `#748 <https://github.com/pulp/pulp_deb/issues/748>`_
+
+
+----
+
+
 2.20.2 (2023-04-26)
 ===================
 

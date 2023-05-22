@@ -1,2 +1,0 @@
-Fixed a bug where packages were only showing up in one Packages index file if they belonged to two
-or more releases.
