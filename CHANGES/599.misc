@@ -1,0 +1,2 @@
+This change includes a large DB migration to drop 'codename' and 'suite' from the uniqueness constraints of all structure content.
+The migration will merge any resulting collisions and alter all records with a foreign key relation to the so eliminated content to point at the merge result instead.

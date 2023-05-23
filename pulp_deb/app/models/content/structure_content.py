@@ -36,18 +36,12 @@ class ReleaseArchitecture(Content):
 
     TYPE = "release_architecture"
 
-    architecture = models.TextField()
     distribution = models.TextField()
-
-    # IMPORTANT: The following fields are only part of this model in order to avoid historical
-    # uniqueness constraint collisions. The plan is to drop these fields from this model ASAP! This
-    # will require a complex DB migration to sort out any collisions.
-    codename = models.TextField()
-    suite = models.TextField()
+    architecture = models.TextField()
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
-        unique_together = (("architecture", "distribution", "codename", "suite"),)
+        unique_together = (("distribution", "architecture"),)
 
 
 class ReleaseComponent(Content):
@@ -62,12 +56,6 @@ class ReleaseComponent(Content):
 
     distribution = models.TextField()
     component = models.TextField()
-
-    # IMPORTANT: The following fields are only part of this model in order to avoid historical
-    # uniqueness constraint collisions. The plan is to drop these fields from this model ASAP! This
-    # will require a complex DB migration to sort out any collisions.
-    codename = models.TextField()
-    suite = models.TextField()
 
     @property
     def plain_component(self):
@@ -87,7 +75,7 @@ class ReleaseComponent(Content):
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
-        unique_together = (("distribution", "component", "codename", "suite"),)
+        unique_together = (("distribution", "component"),)
 
 
 class PackageReleaseComponent(Content):
