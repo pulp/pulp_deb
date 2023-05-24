@@ -17,8 +17,8 @@ ci_update_branches:
 - '2.19'
 - '2.20'
 - '2.21'
-cli_package: pulp-cli
-cli_repo: https://github.com/pulp/pulp-cli.git
+cli_package: pulp-cli-deb
+cli_repo: https://github.com/pulp/pulp-cli-deb.git
 core_import_allowed: []
 deploy_client_to_pypi: true
 deploy_client_to_rubygems: true
@@ -77,7 +77,7 @@ stalebot_days_until_stale: 90
 stalebot_limit_to_pulls: true
 sync_ci: true
 test_azure: true
-test_cli: false
+test_cli: true
 test_deprecations: true
 test_gcp: false
 test_lowerbounds: true
