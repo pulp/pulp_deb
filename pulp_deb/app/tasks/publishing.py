@@ -125,8 +125,6 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                     components=[component],
                     architectures=architectures,
                     description=repository.description,
-                    label=repository.name,
-                    version=str(repo_version.number),
                     signing_service=repository.signing_service,
                 )
 
@@ -190,8 +188,6 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                         components=components,
                         architectures=architectures,
                         description=repository.description,
-                        label=repository.name,
-                        version=str(repo_version.number),
                         suite=release.suite,
                         signing_service=repository.release_signing_service(release),
                     )
@@ -278,8 +274,8 @@ class _ReleaseHelper:
         distribution,
         components,
         architectures,
-        label,
-        version,
+        label=None,
+        version=None,
         description=None,
         suite=None,
         signing_service=None,
@@ -295,11 +291,11 @@ class _ReleaseHelper:
         # the same order of fields that official Debian repositories use.
         self.release = deb822.Release()
         self.release["Origin"] = "Pulp 3"
-        if settings.PUBLISH_RELEASE_FILE_LABEL:
+        if label:
             self.release["Label"] = label
         if suite:
             self.release["Suite"] = suite
-        if settings.PUBLISH_RELEASE_FILE_VERSION:
+        if version:
             self.release["Version"] = version
         if not codename:
             codename = distribution.split("/")[0] if distribution != "/" else "flat-repo"
