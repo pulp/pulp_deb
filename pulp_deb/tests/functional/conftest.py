@@ -14,6 +14,8 @@ from pulpcore.client.pulp_deb import (
     AptRepositorySyncURL,
     ContentGenericContentsApi,
     ContentPackagesApi,
+    ContentReleasesApi,
+    ContentReleaseComponentsApi,
     DebAptPublication,
     DebVerbatimPublication,
     DistributionsAptApi,
@@ -66,6 +68,18 @@ def apt_distribution_api(apt_client):
 def apt_package_api(apt_client):
     """Fixture for APT package API."""
     return ContentPackagesApi(apt_client)
+
+
+@pytest.fixture
+def apt_release_api(apt_client):
+    """Fixture for APT release API."""
+    return ContentReleasesApi(apt_client)
+
+
+@pytest.fixture
+def apt_release_component_api(apt_client):
+    """Fixture for APT release API."""
+    return ContentReleaseComponentsApi(apt_client)
 
 
 @pytest.fixture
