@@ -130,9 +130,8 @@ class ContentRelationshipFilter(Filter):
 
         arg_instance = NamedModelViewSet.get_resource(arg_href, self.ARG_CLASS)
         if not repo_version.content.filter(pk=arg_instance.pk).exists():
-            raise ValidationError(
-                detail=_("Specified filter argument is not in specified RepositoryVersion")
-            )
+            # If the package (or whatever) is not in the repo version then return an empty list.
+            return qs.none()
 
         return self._filter(qs, arg_instance, repo_version.content)
 

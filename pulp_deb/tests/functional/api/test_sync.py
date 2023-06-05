@@ -252,6 +252,9 @@ def test_sync_optimize_skip_unchanged_package_index(
     deb_repository_factory,
     deb_get_repository_by_href,
     deb_sync_repository,
+    apt_package_api,
+    apt_release_api,
+    apt_release_component_api,
 ):
     """Test whether package synchronization is skipped when a package has not been changed."""
     # Create a repository and a remote and verify latest `repository_version` is 0
@@ -264,7 +267,8 @@ def test_sync_optimize_skip_unchanged_package_index(
     repo = deb_get_repository_by_href(repo.pulp_href)
 
     # Verify latest `repository_version` is 1 and sync was not skipped
-    assert repo.latest_version_href.endswith("/1/")
+    repo_v1_href = repo.latest_version_href
+    assert repo_v1_href.endswith("/1/")
     assert not is_sync_skipped(task, DEB_REPORT_CODE_SKIP_RELEASE)
     assert not is_sync_skipped(task, DEB_REPORT_CODE_SKIP_PACKAGE)
 
@@ -276,9 +280,44 @@ def test_sync_optimize_skip_unchanged_package_index(
     repo = deb_get_repository_by_href(repo.pulp_href)
 
     # Verify latest `repository_version` is 2, release was not skipped and package was skipped
-    assert repo.latest_version_href.endswith("/2/")
+    repo_v2_href = repo.latest_version_href
+    assert repo_v2_href.endswith("/2/")
     assert not is_sync_skipped(task_diff, DEB_REPORT_CODE_SKIP_RELEASE)
     assert is_sync_skipped(task_diff, DEB_REPORT_CODE_SKIP_PACKAGE)
+
+    # === Test whether the content filters are working. ===
+    # This doesn't _technically_ have anything to do with testing syncing, but it's a
+    # convenient place to do it since we've already created a repo with content and
+    # multiple versions. Repo version 1 synced from debian/ragnarok and version 2 synced
+    # from debian-update/ragnarok.
+    releases = apt_release_api.list(repository_version=repo_v2_href)
+    assert releases.count == 1
+    release_href = releases.results[0].pulp_href
+    release_components = apt_release_component_api.list(repository_version=repo_v2_href)
+    assert release_components.count == 2
+    rc = [x for x in release_components.results if x.component == "asgard"]
+    rc_href = rc[0].pulp_href
+
+    # some simple "happy path" tests to ensure the filters are working properly
+    assert apt_package_api.list(release=f"{release_href},{repo_v1_href}").count == 4
+    assert apt_package_api.list(release=f"{release_href},{repo_v2_href}").count == 6
+    assert apt_package_api.list(release=f"{release_href},{repo.pulp_href}").count == 6
+
+    assert apt_package_api.list(release_component=f"{rc_href},{repo_v1_href}").count == 3
+    assert apt_package_api.list(release_component=f"{rc_href},{repo_v2_href}").count == 5
+    assert apt_package_api.list(release_component=f"{rc_href},{repo.pulp_href}").count == 5
+
+    packages = apt_package_api.list(release_component=f"{rc_href},{repo.pulp_href}")
+    # The package that was added to asgard in debian-update.
+    package_href = [x for x in packages.results if x.package == "heimdallr"][0].pulp_href
+
+    assert apt_release_api.list(package=f"{package_href},{repo_v1_href}").count == 0
+    assert apt_release_api.list(package=f"{package_href},{repo_v2_href}").count == 1
+    assert apt_release_api.list(package=f"{package_href},{repo.pulp_href}").count == 1
+
+    assert apt_release_component_api.list(package=f"{package_href},{repo_v1_href}").count == 0
+    assert apt_release_component_api.list(package=f"{package_href},{repo_v2_href}").count == 1
+    assert apt_release_component_api.list(package=f"{package_href},{repo.pulp_href}").count == 1
 
 
 def test_sync_orphan_cleanup_fail(
