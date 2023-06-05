@@ -1,14 +1,22 @@
 from random import choice
 import pytest
+import requests
 
 from pulp_smash import config
-from pulp_smash.pulp3.utils import get_content, get_versions, modify_repo
+from pulp_smash.pulp3.utils import (
+    download_content_unit,
+    get_content,
+    get_versions,
+    gen_distribution,
+    modify_repo,
+)
 
 from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_DISTRIBUTIONS,
     DEB_GENERIC_CONTENT_NAME,
     DEB_PACKAGE_NAME,
 )
+from pulp_deb.tests.functional.utils import deb_distribution_api
 
 from pulpcore.client.pulp_deb.exceptions import ApiException
 from pulpcore.client.pulp_deb import (
@@ -91,6 +99,81 @@ def test_publish_any_repo_version(
     # deletion will result in a `django.db.models.deletion.ProtectedError`.
     publication_api.delete(first_publish_href)
     publication_api.delete(second_publish_href)
+
+
+@pytest.mark.parallel
+@pytest.mark.parametrize(
+    "set_on,expect_signed",
+    [
+        ("repo", True),
+        ("release", True),
+        ("publication", True),
+        ("nothing", False),
+    ],
+)
+def test_publish_signing_services(
+    deb_remote_factory,
+    deb_repository_factory,
+    deb_sync_repository,
+    gen_object_with_cleanup,
+    deb_signing_service_factory,
+    set_on,
+    expect_signed,
+    request,
+):
+    """Test whether a signing service preferences are honored.
+
+    The following cases are tested:
+
+    * `Publish where a SigningService is set on the Repo.`_
+    * `Publish where a SigningService is set on a Release.`_
+    * `Publish where a SigningService is set on a Publication.`_
+    """
+    publication_api = request.getfixturevalue("apt_publication_api")
+    repository_api = request.getfixturevalue("apt_repository_api")
+    cfg = config.get_config()
+
+    # Create a repository with at least two dists
+    signing_service = deb_signing_service_factory
+    remote = deb_remote_factory(distributions=DEB_FIXTURE_DISTRIBUTIONS)
+    distro = DEB_FIXTURE_DISTRIBUTIONS.split()[0]
+    repo_options = {}
+    publish_options = {"simple": True, "structured": True}
+    if set_on == "repo":
+        repo_options["signing_service"] = signing_service.pulp_href
+    elif set_on == "release":
+        repo_options["signing_service_release_overrides"] = {distro: signing_service.pulp_href}
+    elif set_on == "publication":
+        publish_options["signing_service"] = signing_service.pulp_href
+
+    repo = deb_repository_factory(**repo_options)
+    deb_sync_repository(remote, repo)
+
+    # Create a publication supplying the latest `repository_version`
+    publish_data = DebAptPublication(repository=repo.pulp_href, **publish_options)
+    publication_href = gen_object_with_cleanup(publication_api, publish_data).pulp_href
+
+    # Create a distribution:
+    body = gen_distribution()
+    body["publication"] = publication_href
+    distribution = gen_object_with_cleanup(deb_distribution_api, body)
+
+    # Check that the expected InRelease file is there:
+    succeeded = False
+    try:
+        download_content_unit(cfg, distribution.to_dict(), "dists/ragnarok/InRelease")
+        succeeded = True
+    except requests.exceptions.HTTPError:
+        pass
+
+    assert expect_signed == succeeded
+
+    # Because the cleanup of the publications happens after we try to delete
+    # the signing service in the `deb_signing_service_factory` fixture we need to
+    # delete the publication explicitly here. Otherwise the signing service
+    # deletion will result in a `django.db.models.deletion.ProtectedError`.
+    publication_api.delete(publication_href)
+    repository_api.delete(repo.pulp_href)
 
 
 @pytest.fixture
