@@ -12,6 +12,7 @@ from pulp_deb.tests.functional.constants import DEB_FIXTURE_PACKAGE_COUNT, DEB_F
 @pytest.mark.parametrize("policy", ["on_demand", "streamed"])
 def test_download_policy(
     apt_package_api,
+    deb_get_fixture_server_url,
     deb_get_repository_by_href,
     deb_publication_factory,
     deb_remote_factory,
@@ -24,7 +25,8 @@ def test_download_policy(
     orphans_cleanup_api_client.cleanup({"orphan_protection_time": 0})
     # Create repository and remote and verify latest `repository_version` is 0
     repo = deb_repository_factory()
-    remote = deb_remote_factory(policy=policy)
+    url = deb_get_fixture_server_url()
+    remote = deb_remote_factory(url=url, policy=policy)
     assert repo.latest_version_href.endswith("/0/")
 
     # Sync and verify latest `repository_version` is 1
@@ -57,6 +59,7 @@ def test_download_policy(
 @pytest.mark.parametrize("policy", ["on_demand", "streamed"])
 def test_lazy_sync_immediate_download_test(
     artifacts_api_client,
+    deb_get_fixture_server_url,
     deb_get_remote_by_href,
     deb_get_repository_by_href,
     deb_patch_remote,
@@ -72,7 +75,8 @@ def test_lazy_sync_immediate_download_test(
 
     # Create repository and remote and sync them
     repo = deb_repository_factory()
-    remote = deb_remote_factory(policy=policy)
+    url = deb_get_fixture_server_url()
+    remote = deb_remote_factory(url=url, policy=policy)
     deb_sync_repository(remote, repo)
     repo = deb_get_repository_by_href(repo.pulp_href)
 
