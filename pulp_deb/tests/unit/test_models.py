@@ -45,9 +45,10 @@ class TestPackage(TestCase):
         self.artifact1.save()
         ContentArtifact(artifact=self.artifact1, content=self.package1).save()
 
-    def test_str(self):
-        """Test package str."""
-        self.assertEqual(str(self.package1), "<Package: aegir_0.1-edda0_sea>")
+    def test_package_fields(self):
+        """Test package fields that typically identify a package."""
+        self.assertEqual(str(self.package1.package), "aegir")
+        self.assertEqual(str(self.package1.version), "0.1-edda0")
 
     def test_filename(self):
         """Test that the pool filename of a package is correct."""
