@@ -84,6 +84,9 @@ class AptPublicationViewSet(PublicationViewSet):
         simple = serializer.validated_data.get("simple")
         structured = serializer.validated_data.get("structured")
         signing_service = serializer.validated_data.get("signing_service")
+        publish_upstream_release_fields = serializer.validated_data.get(
+            "publish_upstream_release_fields"
+        )
 
         result = dispatch(
             func=tasks.publish,
@@ -93,6 +96,7 @@ class AptPublicationViewSet(PublicationViewSet):
                 "simple": simple,
                 "structured": structured,
                 "signing_service_pk": getattr(signing_service, "pk", None),
+                "publish_upstream_release_fields": publish_upstream_release_fields,
             },
         )
         return OperationPostponedResponse(result, request)

@@ -43,6 +43,19 @@ class AptRepositorySerializer(RepositorySerializer):
     A Serializer for AptRepository.
     """
 
+    publish_upstream_release_fields = serializers.BooleanField(
+        help_text=_(
+            "Previously, pulp_deb only synced the Release file fields codename and suite, now "
+            "version, origin, label, and description are also synced. Setting this setting to "
+            "False will make Pulp revert to the old behaviour of using it's own internal values "
+            "for the new fields during publish. This is primarily intended to avoid a sudden "
+            "change in behaviour for existing Pulp repositories, since many Release file field "
+            "changes need to be accepted by hosts consuming the published repository. The default "
+            "for new repositories is True."
+        ),
+        required=False,
+    )
+
     signing_service = RelatedField(
         help_text="A reference to an associated signing service. Used if "
         "AptPublication.signing_service is not set",
@@ -64,6 +77,7 @@ class AptRepositorySerializer(RepositorySerializer):
 
     class Meta:
         fields = RepositorySerializer.Meta.fields + (
+            "publish_upstream_release_fields",
             "signing_service",
             "signing_service_release_overrides",
         )

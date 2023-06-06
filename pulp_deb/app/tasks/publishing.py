@@ -68,7 +68,13 @@ def publish_verbatim(repository_version_pk):
     log.info(_("Publication (verbatim): {publication} created").format(publication=publication.pk))
 
 
-def publish(repository_version_pk, simple=False, structured=False, signing_service_pk=None):
+def publish(
+    repository_version_pk,
+    simple=False,
+    structured=False,
+    signing_service_pk=None,
+    publish_upstream_release_fields=None,
+):
     """
     Use provided publisher to create a Publication based on a RepositoryVersion.
 
@@ -109,7 +115,6 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                 release = Release(
                     distribution="default",
                     codename="default",
-                    suite="default",
                     origin="Pulp 3",
                 )
                 if repository.description:
@@ -175,12 +180,26 @@ def publish(repository_version_pk, simple=False, structured=False, signing_servi
                         pk__in=repo_version.content.order_by("-pulp_created"),
                         distribution=distribution,
                     ).first()
+                    publish_upstream = (
+                        publish_upstream_release_fields
+                        if publish_upstream_release_fields is not None
+                        else repository.publish_upstream_release_fields
+                    )
                     if not release:
                         codename = distribution.strip("/").split("/")[0]
                         release = Release(
                             distribution=distribution,
                             codename=codename,
                             suite=codename,
+                            origin="Pulp 3",
+                        )
+                        if repository.description:
+                            release.description = repository.description
+                    elif not publish_upstream:
+                        release = Release(
+                            distribution=release.distribution,
+                            codename=release.codename,
+                            suite=release.suite,
                             origin="Pulp 3",
                         )
                         if repository.description:
