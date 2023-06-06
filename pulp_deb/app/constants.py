@@ -14,3 +14,6 @@ CHECKSUM_TYPE_MAP = {
 
 PACKAGE_UPLOAD_DEFAULT_DISTRIBUTION = "pulp"
 PACKAGE_UPLOAD_DEFAULT_COMPONENT = "upload"
+
+# Represents null values since nulls can't be used in unique indexes in postgres < 15
+NULL_VALUE = "__!!!NULL VALUE!!!__"

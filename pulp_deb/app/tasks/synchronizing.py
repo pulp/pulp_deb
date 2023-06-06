@@ -635,6 +635,11 @@ class DebFirstStage(Stage):
                     await pb.aincrement()
                 return
 
+        # Parse release file
+        log.info(_('Parsing Release file at distribution="{}"').format(distribution))
+        release_artifact = await _get_main_artifact_blocking(release_file)
+        release_file_dict = deb822.Release(release_artifact.file)
+
         # For historic reasons, we have tied up the distribution with the codename and suite.
         # Untangling this will require careful planning due to changing uniqueness constraints.
         # See: https://github.com/pulp/pulp_deb/issues/599
@@ -643,7 +648,18 @@ class DebFirstStage(Stage):
             "suite": release_file.suite,
             "distribution": distribution,
         }
-        await self.put(DeclarativeContent(content=Release(**distribution_dict)))
+        release_fields = distribution_dict.copy()
+
+        if "version" in release_file_dict:
+            release_fields["version"] = release_file_dict["Version"]
+        if "origin" in release_file_dict:
+            release_fields["origin"] = release_file_dict["Origin"]
+        if "label" in release_file_dict:
+            release_fields["label"] = release_file_dict["Label"]
+        if "description" in release_file_dict:
+            release_fields["description"] = release_file_dict["Description"]
+
+        await self.put(DeclarativeContent(content=Release(**release_fields)))
         # Create release architectures
         if release_file.architectures:
             architectures = _filter_split_architectures(
@@ -662,10 +678,6 @@ class DebFirstStage(Stage):
                 content=ReleaseArchitecture(architecture=architecture, **distribution_dict)
             )
             await self.put(release_architecture_dc)
-        # Parse release file
-        log.info(_('Parsing Release file at distribution="{}"').format(distribution))
-        release_artifact = await _get_main_artifact_blocking(release_file)
-        release_file_dict = deb822.Release(release_artifact.file)
 
         # Retrieve and interpret any 'No-Support-for-Architecture-all' value:
         # We will refer to the presence of 'No-Support-for-Architecture-all: Packages' in a Release
