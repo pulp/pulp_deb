@@ -209,10 +209,19 @@ class _ComponentHelper:
             )
             published_artifact.save()
         package_serializer = Package822Serializer(package, context={"request": None})
-        package_serializer.to822(self.component).dump(
-            self.package_index_files[package.architecture][0]
-        )
-        self.package_index_files[package.architecture][0].write(b"\n")
+
+        try:
+            package_serializer.to822(self.component).dump(
+                self.package_index_files[package.architecture][0]
+            )
+        except KeyError:
+            log.warn(
+                f"Published package '{package.relative_path}' with architecture "
+                f"'{package.architecture}' was not added to component '{self.component}' in "
+                f"distribution '{self.parent.distribution}' because it lacks this architecture!"
+            )
+        else:
+            self.package_index_files[package.architecture][0].write(b"\n")
 
     def finish(self):
         # Publish Packages files

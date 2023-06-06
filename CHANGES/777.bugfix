@@ -1,0 +1,2 @@
+Fixed KeyError during publish if package has architecture that's not supported in the Packages file.
+Instead, a warning message will be logged.
