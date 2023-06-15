@@ -1,0 +1,2 @@
+Fixed a bug where structured package upload was only working as intended for the first package uploaded to each repository.
+Also added logging and ensured structure content is added to the creating tasks ``created_resources`` list.
