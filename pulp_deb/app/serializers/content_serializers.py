@@ -1,13 +1,11 @@
-from contextlib import suppress
 from gettext import gettext as _
 
 import os
 
 from debian import deb822, debfile
-from django.db import IntegrityError
 
 from rest_framework.serializers import CharField, DictField, Field, ValidationError, Serializer
-from pulpcore.plugin.models import Artifact, RemoteArtifact
+from pulpcore.plugin.models import Artifact, CreatedResource, RemoteArtifact
 from pulpcore.plugin.serializers import (
     ContentChecksumSerializer,
     MultipleArtifactContentSerializer,
@@ -218,6 +216,13 @@ class SinglePackageUploadSerializer(SingleArtifactContentUploadSerializer):
     distribution = CharField(help_text="Name of the distribution.", required=False)
     component = CharField(help_text="Name of the component.", required=False)
 
+    @staticmethod
+    def _get_or_create_content_and_qs(model, **data):
+        content, created = model.objects.get_or_create(**data)
+        if created:
+            CreatedResource(content_object=content).save()
+        return content, model.objects.filter(pk=content.pk)
+
     def create(self, validated_data):
         distribution = (
             validated_data.pop("distribution", None)
@@ -231,42 +236,34 @@ class SinglePackageUploadSerializer(SingleArtifactContentUploadSerializer):
         )
 
         if validated_data.get("repository"):
-            repository = validated_data.pop("repository", None)
+            repository = validated_data.pop("repository")
             repository.cast()
-            result = super().create(validated_data)
-            content_to_add = self.Meta.model.objects.filter(pk=result.pk)
-            with suppress(IntegrityError):
-                release_component = ReleaseComponent(distribution=distribution, component=component)
-                release_component.save()
-                release_component_to_add = ReleaseComponent.objects.filter(
-                    distribution=distribution, component=component
-                )
-                package = content_to_add[0]
-                release_arch = ReleaseArchitecture(
-                    distribution=distribution, architecture=package.architecture
-                )
-                release_arch.save()
-                release_arch_to_add = ReleaseArchitecture.objects.filter(
-                    distribution=distribution, architecture=package.architecture
-                )
-                package_release = PackageReleaseComponent(
-                    release_component=release_component, package=package
-                )
-                package_release.save()
-                package_release_to_add = PackageReleaseComponent.objects.filter(
-                    release_component=release_component, package=package
-                )
 
-                with repository.new_version() as new_version:
-                    new_version.add_content(content_to_add)
-                    new_version.add_content(release_component_to_add)
-                    new_version.add_content(release_arch_to_add)
-                    new_version.add_content(package_release_to_add)
+            package = super().create(validated_data)
+            package_qs = self.Meta.model.objects.filter(pk=package.pk)
 
-            return result
+            message = _('Adding uploaded package "{}" to component "{}" of distribution "{}".')
+            log.info(message.format(package.name, component, distribution))
 
-        result = super().create(validated_data)
-        return result
+            component, component_qs = self._get_or_create_content_and_qs(
+                ReleaseComponent, distribution=distribution, component=component
+            )
+            architecture_qs = self._get_or_create_content_and_qs(
+                ReleaseArchitecture, distribution=distribution, architecture=package.architecture
+            )[1]
+            prc_qs = self._get_or_create_content_and_qs(
+                PackageReleaseComponent, release_component=component, package=package
+            )[1]
+
+            with repository.new_version() as new_version:
+                new_version.add_content(package_qs)
+                new_version.add_content(component_qs)
+                new_version.add_content(architecture_qs)
+                new_version.add_content(prc_qs)
+        else:
+            package = super().create(validated_data)
+
+        return package
 
     class Meta(SingleArtifactContentUploadSerializer.Meta):
         fields = SingleArtifactContentUploadSerializer.Meta.fields + ("distribution", "component")
