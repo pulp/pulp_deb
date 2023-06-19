@@ -396,6 +396,8 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
             "since the value '{}' is not in the allowed values list '{}'"
         )
         bool_values = [value[1] for value in BOOL_CHOICES]
+        if "essential" in package_fields:
+            package_fields["essential"] = package_fields["essentials"].lower()
         if "essential" in package_fields and package_fields["essential"] not in bool_values:
             log.warn(
                 message.format(
