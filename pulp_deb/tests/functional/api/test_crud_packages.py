@@ -43,7 +43,9 @@ def test_create_package(apt_package_api, deb_package_factory):
     assert "object has no attribute 'delete'" in exc.value.args[0]
 
 
-def test_same_sha256_same_relative_path_no_repo(apt_package_api, deb_package_factory):
+def test_same_sha256_same_relative_path_no_repo(
+    apt_package_api, deb_package_factory, delete_orphans_pre
+):
     """Test whether uploading the same package works and that it stays unique."""
     attrs = {
         "file": get_local_package_absolute_path(DEB_PACKAGE_RELPATH),
@@ -69,6 +71,7 @@ def test_structured_package_upload(
     deb_get_repository_by_href,
     deb_package_factory,
     deb_repository_factory,
+    delete_orphans_pre,
 ):
     """Test whether uploading a structured package works and creates the correct paths."""
     attrs = {
