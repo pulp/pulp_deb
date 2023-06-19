@@ -239,7 +239,7 @@ class SinglePackageUploadSerializer(SingleArtifactContentUploadSerializer):
                 release_component = ReleaseComponent(distribution=distribution, component=component)
                 release_component.save()
                 release_component_to_add = ReleaseComponent.objects.filter(
-                    distribution=distribution, component=component, codename="", suite=""
+                    distribution=distribution, component=component
                 )
                 package = content_to_add[0]
                 release_arch = ReleaseArchitecture(
@@ -728,8 +728,6 @@ class ReleaseArchitectureSerializer(NoArtifactContentSerializer):
         fields = NoArtifactContentSerializer.Meta.fields + (
             "architecture",
             "distribution",
-            "codename",
-            "suite",
         )
 
 
@@ -746,8 +744,6 @@ class ReleaseComponentSerializer(NoArtifactContentSerializer):
         fields = NoArtifactContentSerializer.Meta.fields + (
             "component",
             "distribution",
-            "codename",
-            "suite",
         )
 
 

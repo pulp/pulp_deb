@@ -18,10 +18,10 @@ TASK_HREF=$(http ${BASE_ADDR}/pulp/api/v3/distributions/deb/apt/ name=myrepo bas
 wait_until_task_finished $BASE_ADDR$TASK_HREF
 
 # create the necessary content (release, comp, architecture)
-RELEASE_HREF=$(http ${BASE_ADDR}/pulp/api/v3/content/deb/releases/ codename=mycodename suite=mysuite distribution=mydist | jq -r .pulp_href)
+RELEASE_HREF=$(http ${BASE_ADDR}/pulp/api/v3/content/deb/releases/ distribution=mydist codename=mycodename suite=mysuite | jq -r .pulp_href)
 # Note that creating the release is optional, but without it your published repo will use default values for the suite and the codename in the published Release file.
-ARCH_HREF=$(http ${BASE_ADDR}/pulp/api/v3/content/deb/release_architectures/ architecture=ppc64 codename=mycodename suite=mysuite distribution=mydist | jq -r .pulp_href)
-COMP_HREF=$(http ${BASE_ADDR}/pulp/api/v3/content/deb/release_components/ component=mycomp codename=mycodename suite=mysuite distribution=mydist | jq -r .pulp_href)
+ARCH_HREF=$(http ${BASE_ADDR}/pulp/api/v3/content/deb/release_architectures/ distribution=mydist architecture=ppc64 | jq -r .pulp_href)
+COMP_HREF=$(http ${BASE_ADDR}/pulp/api/v3/content/deb/release_components/ distribution=mydist component=mycomp | jq -r .pulp_href)
 PKG_COMP_HREF=$(http ${BASE_ADDR}/pulp/api/v3/content/deb/package_release_components/ package=$PACKAGE_HREF release_component=$COMP_HREF | jq -r .pulp_href)
 
 # add our content to the repository

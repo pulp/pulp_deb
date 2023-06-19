@@ -640,15 +640,11 @@ class DebFirstStage(Stage):
         release_artifact = await _get_main_artifact_blocking(release_file)
         release_file_dict = deb822.Release(release_artifact.file)
 
-        # For historic reasons, we have tied up the distribution with the codename and suite.
-        # Untangling this will require careful planning due to changing uniqueness constraints.
-        # See: https://github.com/pulp/pulp_deb/issues/599
-        distribution_dict = {
+        release_fields = {
             "codename": release_file.codename,
             "suite": release_file.suite,
             "distribution": distribution,
         }
-        release_fields = distribution_dict.copy()
 
         if "version" in release_file_dict:
             release_fields["version"] = release_file_dict["Version"]
@@ -660,6 +656,7 @@ class DebFirstStage(Stage):
             release_fields["description"] = release_file_dict["Description"]
 
         await self.put(DeclarativeContent(content=Release(**release_fields)))
+
         # Create release architectures
         if release_file.architectures:
             architectures = _filter_split_architectures(
@@ -675,7 +672,7 @@ class DebFirstStage(Stage):
 
         for architecture in architectures:
             release_architecture_dc = DeclarativeContent(
-                content=ReleaseArchitecture(architecture=architecture, **distribution_dict)
+                content=ReleaseArchitecture(architecture=architecture, distribution=distribution)
             )
             await self.put(release_architecture_dc)
 
@@ -702,13 +699,13 @@ class DebFirstStage(Stage):
 
         if distribution[-1] == "/":
             # Handle flat repo
-            sub_tasks = [self._handle_flat_repo(file_references, release_file, distribution_dict)]
+            sub_tasks = [self._handle_flat_repo(file_references, release_file, distribution)]
         else:
             # Handle components
             sub_tasks = [
                 self._handle_component(
                     component,
-                    distribution_dict,
+                    distribution,
                     release_file,
                     file_references,
                     architectures,
@@ -723,7 +720,7 @@ class DebFirstStage(Stage):
     async def _handle_component(
         self,
         component,
-        distribution_dict,
+        distribution,
         release_file,
         file_references,
         architectures,
@@ -731,7 +728,7 @@ class DebFirstStage(Stage):
     ):
         # Create release_component
         release_component_dc = DeclarativeContent(
-            content=ReleaseComponent(component=component, **distribution_dict)
+            content=ReleaseComponent(component=component, distribution=distribution)
         )
         release_component = await self._create_unit(release_component_dc)
 
@@ -811,10 +808,10 @@ class DebFirstStage(Stage):
             raise NotImplementedError("Syncing source repositories is not yet implemented.")
         await asyncio.gather(*pending_tasks)
 
-    async def _handle_flat_repo(self, file_references, release_file, distribution_dict):
+    async def _handle_flat_repo(self, file_references, release_file, distribution):
         # We are creating a component so the flat repo can be published as a structured repo!
         release_component_dc = DeclarativeContent(
-            content=ReleaseComponent(component="flat-repo-component", **distribution_dict)
+            content=ReleaseComponent(component="flat-repo-component", distribution=distribution)
         )
         release_component = await self._create_unit(release_component_dc)
         pending_tasks = []
@@ -826,7 +823,7 @@ class DebFirstStage(Stage):
                 release_component=release_component,
                 architecture="",
                 file_references=file_references,
-                distribution_dict=distribution_dict,
+                distribution=distribution,
             )
         )
 
@@ -844,7 +841,7 @@ class DebFirstStage(Stage):
         architecture,
         file_references,
         infix="",
-        distribution_dict=None,
+        distribution=None,
         hybrid_format=False,
     ):
         # Create package_index
@@ -1033,7 +1030,7 @@ class DebFirstStage(Stage):
                         log.warning(_(message).format(architecture))
                         release_architecture_dc = DeclarativeContent(
                             content=ReleaseArchitecture(
-                                architecture=architecture, **distribution_dict
+                                architecture=architecture, distribution=distribution
                             )
                         )
                         await self.put(release_architecture_dc)
@@ -1051,7 +1048,9 @@ class DebFirstStage(Stage):
                 log.warning(_(message).format(package_architectures_string))
                 for architecture in package_architectures:
                     release_architecture_dc = DeclarativeContent(
-                        content=ReleaseArchitecture(architecture=architecture, **distribution_dict)
+                        content=ReleaseArchitecture(
+                            architecture=architecture, distribution=distribution
+                        )
                     )
                     await self.put(release_architecture_dc)
 

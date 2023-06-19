@@ -406,7 +406,7 @@ class ReleaseArchitectureFilter(ContentFilter):
 
     class Meta:
         model = models.ReleaseArchitecture
-        fields = ["architecture", "distribution", "codename", "suite"]
+        fields = ["architecture", "distribution"]
 
 
 class ReleaseArchitectureViewSet(ContentViewSet):
@@ -445,7 +445,7 @@ class ReleaseComponentFilter(ContentFilter):
 
     class Meta:
         model = models.ReleaseComponent
-        fields = ["component", "distribution", "codename", "suite"]
+        fields = ["component", "distribution"]
 
 
 class ReleaseComponentViewSet(ContentViewSet):
