@@ -18,6 +18,7 @@ from pulp_deb.tests.functional.utils import (
 @pytest.mark.parametrize("is_verbatim", [False, True])
 def test_download_content(
     deb_distribution_factory,
+    deb_get_fixture_server_url,
     deb_publication_factory,
     deb_remote_factory,
     deb_repository_factory,
@@ -34,7 +35,8 @@ def test_download_content(
     """
     # Create repository, remote and sync them
     repo = deb_repository_factory()
-    remote = deb_remote_factory(DEB_FIXTURE_STANDARD_REPOSITORY_NAME)
+    url = deb_get_fixture_server_url()
+    remote = deb_remote_factory(url=url)
     deb_sync_repository(remote, repo)
     repo = deb_get_repository_by_href(repo.pulp_href)
 

@@ -37,6 +37,7 @@ from pulpcore.client.pulp_deb import (
     ],
 )
 def test_publish_any_repo_version(
+    deb_get_fixture_server_url,
     deb_remote_factory,
     deb_repository_factory,
     deb_sync_repository,
@@ -61,7 +62,8 @@ def test_publish_any_repo_version(
     cfg = config.get_config()
 
     # Create a repository with at least two repository versions
-    remote = deb_remote_factory(distributions=DEB_FIXTURE_DISTRIBUTIONS)
+    url = deb_get_fixture_server_url()
+    remote = deb_remote_factory(url=url, distributions=DEB_FIXTURE_DISTRIBUTIONS)
     repo = deb_repository_factory()
     deb_sync_repository(remote, repo)
     for deb_generic_content in get_content(repo.to_dict())[DEB_GENERIC_CONTENT_NAME]:
@@ -112,6 +114,7 @@ def test_publish_any_repo_version(
     ],
 )
 def test_publish_signing_services(
+    deb_get_fixture_server_url,
     deb_remote_factory,
     deb_repository_factory,
     deb_sync_repository,
@@ -135,7 +138,8 @@ def test_publish_signing_services(
 
     # Create a repository with at least two dists
     signing_service = deb_signing_service_factory
-    remote = deb_remote_factory(distributions=DEB_FIXTURE_DISTRIBUTIONS)
+    url = deb_get_fixture_server_url()
+    remote = deb_remote_factory(url=url, distributions=DEB_FIXTURE_DISTRIBUTIONS)
     distro = DEB_FIXTURE_DISTRIBUTIONS.split()[0]
     repo_options = {}
     publish_options = {"simple": True, "structured": True}

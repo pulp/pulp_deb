@@ -1,11 +1,10 @@
-from pulp_smash.pulp3.bindings import monitor_task
 from pulp_smash.pulp3.utils import gen_distribution, gen_repo
 from pathlib import Path
 import pytest
 import os
 import stat
 
-from pulp_deb.tests.functional.utils import gen_deb_remote, gen_local_deb_remote
+from pulp_deb.tests.functional.utils import gen_local_deb_remote
 from pulp_smash.utils import execute_pulpcore_python, uuid4
 from pulp_deb.tests.functional.constants import DEB_FIXTURE_STANDARD_REPOSITORY_NAME
 
@@ -26,69 +25,70 @@ from pulpcore.client.pulp_deb import (
 )
 
 
-@pytest.fixture
-def apt_client(cid, bindings_cfg):
+@pytest.fixture(scope="session")
+def apt_client(_api_client_set, bindings_cfg):
     """Fixture for APT client."""
     api_client = ApiClient(bindings_cfg)
-    api_client.default_headers["Correlation-ID"] = cid
-    return api_client
+    _api_client_set.add(api_client)
+    yield api_client
+    _api_client_set.remove(api_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def apt_repository_api(apt_client):
     """Fixture for APT repositories API."""
     return RepositoriesAptApi(apt_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def apt_remote_api(apt_client):
     """Fixture for APT remote API."""
     return RemotesAptApi(apt_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def apt_publication_api(apt_client):
     """Fixture for APT publication API."""
     return PublicationsAptApi(apt_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def apt_verbatim_publication_api(apt_client):
     """Fixture for Verbatim publication API."""
     return PublicationsVerbatimApi(apt_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def apt_distribution_api(apt_client):
     """Fixture for APT distribution API."""
     return DistributionsAptApi(apt_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def apt_package_api(apt_client):
     """Fixture for APT package API."""
     return ContentPackagesApi(apt_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def apt_release_api(apt_client):
     """Fixture for APT release API."""
     return ContentReleasesApi(apt_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def apt_release_component_api(apt_client):
     """Fixture for APT release API."""
     return ContentReleaseComponentsApi(apt_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def apt_generic_content_api(apt_client):
     """Fixture for APT generic content API."""
     return ContentGenericContentsApi(apt_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def deb_distribution_factory(apt_distribution_api, gen_object_with_cleanup):
     """Fixture that generates a deb distribution with cleanup from a given publication."""
 
@@ -100,7 +100,7 @@ def deb_distribution_factory(apt_distribution_api, gen_object_with_cleanup):
     return _deb_distribution_factory
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def deb_generic_content_factory(apt_generic_content_api, gen_object_with_cleanup):
     """Fixture that generates deb generic content with cleanup."""
 
@@ -110,7 +110,7 @@ def deb_generic_content_factory(apt_generic_content_api, gen_object_with_cleanup
     return _deb_generic_content_factory
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def deb_package_factory(apt_package_api, gen_object_with_cleanup):
     """Fixture that generates deb package with cleanup."""
 
@@ -120,7 +120,7 @@ def deb_package_factory(apt_package_api, gen_object_with_cleanup):
     return _deb_package_factory
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def deb_publication_factory(apt_publication_api, gen_object_with_cleanup):
     """Fixture that generates a deb publication with cleanup from a given repository."""
 
@@ -131,7 +131,7 @@ def deb_publication_factory(apt_publication_api, gen_object_with_cleanup):
     return _deb_publication_factory
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def deb_repository_factory(apt_repository_api, gen_object_with_cleanup):
     """Fixture that generates a deb repository with cleanup."""
 
@@ -141,24 +141,17 @@ def deb_repository_factory(apt_repository_api, gen_object_with_cleanup):
     return _deb_repository_factory
 
 
-@pytest.fixture
-def deb_remote_factory(
-    apt_remote_api,
-    deb_fixture_server,
-    gen_object_with_cleanup,
-):
+@pytest.fixture(scope="class")
+def deb_remote_factory(apt_remote_api, gen_object_with_cleanup):
     """Fixture that generates a deb remote with cleanup."""
 
-    def _deb_remote_factory(repo_name=DEB_FIXTURE_STANDARD_REPOSITORY_NAME, **kwargs):
-        if "url" in kwargs:
-            return gen_object_with_cleanup(apt_remote_api, gen_deb_remote(**kwargs))
-        url = deb_fixture_server.make_url(repo_name)
+    def _deb_remote_factory(url, **kwargs):
         return gen_object_with_cleanup(apt_remote_api, gen_local_deb_remote(url=str(url), **kwargs))
 
     return _deb_remote_factory
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def deb_remote_custom_data_factory(apt_remote_api, gen_object_with_cleanup):
     """Fixture that generates a deb remote with cleanup using custom data."""
 
@@ -168,7 +161,7 @@ def deb_remote_custom_data_factory(apt_remote_api, gen_object_with_cleanup):
     return _deb_remote_custom_data_factory
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def deb_verbatim_publication_factory(apt_verbatim_publication_api, gen_object_with_cleanup):
     """Fixture that generates a deb verbatim publication with cleanup from a given repository."""
 
@@ -210,7 +203,7 @@ def deb_get_remotes_by_name(apt_remote_api):
 
 
 @pytest.fixture
-def deb_delete_remote(apt_remote_api):
+def deb_delete_remote(apt_remote_api, monitor_task):
     """Fixture that will delete a deb remote."""
 
     def _deb_delete_remote(remote):
@@ -221,7 +214,7 @@ def deb_delete_remote(apt_remote_api):
 
 
 @pytest.fixture
-def deb_patch_remote(apt_remote_api):
+def deb_patch_remote(apt_remote_api, monitor_task):
     """Fixture that will partially update a deb remote."""
 
     def _deb_patch_remote(remote, content):
@@ -232,7 +225,7 @@ def deb_patch_remote(apt_remote_api):
 
 
 @pytest.fixture
-def deb_put_remote(apt_remote_api):
+def deb_put_remote(apt_remote_api, monitor_task):
     """Fixture that will update a deb remote."""
 
     def _deb_put_remote(remote, content):
@@ -243,7 +236,7 @@ def deb_put_remote(apt_remote_api):
 
 
 @pytest.fixture
-def deb_sync_repository(apt_repository_api):
+def deb_sync_repository(apt_repository_api, monitor_task):
     """Fixture that synchronizes a given repository with a given remote
     and returns the monitored task.
     """
@@ -277,7 +270,7 @@ def deb_signing_script_path(signing_gpg_homedir_path):
     return f.name
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def deb_signing_service_factory(
     cli_client,
     deb_signing_script_path,
