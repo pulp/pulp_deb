@@ -12,7 +12,9 @@ from asgiref.sync import sync_to_async
 from collections import defaultdict
 from tempfile import NamedTemporaryFile
 from debian import deb822
+from gettext import gettext
 from urllib.parse import quote, urlparse, urlunparse, urljoin
+
 from django.conf import settings
 from django.db.utils import IntegrityError
 
@@ -65,7 +67,6 @@ from pulp_deb.app.constants import (
 
 
 import logging
-from gettext import gettext as _
 
 log = logging.getLogger(__name__)
 
@@ -113,13 +114,13 @@ class NoPackageIndexFile(Exception):
         Exception to signal, that no file representing a package index is present.
         """
         self.relative_dir = relative_dir
-        message = (
+        message = gettext(
             "No suitable package index files found in '{}'. If you are syncing from a partial "
             "mirror, you can ignore this error for individual remotes "
             "(ignore_missing_package_indices='True') or system wide "
             "(FORCE_IGNORE_MISSING_PACKAGE_INDICES setting)."
-        )
-        super().__init__(_(message).format(relative_dir), *args, **kwargs)
+        ).format(relative_dir)
+        super().__init__(message, *args, **kwargs)
 
     pass
 
@@ -133,8 +134,10 @@ class MissingReleaseFileField(Exception):
         """
         The upstream release file is missing a required field.
         """
-        message = "The release file for distribution '{}' is missing the required field '{}'."
-        super().__init__(_(message).format(distribution, field), *args, **kwargs)
+        message = gettext(
+            "The release file for distribution '{}' is missing the required field '{}'."
+        ).format(distribution, field)
+        super().__init__(message, *args, **kwargs)
 
 
 class UnknownNoSupportForArchitectureAllValue(Exception):
@@ -145,13 +148,13 @@ class UnknownNoSupportForArchitectureAllValue(Exception):
     """
 
     def __init__(self, release_file_path, unknown_value, *args, **kwargs):
-        message = (
+        message = gettext(
             "The Release file at '{}' contains the 'No-Support-for-Architecture-all' field, with "
             "unknown value '{}'! pulp_deb currently only understands the value 'Packages' for "
             "this field, please open an issue at https://github.com/pulp/pulp_deb/issues "
             "specifying the remote you are attempting to sync, so that we can improve pulp_deb!"
-        )
-        super().__init__(_(message).format(unknown_value), *args, **kwargs)
+        ).format(unknown_value)
+        super().__init__(message, *args, **kwargs)
 
     pass
 
@@ -179,11 +182,11 @@ def synchronize(remote_pk, repository_pk, mirror, optimize):
     # TODO: The optimize feature currently does not work in combination with mirror=True! We fall
     # back to full sync for now, until a proper fix is ready:
     if mirror:
-        log.info(_("Falling back to optimize=False behaviour since mirror=True is set!"))
+        log.info(gettext("Falling back to optimize=False behaviour since mirror=True is set!"))
         optimize = False
 
     if not remote.url:
-        raise ValueError(_("A remote must have a url specified to synchronize."))
+        raise ValueError(gettext("A remote must have a url specified to synchronize."))
 
     first_stage = DebFirstStage(remote, optimize, mirror, previous_repo_version)
     DebDeclarativeVersion(first_stage, repository, mirror=mirror).create()
@@ -203,20 +206,14 @@ class DeclarativeFailsafeArtifact(DeclarativeArtifact):
         except aiohttp.client_exceptions.ClientResponseError as e:
             if e.code == 404:
                 self.artifact = None
-                log.info(
-                    _("Artifact with relative_path='{}' not found. Ignored").format(
-                        self.relative_path
-                    )
-                )
+                message = gettext("Artifact with relative_path='{}' not found. Ignored")
+                log.info(message.format(self.relative_path))
             else:
                 raise
         except DigestValidationError:
             self.artifact = None
-            log.info(
-                _("Digest for artifact with relative_path='{}' not matched. Ignored").format(
-                    self.relative_path
-                )
-            )
+            message = gettext("Digest for artifact with relative_path='{}' not matched. Ignored")
+            log.info(message.format(self.relative_path))
 
 
 class DebDeclarativeVersion(DeclarativeVersion):
@@ -263,12 +260,12 @@ def _filter_split_architectures(release_file_string, remote_string, distribution
     if remote_string:
         remote_architectures = set(remote_string.split())
         for arch in remote_architectures - remaining_values:
-            message = (
+            message = gettext(
                 "Architecture '{0}' is not amongst the release file architectures '{1}' for "
                 "distribution '{2}'. This could be valid, but more often indicates an error in "
                 "the architectures field of the remote being used."
-            )
-            log.warning(_(message).format(arch, release_file_string, distribution))
+            ).format(arch, release_file_string, distribution)
+            log.warning(message)
 
         remote_architectures.add("all")  # Users always want the all type architecture!
         remaining_values &= remote_architectures
@@ -299,12 +296,12 @@ def _filter_split_components(release_file_string, remote_string, distribution):
         plain_components = [os.path.basename(component) for component in release_file_components]
         for component in remote_components:
             if component not in release_file_components and component not in plain_components:
-                message = (
+                message = gettext(
                     "Component '{0}' is not amongst the release file components '{1}' for "
                     "distribution '{2}'. This could be valid, but more often indicates an error in "
                     "the components field of the remote being used."
-                )
-                log.warning(_(message).format(component, release_file_string, distribution))
+                ).format(component, release_file_string, distribution)
+                log.warning(message)
 
     return sorted(set(filtered_components))
 
@@ -327,7 +324,7 @@ class DebUpdateReleaseFileAttributes(Stage):
             self.gpg = gnupg.GPG(gpgbinary="/usr/bin/gpg", gnupghome=gnupghome)
             import_res = self.gpg.import_keys(self.gpgkey)
             if import_res.count == 0:
-                log.warning(_("Key import failed."))
+                log.warning(gettext("Key import failed."))
             pass
 
     async def run(self):
@@ -356,11 +353,14 @@ class DebUpdateReleaseFileAttributes(Stage):
                                         da_names["Release.gpg"].artifact.file, tmp_file.name
                                     )
                                 if verified.valid:
-                                    log.info(_("Verification of Release successful."))
+                                    log.info(gettext("Verification of Release successful."))
                                     release_file_artifact = da_names["Release"].artifact
                                     release_file.relative_path = da_names["Release"].relative_path
                                 else:
-                                    log.warning(_("Verification of Release failed. Dropping it."))
+                                    message = gettext(
+                                        "Verification of Release failed. Dropping it."
+                                    )
+                                    log.warning(message)
                                     d_content.d_artifacts.remove(da_names.pop("Release"))
                                     d_content.d_artifacts.remove(da_names.pop("Release.gpg"))
                                     dropped_count += 1
@@ -382,11 +382,12 @@ class DebUpdateReleaseFileAttributes(Stage):
                         if self.gpgkey:
                             verified = self.gpg.verify_file(da_names["InRelease"].artifact.file)
                             if verified.valid:
-                                log.info(_("Verification of InRelease successful."))
+                                log.info(gettext("Verification of InRelease successful."))
                                 release_file_artifact = da_names["InRelease"].artifact
                                 release_file.relative_path = da_names["InRelease"].relative_path
                             else:
-                                log.warning(_("Verification of InRelease failed. Dropping it."))
+                                message = gettext("Verification of InRelease failed. Dropping it.")
+                                log.warning(message)
                                 d_content.d_artifacts.remove(da_names.pop("InRelease"))
                                 dropped_count += 1
                         else:
@@ -419,7 +420,7 @@ class DebUpdateReleaseFileAttributes(Stage):
                             "field, but since we are dealing with a flat repo, we can continue "
                             "regardless."
                         )
-                        log.warning(_(message).format(release_file.distribution))
+                        log.warning(gettext(message).format(release_file.distribution))
                         # TODO: Consider not setting the field at all (requires migrations).
                         release_file.components = ""
                     else:
@@ -428,19 +429,19 @@ class DebUpdateReleaseFileAttributes(Stage):
                     if "architectures" in release_file_dict:
                         release_file.architectures = release_file_dict["Architectures"]
                     elif release_file.distribution[-1] == "/":
-                        message = (
+                        message = gettext(
                             "The Release file for distribution '{}' contains no 'Architectures' "
                             "field, but since we are dealing with a flat repo, we can extract them "
                             "from the repos single Package index later."
-                        )
-                        log.warning(_(message).format(release_file.distribution))
+                        ).format(release_file.distribution)
+                        log.warning(message)
                         release_file.architectures = ""
                     else:
                         raise MissingReleaseFileField(release_file.distribution, "Architectures")
 
-                    log.debug(_("Codename: {}").format(release_file.codename))
-                    log.debug(_("Components: {}").format(release_file.components))
-                    log.debug(_("Architectures: {}").format(release_file.architectures))
+                    log.debug(gettext("Codename: {}").format(release_file.codename))
+                    log.debug(gettext("Components: {}").format(release_file.components))
+                    log.debug(gettext("Architectures: {}").format(release_file.architectures))
                     await pb.aincrement()
                 await self.put(d_content)
 
@@ -499,7 +500,7 @@ def _uncompress_artifact(d_artifacts, relative_dir):
         elif ext == ".xz":
             compressor = lzma
         else:
-            log.info(_("Compression algorithm unknown for extension '{}'.").format(ext))
+            log.info(gettext("Compression algorithm unknown for extension '{}'.").format(ext))
             continue
         # At this point we have found a file that can be decompressed
         with NamedTemporaryFile(delete=False) as f_out:
@@ -565,7 +566,7 @@ class DebFirstStage(Stage):
         Build and emit `DeclarativeContent` from the Release data.
         """
         if "md5" not in settings.ALLOWED_CONTENT_CHECKSUMS and settings.FORBIDDEN_CHECKSUM_WARNINGS:
-            log.warning(_(NO_MD5_WARNING_MESSAGE))
+            log.warning(gettext(NO_MD5_WARNING_MESSAGE))
 
         await asyncio.gather(
             *[self._handle_distribution(dist) for dist in self.remote.distributions.split()]
@@ -602,7 +603,7 @@ class DebFirstStage(Stage):
         }
 
     async def _handle_distribution(self, distribution):
-        log.info(_('Downloading Release file for distribution: "{}"').format(distribution))
+        log.info(gettext('Downloading Release file for distribution: "{}"').format(distribution))
         # Create release_file
         if distribution[-1] == "/":
             release_file_dir = distribution.strip("/")
@@ -626,8 +627,8 @@ class DebFirstStage(Stage):
                 await _readd_previous_package_indices(
                     self.previous_repo_version, self.new_version, distribution
                 )
-                message = 'ReleaseFile has not changed for distribution="{}". Skipping.'
-                log.info(_(message).format(distribution))
+                message = gettext('ReleaseFile has not changed for distribution="{}". Skipping.')
+                log.info(message.format(distribution))
                 async with ProgressReport(
                     message="Skipping ReleaseFile sync (no change from previous sync)",
                     code="sync.release_file.was_skipped",
@@ -636,7 +637,7 @@ class DebFirstStage(Stage):
                 return
 
         # Parse release file
-        log.info(_('Parsing Release file at distribution="{}"').format(distribution))
+        log.info(gettext('Parsing Release file at distribution="{}"').format(distribution))
         release_artifact = await _get_main_artifact_blocking(release_file)
         release_file_dict = deb822.Release(release_artifact.file)
 
@@ -663,11 +664,11 @@ class DebFirstStage(Stage):
                 release_file.architectures, self.remote.architectures, distribution
             )
         elif distribution[-1] == "/":
-            message = (
+            message = gettext(
                 "The ReleaseFile content unit architecrures are unset for the flat repo with "
                 "distribution '{}'. ReleaseArchitecture content creation is deferred!"
-            )
-            log.warning(_(message).format(distribution))
+            ).format(distribution)
+            log.warning(message)
             architectures = []
 
         for architecture in architectures:
@@ -745,12 +746,12 @@ class DebFirstStage(Stage):
                     hybrid_format=hybrid_format,
                 )
             except NoPackageIndexFile as exception:
-                message = (
+                message = gettext(
                     "The Release file at '{}' advertised 'No-Support-for-Architecture-all: "
                     "Packages', however the binary-all index at '{}' appears to be missing! "
                     "Defaulting back to old style repo format handling."
-                )
-                log.warning(_(message).format(release_file.relative_path, exception.relative_dir))
+                ).format(release_file.relative_path, exception.relative_dir)
+                log.warning(message)
                 # We flip hybrid_format to False, and remove 'all' from the list of architectures to
                 # signal "old style repo format" to the rest of the sync:
                 hybrid_format = False
@@ -865,20 +866,21 @@ class DebFirstStage(Stage):
             # PackageIndex.SUPPORTED_ARTIFACTS. The only case where this is known to occur is when
             # the remote uses 'sync_udebs = True', but the upstream repo does not contain any
             # debian-installer indices.
-            message = (
+            message = gettext(
                 "Looking for package indices in '{}', but the Release file does not reference any! "
                 "Ignoring."
-            )
-            log.warning(_(message).format(package_index_dir))
+            ).format(package_index_dir)
+            log.warning(message)
             if "debian-installer" in package_index_dir and self.remote.sync_udebs:
-                message = (
+                message = gettext(
                     "It looks like the remote is using 'sync_udebs=True', but there is no "
                     "installer package index."
                 )
-                log.info(_(message))
+                log.info(message)
             return
         relative_path = os.path.join(package_index_dir, "Packages")
-        log.info(_('Creating PackageIndex unit with relative_path="{}".').format(relative_path))
+        message = gettext('Creating PackageIndex unit with relative_path="{}".')
+        log.info(message.format(relative_path))
         content_unit = PackageIndex(
             component=release_component.component,
             architecture=architecture,
@@ -893,8 +895,8 @@ class DebFirstStage(Stage):
                 settings.FORCE_IGNORE_MISSING_PACKAGE_INDICES
                 or self.remote.ignore_missing_package_indices
             ) and architecture != "all":
-                message = "No suitable package index files found in '{}'. Skipping."
-                log.info(_(message).format(package_index_dir))
+                message = gettext("No suitable package index files found in '{}'. Skipping.")
+                log.info(message.format(package_index_dir))
                 return
             else:
                 raise NoPackageIndexFile(relative_dir=package_index_dir)
@@ -904,8 +906,8 @@ class DebFirstStage(Stage):
                 self.previous_repo_version, relative_path
             )
             if previous_package_index.artifact_set_sha256 == package_index.artifact_set_sha256:
-                message = 'PackageIndex has not changed for relative_path="{}". Skipped.'
-                log.info(_(message).format(relative_path))
+                message = gettext('PackageIndex has not changed for relative_path="{}". Skipped.')
+                log.info(message.format(relative_path))
                 async with ProgressReport(
                     message="Skipping PackageIndex processing (no change from previous sync)",
                     code="sync.package_index.was_skipped",
@@ -927,12 +929,12 @@ class DebFirstStage(Stage):
                     and package_paragraph_architecture != "all"
                     and package_paragraph_architecture not in self.remote.architectures.split()
                 ):
-                    message = (
+                    message = gettext(
                         "Omitting package '{}' with architecture '{}' from flat repo distribution "
                         "'{}', since we are filtering for architectures '{}'!"
                     )
                     log.debug(
-                        _(message).format(
+                        message.format(
                             package_paragraph["Filename"],
                             package_paragraph_architecture,
                             release_file.distribution,
@@ -948,12 +950,12 @@ class DebFirstStage(Stage):
                 or "all" in release_file.architectures.split()
             ) and package_paragraph_architecture != architecture:
                 if not hybrid_format:
-                    message = (
+                    message = gettext(
                         "The upstream package index in '{}' contains package '{}' with wrong "
                         "architecture '{}'. Skipping!"
                     )
                     log.warning(
-                        _(message).format(
+                        message.format(
                             package_index_dir,
                             package_paragraph["Filename"],
                             package_paragraph_architecture,
@@ -970,7 +972,7 @@ class DebFirstStage(Stage):
                 elif package_relpath.endswith(".udeb"):
                     package_class = InstallerPackage
                     serializer_class = InstallerPackage822Serializer
-                log.debug(_("Downloading package {}").format(package_paragraph["Package"]))
+                log.debug(gettext("Downloading package {}").format(package_paragraph["Package"]))
                 serializer = serializer_class.from822(data=package_paragraph)
                 serializer.is_valid(raise_exception=True)
                 package_content_unit = package_class(
@@ -994,7 +996,8 @@ class DebFirstStage(Stage):
                 package_futures.append(package_dc)
                 await self.put(package_dc)
             except KeyError:
-                log.warning(_("Ignoring invalid package paragraph. {}").format(package_paragraph))
+                message = gettext("Ignoring invalid package paragraph. {}")
+                log.warning(message.format(package_paragraph))
         # Assign packages to this release_component
         package_architectures = set([])
         for package_future in package_futures:
@@ -1016,18 +1019,20 @@ class DebFirstStage(Stage):
             if release_file.architectures:
                 for architecture in package_architectures:
                     if architecture not in release_file.architectures.split():
-                        message = (
+                        message = gettext(
                             "The flat repo with distribution '{}' contains packages with "
                             "architecture '{}' but this is not included in the ReleaseFile's "
                             "architectures field '{}'!"
                         )
                         log.warning(
-                            _(message).format(
+                            message.format(
                                 release_file.distribution, architecture, release_file.architectures
                             )
                         )
-                        message = "Creating additional ReleaseArchitecture for architecture '{}'!"
-                        log.warning(_(message).format(architecture))
+                        message = gettext(
+                            "Creating additional ReleaseArchitecture for architecture '{}'!"
+                        ).format(architecture)
+                        log.warning(message)
                         release_architecture_dc = DeclarativeContent(
                             content=ReleaseArchitecture(
                                 architecture=architecture, distribution=distribution
@@ -1036,16 +1041,16 @@ class DebFirstStage(Stage):
                         await self.put(release_architecture_dc)
             else:
                 package_architectures_string = " ".join(package_architectures)
-                message = (
+                message = gettext(
                     "The ReleaseFile of the flat repo with distribution '{}' has an empty "
                     "architectures field!"
-                )
-                log.warning(_(message).format(release_file.distribution))
-                message = (
+                ).format(release_file.distribution)
+                log.warning(message)
+                message = gettext(
                     "Creating ReleaseArchitecture content for architectures '{}', extracted from "
                     "the synced packages."
-                )
-                log.warning(_(message).format(package_architectures_string))
+                ).format(package_architectures_string)
+                log.warning(message)
                 for architecture in package_architectures:
                     release_architecture_dc = DeclarativeContent(
                         content=ReleaseArchitecture(
@@ -1073,7 +1078,7 @@ class DebFirstStage(Stage):
                 d_artifacts.append(self._to_d_artifact(relative_path, file_references[path]))
         if not d_artifacts:
             return
-        log.info(_("Downloading installer files from {}").format(installer_file_index_dir))
+        log.info(gettext("Downloading installer files from {}").format(installer_file_index_dir))
         content_unit = InstallerFileIndex(
             component=release_component.component,
             architecture=architecture,

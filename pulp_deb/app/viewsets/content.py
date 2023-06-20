@@ -1,4 +1,4 @@
-from gettext import gettext as _  # noqa
+from gettext import gettext
 
 from django_filters import Filter
 from pulpcore.plugin.models import Repository, RepositoryVersion
@@ -100,7 +100,8 @@ class ContentRelationshipFilter(Filter):
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault(
-            "help_text", _(self.GENERIC_HELP).format(arg=_(self.ARG), help=_(self.HELP))
+            "help_text",
+            gettext(self.GENERIC_HELP).format(arg=gettext(self.ARG), help=gettext(self.HELP)),
         )
         super().__init__(*args, **kwargs)
 
@@ -117,7 +118,7 @@ class ContentRelationshipFilter(Filter):
         repo_version: RepositoryVersion = None
         arg_href, r_or_rv_href = value.split(",", 1)
         if not arg_href or not r_or_rv_href or "," in r_or_rv_href:
-            raise ValidationError(detail=_("Unparsable argument supplied for content filter"))
+            raise ValidationError(detail=gettext("Unparsable argument supplied for content filter"))
 
         repo_version = NamedModelViewSet.get_resource(r_or_rv_href)
         if isinstance(repo_version, Repository):
@@ -125,7 +126,7 @@ class ContentRelationshipFilter(Filter):
 
         if not isinstance(repo_version, RepositoryVersion):
             raise ValidationError(
-                detail=_("Could not resolve a RepositoryVersion from content filter argument")
+                detail=gettext("Could not resolve a RepositoryVersion from content filter argument")
             )
 
         arg_instance = NamedModelViewSet.get_resource(arg_href, self.ARG_CLASS)

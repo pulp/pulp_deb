@@ -1,4 +1,4 @@
-from gettext import gettext as _
+from gettext import gettext
 
 import os
 
@@ -242,8 +242,10 @@ class SinglePackageUploadSerializer(SingleArtifactContentUploadSerializer):
             package = super().create(validated_data)
             package_qs = self.Meta.model.objects.filter(pk=package.pk)
 
-            message = _('Adding uploaded package "{}" to component "{}" of distribution "{}".')
-            log.info(message.format(package.name, component, distribution))
+            message = gettext(
+                'Adding uploaded package "{}" to component "{}" of distribution "{}".'
+            ).format(package.name, component, distribution)
+            log.info(message)
 
             component, component_qs = self._get_or_create_content_and_qs(
                 ReleaseComponent, distribution=distribution, component=component
@@ -370,7 +372,7 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
         # Drop keys with empty values
         empty_fields = [k for k, v in package_fields.items() if not v]
         for key in empty_fields:
-            message = _('Dropping empty "{}" field from "{}" package!').format(
+            message = gettext('Dropping empty "{}" field from "{}" package!').format(
                 key, unique_package_name
             )
             log.warning(message)
@@ -381,14 +383,13 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
             try:
                 int(package_fields["installed_size"])
             except (TypeError, ValueError):
-                log.warn(
-                    _(
-                        "Dropping 'Installed-Size' field from '{}', "
-                        "since the value '{}' is of incorrect type."
-                    ).format(unique_package_name, package_fields["installed_size"])
-                )
+                message = gettext(
+                    "Dropping 'Installed-Size' field from '{}', since the value '{}' is of "
+                    "incorrect type."
+                ).format(unique_package_name, package_fields["installed_size"])
+                log.warn(message)
                 del package_fields["installed_size"]
-        message = _(
+        message = gettext(
             "Dropping '{}' field from package '{}', "
             "since the value '{}' is not in the allowed values list '{}'"
         )
@@ -577,7 +578,7 @@ class BasePackageMixin(Serializer):
                 message = (
                     "python-debian was unable to read the provided package file! The error is '{}'."
                 )
-            raise ValidationError(_(message).format(e))
+            raise ValidationError(gettext(message).format(e))
 
         from822_serializer = self.Meta.from822_serializer.from822(data=package_paragraph)
         from822_serializer.is_valid(raise_exception=True)
@@ -591,7 +592,8 @@ class BasePackageMixin(Serializer):
             self.Meta.model(**package_data).name, self.Meta.model.SUFFIX
         ):
             data["artifact"].touch()  # Orphan cleanup protection so the user can try again!
-            raise ValidationError(_("Invalid relative_path provided, filename does not match."))
+            message = gettext("Invalid relative_path provided, filename does not match.")
+            raise ValidationError(message)
 
         return data
 
@@ -646,7 +648,7 @@ class PackageSerializer(BasePackageMixin, SinglePackageUploadSerializer, Content
         data = super().deferred_validate(data)
 
         if data.get("section") == "debian-installer":
-            raise ValidationError(_("Not a valid Deb Package"))
+            raise ValidationError(gettext("Not a valid Deb Package"))
 
         return data
 
@@ -672,7 +674,7 @@ class InstallerPackageSerializer(
         data = super().deferred_validate(data)
 
         if data.get("section") != "debian-installer":
-            raise ValidationError(_("Not a valid uDeb Package"))
+            raise ValidationError(gettext("Not a valid uDeb Package"))
 
         return data
 

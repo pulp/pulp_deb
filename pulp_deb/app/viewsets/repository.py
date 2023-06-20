@@ -1,4 +1,4 @@
-from gettext import gettext as _  # noqa
+from gettext import gettext
 
 from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
@@ -149,7 +149,7 @@ class CopyViewSet(viewsets.ViewSet):
                         number=entry["dest_base_version"]
                     ).pk
                 except RepositoryVersion.DoesNotExist:
-                    message = _(
+                    message = gettext(
                         "Version {version} does not exist for repository " "'{repo}'."
                     ).format(version=entry["dest_base_version"], repo=dest_repo.name)
                     raise DRFValidationError(detail=message)

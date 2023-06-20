@@ -1,4 +1,4 @@
-from gettext import gettext as _
+from gettext import gettext
 from django.db import transaction
 from pulpcore.plugin.models import SigningService
 from pulpcore.plugin.serializers import (
@@ -44,7 +44,7 @@ class AptRepositorySerializer(RepositorySerializer):
     """
 
     publish_upstream_release_fields = serializers.BooleanField(
-        help_text=_(
+        help_text=gettext(
             "Previously, pulp_deb only synced the Release file fields codename and suite, now "
             "version, origin, label, and description are also synced. Setting this setting to "
             "False will make Pulp revert to the old behaviour of using it's own internal values "
@@ -68,7 +68,7 @@ class AptRepositorySerializer(RepositorySerializer):
     signing_service_release_overrides = ServiceOverrideField(
         default=dict,
         required=False,
-        help_text=_(
+        help_text=gettext(
             "A dictionary of Release distributions and the Signing Service URLs they should use."
             "Example: "
             '{"bionic": "/pulp/api/v3/signing-services/433a1f70-c589-4413-a803-c50b842ea9b5/"}'
@@ -134,7 +134,7 @@ class AptRepositorySyncURLSerializer(RepositorySyncURLSerializer):
     """
 
     optimize = serializers.BooleanField(
-        help_text=_(
+        help_text=gettext(
             "Using optimize sync, will skip the processing of metadata if the checksum has not "
             "changed since the last sync. This greately improves re-sync performance in such "
             "situations. If you feel the sync is missing something that has changed about the "
@@ -152,11 +152,13 @@ class CopySerializer(serializers.Serializer):
     """
 
     config = serializers.JSONField(
-        help_text=_("A JSON document describing sources, destinations, and content to be copied")
+        help_text=gettext(
+            "A JSON document describing sources, destinations, and content to be copied"
+        )
     )
 
     structured = serializers.BooleanField(
-        help_text=_(
+        help_text=gettext(
             "Also copy any distributions, components, and releases as needed for any packages "
             "being copied. This will allow for structured publications of the target repository."
             "Default is set to True"
@@ -165,7 +167,7 @@ class CopySerializer(serializers.Serializer):
     )
 
     dependency_solving = serializers.BooleanField(
-        help_text=_(
+        help_text=gettext(
             "Also copy dependencies of any packages being copied. NOT YET"
             'IMPLEMENTED! You must keep this at "False"!'
         ),
@@ -192,7 +194,7 @@ class CopySerializer(serializers.Serializer):
                 err.append(error.message)
             if err:
                 raise serializers.ValidationError(
-                    _("Provided copy criteria is invalid:'{}'".format(err))
+                    gettext("Provided copy criteria is invalid:'{}'".format(err))
                 )
 
         return data

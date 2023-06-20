@@ -1,3 +1,5 @@
+from gettext import gettext
+
 from django.db import transaction
 from django.db.models import Q
 
@@ -12,7 +14,6 @@ from pulp_deb.app.models import (
 )
 
 import logging
-from gettext import gettext as _
 
 log = logging.getLogger(__name__)
 
@@ -45,7 +46,10 @@ def find_structured_publish_content(content, src_repo_version):
     structured_publish_content.update(packages.values_list("pk", flat=True))
 
     if len(content) != len(packages):
-        log.warning(_("Additional data with packages is provided. Removing from the content list."))
+        message = gettext(
+            "Additional data with packages is provided. Removing from the content list."
+        )
+        log.warning(message)
 
     # List of all architectures
     architectures = ReleaseArchitecture.objects.filter(pk__in=architecture_ids).values_list(
@@ -94,7 +98,7 @@ def copy_content(config, structured, dependency_solving):
         else:
             content_filter = Q()
 
-        log.info(_("Copying: {copy} created").format(copy=content_filter))
+        log.info(gettext("Copying: {copy} created").format(copy=content_filter))
 
         return (
             source_repo_version,

@@ -1,5 +1,3 @@
-from gettext import gettext as _  # noqa
-
 from drf_spectacular.utils import extend_schema
 
 from pulpcore.plugin.serializers import AsyncOperationResponseSerializer

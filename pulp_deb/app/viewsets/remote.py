@@ -1,5 +1,3 @@
-from gettext import gettext as _  # noqa
-
 from pulpcore.plugin.viewsets import RemoteViewSet
 
 from pulp_deb.app import models, serializers

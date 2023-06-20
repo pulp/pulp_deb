@@ -1,12 +1,13 @@
 import asyncio
 import os
 import shutil
-from contextlib import suppress
+import tempfile
 
+from contextlib import suppress
 from datetime import datetime, timezone
 from debian import deb822
+from gettext import gettext
 from gzip import GzipFile
-import tempfile
 
 from django.conf import settings
 from django.core.files import File
@@ -19,7 +20,11 @@ from pulpcore.plugin.models import (
     RepositoryVersion,
 )
 
-from pulp_deb.app.constants import NULL_VALUE
+from pulp_deb.app.constants import (
+    NO_MD5_WARNING_MESSAGE,
+    NULL_VALUE,
+    CHECKSUM_TYPE_MAP,
+)
 from pulp_deb.app.models import (
     AptPublication,
     AptRepository,
@@ -31,17 +36,10 @@ from pulp_deb.app.models import (
     VerbatimPublication,
     AptReleaseSigningService,
 )
-
 from pulp_deb.app.serializers import Package822Serializer
-
-from pulp_deb.app.constants import (
-    NO_MD5_WARNING_MESSAGE,
-    CHECKSUM_TYPE_MAP,
-)
 
 
 import logging
-from gettext import gettext as _
 
 log = logging.getLogger(__name__)
 
@@ -56,16 +54,15 @@ def publish_verbatim(repository_version_pk):
     """
     repo_version = RepositoryVersion.objects.get(pk=repository_version_pk)
 
-    log.info(
-        _("Publishing (verbatim): repository={repo}, version={ver}").format(
-            repo=repo_version.repository.name, ver=repo_version.number
-        )
-    )
+    message = gettext('Creating verbatim publication for version "{}" of repository "{}"')
+    log.info(message.format(repo_version.number, repo_version.repository.name))
+
     with tempfile.TemporaryDirectory("."):
         with VerbatimPublication.create(repo_version, pass_through=True) as publication:
             pass
 
-    log.info(_("Publication (verbatim): {publication} created").format(publication=publication.pk))
+    message = gettext('Verbatim publication with pk "{}" created').format(publication.pk)
+    log.info(message)
 
 
 def publish(
@@ -86,7 +83,7 @@ def publish(
 
     """
     if "md5" not in settings.ALLOWED_CONTENT_CHECKSUMS and settings.FORBIDDEN_CHECKSUM_WARNINGS:
-        log.warning(_(NO_MD5_WARNING_MESSAGE))
+        log.warning(gettext(NO_MD5_WARNING_MESSAGE))
 
     repo_version = RepositoryVersion.objects.get(pk=repository_version_pk)
     if signing_service_pk:
@@ -95,7 +92,7 @@ def publish(
         signing_service = None
 
     log.info(
-        _(
+        gettext(
             "Publishing: repository={repo}, version={ver}, simple={simple}, structured={structured}"
         ).format(  # noqa
             repo=repo_version.repository.name,
@@ -160,7 +157,7 @@ def publish(
                         'Ignoring structured "default" distribution for publication that also '
                         "uses simple mode."
                     )
-                    log.warning(_(message))
+                    log.warning(gettext(message))
                     distributions.remove("default")
 
                 release_helpers = []
@@ -236,7 +233,7 @@ def publish(
                 for release_helper in release_helpers:
                     release_helper.save_signed_metadata()
 
-    log.info(_("Publication: {publication} created").format(publication=publication.pk))
+    log.info(gettext("Publication: {publication} created").format(publication=publication.pk))
 
 
 async def _concurrently_sign_metadata(release_helpers):
@@ -317,8 +314,10 @@ class _ReleaseHelper:
         self.distribution = distribution = release.distribution
         self.dists_subfolder = distribution.strip("/") if distribution != "/" else "flat-repo"
         if distribution[-1] == "/":
-            message = "Using dists subfolder '{}' for structured publish of originally flat repo!"
-            log.info(_(message).format(self.dists_subfolder))
+            message = gettext(
+                "Using dists subfolder '{}' for structured publish of originally flat repo!"
+            ).format(self.dists_subfolder)
+            log.info(message)
         # Note: The order in which fields are added to self.release is retained in the
         # published Release file. As a "nice to have" for human readers, we try to use
         # the same order of fields that official Debian repositories use.
