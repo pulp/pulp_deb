@@ -53,12 +53,12 @@ def reassociate_with_release_for_model(release_model, model_to_associate):
             )
         except release_model.DoesNotExist:
             # We do not batch for this rare edge case!
-            release = Release(
+            release = Release.objects.create(
+                pulp_type='deb.release',
                 codename=content.codename,
                 distribution=content.distribution,
                 suite=content.suite,
             )
-            release.save()
 
         content.release = release
         content_to_update.append(content)
