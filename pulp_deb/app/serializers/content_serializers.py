@@ -250,12 +250,12 @@ class SinglePackageUploadSerializer(SingleArtifactContentUploadSerializer):
             component, component_qs = self._get_or_create_content_and_qs(
                 ReleaseComponent, distribution=distribution, component=component
             )
-            architecture_qs = self._get_or_create_content_and_qs(
+            _, architecture_qs = self._get_or_create_content_and_qs(
                 ReleaseArchitecture, distribution=distribution, architecture=package.architecture
-            )[1]
-            prc_qs = self._get_or_create_content_and_qs(
+            )
+            _, prc_qs = self._get_or_create_content_and_qs(
                 PackageReleaseComponent, release_component=component, package=package
-            )[1]
+            )
 
             with repository.new_version() as new_version:
                 new_version.add_content(package_qs)
