@@ -35,6 +35,7 @@ class AptPublicationSerializer(PublicationSerializer):
         default=False,
     )
     structured = BooleanField(help_text="Activate structured publishing mode.", default=False)
+    publish_upstream_release_fields = BooleanField(help_text="", required=False)
     signing_service = RelatedField(
         help_text="Sign Release files with this signing key",
         many=False,
@@ -53,7 +54,12 @@ class AptPublicationSerializer(PublicationSerializer):
         return data
 
     class Meta:
-        fields = PublicationSerializer.Meta.fields + ("simple", "structured", "signing_service")
+        fields = PublicationSerializer.Meta.fields + (
+            "simple",
+            "structured",
+            "signing_service",
+            "publish_upstream_release_fields",
+        )
         model = AptPublication
 
 

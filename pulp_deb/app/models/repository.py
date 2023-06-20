@@ -40,6 +40,8 @@ class AptRepository(Repository):
         AptRemote,
     ]
 
+    publish_upstream_release_fields = models.BooleanField(default=True)
+
     signing_service = models.ForeignKey(
         AptReleaseSigningService, on_delete=models.PROTECT, null=True
     )
