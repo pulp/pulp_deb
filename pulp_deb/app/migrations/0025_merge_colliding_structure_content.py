@@ -135,6 +135,9 @@ def merge_colliding_structure_content(apps, schema_editor):
 
             if len(repo_content_to_update) >= BATCH_SIZE:
                 RepositoryContent.objects.bulk_update(repo_content_to_update, ["content_id"])
+                repo_content_to_update = []
+                message = '{}: Merged PRC batch from duplicate component "{}" into component "{}"!'
+                log.info(message.format(datetime.now(), duplicate_component, component_to_keep))
 
         # Handle remaining content <= BATCH_SIZE:
         if len(repo_content_to_update) > 0:
@@ -210,7 +213,7 @@ def merge_colliding_structure_content(apps, schema_editor):
             duplicate_component_ids = list(
                 ReleaseComponent.objects.filter(
                     distribution=distribution, component=component
-                ).values_list('pk', flat=True)
+                ).order_by('-pulp_created').values_list('pk', flat=True)
             )
             if len(duplicate_component_ids) > 1:
                 component_to_keep = duplicate_component_ids.pop()
