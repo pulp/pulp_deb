@@ -1086,13 +1086,13 @@ class DebFirstStage(Stage):
         deferred_download = self.remote.policy != Remote.IMMEDIATE
         # Parse installer file index
         file_list = defaultdict(dict)
-        for content_artifact in installer_file_index.contentartifact_set.all():
+        async for content_artifact in installer_file_index.contentartifact_set.all():
             algorithm = InstallerFileIndex.FILE_ALGORITHM.get(
                 os.path.basename(content_artifact.relative_path)
             )
             if not algorithm:
                 continue
-            for line in content_artifact.artifact.file:
+            for line in await _get_content_artifact_file(content_artifact):
                 digest, filename = line.decode().strip().split(maxsplit=1)
                 filename = os.path.normpath(filename)
                 if filename in InstallerFileIndex.FILE_ALGORITHM:  # strangely they may appear here
@@ -1132,6 +1132,11 @@ class DebFirstStage(Stage):
             await self.put(
                 DeclarativeContent(content=content_unit, d_artifacts=translation["d_artifacts"])
             )
+
+
+@sync_to_async
+def _get_content_artifact_file(content_artifact):
+    return content_artifact.artifact.file
 
 
 @sync_to_async
