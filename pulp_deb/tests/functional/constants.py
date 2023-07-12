@@ -6,8 +6,6 @@ from pulp_smash import config
 from pulp_smash.pulp3.constants import (
     # API_DOCS_PATH,
     BASE_CONTENT_PATH,
-    BASE_DISTRIBUTION_PATH,
-    BASE_PATH,
     BASE_PUBLICATION_PATH,
     BASE_REMOTE_PATH,
     BASE_REPO_PATH,
@@ -36,10 +34,8 @@ DEB_PACKAGE_NAME = "deb.package"
 DEB_INSTALLER_PACKAGE_NAME = "deb.installer_package"
 DEB_GENERIC_CONTENT_NAME = "deb.generic"
 
-DEB_PACKAGE_PATH = urljoin(BASE_CONTENT_PATH, "deb/packages/")
 DEB_GENERIC_CONTENT_PATH = urljoin(BASE_CONTENT_PATH, "deb/generic_contents/")
 
-DEB_DISTRIBUTION_PATH = urljoin(BASE_DISTRIBUTION_PATH, "deb/apt/")
 
 DEB_REMOTE_PATH = urljoin(BASE_REMOTE_PATH, "deb/apt/")
 
@@ -48,7 +44,6 @@ DEB_REPO_PATH = urljoin(BASE_REPO_PATH, "deb/apt/")
 DEB_PUBLICATION_PATH = urljoin(BASE_PUBLICATION_PATH, "deb/apt/")
 VERBATIM_PUBLICATION_PATH = urljoin(BASE_PUBLICATION_PATH, "deb/verbatim/")
 
-DEB_SINGLE_REQUEST_UPLOAD_PATH = urljoin(BASE_PATH, "deb/upload/")
 
 DEB_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, "debian/")
 DEB_FIXTURE_URL_UPDATE = urljoin(PULP_FIXTURES_BASE_URL, "debian_update/")
@@ -110,20 +105,6 @@ DEB_REPORT_CODE_SKIP_PACKAGE = "sync.package_index.was_skipped"
 
 DEB_PACKAGE_RELPATH = "frigg_1.0_ppc64.deb"
 DEB_GENERIC_CONTENT_RELPATH = "dists/ragnarok/asgard/binary-armeb/Release"
-DEB_GENERIC_CONTENT_URL = urljoin(DEB_FIXTURE_URL, DEB_GENERIC_CONTENT_RELPATH)
-
-DEB_INVALID_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, "debian-invalid/")
-
-DEB_COMPLEX_DISTS_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, "debian-complex-dists/")
-
-DEB_MISSING_ARCH_DISTS_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, "debian-missing-architecture/")
-DEB_FLAT_REPO_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, "debian-flat/")
-
-# FIXME: replace this with your own fixture repository URL and metadata
-DEB_LARGE_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, "deb_large/")
-
-# FIXME: replace this with the actual number of content units in your test fixture
-DEB_LARGE_FIXTURE_COUNT = 25
 
 DEB_PUBLISH_COMPLEX_UBUNTU_BACKPORTS = {
     "distribution": "ragnarok-backports",
