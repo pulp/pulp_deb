@@ -288,6 +288,7 @@ def test_sync_orphan_cleanup_fail(
     deb_sync_repository,
     orphans_cleanup_api_client,
     monitor_task,
+    delete_orphans_pre,
 ):
     """Test whether an orphan cleanup is possible after syncing where only some PackageIndices got
     changed and older repository versions are not kept.
@@ -316,7 +317,8 @@ def test_sync_orphan_cleanup_fail(
     task = monitor_task(orphans_cleanup_api_client.cleanup({"orphan_protection_time": 0}).task)
     assert task.state == "completed"
     for report in task.progress_reports:
-        assert report.total == 2 if "Content" in report.message else 5
+        if "Content" in report.message:
+            assert report.done == 2
 
 
 def is_sync_skipped(task, code):
