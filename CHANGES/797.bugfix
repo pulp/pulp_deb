@@ -1,0 +1,1 @@
+Fixed an async error preventing synchronization with ``sync_installer`` set to ``True``.
