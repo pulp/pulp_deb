@@ -13,8 +13,6 @@ check_stray_pulpcore_imports: true
 ci_env: {}
 ci_trigger: '{pull_request: {branches: [''*'']}}'
 ci_update_branches:
-- '2.18'
-- '2.19'
 - '2.20'
 - '2.21'
 ci_update_docs: false
