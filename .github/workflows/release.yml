@@ -6,7 +6,7 @@
 # For more info visit https://github.com/pulp/plugin_template
 
 ---
-name: Release Pipeline
+name: Deb Release Pipeline
 on:
   workflow_dispatch:
     inputs:
