@@ -2,6 +2,8 @@ import asyncio
 import os
 import shutil
 from contextlib import suppress
+from pathlib import Path
+import hashlib
 
 from datetime import datetime, timezone
 from debian import deb822
@@ -34,11 +36,9 @@ from pulp_deb.app.models import (
 
 from pulp_deb.app.serializers import Package822Serializer
 
-from pulp_deb.app.constants import (
-    NO_MD5_WARNING_MESSAGE,
-    CHECKSUM_TYPE_MAP,
-)
+from pulp_deb.app.constants import NO_MD5_WARNING_MESSAGE, CHECKSUM_TYPE_MAP
 
+from pulp_deb.app.settings import APT_BY_HASH, APT_BY_HASH_CHECKSUM_TYPE
 
 import logging
 from gettext import gettext as _
@@ -272,6 +272,7 @@ class _ComponentHelper:
                 content_artifact=package.contentartifact_set.get(),
             )
             published_artifact.save()
+
         package_serializer = Package822Serializer(package, context={"request": None})
 
         try:
@@ -296,10 +297,23 @@ class _ComponentHelper:
                 publication=self.parent.publication, file=File(open(package_index_path, "rb"))
             )
             package_index.save()
+
             gz_package_index = PublishedMetadata.create_from_file(
                 publication=self.parent.publication, file=File(open(gz_package_index_path, "rb"))
             )
             gz_package_index.save()
+
+            # Generating metadata files using checksum
+            if APT_BY_HASH and APT_BY_HASH_CHECKSUM_TYPE in settings.ALLOWED_CONTENT_CHECKSUMS:
+                for path in (package_index_path, gz_package_index_path):
+                    hashed_index_path = _create_checksum_file(path)
+                    hashed_index = PublishedMetadata.create_from_file(
+                        publication=self.parent.publication,
+                        file=File(open(hashed_index_path, "rb")),
+                    )
+                    hashed_index.save()
+            # Done generating
+
             self.parent.add_metadata(package_index)
             self.parent.add_metadata(gz_package_index)
 
@@ -413,3 +427,19 @@ def _zip_file(file_path):
         with GzipFile(gz_file_path, "wb") as f_out:
             shutil.copyfileobj(f_in, f_out)
     return gz_file_path
+
+
+def _checksum_file(path):
+    h = hashlib.new(APT_BY_HASH_CHECKSUM_TYPE)
+    with open(path, "rb") as f:
+        for line in f:
+            h.update(line)
+    return h.hexdigest()
+
+
+def _create_checksum_file(file_path):
+    by_hash_path = Path(file_path).parents[0] / "byhash"
+    by_hash_path.mkdir(parents=True, exist_ok=True)
+    hashed_path = by_hash_path / _checksum_file(file_path)
+    shutil.copyfile(file_path, hashed_path)
+    return hashed_path

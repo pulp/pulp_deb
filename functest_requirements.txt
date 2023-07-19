@@ -1,3 +1,4 @@
 pulp-smash @ git+https://github.com/pulp/pulp-smash.git
 pytest
 python-debian>=0.1.36
+epdb
