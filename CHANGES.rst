@@ -13,6 +13,29 @@ Changelog
 
 .. towncrier release notes start
 
+2.20.3 (2023-07-20)
+===================
+
+Bugfixes
+--------
+
+- Fixed KeyError during publish if package has architecture that's not supported in the Packages file.
+  Instead, a warning message will be logged.
+  `#777 <https://github.com/pulp/pulp_deb/issues/777>`_
+- Fixed an async error preventing synchronization with ``sync_installer`` set to ``True``.
+  `#797 <https://github.com/pulp/pulp_deb/issues/797>`_
+
+
+Improved Documentation
+----------------------
+
+- Fixed infinite loading when searching for specific terms.
+  `#765 <https://github.com/pulp/pulp_deb/issues/765>`_
+
+
+----
+
+
 2.20.2 (2023-04-26)
 ===================
 
