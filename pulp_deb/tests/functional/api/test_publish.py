@@ -77,7 +77,7 @@ def create_publication_and_verify_repo_version(
 
 
 @pytest.fixture
-def verify_publication_data(deb_get_present_content, deb_list_content_types_by_href):
+def verify_publication_data(deb_get_content_types):
     def _verify_publication_data(publication, expected, is_nested=False):
         """Verifies the content data of a given publication with the given expected values.
 
@@ -89,21 +89,18 @@ def verify_publication_data(deb_get_present_content, deb_list_content_types_by_h
         release_file_folder = "release_file_folder_sync" if is_nested else "release_file_folder"
         package_index_paths = "package_index_paths_sync" if is_nested else "package_index_paths"
 
-        content = deb_get_present_content(
-            publication.to_dict(), version_href=publication.repository_version
-        )
+        repo = publication.to_dict()
+        version_href = publication.repository_version
 
-        release_file = deb_list_content_types_by_href(
-            "apt_release_file_api", content[DEB_RELEASE_FILE_NAME]["href"]
+        release_file = deb_get_content_types(
+            "apt_release_file_api", DEB_RELEASE_FILE_NAME, repo, version_href
         )[0]
-        release = deb_list_content_types_by_href(
-            "apt_release_api", content[DEB_RELEASE_NAME]["href"]
-        )[0]
-        components = deb_list_content_types_by_href(
-            "apt_release_component_api", content[DEB_RELEASE_COMPONENT_NAME]["href"]
+        release = deb_get_content_types("apt_release_api", DEB_RELEASE_NAME, repo, version_href)[0]
+        components = deb_get_content_types(
+            "apt_release_component_api", DEB_RELEASE_COMPONENT_NAME, repo, version_href
         )
-        package_indices = deb_list_content_types_by_href(
-            "apt_package_indices_api", content[DEB_PACKAGE_INDEX_NAME]["href"]
+        package_indices = deb_get_content_types(
+            "apt_package_indices_api", DEB_PACKAGE_INDEX_NAME, repo, version_href
         )
         release_file_path = os.path.join(expected[release_file_folder], release_type)
 

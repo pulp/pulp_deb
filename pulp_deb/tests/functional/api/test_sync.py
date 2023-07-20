@@ -1,9 +1,7 @@
 """Tests that sync deb repositories in optimized mode."""
-from pulp_smash.pulp3.bindings import PulpTaskError
 import pytest
 
-from pulp_smash.pulp3.utils import get_added_content_summary, get_content_summary
-
+from pulpcore.tests.functional.utils import PulpTaskError
 from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_ARCH,
     DEB_FIXTURE_ARCH_UPDATE,
@@ -30,6 +28,8 @@ from pulp_deb.tests.functional.constants import (
     ],
 )
 def test_sync(
+    deb_get_added_content_summary,
+    deb_get_present_content_summary,
     deb_get_fixture_server_url,
     deb_remote_factory,
     deb_repository_factory,
@@ -54,8 +54,8 @@ def test_sync(
     assert not is_sync_skipped(task, DEB_REPORT_CODE_SKIP_RELEASE)
 
     # Verify that the repo content and added content matches the summary
-    assert get_content_summary(repo.to_dict()) == fixture_summary
-    assert get_added_content_summary(repo.to_dict()) == fixture_summary
+    assert deb_get_present_content_summary(repo.to_dict()) == fixture_summary
+    assert deb_get_added_content_summary(repo.to_dict()) == fixture_summary
 
     # Sync the repository again
     task_skip = deb_sync_repository(remote, repo)
@@ -66,7 +66,7 @@ def test_sync(
     assert is_sync_skipped(task_skip, DEB_REPORT_CODE_SKIP_RELEASE)
 
     # Verify that the repo content still matches the summary
-    assert get_content_summary(repo.to_dict()) == fixture_summary
+    assert deb_get_present_content_summary(repo.to_dict()) == fixture_summary
 
 
 @pytest.mark.skip("Skip - ignore_missing_package_indices sync parameter does currently not work")

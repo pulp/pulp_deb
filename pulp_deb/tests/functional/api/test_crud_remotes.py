@@ -1,10 +1,9 @@
 """Tests that CRUD deb remotes."""
 from random import choice
+from uuid import uuid4
 import pytest
 
 from pulpcore.client.pulp_deb.exceptions import ApiException
-
-from pulp_smash import utils
 
 from pulp_deb.tests.functional.constants import DOWNLOAD_POLICIES, DEB_SIGNING_KEY
 from pulp_deb.tests.functional.utils import gen_local_deb_remote
@@ -180,7 +179,7 @@ def test_remote_download_policies(
 
     # Attempt to change the remote policy to an invalid string
     with pytest.raises(ApiException) as exc:
-        deb_patch_remote(remote, {"policy": utils.uuid4()})
+        deb_patch_remote(remote, {"policy": str(uuid4())})
     assert exc.value.status == 400
 
     # Verify that the remote policy remains unchanged
@@ -200,12 +199,12 @@ def gen_verbose_remote_data(url):
     data = gen_local_deb_remote(url)
     data.update(
         {
-            "password": utils.uuid4(),
-            "username": utils.uuid4(),
+            "password": str(uuid4()),
+            "username": str(uuid4()),
             "policy": choice(DOWNLOAD_POLICIES),
-            "distributions": f"{utils.uuid4()} {utils.uuid4()}",
-            "components": f"{utils.uuid4()} {utils.uuid4()}",
-            "architectures": f"{utils.uuid4()} {utils.uuid4()}",
+            "distributions": f"{str(uuid4())} {str(uuid4())}",
+            "components": f"{str(uuid4())} {str(uuid4())}",
+            "architectures": f"{str(uuid4())} {str(uuid4())}",
             "gpgkey": DEB_SIGNING_KEY,
         }
     )

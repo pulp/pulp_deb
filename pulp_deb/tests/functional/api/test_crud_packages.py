@@ -1,8 +1,6 @@
 """Tests that perform actions over packages."""
-import uuid
+from uuid import uuid4
 import pytest
-
-from pulp_smash import utils
 
 from pulp_deb.tests.functional.constants import DEB_PACKAGE_RELPATH
 from pulp_deb.tests.functional.utils import get_local_package_absolute_path
@@ -29,12 +27,12 @@ def test_create_package(apt_package_api, deb_package_factory):
 
     # Verify that partial update does not work for packages
     with pytest.raises(AttributeError) as exc:
-        apt_package_api.partial_update(package.pulp_href, relative_path=str(uuid.uuid4()))
+        apt_package_api.partial_update(package.pulp_href, relative_path=str(uuid4()))
     assert "object has no attribute 'partial_update'" in exc.value.args[0]
 
     # Verify that update does not work for packages
     with pytest.raises(AttributeError) as exc:
-        apt_package_api.update(package.pulp_href, relative_path=str(uuid.uuid4()))
+        apt_package_api.update(package.pulp_href, relative_path=str(uuid4()))
     assert "object has no attribute 'update'" in exc.value.args[0]
 
     # Verify that delete does not work for packages
@@ -77,8 +75,8 @@ def test_structured_package_upload(
     attrs = {
         "file": get_local_package_absolute_path(DEB_PACKAGE_RELPATH),
         "relative_path": DEB_PACKAGE_RELPATH,
-        "distribution": utils.uuid4(),
-        "component": utils.uuid4(),
+        "distribution": str(uuid4()),
+        "component": str(uuid4()),
     }
 
     repository = deb_repository_factory()
