@@ -1,1 +1,0 @@
-Fixed content creating code triggered in rare edge cases when unapplying DB migration 0021.
