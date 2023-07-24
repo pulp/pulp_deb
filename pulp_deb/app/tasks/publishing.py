@@ -305,11 +305,15 @@ class _ComponentHelper:
 
             # Generating metadata files using checksum
             if APT_BY_HASH and APT_BY_HASH_CHECKSUM_TYPE in settings.ALLOWED_CONTENT_CHECKSUMS:
-                for path in (package_index_path, gz_package_index_path):
-                    hashed_index_path = _create_checksum_file(path)
+                for path, index in (
+                    (package_index_path, package_index),
+                    (gz_package_index_path, gz_package_index),
+                ):
+                    hashed_index_path = _fetch_file_checksum(path, index)
                     hashed_index = PublishedMetadata.create_from_file(
                         publication=self.parent.publication,
-                        file=File(open(hashed_index_path, "rb")),
+                        file=File(open(path, "rb")),
+                        relative_path=hashed_index_path,
                     )
                     hashed_index.save()
             # Done generating
@@ -438,8 +442,14 @@ def _checksum_file(path):
 
 
 def _create_checksum_file(file_path):
-    by_hash_path = Path(file_path).parents[0] / "byhash"
+    by_hash_path = Path(file_path).parents[0] / "by-hash" / APT_BY_HASH_CHECKSUM_TYPE
     by_hash_path.mkdir(parents=True, exist_ok=True)
     hashed_path = by_hash_path / _checksum_file(file_path)
     shutil.copyfile(file_path, hashed_path)
+    return hashed_path
+
+
+def _fetch_file_checksum(file_path, index):
+    h = getattr(index.contentartifact_set.first().artifact, APT_BY_HASH_CHECKSUM_TYPE)
+    hashed_path = Path(file_path).parents[0] / "by-hash" / APT_BY_HASH_CHECKSUM_TYPE / h
     return hashed_path
