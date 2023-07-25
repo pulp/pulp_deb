@@ -434,5 +434,6 @@ def _zip_file(file_path):
 
 def _fetch_file_checksum(file_path, index):
     h = getattr(index.contentartifact_set.first().artifact, APT_BY_HASH_CHECKSUM_TYPE)
-    hashed_path = Path(file_path).parents[0] / "by-hash" / APT_BY_HASH_CHECKSUM_TYPE / h
+    checksum_type = CHECKSUM_TYPE_MAP[APT_BY_HASH_CHECKSUM_TYPE]
+    hashed_path = Path(file_path).parents[0] / "by-hash" / checksum_type / h
     return hashed_path
