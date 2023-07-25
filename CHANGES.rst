@@ -13,6 +13,27 @@ Changelog
 
 .. towncrier release notes start
 
+2.21.1 (2023-07-20)
+===================
+
+Bugfixes
+--------
+
+- Fixed KeyError during publish if package has architecture that's not supported in the Packages file.
+  Instead, a warning message will be logged.
+  `#777 <https://github.com/pulp/pulp_deb/issues/777>`_
+- Fixed an async error preventing synchronization with ``sync_installer`` set to ``True``.
+  `#797 <https://github.com/pulp/pulp_deb/issues/797>`_
+- Fixed content creating code triggered in rare edge cases when unapplying DB migration 0021.
+  `#806 <https://github.com/pulp/pulp_deb/issues/806>`_
+- Fixed a bug where structured package upload was only working as intended for the first package uploaded to each repository.
+  Also added logging and ensured structure content is added to the creating tasks ``created_resources`` list.
+  `#807 <https://github.com/pulp/pulp_deb/issues/807>`_
+
+
+----
+
+
 2.21.0 (2023-05-22)
 ===================
 
@@ -73,6 +94,29 @@ Misc
   `#395 <https://github.com/pulp/pulp_deb/issues/395>`_
 - Made repository publication structure independed of the Release model, which includes removing all foreighn key relations to the model.
   `#748 <https://github.com/pulp/pulp_deb/issues/748>`_
+
+
+----
+
+
+2.20.3 (2023-07-20)
+===================
+
+Bugfixes
+--------
+
+- Fixed KeyError during publish if package has architecture that's not supported in the Packages file.
+  Instead, a warning message will be logged.
+  `#777 <https://github.com/pulp/pulp_deb/issues/777>`_
+- Fixed an async error preventing synchronization with ``sync_installer`` set to ``True``.
+  `#797 <https://github.com/pulp/pulp_deb/issues/797>`_
+
+
+Improved Documentation
+----------------------
+
+- Fixed infinite loading when searching for specific terms.
+  `#765 <https://github.com/pulp/pulp_deb/issues/765>`_
 
 
 ----
