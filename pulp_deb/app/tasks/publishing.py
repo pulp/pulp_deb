@@ -3,7 +3,6 @@ import os
 import shutil
 from contextlib import suppress
 from pathlib import Path
-import hashlib
 
 from datetime import datetime, timezone
 from debian import deb822
@@ -431,22 +430,6 @@ def _zip_file(file_path):
         with GzipFile(gz_file_path, "wb") as f_out:
             shutil.copyfileobj(f_in, f_out)
     return gz_file_path
-
-
-def _checksum_file(path):
-    h = hashlib.new(APT_BY_HASH_CHECKSUM_TYPE)
-    with open(path, "rb") as f:
-        for line in f:
-            h.update(line)
-    return h.hexdigest()
-
-
-def _create_checksum_file(file_path):
-    by_hash_path = Path(file_path).parents[0] / "by-hash" / APT_BY_HASH_CHECKSUM_TYPE
-    by_hash_path.mkdir(parents=True, exist_ok=True)
-    hashed_path = by_hash_path / _checksum_file(file_path)
-    shutil.copyfile(file_path, hashed_path)
-    return hashed_path
 
 
 def _fetch_file_checksum(file_path, index):
