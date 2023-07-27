@@ -1,0 +1,7 @@
+Archive: stable
+Version: 10
+Component: jotunheimr
+Origin: pulp-fixtures
+Label: Debian-security-like-fixture
+Architecture: armeb
+Description: A fixtures repo with a structure modeled on debian-security.

@@ -69,7 +69,7 @@ def test_sync(
     assert get_content_summary(repo.to_dict()) == fixture_summary
 
 
-@pytest.mark.skip("Skip - Does currently not work")
+@pytest.mark.skip("Skip - ignore_missing_package_indices sync parameter does currently not work")
 @pytest.mark.parallel
 @pytest.mark.parametrize(
     "remote_params, expected",

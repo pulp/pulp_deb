@@ -1,12 +1,12 @@
 -----BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA256
+Hash: SHA512
 
 Origin: pulp-fixtures
 Label: Debian-security-like-fixture
 Suite: stable
 Codename: ragnarok
 Version: 10
-Date: Thu, 26 Jan 2023 14:19:00 UTC
+Date: Mon, 19 Jun 2023 10:31:11 UTC
 Architectures: armeb ppc64
 Components: updates/asgard updates/jotunheimr
 Description: A fixtures repo with a structure modeled on debian-security.
@@ -14,11 +14,11 @@ MD5Sum:
  d41d8cd98f00b204e9800998ecf8427e 0 asgard/binary-armeb/Packages
  7029066c27ac6f5ef18d660d5741979a 20 asgard/binary-armeb/Packages.gz
  e6b09eccd48d4dadff1b9baa3db41b6d 198 asgard/binary-armeb/Release
- 9a8da3521839a101915e3866eb6406ce 1575 asgard/binary-ppc64/Packages
- 34df3e0eec846b249ee15d5b28e4b75f 767 asgard/binary-ppc64/Packages.gz
+ c289bfa516beff6befb8d6660ecc8c56 1632 asgard/binary-ppc64/Packages
+ 2f5d98b2626ce579538decb618085abf 794 asgard/binary-ppc64/Packages.gz
  370218e90e97c7316594d77221e355be 198 asgard/binary-ppc64/Release
- ec105da3a540708c7a80e229fa678475 487 jotunheimr/binary-armeb/Packages
- 8f805e37d9be89ef700bb68b561d81e9 362 jotunheimr/binary-armeb/Packages.gz
+ 9ec8e6505c338bb99ebed69c621d4396 501 jotunheimr/binary-armeb/Packages
+ 0c1be7a316283320f0549582f768b0c5 372 jotunheimr/binary-armeb/Packages.gz
  f6be5d0a70039cd3da7cdbbe80f46a3c 202 jotunheimr/binary-armeb/Release
  d41d8cd98f00b204e9800998ecf8427e 0 jotunheimr/binary-ppc64/Packages
  7029066c27ac6f5ef18d660d5741979a 20 jotunheimr/binary-ppc64/Packages.gz
@@ -27,11 +27,11 @@ SHA1:
  da39a3ee5e6b4b0d3255bfef95601890afd80709 0 asgard/binary-armeb/Packages
  46c6643f07aa7f6bfe7118de926b86defc5087c4 20 asgard/binary-armeb/Packages.gz
  fceb1c481591feb78aefb802838241a2bab8d54a 198 asgard/binary-armeb/Release
- 6a4f3cd39ec0ccee99aef6aa9b18f3bbbc60a60e 1575 asgard/binary-ppc64/Packages
- f8f52a44fdcaf5d71f9cd5a54a000d96339febc5 767 asgard/binary-ppc64/Packages.gz
+ 759f1a34f0ae55da33cb607e15305a51a68b26a6 1632 asgard/binary-ppc64/Packages
+ c11d443871f9d654de77ab4d17b30327d06a5a69 794 asgard/binary-ppc64/Packages.gz
  130d0e7cf564a36e94df1c2dc9985cdb37dffe75 198 asgard/binary-ppc64/Release
- e6f0266b78db70086c81c7ce06fb06f8d1ea7049 487 jotunheimr/binary-armeb/Packages
- f9daf6c662cf310195a83cf8ce08cca0d322ea5d 362 jotunheimr/binary-armeb/Packages.gz
+ 222b3c0c234337bac51e9c99611d86a823e7021f 501 jotunheimr/binary-armeb/Packages
+ 445c54a3d8da53141b2bc621255319265734ed80 372 jotunheimr/binary-armeb/Packages.gz
  8ba79ed7d9b73dbf14afb76ea1a3f009eb4eea89 202 jotunheimr/binary-armeb/Release
  da39a3ee5e6b4b0d3255bfef95601890afd80709 0 jotunheimr/binary-ppc64/Packages
  46c6643f07aa7f6bfe7118de926b86defc5087c4 20 jotunheimr/binary-ppc64/Packages.gz
@@ -40,23 +40,23 @@ SHA256:
  e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 0 asgard/binary-armeb/Packages
  59869db34853933b239f1e2219cf7d431da006aa919635478511fabbfc8849d2 20 asgard/binary-armeb/Packages.gz
  b0a15717a53d8c0b9ea70b6376f255298b5b1680f261073cbd5ad2762ae4000a 198 asgard/binary-armeb/Release
- 243788983dbe394c0d8fac2594bd0b2c833f8bc65548a95d28fb95efb090e30c 1575 asgard/binary-ppc64/Packages
- d8f7e337caa194f3b0232a859194d58d79b31b2fecaf15b8dc8ae3c80099f10b 767 asgard/binary-ppc64/Packages.gz
+ 54e8a0f124c17665243f3e2d8342ee936d1af8bb0b130f491188aefc6b90d52f 1632 asgard/binary-ppc64/Packages
+ c940f712e41c1983f3a7189f0fbd7689802868d4f897484594e28e3648aeb68a 794 asgard/binary-ppc64/Packages.gz
  55e6258fdb3edefb859e8be3d7c0ae181277c0be939bfb572b7ec10757137e15 198 asgard/binary-ppc64/Release
- fe42f5bf7398cee1d1dbad1e01cf280def0f3fdcdcea9169e81755d3100408fc 487 jotunheimr/binary-armeb/Packages
- c4ebc2e72aa556735d57b64b6dcdd5d115a1d158eae70320214b13187763daab 362 jotunheimr/binary-armeb/Packages.gz
+ 4ddd13b2c78d40e45640c51805545711f2760e99fcf70c928b696d7d1e31a3ac 501 jotunheimr/binary-armeb/Packages
+ 81f335c78d1dd74c63107370a263fb1c5eb3fdd88677fa49c5e61eeccaf268c8 372 jotunheimr/binary-armeb/Packages.gz
  6a2f18cb84b3012f57e3e8e732153df840f1777648b1eb65e1e468022ab2467e 202 jotunheimr/binary-armeb/Release
  e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 0 jotunheimr/binary-ppc64/Packages
  59869db34853933b239f1e2219cf7d431da006aa919635478511fabbfc8849d2 20 jotunheimr/binary-ppc64/Packages.gz
  5ebca3d0b71e2f669a591c14f9cecddef5bd82cb7c589e75c673fded28a390f7 202 jotunheimr/binary-ppc64/Release
 -----BEGIN PGP SIGNATURE-----
 
-iQEzBAEBCAAdFiEEbt8wElZIC5uAHro9BaXm2iadnZgFAmPSi9QACgkQBaXm2iad
-nZijnQf/SgGg2U685FjZx3JpDgBoX3fSQmgH2GKtPKIWRgSZreA1ds18xzZx2P3m
-cwd0cChM6bgvw9YFBWYG4mtF9rearWS/n88Q576MuQNyh2sPGeKZOVSZeZKBgnsi
-U/vxXiXX/22gF0p2PIY4CG3iNGkFNijbIkZLt3JYLkUV7kS5rv67LSk78YpRqn90
-GuvrI+tUgaEa4d54nF6apaOYgn/GcK16OEoSUEp71KrDYtRjR47HvKqnVnuzr14Y
-SeNROzQ9DBQhFI44sdsh2MDsLbPT2hk7pwiyCidColgoCICclRTBt/pQgseS3rd2
-1SOW8sX0TYOJU9dSsbKHEkQkDYnz6A==
-=TuSA
+iQEzBAEBCgAdFiEEbt8wElZIC5uAHro9BaXm2iadnZgFAmSQLnAACgkQBaXm2iad
+nZhupwf+LOfLQwHCJk4r6Shvjd+N89TOD9F+8py+jU4J23CJQy+QSS2dgh22TwkI
+PCWpDG/CxpZfdD/hXzb7y8zk2Cj+u9je2A4V+XmJVrlD5XgIAEOCHH15eLcRGU+c
+S9v30RJjTuWMZyNj2bNO/+O/AD6O7r7iTULG0sQXrJdQKi/QPT2avWrit4kcmXtk
+Ic9anAD7TK4AHgdxp3SZmfssda2PDOtHahwwnS39H1CVyOjNIeU6qxUZ+NfzNUQw
+b3ZqaEHiBjtvAVnu/jY+V1+2eBpNMmf+OZgJ/Cqst8VzxTJDcmdAv7AjHlv1rmER
+TP5dFFb+uG2bqtL4S4sWpMzoDEmQhQ==
+=GW9M
 -----END PGP SIGNATURE-----
