@@ -1,13 +1,18 @@
 # coding=utf-8
 """Utilities for tests for the deb plugin."""
+from random import choice
 from pathlib import Path
 from uuid import uuid4
 
-from pulp_deb.tests.functional.constants import DEB_FIXTURE_DISTRIBUTIONS
+from pulp_deb.tests.functional.constants import (
+    DEB_FIXTURE_DISTRIBUTIONS,
+    DEB_SIGNING_KEY,
+    DOWNLOAD_POLICIES,
+)
 
 
-def gen_local_deb_remote(
-    url,
+def gen_deb_remote(
+    url=None,
     distributions=DEB_FIXTURE_DISTRIBUTIONS,
     sync_udebs=False,
     gpgkey=None,
@@ -22,11 +27,39 @@ def gen_local_deb_remote(
         kwargs["gpgkey"] = gpgkey
     data = {
         "name": str(uuid4()),
-        "url": url,
+        "url": "" if url is None else url,
         "distributions": distributions,
         "sync_udebs": sync_udebs,
     }
     data.update(kwargs)
+    return data
+
+
+def gen_deb_remote_verbose(url=None, remove_policy=False):
+    """Return a semi-random dict for use in defining a remote.
+
+    For most tests, it's desirable to create remotes with as few attributes
+    as possible, so that the tests can specifically target and attempt to break
+    specific features. This module specifically targets remotes, so it makes
+    sense to provide as many attributes as possible.
+    Note that 'username' and 'password' are write-only attributes.
+    """
+    data = gen_deb_remote(url)
+    data.update(
+        {
+            "password": str(uuid4()),
+            "username": str(uuid4()),
+            "policy": choice(DOWNLOAD_POLICIES),
+            "distributions": f"{str(uuid4())} {str(uuid4())}",
+            "components": f"{str(uuid4())} {str(uuid4())}",
+            "architectures": f"{str(uuid4())} {str(uuid4())}",
+            "gpgkey": DEB_SIGNING_KEY,
+        }
+    )
+    if url is None:
+        del data["url"]
+    if remove_policy:
+        del data["policy"]
     return data
 
 

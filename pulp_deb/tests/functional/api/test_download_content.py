@@ -130,15 +130,11 @@ def deb_get_random_content_unit_path(request):
 @pytest.mark.parallel
 @pytest.mark.parametrize("is_verbatim", [False, True])
 def test_download_content(
+    deb_init_and_sync,
     deb_distribution_factory,
-    deb_get_fixture_server_url,
     deb_publication_factory,
-    deb_remote_factory,
-    deb_repository_factory,
     deb_verbatim_publication_factory,
-    deb_get_repository_by_href,
     deb_get_random_content_unit_path,
-    deb_sync_repository,
     deb_fixture_server,
     download_content_unit,
     http_get,
@@ -150,11 +146,7 @@ def test_download_content(
     this case.
     """
     # Create repository, remote and sync them
-    repo = deb_repository_factory()
-    url = deb_get_fixture_server_url()
-    remote = deb_remote_factory(url=url)
-    deb_sync_repository(remote, repo)
-    repo = deb_get_repository_by_href(repo.pulp_href)
+    repo, _ = deb_init_and_sync()
 
     # Create a publication and a distribution
     publication = (
