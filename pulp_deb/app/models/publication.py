@@ -31,7 +31,7 @@ class AptPublication(Publication):
     TYPE = "apt-publication"
 
     simple = models.BooleanField(default=False)
-    structured = models.BooleanField(default=False)
+    structured = models.BooleanField(default=True)
     signing_service = models.ForeignKey(
         AptReleaseSigningService, on_delete=models.PROTECT, null=True
     )

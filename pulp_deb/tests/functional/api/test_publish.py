@@ -12,10 +12,10 @@ from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_SINGLE_DIST,
     DEB_PACKAGE_INDEX_NAME,
     DEB_PACKAGE_NAME,
-    DEB_PARAMS_PUB_ALL,
-    DEB_PARAMS_PUB_SIMPLE,
-    DEB_PARAMS_PUB_SIMPLE_AND_STRUCTURED,
-    DEB_PARAMS_PUB_STRUCTURED,
+    DEB_PUBLICATION_ARGS_ALL,
+    DEB_PUBLICATION_ARGS_ONLY_SIMPLE,
+    DEB_PUBLICATION_ARGS_ONLY_STRUCTURED,
+    DEB_PUBLICATION_ARGS_SIMPLE_AND_STRUCTURED,
     DEB_PUBLISH_COMPLEX_DEBIAN_SECURITY,
     DEB_PUBLISH_COMPLEX_UBUNTU_BACKPORTS,
     DEB_PUBLISH_EMPTY_REPOSITORY,
@@ -140,10 +140,11 @@ def verify_distribution(download_content_unit):
 @pytest.mark.parametrize(
     "publication_args",
     [
-        DEB_PARAMS_PUB_SIMPLE,
-        DEB_PARAMS_PUB_STRUCTURED,
-        DEB_PARAMS_PUB_SIMPLE_AND_STRUCTURED,
-        DEB_PARAMS_PUB_ALL,
+        DEB_PUBLICATION_ARGS_ONLY_SIMPLE,
+        DEB_PUBLICATION_ARGS_ONLY_STRUCTURED,
+        DEB_PUBLICATION_ARGS_SIMPLE_AND_STRUCTURED,
+        DEB_PUBLICATION_ARGS_ALL,
+        {},
     ],
 )
 def test_publish_any_repo_version(
@@ -162,6 +163,7 @@ def test_publish_any_repo_version(
     * `Publish a structured repository version.`_
     * `Publish a simple and structured repository version.`_
     * `Publish a simple, structured and signed repository version.`_
+    * `Publish with default arguments. Which is just a structured repository.`_
     """
     # Create a repository with multiple versions and publication with the latest version
     if "signing_service" in publication_args.keys():
@@ -225,10 +227,10 @@ def test_publish_signing_services(
     signing_service = deb_signing_service_factory
     remote_args = {"distributions": DEB_FIXTURE_SINGLE_DIST}
     if set_on == "publication":
-        publication_args = DEB_PARAMS_PUB_ALL
+        publication_args = DEB_PUBLICATION_ARGS_ALL
         publication_args["signing_service"] = signing_service.pulp_href
     else:
-        publication_args = DEB_PARAMS_PUB_SIMPLE_AND_STRUCTURED
+        publication_args = DEB_PUBLICATION_ARGS_SIMPLE_AND_STRUCTURED
     repo_args = {}
     if set_on == "repo":
         repo_args["signing_service"] = signing_service.pulp_href
@@ -295,7 +297,7 @@ def test_publish_empty_repository(
     # Create a publication.
     publication, _, _, _ = create_publication_and_verify_repo_version(
         remote_args={"distributions": DEB_FIXTURE_ALT_SINGLE_DIST},
-        publication_args=DEB_PARAMS_PUB_SIMPLE_AND_STRUCTURED,
+        publication_args=DEB_PUBLICATION_ARGS_SIMPLE_AND_STRUCTURED,
     )
 
     release = deb_get_present_content(
@@ -350,10 +352,10 @@ def test_publish_flat_repository_verbatim(
 @pytest.mark.parametrize(
     "expected_data, publication_args",
     [
-        (DEB_PUBLISH_FLAT_STRUCTURED, DEB_PARAMS_PUB_STRUCTURED),
-        (DEB_PUBLISH_FLAT_SIMPLE, DEB_PARAMS_PUB_SIMPLE),
-        (DEB_PUBLISH_FLAT_NESTED_STRUCTURED, DEB_PARAMS_PUB_STRUCTURED),
-        (DEB_PUBLISH_FLAT_NESTED_SIMPLE, DEB_PARAMS_PUB_SIMPLE),
+        (DEB_PUBLISH_FLAT_STRUCTURED, DEB_PUBLICATION_ARGS_ONLY_STRUCTURED),
+        (DEB_PUBLISH_FLAT_SIMPLE, DEB_PUBLICATION_ARGS_ONLY_SIMPLE),
+        (DEB_PUBLISH_FLAT_NESTED_STRUCTURED, DEB_PUBLICATION_ARGS_ONLY_STRUCTURED),
+        (DEB_PUBLISH_FLAT_NESTED_SIMPLE, DEB_PUBLICATION_ARGS_ONLY_SIMPLE),
     ],
 )
 def test_publish_flat_repository(
@@ -404,7 +406,7 @@ def test_publish_missing_architecture(
 
     publication, _, remote, _ = create_publication_and_verify_repo_version(
         remote_args,
-        publication_args=DEB_PARAMS_PUB_STRUCTURED,
+        publication_args=DEB_PUBLICATION_ARGS_ONLY_STRUCTURED,
         remote_name=DEB_FIXTURE_MISSING_ARCHITECTURE_REPOSITORY_NAME,
     )
     verify_publication_data(publication, DEB_PUBLISH_MISSING_ARCHITECTURE)
@@ -452,7 +454,7 @@ def test_publish_complex_dists(
     # Create a publication
     publication, _, _, _ = create_publication_and_verify_repo_version(
         remote_args,
-        publication_args=DEB_PARAMS_PUB_STRUCTURED,
+        publication_args=DEB_PUBLICATION_ARGS_ONLY_STRUCTURED,
         remote_name=DEB_FIXTURE_COMPLEX_REPOSITORY_NAME,
     )
     verify_publication_data(publication, expected_data)

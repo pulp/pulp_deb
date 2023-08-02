@@ -34,7 +34,7 @@ class AptPublicationSerializer(PublicationSerializer):
         help_text="Activate simple publishing mode (all packages in one release component).",
         default=False,
     )
-    structured = BooleanField(help_text="Activate structured publishing mode.", default=False)
+    structured = BooleanField(help_text="Activate structured publishing mode.", default=True)
     publish_upstream_release_fields = BooleanField(help_text="", required=False)
     signing_service = RelatedField(
         help_text="Sign Release files with this signing key",
