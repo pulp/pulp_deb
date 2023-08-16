@@ -1,22 +1,10 @@
 # coding=utf-8
 """Constants for Pulp Deb plugin tests."""
-from urllib.parse import urljoin
-
-from pulp_smash import config
-from pulp_smash.pulp3.constants import (
-    # API_DOCS_PATH,
-    BASE_CONTENT_PATH,
-    BASE_PUBLICATION_PATH,
-    BASE_REMOTE_PATH,
-    BASE_REPO_PATH,
-)
 
 
 def _clean_dict(d):
     return {k: v for k, v in d.items() if v != 0}
 
-
-PULP_FIXTURES_BASE_URL = config.get_config().get_fixtures_url()
 
 DOWNLOAD_POLICIES = ["immediate", "streamed", "on_demand"]
 
@@ -34,19 +22,6 @@ DEB_PACKAGE_NAME = "deb.package"
 DEB_INSTALLER_PACKAGE_NAME = "deb.installer_package"
 DEB_GENERIC_CONTENT_NAME = "deb.generic"
 
-DEB_GENERIC_CONTENT_PATH = urljoin(BASE_CONTENT_PATH, "deb/generic_contents/")
-
-
-DEB_REMOTE_PATH = urljoin(BASE_REMOTE_PATH, "deb/apt/")
-
-DEB_REPO_PATH = urljoin(BASE_REPO_PATH, "deb/apt/")
-
-DEB_PUBLICATION_PATH = urljoin(BASE_PUBLICATION_PATH, "deb/apt/")
-VERBATIM_PUBLICATION_PATH = urljoin(BASE_PUBLICATION_PATH, "deb/verbatim/")
-
-
-DEB_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, "debian/")
-DEB_FIXTURE_URL_UPDATE = urljoin(PULP_FIXTURES_BASE_URL, "debian_update/")
 DEB_FIXTURE_DISTRIBUTIONS = "ragnarok nosuite"
 DEB_FIXTURE_SINGLE_DIST = "ragnarok"
 DEB_FIXTURE_ALT_SINGLE_DIST = "ginnungagap"

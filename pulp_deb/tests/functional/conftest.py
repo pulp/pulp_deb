@@ -1,12 +1,12 @@
 from urllib.parse import urlsplit
-from pulp_smash.pulp3.utils import gen_distribution, gen_repo
 from pathlib import Path
+from uuid import uuid4
 import pytest
 import os
 import stat
+import subprocess
 
-from pulp_deb.tests.functional.utils import gen_local_deb_remote
-from pulp_smash.utils import execute_pulpcore_python, uuid4
+from pulp_deb.tests.functional.utils import gen_local_deb_remote, gen_distribution, gen_repo
 from pulp_deb.tests.functional.constants import DEB_FIXTURE_STANDARD_REPOSITORY_NAME
 
 from pulpcore.client.pulp_deb import (
@@ -15,6 +15,7 @@ from pulpcore.client.pulp_deb import (
     ContentGenericContentsApi,
     ContentPackagesApi,
     ContentPackageIndicesApi,
+    ContentPackageReleaseComponentsApi,
     ContentReleasesApi,
     ContentReleaseComponentsApi,
     ContentReleaseFilesApi,
@@ -63,7 +64,14 @@ def apt_remote_api(apt_client):
 
 @pytest.fixture(scope="session")
 def apt_package_indices_api(apt_client):
+    """Fixture for APT package indices API."""
     return ContentPackageIndicesApi(apt_client)
+
+
+@pytest.fixture(scope="session")
+def apt_package_release_components_api(apt_client):
+    """Fixture for APT package release components API."""
+    return ContentPackageReleaseComponentsApi(apt_client)
 
 
 @pytest.fixture(scope="session")
@@ -468,7 +476,6 @@ def deb_signing_script_path(signing_gpg_homedir_path):
 
 @pytest.fixture(scope="class")
 def deb_signing_service_factory(
-    cli_client,
     deb_signing_script_path,
     signing_gpg_metadata,
     signing_service_api_client,
@@ -477,7 +484,7 @@ def deb_signing_service_factory(
     st = os.stat(deb_signing_script_path)
     os.chmod(deb_signing_script_path, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
     gpg, fingerprint, keyid = signing_gpg_metadata
-    service_name = uuid4()
+    service_name = str(uuid4())
     cmd = (
         "pulpcore-manager",
         "add-signing-service",
@@ -489,9 +496,9 @@ def deb_signing_service_factory(
         "--gnupghome",
         gpg.gnupghome,
     )
-    response = cli_client.run(cmd)
+    process = subprocess.run(cmd, capture_output=True)
 
-    assert response.returncode == 0
+    assert process.returncode == 0
 
     signing_service = signing_service_api_client.list(name=service_name).results[0]
 
@@ -504,7 +511,8 @@ def deb_signing_service_factory(
         "from pulpcore.app.models import SigningService;"
         f"SigningService.objects.filter(name='{service_name}').delete()"
     )
-    execute_pulpcore_python(cli_client, cmd)
+    process = subprocess.run(["pulpcore-manager", "shell", "-c", cmd], capture_output=True)
+    assert process.returncode == 0
 
 
 @pytest.fixture
@@ -568,38 +576,168 @@ def deb_init_and_sync(
 
 
 @pytest.fixture
-def deb_get_present_content(apt_repository_versions_api):
+def deb_get_content(apt_repository_versions_api):
+    """A fixture that fetches the content from a repository."""
+
+    def _deb_get_content(repo, version_href=None):
+        """Fetches the content from a given repository.
+        :param repo: The repository where the content is fetched from.
+        :param version_href: The repository version from where the content should be fetched.
+            Default: latest repository version.
+        :returns: The content summary of the repository.
+        """
+        version_href = version_href or repo.latest_version_href
+        if version_href is None:
+            return {}
+        return apt_repository_versions_api.read(version_href).content_summary
+
+    return _deb_get_content
+
+
+@pytest.fixture
+def deb_get_present_content(deb_get_content):
     """A fixture that fetches the present content from a repository."""
 
     def _deb_get_present_content(repo, version_href=None):
         """Fetches the present content from a given repository.
 
         :param repo: The repository where the content is fetched from.
-        :param version_href: The repository version from where the content should be fetched.
-            Default: latest repository version.
-        :returns: The present content summary of the repository.
+        :param version_href: The repository version from where the content is fetched freom.
+        :returns: The present content of the repository.
         """
-        version_href = version_href or repo.latest_version_href
-        if version_href is None:
-            return {}
-        return apt_repository_versions_api.read(version_href).content_summary.present
+        return deb_get_content(repo, version_href).present
 
     return _deb_get_present_content
 
 
 @pytest.fixture
-def deb_list_content_types_by_href(request):
-    """A fixture that lists content of a given type by given href."""
+def deb_get_added_content(deb_get_content):
+    """A fixture that fetches the added content from a repository."""
 
-    def _deb_list_content_types_by_href(content_type, content_href):
-        """Lists the content of a given type.
+    def _deb_get_added_content(repo, version_href=None):
+        """Fetches the added content from a given repository.
 
-        :param content_type: The fixture name of the content type api.
-        :param content_href: The type href string from the content summary.
-        :returns: The results of the content list.
+        :param repo: The repository where the content is fetched from.
+        :param version_href: The repository version from where the content is fetched freom.
+        :returns: The added content of the repository.
         """
-        api = request.getfixturevalue(content_type)
-        _, _, latest_version_href = content_href.partition("?repository_version=")
+        return deb_get_content(repo, version_href).added
+
+    return _deb_get_added_content
+
+
+@pytest.fixture
+def deb_get_removed_content(deb_get_content):
+    """A fixture that fetches the removed content from a repository."""
+
+    def _deb_get_removed_content(repo, version_href=None):
+        """Fetches the removed content from a given repository.
+
+        :param repo: The repository where the content is fetched from.
+        :param version_href: The repository version from where the content is fetched freom.
+        :returns: The removed content of the repository.
+        """
+        return deb_get_content(repo, version_href).removed
+
+    return _deb_get_removed_content
+
+
+@pytest.fixture
+def deb_get_content_summary(apt_repository_versions_api):
+    """A fixture that fetches the content summary from a repository."""
+
+    def _deb_get_content_summary(repo, version_href=None):
+        """Fetches the content summary from a given repository.
+
+        :param repo: The repository where the content is fetched from.
+        :param version_href: The repository version from where the content should be fetched from.
+            Default: latest repository version.
+        :returns: The content summary of the repository.
+        """
+        version_href = version_href or repo["latest_version_href"]
+        if version_href is None:
+            return {}
+        return apt_repository_versions_api.read(version_href).content_summary
+
+    return _deb_get_content_summary
+
+
+@pytest.fixture
+def deb_get_added_content_summary(deb_get_content_summary):
+    """A fixture that fetches the added content summary from a repository version."""
+
+    def _deb_get_added_content_summary(repo, version_href=None):
+        """Fetches the added content summary from a given repository.
+
+        :param repo: The repository where content is fetched from.
+        :param version_href: The repository version from where content should be fetched from.
+        :returns: The added content of the repository version.
+        """
+        content = deb_get_content_summary(repo, version_href).added
+        for key in content:
+            content[key] = content[key]["count"]
+        return content
+
+    return _deb_get_added_content_summary
+
+
+@pytest.fixture
+def deb_get_present_content_summary(deb_get_content_summary):
+    """A fixture that fetches the present content summary from a repository version."""
+
+    def _deb_get_present_content_summary(repo, version_href=None):
+        """Fetches the present content summary from a given repository.
+
+        :param repo: The repository where content is fetched from.
+        :param version_href: The repository version from where content should be fetched from.
+        :returns: The added content of the repository version.
+        """
+        content = deb_get_content_summary(repo, version_href).present
+        for key in content:
+            content[key] = content[key]["count"]
+        return content
+
+    return _deb_get_present_content_summary
+
+
+@pytest.fixture
+def deb_get_removed_content_summary(deb_get_content_summary):
+    """A fixture that fetches the removed content summary from a repository version."""
+
+    def _deb_get_removed_content_summary(repo, version_href=None):
+        """Fetches the removed content from a given repository.
+
+        :param repo: The repository where the content is fetched from.
+        :param version_href: The repository version from where content should be fetched from.
+        :returns: The removed content of the repository version.
+        """
+        content = deb_get_content_summary(repo, version_href).removed
+        for key in content:
+            content[key] = content[key]["count"]
+        return content
+
+    return _deb_get_removed_content_summary
+
+
+@pytest.fixture
+def deb_get_content_types(deb_get_present_content, request):
+    """A fixture that fetches content by type."""
+
+    def _deb_get_content_types(content_api_name, content_type, repo, version_href=None):
+        """Lists the content of a given repository and repository version by type.
+
+        :param content_api_name: The name of the api fixture of the desired content type.
+        :param content_type: The name of the desired content type.
+        :param repo: The repository where the content is fetched from.
+        :param version_href: (Optional) The repository version of the content.
+        :returns: List of the fetched content type.
+        """
+        api = request.getfixturevalue(content_api_name)
+        content = deb_get_present_content(repo, version_href)
+        if content_type not in content.keys():
+            return {}
+        content_hrefs = content[content_type]["href"]
+        _, _, latest_version_href = content_hrefs.partition("?repository_version=")
         return api.list(repository_version=latest_version_href).results
 
-    return _deb_list_content_types_by_href
+    return _deb_get_content_types
