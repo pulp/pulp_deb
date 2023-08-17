@@ -37,11 +37,11 @@ DEB_FIXTURE_FLAT_REPOSITORY_NAME = "/debian-flat/"
 DEB_FIXTURE_COMPLEX_REPOSITORY_NAME = "/debian-complex-dists"
 DEB_FIXTURE_MISSING_ARCHITECTURE_REPOSITORY_NAME = "/debian-missing-architecture/"
 
-# Publication Parameters
-DEB_PARAMS_PUB_SIMPLE = {"simple": True}
-DEB_PARAMS_PUB_STRUCTURED = {"structured": True}
-DEB_PARAMS_PUB_SIMPLE_AND_STRUCTURED = {"simple": True, "structured": True}
-DEB_PARAMS_PUB_ALL = {"simple": True, "structured": True, "signing_service": ""}
+# Publication Parameters (structured is True by default)
+DEB_PUBLICATION_ARGS_ONLY_SIMPLE = {"simple": True, "structured": False}
+DEB_PUBLICATION_ARGS_ONLY_STRUCTURED = {"simple": False, "structured": True}
+DEB_PUBLICATION_ARGS_SIMPLE_AND_STRUCTURED = {"simple": True, "structured": True}
+DEB_PUBLICATION_ARGS_ALL = {"simple": True, "structured": True, "signing_service": ""}
 
 DEB_FIXTURE_SUMMARY = _clean_dict(
     {

@@ -70,8 +70,8 @@ def publish_verbatim(repository_version_pk):
 
 def publish(
     repository_version_pk,
-    simple=False,
-    structured=False,
+    simple,
+    structured,
     signing_service_pk=None,
     publish_upstream_release_fields=None,
 ):
@@ -85,6 +85,7 @@ def publish(
         signing_service_pk (str): Use this SigningService to sign the Release files.
 
     """
+
     if "md5" not in settings.ALLOWED_CONTENT_CHECKSUMS and settings.FORBIDDEN_CHECKSUM_WARNINGS:
         log.warning(_(NO_MD5_WARNING_MESSAGE))
 
