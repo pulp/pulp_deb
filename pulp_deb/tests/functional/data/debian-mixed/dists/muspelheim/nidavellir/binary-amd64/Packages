@@ -1,32 +1,32 @@
 Package: hreidmar
 Version: 1.0
 Architecture: amd64
-Maintainer: root <root@b81c8887d23b>
+Maintainer: Equivs Dummy Package Generator <root@>
 Installed-Size: 9
 Multi-Arch: foreign
 Priority: optional
 Section: misc
 Filename: pool/nidavellir/h/hreidmar/hreidmar_1.0_amd64.deb
-Size: 2026
-SHA256: 6f1c906045ce7ea759659f0da06cbbe016ecfed429c5a7bb0440a3bbe4e09280
-SHA1: d125c62b53fdd90e8a8185bf614b356e3769c8a7
-MD5sum: 2d0d2aa35a3e3bc5549ffd52f1bc3c80
+Size: 2136
+SHA256: 7756129942b65996671d1cb3f8a264bc574818a68de543a8534fa0220095caf7
+SHA1: 023d8d59e277b6de8e986ba34e9fa48655fa4fd1
+MD5sum: d23e8120c250497b9e33be53ff188e61
 Description: Hreidmar
  Hreidmar is a dwarf sorcerer and the king of Nidavellir.
 
 Package: regin
 Version: 1.0
 Architecture: all
-Maintainer: root <root@b81c8887d23b>
+Maintainer: Equivs Dummy Package Generator <root@>
 Installed-Size: 9
 Multi-Arch: foreign
 Priority: optional
 Section: misc
 Filename: pool/nidavellir/r/regin/regin_1.0_all.deb
-Size: 2030
-SHA256: e74af9bbcfd363a8a0702f230a436bcd0f24dd6334d58747abc37dc59fe1e929
-SHA1: 03063a93ced35cdae3aae49503a4880c48f963ff
-MD5sum: 8b8898ad17c7612584d474389f27ded8
+Size: 2136
+SHA256: 418f91ac621d6ba93aebd74a96b806901922511f8d04965a26f942af56ed78a2
+SHA1: a21597e6cfbe541256c2af72f8fbfc4dba458883
+MD5sum: 49def75bc66a959a47fd0571e8b7a16d
 Description: Regin
  Regin the son of Hreidmar is the most skillful, and a dwarf of size.
 

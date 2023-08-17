@@ -1,0 +1,25 @@
+Format: 1.8
+Date: Mon, 19 Jun 2023 10:31:28 +0000
+Source: thor
+Binary: thor
+Architecture: ppc64
+Version: 1.0
+Distribution: unstable
+Urgency: low
+Maintainer: Equivs Dummy Package Generator <root@>
+Changed-By: Equivs Dummy Package Generator <root@>
+Description:
+ thor       - Thor
+Changes:
+ thor (1.0) unstable; urgency=low
+ .
+   * First version
+Checksums-Sha1:
+ 429a31d53e1fe5884102a2caf0b791e6d30f9d63 4725 thor_1.0_ppc64.buildinfo
+ cecc572a0a890f49cfac13d1ae3216ab32f0c930 2196 thor_1.0_ppc64.deb
+Checksums-Sha256:
+ 861e040b160f3da912965654e8e585782820b670d6395e0e25cb3d73348fd46d 4725 thor_1.0_ppc64.buildinfo
+ ebfa07cf85137ef7935215f47fa006c60ef6ba24cdce87db6f3651ecb38842a9 2196 thor_1.0_ppc64.deb
+Files:
+ bed532747761dd828316538123d6c5d4 4725 misc optional thor_1.0_ppc64.buildinfo
+ 061ea1333e50bcba25a9ae51027e8427 2196 misc optional thor_1.0_ppc64.deb

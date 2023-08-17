@@ -1,70 +1,70 @@
 -----BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA256
+Hash: SHA512
 
 Suite: mythology
 Codename: ragnarok
-Date: Thu, 26 Jan 2023 14:19:10 UTC
+Date: Mon, 19 Jun 2023 10:31:23 UTC
 Architectures: armeb ppc64
 Components: asgard jotunheimr
 MD5Sum:
- b36b61691869c0d34c846277f837e737 495 asgard/binary-armeb/Packages
- 79a3dd7d8822e56c75ca31c5d4d229d1 372 asgard/binary-armeb/Packages.gz
+ fc7b79d7008a7f72ef1bbe17d0b9580f 509 asgard/binary-armeb/Packages
+ 8b7b88c3167207508bb01cf2a4e18030 384 asgard/binary-armeb/Packages.gz
  1addfe045455b45c01019317e4ce79ca 57 asgard/binary-armeb/Release
  d41d8cd98f00b204e9800998ecf8427e 0 asgard/debian-installer/binary-armeb/Packages
  7029066c27ac6f5ef18d660d5741979a 20 asgard/debian-installer/binary-armeb/Packages.gz
- 2928041cf8f6c495ef55c223eff3e3fb 1753 asgard/binary-ppc64/Packages
- 5feae1176f8d28669686cbb76763247e 868 asgard/binary-ppc64/Packages.gz
+ bb2ca1713af73af5958fc0caceb3dbac 1810 asgard/binary-ppc64/Packages
+ 356037b3576bdeb8796b4be7e2106cb8 901 asgard/binary-ppc64/Packages.gz
  2dd699736bea3699c402ab67140f1786 57 asgard/binary-ppc64/Release
- 99db1fa9bad9ceb3ca8c9ebd6f94f332 556 asgard/debian-installer/binary-ppc64/Packages
- a73cff1bd6a5f99e7395943e8d82dec3 404 asgard/debian-installer/binary-ppc64/Packages.gz
- 2ca1646bc44761a600c39d8fa7322ada 499 jotunheimr/binary-armeb/Packages
- 81a0187c48ad72a7ab5e508e79643987 375 jotunheimr/binary-armeb/Packages.gz
+ ce68ef458945f1a9b66ea03dd208ad45 570 asgard/debian-installer/binary-ppc64/Packages
+ e41577238ddf2f0f83c32137b3e06679 411 asgard/debian-installer/binary-ppc64/Packages.gz
+ ce002693a90b5aeee991fb7ee459fcc5 513 jotunheimr/binary-armeb/Packages
+ b98de9acfbfa1f086038359c87545888 386 jotunheimr/binary-armeb/Packages.gz
  3a3f681d97bdc7e2f33e6d7f6ced07b9 61 jotunheimr/binary-armeb/Release
  d41d8cd98f00b204e9800998ecf8427e 0 jotunheimr/binary-ppc64/Packages
  7029066c27ac6f5ef18d660d5741979a 20 jotunheimr/binary-ppc64/Packages.gz
  eae9c1a3c81c9de36590540c800a4059 61 jotunheimr/binary-ppc64/Release
 SHA1:
- fd4934be1eaa634abe310c64532f35e59c8bc7e8 495 asgard/binary-armeb/Packages
- eaa8461194520dc109486d755c7d7e3a52b0bff1 372 asgard/binary-armeb/Packages.gz
+ c56da3ba24694071d2b95e3c698d3dd89730a79d 509 asgard/binary-armeb/Packages
+ 5ac6d69efcbab2c7126e330ed2a940f373114029 384 asgard/binary-armeb/Packages.gz
  dc6d0db0636299e324c4c1d87042de25f9bb2102 57 asgard/binary-armeb/Release
  da39a3ee5e6b4b0d3255bfef95601890afd80709 0 asgard/debian-installer/binary-armeb/Packages
  46c6643f07aa7f6bfe7118de926b86defc5087c4 20 asgard/debian-installer/binary-armeb/Packages.gz
- a4a43d8d0b11989411bacd8c3924e15b1819ce3c 1753 asgard/binary-ppc64/Packages
- c228f34736823d3810a22166aa650830bebb493b 868 asgard/binary-ppc64/Packages.gz
+ cc0afbe37ec3f250ae6dcf18ad1c5a2e07e68ffb 1810 asgard/binary-ppc64/Packages
+ d65fcac21077a41008f71586f420a5a8426822a4 901 asgard/binary-ppc64/Packages.gz
  3560e122f5cd211da533538e402665e417cf29a2 57 asgard/binary-ppc64/Release
- 92080064911960be9149b78ff16bea16a9fbcb51 556 asgard/debian-installer/binary-ppc64/Packages
- fd949a7cf70e02282fd970852116b7bdc980efe3 404 asgard/debian-installer/binary-ppc64/Packages.gz
- d669722496aea828482406409ef04e414aea9032 499 jotunheimr/binary-armeb/Packages
- 9fb65401a56b329c89dde0872ddd2fb4d093b25f 375 jotunheimr/binary-armeb/Packages.gz
+ 5d906dc237fb724aa1f2d6bca7838ba1b8a4ef8f 570 asgard/debian-installer/binary-ppc64/Packages
+ b17818641c5b92d866d78940fa249b6497040fd4 411 asgard/debian-installer/binary-ppc64/Packages.gz
+ 983be773eab04104d6d2da262eb8c21c422d7089 513 jotunheimr/binary-armeb/Packages
+ 900af92a8d7d537e6a447eec238b6d9f100cd3d7 386 jotunheimr/binary-armeb/Packages.gz
  eb841b7bab312f73587275780af83109cdd30321 61 jotunheimr/binary-armeb/Release
  da39a3ee5e6b4b0d3255bfef95601890afd80709 0 jotunheimr/binary-ppc64/Packages
  46c6643f07aa7f6bfe7118de926b86defc5087c4 20 jotunheimr/binary-ppc64/Packages.gz
  ef9a8a328e4ab667dc165d5d39fb987c83019f8c 61 jotunheimr/binary-ppc64/Release
 SHA256:
- 1b7e222dfb12d483372084b2c1404d4f19d1da5bf384fa401d8b84eb187f0269 495 asgard/binary-armeb/Packages
- 980327c11be36c7caca89335752440c3ea04074e24e3bd70d1dd110c061fcc37 372 asgard/binary-armeb/Packages.gz
+ 5d977d12c127b9e9a80b3d327b1802667058617c5b23d6dceea12420181c039a 509 asgard/binary-armeb/Packages
+ 19a6e27335818c57c0c9a4efe3e313fd73fc7d18bac9e7bda3510fae839ac0e5 384 asgard/binary-armeb/Packages.gz
  1c892f468bdea099e34ad0e602b651cdff69064e4c7ef7803733659a37e2330f 57 asgard/binary-armeb/Release
  e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 0 asgard/debian-installer/binary-armeb/Packages
  59869db34853933b239f1e2219cf7d431da006aa919635478511fabbfc8849d2 20 asgard/debian-installer/binary-armeb/Packages.gz
- d98d8f09a8becaf0dc1132e4688576a93b6eef2e3ada9720e037957b70df363d 1753 asgard/binary-ppc64/Packages
- 5d229d8b44034cb2f9bd41d8933132fe24cce0e1d9642e2d33b187ccc32b873d 868 asgard/binary-ppc64/Packages.gz
+ 007e4379e1b9cb3e0c47c8921a1281c881cf7ba95eb439911c7f22538e79c819 1810 asgard/binary-ppc64/Packages
+ 50f47479f660b0b63bf3acc2996021b329494dd1fc6552046c899f1449981f36 901 asgard/binary-ppc64/Packages.gz
  77626f06a3cfb729d1bef0432b7d5d2ec96a36461c4a702cb5822e09ec322484 57 asgard/binary-ppc64/Release
- 616ce0c7ed11e46a82b37a01bf2397e59ea671aed2c1bed2d63e36b169f18f63 556 asgard/debian-installer/binary-ppc64/Packages
- 114ae7dfcc4761edffb5d9957c09caf761206a896761955e4e44a3c9d51830d4 404 asgard/debian-installer/binary-ppc64/Packages.gz
- f0778991b737906d797adcd942cabeabdd4c4e4a167977eec0d506b34b9d1aae 499 jotunheimr/binary-armeb/Packages
- 22327474d3d872d93ce4e4c1dfad8fa13954ad0e01850afdf68d0765e6613344 375 jotunheimr/binary-armeb/Packages.gz
+ d45540cc57cf2e315ef6deaa63fa6dac279cdde60dbc1f3bf475de2a635dd466 570 asgard/debian-installer/binary-ppc64/Packages
+ 96776ab43838eb9d27f5b4b56675026d99a400c5186823fc93a1c9a565623119 411 asgard/debian-installer/binary-ppc64/Packages.gz
+ ae1b4621d08876bdafecd0476783396be3f84f17a74f8df0f8b3d47a1f6098dd 513 jotunheimr/binary-armeb/Packages
+ 5fff56e0340f8c7bef74bbfea0a50eef9b7972e1c330382f68b609a0e2459930 386 jotunheimr/binary-armeb/Packages.gz
  596f4bd08b59e71fab6926768af1a9f7b7e83aef72c00213248aab709d9f5ec1 61 jotunheimr/binary-armeb/Release
  e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 0 jotunheimr/binary-ppc64/Packages
  59869db34853933b239f1e2219cf7d431da006aa919635478511fabbfc8849d2 20 jotunheimr/binary-ppc64/Packages.gz
  4fb4eb7d074617966e0fcfcd7c0fcbdc737e7c65dbdd191f79e4a86de9dec27e 61 jotunheimr/binary-ppc64/Release
 -----BEGIN PGP SIGNATURE-----
 
-iQEzBAEBCAAdFiEEbt8wElZIC5uAHro9BaXm2iadnZgFAmPSi94ACgkQBaXm2iad
-nZjC9wgAkL3JKfsG90UtThMQR+dUitqO7fvVz5C1XmbqktUHUIL62dU2QVlGgSAd
-vaqBY6DR+66RskKCEoy7IoSfPxknAs1U538WBkf5ihpvPiShNIf1rgMIoIrO5PLF
-zp6bHFIxfcuNL47ru2rM9jRvANHKl+nwgu55brJdAVn/9bINzN5F5cvAPTo1Nrx6
-upBfk/yc+ivjgL6ibfRgEqHSsx/hHX7oBQnvB5ojUQ+7tQEvYlXW3vtzNtQv2D/m
-4DkCVtcy6x8OUvDFoxIp1qi1yeoBt7RUYFhe5jMJUc4l0nE+DwNiiaG2+TnfnKWy
-UAIoiycH/7FcdOtLm3kXgcXl5kzD6g==
-=bmab
+iQEzBAEBCgAdFiEEbt8wElZIC5uAHro9BaXm2iadnZgFAmSQLnsACgkQBaXm2iad
+nZjSBAgAqoP6hZrsW5FJei2CnYRiQ2zCAIb1rj4PH9VzRYzwiCtP6ZFW3TDjIYfy
+1drgDJA6bLuY0+qRRs3g4yY+ImWIT0mOrDwAZXWw1BPqV/BbzTV0LX9IsZ8hbCzy
+tV/q42TcZA6WIUlkWMW0lwRVIOEIMZYoxnbpUj9Mx6kbWzHH9NOeLWHFBxzggc0f
+n+uXJw5NWHrSDhB5b9TRCX2DnzqPhM3iAoRawELYgKkAyxOkUicl83CT6u+/fKpk
+WDWelnSMoOpUgYtbUvdwDFVLXtbgE9+PxsbVWtNtkA5DjemeNtCN7k8cpbEyUrv6
+Qk6cHq525x9iElOI2FNXlZoDg4OUmg==
+=3l0Q
 -----END PGP SIGNATURE-----

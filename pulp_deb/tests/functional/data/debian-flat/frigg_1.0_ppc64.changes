@@ -1,0 +1,25 @@
+Format: 1.8
+Date: Mon, 19 Jun 2023 10:31:23 +0000
+Source: frigg
+Binary: frigg
+Architecture: ppc64
+Version: 1.0
+Distribution: unstable
+Urgency: low
+Maintainer: Equivs Dummy Package Generator <root@>
+Changed-By: Equivs Dummy Package Generator <root@>
+Description:
+ frigg      - Frigg
+Changes:
+ frigg (1.0) unstable; urgency=low
+ .
+   * First version
+Checksums-Sha1:
+ a0dabb22685df9dd1cf4811ba33ff606d105122c 4730 frigg_1.0_ppc64.buildinfo
+ efd0ae64cd9e9c493595d9ea02909c50512708a5 2120 frigg_1.0_ppc64.deb
+Checksums-Sha256:
+ c7ac542d716847140157e7ee55207de2e65372dad3cfb98566ee97b4aabc7172 4730 frigg_1.0_ppc64.buildinfo
+ 96ea71a376d5e49617e3f67bc9fcc539eb72c0b1f23415a18c91336c765790fe 2120 frigg_1.0_ppc64.deb
+Files:
+ 45f84d9a687dbd0e588fc2a1e107de29 4730 misc optional frigg_1.0_ppc64.buildinfo
+ f238ab02613a10b8647a1a667f4b7be9 2120 misc optional frigg_1.0_ppc64.deb

@@ -1,34 +1,34 @@
 Package: frigg
 Version: 2.0
 Architecture: ppc64
-Maintainer: root <root@b81c8887d23b>
+Maintainer: Equivs Dummy Package Generator <root@>
 Installed-Size: 9
 Multi-Arch: foreign
 Task: Æsir
 Priority: optional
 Section: misc
 Filename: pool/asgard/f/frigg/frigg_2.0_ppc64.deb
-Size: 2004
-SHA256: f3a4b2bad96a06b598378fa93fb737cca601cdb55c3d25cddca78adafe95bb10
-SHA1: a2d1b2b508458b6888cbb36c72fbe012b6db8cf0
-MD5sum: a6c39a7a3c86e7ee5315b517869b21c6
+Size: 2120
+SHA256: 9a1289b69202c0d32c36ceb3884bfd3e3affc4a07adff5cb8dc011167ba67128
+SHA1: 6fe4c84ada8c5352696f6eff9af48883cfa64aae
+MD5sum: 40d20d0b68a7f15024082ad593ca2514
 Description: Frigg
  Frigg is described as the wife of the god Odin.
 
 Package: heimdallr
 Version: 1.0
 Architecture: ppc64
-Maintainer: root <root@b81c8887d23b>
+Maintainer: Equivs Dummy Package Generator <root@>
 Installed-Size: 9
 Multi-Arch: foreign
 Task: Æsir
 Priority: optional
 Section: misc
 Filename: pool/asgard/h/heimdallr/heimdallr_1.0_ppc64.deb
-Size: 2126
-SHA256: c9302c38e217b7267580cf5b50d0354a51169550ed4aa6b3ce1febe35087e77b
-SHA1: 935107a2f1971a97eb6f1662e1355a912f202bde
-MD5sum: 3ee896f01b962a83ba3c329f49db68de
+Size: 2236
+SHA256: 1d4dc0012d8ddf2b945de6d27e86a13c68952664169105c3d5a3cca78140b8bd
+SHA1: 244e727687f04fc7b515d27bc308490233397ce8
+MD5sum: 23aebf093f0507eea499c5bc8a4fb4fa
 Description: Heimdallr
  Heimdallr is attested as possessing foreknowledge, keen eyesight and hearing,
  and keeps watch for invaders and the onset of Ragnarök.
@@ -37,7 +37,8 @@ Description: Heimdallr
 Package: odin
 Version: 1.0
 Architecture: ppc64
-Maintainer: root <root@b81c8887d23b>
+Essential: yes
+Maintainer: Equivs Dummy Package Generator <root@>
 Installed-Size: 9
 Multi-Arch: foreign
 Description-md5: 654ca349ba8dade6580ba77c71d67eff
@@ -45,10 +46,10 @@ Task: Æsir
 Priority: optional
 Section: misc
 Filename: pool/asgard/o/odin/odin_1.0_ppc64.deb
-Size: 2094
-SHA256: 4986b4d0e070f6a57c00b8323c0a2d1408058ef61f6a6dd4bfe26172bacf29b3
-SHA1: c77738f53e401d5e035c11bf73fbe0d7ae04da97
-MD5sum: e1b87ae14113ed7278fd676b1812efc5
+Size: 2220
+SHA256: 79ae7e0c2674b3d780475462609a02b5e76f06fe47c3393b0d503d1b4b9210f8
+SHA1: d911f778cdef4aa2ced1977684d4f77241ba02a3
+MD5sum: cc5bdfc544affcc6d4fd9b2ba24277ef
 Description: Odin
  Odin is associated with wisdom, healing, death, royalty, the gallows,
  knowledge, battle, sorcery, poetry, frenzy, and the runic alphabet, and is
