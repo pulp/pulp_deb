@@ -1,16 +1,16 @@
 Package: eir
 Version: 1.0
 Architecture: all
-Maintainer: root <root@b81c8887d23b>
+Maintainer: Equivs Dummy Package Generator <root@>
 Installed-Size: 9
 Multi-Arch: foreign
 Priority: optional
 Section: misc
 Filename: pool/asgard/e/eir/eir_1.0_all.deb
-Size: 2018
-SHA256: 7115639f1915edd1058eafc8550639490e9edf96efa2da6f2abf79a33f60ef2b
-SHA1: 9d13612685652e4f09de5f8d3a186e063eca36d0
-MD5sum: 4321464599c5b59068a68d4489f77dfb
+Size: 2124
+SHA256: 8b4bdfa0e7ff53b6f3b63533370d53dc34295b4eb162dbf03297773ba1c6e4d5
+SHA1: 457d8f06b712831cecd9e7d21b0fa483e2abf7a5
+MD5sum: b11bf095834a6e74d24bc63e147a22fa
 Description: Eir
  Eir is a valkyrie and goddess associated with medical skill.
 

@@ -4,31 +4,18 @@ import pytest
 from pulp_deb.tests.functional.constants import DEB_FIXTURE_PACKAGE_COUNT, DEB_FIXTURE_SUMMARY
 
 
-@pytest.mark.parametrize("policy", ["on_demand", "streamed"])
+@pytest.mark.parametrize("remote_args", [{"policy": "on_demand"}, {"policy": "streamed"}])
 def test_download_policy(
     apt_package_api,
+    deb_init_and_sync,
     deb_get_present_content_summary,
     deb_get_added_content_summary,
-    deb_get_fixture_server_url,
-    deb_get_repository_by_href,
     deb_publication_factory,
-    deb_remote_factory,
-    deb_repository_factory,
-    deb_sync_repository,
-    orphans_cleanup_api_client,
-    policy,
+    remote_args,
+    delete_orphans_pre,
 ):
     """Test whether lazy synced content can be accessed with different download policies."""
-    orphans_cleanup_api_client.cleanup({"orphan_protection_time": 0})
-    # Create repository and remote and verify latest `repository_version` is 0
-    repo = deb_repository_factory()
-    url = deb_get_fixture_server_url()
-    remote = deb_remote_factory(url=url, policy=policy)
-    assert repo.latest_version_href.endswith("/0/")
-
-    # Sync and verify latest `repository_version` is 1
-    deb_sync_repository(remote, repo)
-    repo = deb_get_repository_by_href(repo.pulp_href)
+    repo, remote = deb_init_and_sync(remote_args=remote_args)
     assert repo.latest_version_href.endswith("/1/")
 
     # Verify the correct amount of content units are available
@@ -37,8 +24,7 @@ def test_download_policy(
 
     # Sync again and verify the same amount of content units are available
     latest_version_href = repo.latest_version_href
-    deb_sync_repository(remote, repo)
-    repo = deb_get_repository_by_href(repo.pulp_href)
+    repo, _ = deb_init_and_sync(repository=repo, remote=remote)
     assert repo.latest_version_href == latest_version_href
     assert DEB_FIXTURE_SUMMARY == deb_get_present_content_summary(repo.to_dict())
 
@@ -51,29 +37,21 @@ def test_download_policy(
     assert content.count == DEB_FIXTURE_PACKAGE_COUNT
 
 
-@pytest.mark.parametrize("policy", ["on_demand", "streamed"])
+@pytest.mark.parametrize("remote_args", [{"policy": "on_demand"}, {"policy": "streamed"}])
 def test_lazy_sync_immediate_download_test(
     artifacts_api_client,
-    deb_get_fixture_server_url,
+    deb_init_and_sync,
     deb_get_remote_by_href,
-    deb_get_repository_by_href,
     deb_patch_remote,
-    deb_remote_factory,
-    deb_repository_factory,
-    deb_sync_repository,
+    remote_args,
     delete_orphans_pre,
-    policy,
 ):
     """Test whether a immediate sync after a lazy one has all artifacts available."""
     # Cleanup artifacts
     NON_LAZY_ARTIFACT_COUNT = 14
 
     # Create repository and remote and sync them
-    repo = deb_repository_factory()
-    url = deb_get_fixture_server_url()
-    remote = deb_remote_factory(url=url, policy=policy)
-    deb_sync_repository(remote, repo)
-    repo = deb_get_repository_by_href(repo.pulp_href)
+    repo, remote = deb_init_and_sync(remote_args=remote_args)
 
     # Verify amount of artifacts are equal to NON_LAZY_ARTIFACT_COUNT
     artifacts = artifacts_api_client.list()
@@ -85,7 +63,6 @@ def test_lazy_sync_immediate_download_test(
     assert remote.policy == "immediate"
 
     # Sync with updated remote and verify the correct amount artifacts
-    deb_sync_repository(remote, repo)
-    repo = deb_get_repository_by_href(repo.pulp_href)
+    repo, _ = deb_init_and_sync(repository=repo, remote=remote)
     artifacts = artifacts_api_client.list()
     assert artifacts.count == NON_LAZY_ARTIFACT_COUNT + DEB_FIXTURE_PACKAGE_COUNT

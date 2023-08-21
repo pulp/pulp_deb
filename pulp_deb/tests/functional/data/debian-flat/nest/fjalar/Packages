@@ -1,13 +1,13 @@
 Package: frigg
 Version: 1.0
 Architecture: ppc64
-Maintainer: root <root@b81c8887d23b>
+Maintainer: Equivs Dummy Package Generator <root@>
 Installed-Size: 9
 Filename: ./frigg_1.0_ppc64.deb
-Size: 2004
-MD5sum: ac7605f7dbe9541b87fb9aa0d7c371fa
-SHA1: f1843d7a1350945df278f265e929f699e2a9bf63
-SHA256: 3b8aabce06339e56b69f3a7f0927adb17051281ef8b605ffdd4ae2a3524c1466
+Size: 2120
+MD5sum: f238ab02613a10b8647a1a667f4b7be9
+SHA1: efd0ae64cd9e9c493595d9ea02909c50512708a5
+SHA256: 96ea71a376d5e49617e3f67bc9fcc539eb72c0b1f23415a18c91336c765790fe
 Section: misc
 Priority: optional
 Multi-Arch: foreign
@@ -17,13 +17,14 @@ Description: Frigg
 Package: odin
 Version: 1.0
 Architecture: ppc64
-Maintainer: root <root@b81c8887d23b>
+Essential: yes
+Maintainer: Equivs Dummy Package Generator <root@>
 Installed-Size: 9
 Filename: ./odin_1.0_ppc64.deb
-Size: 2096
-MD5sum: 12e2fd974f985e40a3a07a2cffd05240
-SHA1: a7f4dbacd197dd45408ba9666d207c25dbbf63e4
-SHA256: aace589523b5b684da2c1ad70364341dc8189e5ee8d0f04cad79eda7f7be8b06
+Size: 2220
+MD5sum: 19785a25a80d0fc873e5173f5c190425
+SHA1: e3aa3a2eff26372c72a190766e6fbe6f5c945151
+SHA256: d685d3b2d8448ecb843cc40bb19770022cc61c40a1ad4894028b657c2007b4e0
 Section: misc
 Priority: optional
 Multi-Arch: foreign
@@ -35,13 +36,13 @@ Description: Odin
 Package: thor
 Version: 1.0
 Architecture: ppc64
-Maintainer: root <root@b81c8887d23b>
+Maintainer: Equivs Dummy Package Generator <root@>
 Installed-Size: 9
 Filename: ./thor_1.0_ppc64.deb
-Size: 2080
-MD5sum: a6245e021b25a408981a4c4d1f49d2e7
-SHA1: 621a1262ead08f779547b726c6592b2f45040b0f
-SHA256: 22dbaac106ea7646ab68f19a6aa84607ad91b8da0d50fe15959f1f4575320970
+Size: 2196
+MD5sum: 061ea1333e50bcba25a9ae51027e8427
+SHA1: cecc572a0a890f49cfac13d1ae3216ab32f0c930
+SHA256: ebfa07cf85137ef7935215f47fa006c60ef6ba24cdce87db6f3651ecb38842a9
 Section: misc
 Priority: optional
 Multi-Arch: foreign

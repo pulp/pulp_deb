@@ -1,0 +1,25 @@
+Format: 1.8
+Date: Mon, 19 Jun 2023 10:31:25 +0000
+Source: odin
+Binary: odin
+Architecture: ppc64
+Version: 1.0
+Distribution: unstable
+Urgency: low
+Maintainer: Equivs Dummy Package Generator <root@>
+Changed-By: Equivs Dummy Package Generator <root@>
+Description:
+ odin       - Odin
+Changes:
+ odin (1.0) unstable; urgency=low
+ .
+   * First version
+Checksums-Sha1:
+ 0bb0b39dacc78183f71b89f590d5a560befb9ade 4725 odin_1.0_ppc64.buildinfo
+ e3aa3a2eff26372c72a190766e6fbe6f5c945151 2220 odin_1.0_ppc64.deb
+Checksums-Sha256:
+ cac761e4281f45fb14fb38d5ab5e30dbcd82777808650b2fc6dbe128faa54cd7 4725 odin_1.0_ppc64.buildinfo
+ d685d3b2d8448ecb843cc40bb19770022cc61c40a1ad4894028b657c2007b4e0 2220 odin_1.0_ppc64.deb
+Files:
+ 32839cdbfb49a5c3ee7c9fde89b4af61 4725 misc optional odin_1.0_ppc64.buildinfo
+ 19785a25a80d0fc873e5173f5c190425 2220 misc optional odin_1.0_ppc64.deb

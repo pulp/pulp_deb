@@ -1,24 +1,25 @@
 Package: frigg
 Version: 1.0
 Architecture: ppc64
-Maintainer: root <root@b81c8887d23b>
+Maintainer: Equivs Dummy Package Generator <root@>
 Installed-Size: 9
 Multi-Arch: foreign
 Task: Æsir
 Priority: optional
 Section: misc
 Filename: pool/asgard/f/frigg/frigg_1.0_ppc64.deb
-Size: 2004
-SHA256: f26135bcd503f0a88ee6eba0de4d3601d21fe5a58efe1e36be5431e371a83b54
-SHA1: b7474b0264aaeb0a5890019701310f57ad7ffe3a
-MD5sum: 25b991847881d8afa537d2a8a5f899f4
+Size: 2120
+SHA256: 098cf414958fccbfc8c5c72693962d6ab4caa87c64c6b7af3b893666c6af7614
+SHA1: 0e0b498aa795e1933bb29fcf1e23df00871bfbb4
+MD5sum: cf6db0a73ff0d8f56ef910f126c08991
 Description: Frigg
  Frigg is described as the wife of the god Odin.
 
 Package: odin
 Version: 1.0
 Architecture: ppc64
-Maintainer: root <root@b81c8887d23b>
+Essential: yes
+Maintainer: Equivs Dummy Package Generator <root@>
 Installed-Size: 9
 Multi-Arch: foreign
 Description-md5: 654ca349ba8dade6580ba77c71d67eff
@@ -26,10 +27,10 @@ Task: Æsir
 Priority: optional
 Section: misc
 Filename: pool/asgard/o/odin/odin_1.0_ppc64.deb
-Size: 2090
-SHA256: 42ac46e3b89f42ad5471559dd516b7f2f1d0c43779771e5896570dff169f66cc
-SHA1: f6e0fde2140e0e18b2e6cfd5ea53506663859a09
-MD5sum: fedc5a95a4e9ecc425f4b7700a700c3c
+Size: 2216
+SHA256: de9a62e13bc7084586f9064dd65a253647b489908c0c4b05e81afc1733c1e1e8
+SHA1: 906ebf788e28105e489e6cc54e413d06068ac2e6
+MD5sum: 567325e3e1e2284b954a0b241dcc7471
 Description: Odin
  Odin is associated with wisdom, healing, death, royalty, the gallows,
  knowledge, battle, sorcery, poetry, frenzy, and the runic alphabet, and is
@@ -38,7 +39,7 @@ Description: Odin
 Package: thor
 Version: 1.0
 Architecture: ppc64
-Maintainer: root <root@b81c8887d23b>
+Maintainer: Equivs Dummy Package Generator <root@>
 Installed-Size: 9
 Multi-Arch: foreign
 Description-md5: f5d3997e79acfeeb7a6ff4aa71ab65ac
@@ -47,10 +48,10 @@ Task: Æsir
 Priority: optional
 Section: misc
 Filename: pool/asgard/t/thor/thor_1.0_ppc64.deb
-Size: 2088
-SHA256: 67261efd6fb32f47ad65081a62eac33ba463c73ee878dafef6308ea297f86bdf
-SHA1: a5f43562ba0e3047f93c93ce0fd8b1d618fe9d40
-MD5sum: 3a450b8c15930ad5c962614162b9c337
+Size: 2196
+SHA256: c8e1ac54c39bf7fcc426dad0f08520237fe52fee491c83daaf5ba0f78b5b6fed
+SHA1: 0dd9c231778b22efe782d57ca27ef58d13abb34e
+MD5sum: ead8f8a40cafdceb4010f14655882367
 Description: Thor
  Thor is a hammer-wielding god associated with thunder, lightning, storms, oak
  trees, strength, the protection of mankind, and also hallowing and fertility.

@@ -21,33 +21,23 @@ from pulp_deb.tests.functional.constants import (
 
 @pytest.mark.parallel
 @pytest.mark.parametrize(
-    "remote_params, fixture_summary",
+    "remote_args, fixture_summary",
     [
         ({"gpgkey": DEB_SIGNING_KEY}, DEB_FIXTURE_SUMMARY),
         ({"gpgkey": DEB_SIGNING_KEY, "sync_udebs": True}, DEB_FULL_FIXTURE_SUMMARY),
     ],
 )
 def test_sync(
+    deb_init_and_sync,
     deb_get_added_content_summary,
     deb_get_present_content_summary,
-    deb_get_fixture_server_url,
-    deb_remote_factory,
-    deb_repository_factory,
     deb_get_repository_by_href,
     deb_sync_repository,
     fixture_summary,
-    remote_params,
+    remote_args,
 ):
     """Test whether synchronizations with and without udebs works as expected."""
-    # Create a repository and a remote and verify latest `repository_version` is 0
-    repo = deb_repository_factory()
-    url = deb_get_fixture_server_url()
-    remote = deb_remote_factory(url=url, **remote_params)
-    assert repo.latest_version_href.endswith("/0/")
-
-    # Sync the repository
-    task = deb_sync_repository(remote, repo)
-    repo = deb_get_repository_by_href(repo.pulp_href)
+    repo, remote, task = deb_init_and_sync(remote_args=remote_args, return_task=True)
 
     # Verify latest `repository_version` is 1 and sync was not skipped
     assert repo.latest_version_href.endswith("/1/")
@@ -72,7 +62,7 @@ def test_sync(
 @pytest.mark.skip("Skip - ignore_missing_package_indices sync parameter does currently not work")
 @pytest.mark.parallel
 @pytest.mark.parametrize(
-    "remote_params, expected",
+    "remote_args, expected",
     [
         (
             {
@@ -91,12 +81,12 @@ def test_sync(
     ],
 )
 def test_sync_missing_package_indices(
-    expected,
     deb_get_fixture_server_url,
     deb_remote_factory,
     deb_repository_factory,
     deb_sync_repository,
-    remote_params,
+    remote_args,
+    expected,
 ):
     """Test whether tests fail as expected when package indices are missing.
 
@@ -108,7 +98,7 @@ def test_sync_missing_package_indices(
     # Create repository and remote
     repo = deb_repository_factory()
     url = deb_get_fixture_server_url(DEB_FIXTURE_INVALID_REPOSITORY_NAME)
-    remote = deb_remote_factory(url=url, **remote_params)
+    remote = deb_remote_factory(url=url, **remote_args)
 
     # Verify a PulpTaskError is raised and the error message is as expected
     with pytest.raises(PulpTaskError) as exc:
@@ -119,7 +109,7 @@ def test_sync_missing_package_indices(
 
 @pytest.mark.parallel
 @pytest.mark.parametrize(
-    "repo_name, remote_params, expected",
+    "repo_name, remote_args, expected",
     [
         ("http://i-am-an-invalid-url.com/invalid/", {}, ["Cannot connect"]),
         (
@@ -138,13 +128,13 @@ def test_sync_missing_package_indices(
     ],
 )
 def test_sync_invalid_cases(
-    expected,
     deb_get_fixture_server_url,
     deb_remote_factory,
     deb_repository_factory,
     deb_sync_repository,
-    remote_params,
+    remote_args,
     repo_name,
+    expected,
 ):
     """Test whether various invalid sync cases fail as expected.
 
@@ -157,7 +147,7 @@ def test_sync_invalid_cases(
     # Create repository and remote
     repo = deb_repository_factory()
     url = repo_name if repo_name.startswith("http://") else deb_get_fixture_server_url(repo_name)
-    remote = deb_remote_factory(url=url, **remote_params)
+    remote = deb_remote_factory(url=url, **remote_args)
 
     # Verify a PulpTaskError is raised and the error message is as expected
     with pytest.raises(PulpTaskError) as exc:
@@ -168,7 +158,7 @@ def test_sync_invalid_cases(
 
 @pytest.mark.parallel
 @pytest.mark.parametrize(
-    "repo_name, remote_params, repo_diff_name, remote_diff_params",
+    "remote_name, remote_args, remote_diff_name, remote_diff_args",
     [
         (
             DEB_FIXTURE_STANDARD_REPOSITORY_NAME,
@@ -215,15 +205,11 @@ def test_sync_invalid_cases(
     ],
 )
 def test_sync_optimize_no_skip_release_file(
-    deb_get_fixture_server_url,
-    deb_remote_factory,
-    deb_repository_factory,
-    deb_get_repository_by_href,
-    remote_params,
-    remote_diff_params,
-    repo_name,
-    repo_diff_name,
-    deb_sync_repository,
+    deb_init_and_sync,
+    remote_args,
+    remote_diff_args,
+    remote_name,
+    remote_diff_name,
 ):
     """Test whether synchronizations have not been skipped for certain conditions.
 
@@ -233,15 +219,7 @@ def test_sync_optimize_no_skip_release_file(
     * `Sync a repository with same Release file but updated Architectures.`_
     * `Sync a repository with updated Release file and updated Components.`_
     """
-    # Create a repository and a remote and verify latest `repository_version` is 0
-    repo = deb_repository_factory()
-    url = deb_get_fixture_server_url(repo_name)
-    remote = deb_remote_factory(url=url, **remote_params)
-    assert repo.latest_version_href.endswith("/0/")
-
-    # Sync the repository
-    task = deb_sync_repository(remote, repo)
-    repo = deb_get_repository_by_href(repo.pulp_href)
+    repo, _, task = deb_init_and_sync(url=remote_name, remote_args=remote_args, return_task=True)
 
     # Verify latest `repository_version` is 1 and sync was not skipped
     assert repo.latest_version_href.endswith("/1/")
@@ -249,10 +227,9 @@ def test_sync_optimize_no_skip_release_file(
     assert not is_sync_skipped(task, DEB_REPORT_CODE_SKIP_PACKAGE)
 
     # Create a new remote with different parameters and sync with repository
-    url = deb_get_fixture_server_url(repo_diff_name)
-    remote_diff = deb_remote_factory(url=url, **remote_diff_params)
-    task_diff = deb_sync_repository(remote_diff, repo)
-    repo = deb_get_repository_by_href(repo.pulp_href)
+    repo, _, task_diff = deb_init_and_sync(
+        repository=repo, url=remote_diff_name, remote_args=remote_diff_args, return_task=True
+    )
 
     # Verify that latest `repository_version` is 2 and sync was not skipped
     assert repo.latest_version_href.endswith("/2/")
@@ -262,25 +239,14 @@ def test_sync_optimize_no_skip_release_file(
 
 @pytest.mark.parallel
 def test_sync_optimize_skip_unchanged_package_index(
-    deb_get_fixture_server_url,
-    deb_remote_factory,
-    deb_repository_factory,
-    deb_get_repository_by_href,
-    deb_sync_repository,
+    deb_init_and_sync,
     apt_package_api,
     apt_release_api,
     apt_release_component_api,
 ):
     """Test whether package synchronization is skipped when a package has not been changed."""
-    # Create a repository and a remote and verify latest `repository_version` is 0
-    repo = deb_repository_factory()
-    url = deb_get_fixture_server_url()
-    remote = deb_remote_factory(url=url, distributions=DEB_FIXTURE_SINGLE_DIST)
-    assert repo.latest_version_href.endswith("/0/")
-
-    # Sync the repository
-    task = deb_sync_repository(remote, repo)
-    repo = deb_get_repository_by_href(repo.pulp_href)
+    remote_args = {"distributions": DEB_FIXTURE_SINGLE_DIST}
+    repo, _, task = deb_init_and_sync(remote_args=remote_args, return_task=True)
 
     # Verify latest `repository_version` is 1 and sync was not skipped
     repo_v1_href = repo.latest_version_href
@@ -289,10 +255,12 @@ def test_sync_optimize_skip_unchanged_package_index(
     assert not is_sync_skipped(task, DEB_REPORT_CODE_SKIP_PACKAGE)
 
     # Create new remote with both updated and unchanged packages and sync with repository
-    url = deb_get_fixture_server_url(DEB_FIXTURE_UPDATE_REPOSITORY_NAME)
-    remote_diff = deb_remote_factory(url=url, distributions=DEB_FIXTURE_SINGLE_DIST)
-    task_diff = deb_sync_repository(remote_diff, repo)
-    repo = deb_get_repository_by_href(repo.pulp_href)
+    repo, _, task_diff = deb_init_and_sync(
+        repository=repo,
+        url=DEB_FIXTURE_UPDATE_REPOSITORY_NAME,
+        remote_args=remote_args,
+        return_task=True,
+    )
 
     # Verify latest `repository_version` is 2, release was not skipped and package was skipped
     repo_v2_href = repo.latest_version_href
@@ -336,11 +304,7 @@ def test_sync_optimize_skip_unchanged_package_index(
 
 
 def test_sync_orphan_cleanup_fail(
-    deb_get_fixture_server_url,
-    deb_remote_factory,
-    deb_repository_factory,
-    deb_get_repository_by_href,
-    deb_sync_repository,
+    deb_init_and_sync,
     orphans_cleanup_api_client,
     monitor_task,
     delete_orphans_pre,
@@ -350,21 +314,15 @@ def test_sync_orphan_cleanup_fail(
 
     See: https://github.com/pulp/pulp_deb/issues/690
     """
-    # Create a repository and only retain the latest repository version.
-    repo = deb_repository_factory(retain_repo_versions=1)
-
-    # Create a remote and sync with repo. Verify the latest `repository_version` is 1.
-    url = deb_get_fixture_server_url()
-    remote = deb_remote_factory(url=url, distributions=DEB_FIXTURE_SINGLE_DIST)
-    deb_sync_repository(remote, repo)
-    repo = deb_get_repository_by_href(repo.pulp_href)
+    repo_args = {"retain_repo_versions": 1}
+    remote_args = {"distributions": DEB_FIXTURE_SINGLE_DIST}
+    repo, _ = deb_init_and_sync(repo_args=repo_args, remote_args=remote_args)
     assert repo.latest_version_href.endswith("/1/")
 
     # Create a new remote with updated packages and sync again. Verify `repository_version` is 2.
-    url = deb_get_fixture_server_url(DEB_FIXTURE_UPDATE_REPOSITORY_NAME)
-    remote_diff = deb_remote_factory(url=url, distributions=DEB_FIXTURE_SINGLE_DIST)
-    deb_sync_repository(remote_diff, repo)
-    repo = deb_get_repository_by_href(repo.pulp_href)
+    repo, _ = deb_init_and_sync(
+        repository=repo, url=DEB_FIXTURE_UPDATE_REPOSITORY_NAME, remote_args=remote_args
+    )
     assert repo.latest_version_href.endswith("/2/")
 
     # Trigger orphan cleanup without protection time and verify the task completed

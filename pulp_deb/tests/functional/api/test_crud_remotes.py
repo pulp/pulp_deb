@@ -5,16 +5,38 @@ import pytest
 
 from pulpcore.client.pulp_deb.exceptions import ApiException
 
-from pulp_deb.tests.functional.constants import DOWNLOAD_POLICIES, DEB_SIGNING_KEY
-from pulp_deb.tests.functional.utils import gen_local_deb_remote
+from pulp_deb.tests.functional.utils import gen_deb_remote_verbose
+from pulp_deb.tests.functional.constants import DOWNLOAD_POLICIES
+
+
+@pytest.fixture
+def deb_init_verbose_remote(deb_get_fixture_server_url, deb_remote_custom_data_factory):
+    """A fixture that initializes are deb remote with verbose data."""
+
+    def _deb_init_verbose_remote(remove_policy=False, extra_data=False):
+        """Generates a deb remote with verbose data.
+
+        :param remove_policy: (Optional) If set will remove the policy field from the dict
+        :param extra_data: (Optional) If set will return an extra set of data for testing
+        :returns: A tuple containing the created remote and the verbose data used to create it.
+            Optionally it will also return a second set of verbose data for testing purposes.
+        """
+        url = deb_get_fixture_server_url()
+        data = gen_deb_remote_verbose(url, remove_policy)
+        remote = deb_remote_custom_data_factory(data)
+        return (
+            (remote, data)
+            if not extra_data
+            else (remote, data, gen_deb_remote_verbose(url, remove_policy))
+        )
+
+    return _deb_init_verbose_remote
 
 
 @pytest.mark.parallel
-def test_create_remote_repository(deb_remote_custom_data_factory, deb_get_fixture_server_url):
+def test_create_remote_repository(deb_init_verbose_remote):
     """Test creation of the remote."""
-    url = deb_get_fixture_server_url()
-    data = gen_verbose_remote_data(url)
-    remote = deb_remote_custom_data_factory(data)
+    remote, data = deb_init_verbose_remote()
 
     for key, val in data.items():
         if key != "username" and key != "password":
@@ -23,12 +45,10 @@ def test_create_remote_repository(deb_remote_custom_data_factory, deb_get_fixtur
 
 @pytest.mark.parallel
 def test_create_remote_repository_with_same_name(
-    deb_remote_custom_data_factory, deb_get_fixture_server_url
+    deb_remote_custom_data_factory, deb_init_verbose_remote
 ):
     """Verify whether it is possible to create a remote with the same name."""
-    url = deb_get_fixture_server_url()
-    data = gen_verbose_remote_data(url)
-    deb_remote_custom_data_factory(data)
+    _, data = deb_init_verbose_remote()
 
     with pytest.raises(ApiException) as exc:
         deb_remote_custom_data_factory(data)
@@ -37,13 +57,9 @@ def test_create_remote_repository_with_same_name(
 
 
 @pytest.mark.parallel
-def test_create_remote_repository_without_url(
-    deb_remote_custom_data_factory, deb_get_fixture_server_url
-):
+def test_create_remote_repository_without_url(deb_remote_custom_data_factory):
     """Verify whether it is possible to create a remote without an URL."""
-    url = deb_get_fixture_server_url()
-    data = gen_verbose_remote_data(url)
-    del data["url"]
+    data = gen_deb_remote_verbose()
 
     with pytest.raises(ApiException) as exc:
         deb_remote_custom_data_factory(data)
@@ -52,15 +68,9 @@ def test_create_remote_repository_without_url(
 
 
 @pytest.mark.parallel
-def test_read_remote_by_href(
-    deb_get_fixture_server_url,
-    deb_get_remote_by_href,
-    deb_remote_custom_data_factory,
-):
+def test_read_remote_by_href(deb_init_verbose_remote, deb_get_remote_by_href):
     """Verify whether it is possible to read a remote repository by its href."""
-    url = deb_get_fixture_server_url()
-    data = gen_verbose_remote_data(url)
-    remote = deb_remote_custom_data_factory(data)
+    remote, _ = deb_init_verbose_remote()
     read_remote = deb_get_remote_by_href(remote.pulp_href)
 
     for key, val in remote.to_dict().items():
@@ -68,15 +78,9 @@ def test_read_remote_by_href(
 
 
 @pytest.mark.parallel
-def test_read_remote_by_name(
-    deb_get_fixture_server_url,
-    deb_get_remotes_by_name,
-    deb_remote_custom_data_factory,
-):
+def test_read_remote_by_name(deb_init_verbose_remote, deb_get_remotes_by_name):
     """Verify whether it is possible to read a remote repository by its name."""
-    url = deb_get_fixture_server_url()
-    data = gen_verbose_remote_data(url)
-    remote = deb_remote_custom_data_factory(data)
+    remote, _ = deb_init_verbose_remote()
     read_remote = deb_get_remotes_by_name(remote.name)
 
     assert len(read_remote.results) == 1
@@ -86,17 +90,9 @@ def test_read_remote_by_name(
 
 
 @pytest.mark.parallel
-def test_patch_remote(
-    deb_get_fixture_server_url,
-    deb_get_remote_by_href,
-    deb_patch_remote,
-    deb_remote_custom_data_factory,
-):
+def test_patch_remote(deb_init_verbose_remote, deb_get_remote_by_href, deb_patch_remote):
     """Verify whether it is possible to update a remote with PATCH."""
-    url = deb_get_fixture_server_url()
-    data = gen_verbose_remote_data(url)
-    remote = deb_remote_custom_data_factory(data)
-    patch_data = gen_verbose_remote_data(url)
+    remote, _, patch_data = deb_init_verbose_remote(extra_data=True)
     deb_patch_remote(remote, patch_data)
     patch_remote = deb_get_remote_by_href(remote.pulp_href)
 
@@ -108,17 +104,9 @@ def test_patch_remote(
 
 
 @pytest.mark.parallel
-def test_put_remote(
-    deb_get_fixture_server_url,
-    deb_get_remote_by_href,
-    deb_put_remote,
-    deb_remote_custom_data_factory,
-):
+def test_put_remote(deb_init_verbose_remote, deb_get_remote_by_href, deb_put_remote):
     """Verify whether it is possible to update a remote with PUT."""
-    url = deb_get_fixture_server_url()
-    data = gen_verbose_remote_data(url)
-    remote = deb_remote_custom_data_factory(data)
-    put_data = gen_verbose_remote_data(url)
+    remote, _, put_data = deb_init_verbose_remote(extra_data=True)
     deb_put_remote(remote, put_data)
     put_remote = deb_get_remote_by_href(remote.pulp_href)
 
@@ -130,16 +118,9 @@ def test_put_remote(
 
 
 @pytest.mark.parallel
-def test_delete_remote(
-    deb_delete_remote,
-    deb_get_fixture_server_url,
-    deb_get_remote_by_href,
-    deb_remote_custom_data_factory,
-):
+def test_delete_remote(deb_init_verbose_remote, deb_delete_remote, deb_get_remote_by_href):
     """Verify whether it is possible to delete a remote."""
-    url = deb_get_fixture_server_url()
-    data = gen_verbose_remote_data(url)
-    remote = deb_remote_custom_data_factory(data)
+    remote, _ = deb_init_verbose_remote()
     deb_delete_remote(remote)
 
     with pytest.raises(ApiException) as exc:
@@ -150,17 +131,12 @@ def test_delete_remote(
 
 @pytest.mark.parallel
 def test_remote_download_policies(
+    deb_init_verbose_remote,
     deb_get_remote_by_href,
-    deb_get_fixture_server_url,
     deb_patch_remote,
-    deb_remote_custom_data_factory,
 ):
     """Verify download policy behavior for valid and invalid values."""
-    # Create a remote without a download policy.
-    url = deb_get_fixture_server_url()
-    data = gen_verbose_remote_data(url)
-    del data["policy"]
-    remote = deb_remote_custom_data_factory(data)
+    remote, _ = deb_init_verbose_remote(remove_policy=True)
 
     # Verify the creation is successful and the "immediate" policy is applied.
     assert remote.policy == "immediate"
@@ -185,27 +161,3 @@ def test_remote_download_policies(
     # Verify that the remote policy remains unchanged
     remote = deb_get_remote_by_href(remote.pulp_href)
     assert remote.policy == remote_snapshot.policy
-
-
-def gen_verbose_remote_data(url):
-    """Return a semi-random dict for use in defining a remote.
-
-    For most tests, it's desirable to create remotes with as few attributes
-    as possible, so that the tests can specifically target and attempt to break
-    specific features. This module specifically targets remotes, so it makes
-    sense to provide as many attributes as possible.
-    Note that 'username' and 'password' are write-only attributes.
-    """
-    data = gen_local_deb_remote(url)
-    data.update(
-        {
-            "password": str(uuid4()),
-            "username": str(uuid4()),
-            "policy": choice(DOWNLOAD_POLICIES),
-            "distributions": f"{str(uuid4())} {str(uuid4())}",
-            "components": f"{str(uuid4())} {str(uuid4())}",
-            "architectures": f"{str(uuid4())} {str(uuid4())}",
-            "gpgkey": DEB_SIGNING_KEY,
-        }
-    )
-    return data

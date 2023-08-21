@@ -6,7 +6,7 @@ import os
 import stat
 import subprocess
 
-from pulp_deb.tests.functional.utils import gen_local_deb_remote, gen_distribution, gen_repo
+from pulp_deb.tests.functional.utils import gen_deb_remote, gen_distribution, gen_repo
 from pulp_deb.tests.functional.constants import DEB_FIXTURE_STANDARD_REPOSITORY_NAME
 
 from pulpcore.client.pulp_deb import (
@@ -268,7 +268,7 @@ def deb_remote_factory(apt_remote_api, gen_object_with_cleanup):
         :param url: The name of the local data repository.
         :returns: The created remote.
         """
-        return gen_object_with_cleanup(apt_remote_api, gen_local_deb_remote(url=str(url), **kwargs))
+        return gen_object_with_cleanup(apt_remote_api, gen_deb_remote(url=str(url), **kwargs))
 
     return _deb_remote_factory
 
