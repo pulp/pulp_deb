@@ -60,10 +60,10 @@
    https://github.com/pulp/plugin_template
 .. _Pulp plugin template README:
    https://github.com/pulp/plugin_template/blob/master/README.md
-.. _Pulp Ansible installer:
-   https://github.com/pulp/pulp_installer
-.. _Pulp Ansible installer documentation:
-   https://docs.pulpproject.org/pulp_installer/
+.. _Pulp container images:
+   https://github.com/pulp/pulp-oci-images
+.. _Pulp container image documentation:
+   https://docs.pulpproject.org/pulp_oci_images/
 .. _pulp_deb GitHub actions pipelines:
    https://github.com/pulp/pulp_deb/actions
 .. _httpie:

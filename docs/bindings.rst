@@ -48,22 +48,3 @@ Generating a client is a two step process:
 
    The schema can then be used as input to the ``openapi-generator-cli``.
    See `try OpenAPI generator`_ for documentation on getting started.
-
-
-Generating a Client on dev Environment
---------------------------------------------------------------------------------
-
-The easiest way to set up a Pulp development environment is to use a Vagrant box from the `pulp Ansible installer`_ repo.
-These development boxes provide the ``pbindings`` alias for generating bindings (aka clients):
-
-For example, use the following for generating Python bindings for ``pulp_deb``:
-
-.. code-block:: bash
-
-   pbindings pulp_deb python
-
-As another example, use the following for generating Ruby bindings for version ``2.5.0b1`` of ``pulp_deb``:
-
-.. code-block:: bash
-
-   pbindings pulp_deb ruby 2.5.0b1
