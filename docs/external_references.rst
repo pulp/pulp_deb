@@ -70,3 +70,11 @@
    https://httpie.org/doc
 .. _nginx.org:
    https://nginx.org/en/linux_packages.html#Debian
+.. _pulp-cli-deb issue tracker:
+   https://github.com/pulp/pulp-cli-deb/issues
+.. _pulp-cli-deb python package:
+   https://pypi.org/project/pulp-cli-deb/
+.. _pulp-cli python package:
+   https://pypi.org/project/pulp-cli/
+.. _pulp-cli documentation:
+   https://docs.pulpproject.org/pulp_cli/
