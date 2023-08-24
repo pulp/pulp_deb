@@ -19,14 +19,14 @@ def test_download_policy(
     assert repo.latest_version_href.endswith("/1/")
 
     # Verify the correct amount of content units are available
-    assert DEB_FIXTURE_SUMMARY == deb_get_present_content_summary(repo.to_dict())
-    assert DEB_FIXTURE_SUMMARY == deb_get_added_content_summary(repo.to_dict())
+    assert DEB_FIXTURE_SUMMARY == deb_get_present_content_summary(repo)
+    assert DEB_FIXTURE_SUMMARY == deb_get_added_content_summary(repo)
 
     # Sync again and verify the same amount of content units are available
     latest_version_href = repo.latest_version_href
     repo, _ = deb_init_and_sync(repository=repo, remote=remote)
     assert repo.latest_version_href == latest_version_href
-    assert DEB_FIXTURE_SUMMARY == deb_get_present_content_summary(repo.to_dict())
+    assert DEB_FIXTURE_SUMMARY == deb_get_present_content_summary(repo)
 
     # Create a publication and verify the `repository_version` is not empty
     publication = deb_publication_factory(repo, simple=True)

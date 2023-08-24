@@ -44,8 +44,8 @@ def test_sync(
     assert not is_sync_skipped(task, DEB_REPORT_CODE_SKIP_RELEASE)
 
     # Verify that the repo content and added content matches the summary
-    assert deb_get_present_content_summary(repo.to_dict()) == fixture_summary
-    assert deb_get_added_content_summary(repo.to_dict()) == fixture_summary
+    assert deb_get_present_content_summary(repo) == fixture_summary
+    assert deb_get_added_content_summary(repo) == fixture_summary
 
     # Sync the repository again
     task_skip = deb_sync_repository(remote, repo)
@@ -56,7 +56,7 @@ def test_sync(
     assert is_sync_skipped(task_skip, DEB_REPORT_CODE_SKIP_RELEASE)
 
     # Verify that the repo content still matches the summary
-    assert deb_get_present_content_summary(repo.to_dict()) == fixture_summary
+    assert deb_get_present_content_summary(repo) == fixture_summary
 
 
 @pytest.mark.skip("Skip - ignore_missing_package_indices sync parameter does currently not work")

@@ -654,7 +654,7 @@ def deb_get_content_summary(apt_repository_versions_api):
             Default: latest repository version.
         :returns: The content summary of the repository.
         """
-        version_href = version_href or repo["latest_version_href"]
+        version_href = version_href or repo.latest_version_href
         if version_href is None:
             return {}
         return apt_repository_versions_api.read(version_href).content_summary
