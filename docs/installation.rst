@@ -6,7 +6,7 @@ Installation
 
 As with all Pulp plugins, the installation method for ``pulp_deb`` depends on your chosen ``pulpcore`` installation method.
 There are multiple `pulpcore installation options`_.
-The default recommendation is to use the `Pulp container images`_, which are documented via the `Pulp container image documentation`_.
+The default recommendation is to use the `Pulp container images`_, which are documented via the `Pulp container image documentation`_ and contain ``pulp_deb`` by default.
 
 If you need more help with advanced installation scenarios you can either consult the documentation referenced above, or else join the ``pulp`` Matrix/IRC channel for interactive help.
 See the `Pulp project help page`_ for more information and additional ways on how to get in contact with the Pulp community.
@@ -14,7 +14,7 @@ See the `Pulp project help page`_ for more information and additional ways on ho
 
 .. _pulp_cli_deb:
 
-Installing Pulp CLI for pulp_deb
+Setting up Pulp CLI for pulp_deb
 --------------------------------------------------------------------------------
 
 .. hint::
@@ -56,3 +56,32 @@ To start using the CLI commands for ``pulp_deb``, consult:
 .. code-block:: none
 
    pulp deb --help
+
+
+.. _httpie_and_jq:
+
+Setting up httpie and jq
+--------------------------------------------------------------------------------
+
+Where there are feature gaps in Pulp CLI, or for advanced scripting scenarios, it may be preferrable to interact with the :ref:`Pulp REST API <rest_api>` directly.
+Examples within this documentation will use the `httpie`_ utility for this purpose.
+httpie can be installed via ``pip``, so you could install it alongside Pulp CLI in a virtual python environment using:
+
+.. code-block:: none
+
+   pip install pulp-cli-deb httpie
+
+You will need to configure your Pulp API credentials, or else specify them with each call to ``http``.
+For example, you can adjust the following ``.netrc`` example as needed:
+
+.. code-block:: none
+
+   machine localhost
+   login admin
+   password password
+
+For alternative methods, please consult ``http --help``.
+
+Both in combination with Pulp CLI as well as httpie, we recommend and make use of `jq`_ for parsing API responses.
+``jq`` can normally be installed via your preferred package manager, for example using ``sudo apt-get install jq`` for APT based systems.
+Being a simple command-line JSON parser, ``jq`` requires no additional configuration.

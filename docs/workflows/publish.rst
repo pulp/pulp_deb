@@ -1,216 +1,125 @@
 .. _publish:
 
-Publish and Host
+Hosting APT Repositories
 ================================================================================
 
-.. image:: publish.svg
+.. include:: ../external_references.rst
+
+.. figure:: publish.svg
    :alt: Publish content
 
-This section assumes that you have a repository with content in it.
-To do this, see the :doc:`sync` or :doc:`upload` documentation.
+   However you have obtained your Pulp repository content, you must publish and distribute it for it to become accessible on your Pulp instance.
 
 
-Create a Publication
+Basic Workflow
 --------------------------------------------------------------------------------
 
-Creating a publication is based on a repository:
+Once you have obtained some ``pulp_deb`` content, either via :ref:`sync <workflows_sync>` or :ref:`upload <upload_and_manage_content>`, that content must then be published and distributed so as to be available for clients.
+The most basic version of this workflow is always the same, and all you need is the name of the relevant Pulp repository:
 
 .. code-block:: bash
 
-   http get $BASE_ADDR/pulp/api/v3/repositories/deb/apt/
+   pulp deb repository list
+   NAME=my-repository  # Insert some repository name from the list here.
+   pulp deb publication create --repository=${NAME}
+   pulp deb distribution create --name=${NAME} --base-path=${NAME} --repository=${NAME}
 
-This will return a ``200 OK`` response:
+Creating the distribution will return the ``base_url`` in the API response, which will contain the URL to your hosted repository.
+The ``base_url`` has the following structure:
 
-.. code-block:: json
+.. code-block:: none
 
-   {
-       "count": 1,
-       "next": null,
-       "previous": null,
-       "results": [
-           {
-               "description": null,
-               "latest_version_href": "/pulp/api/v3/repositories/deb/apt/250083a4-8eaa-42b6-a588-c48c2a2935f0/versions/1/",
-               "name": "vim",
-               "pulp_created": "2020-06-29T07:35:14.713025Z",
-               "pulp_href": "/pulp/api/v3/repositories/deb/apt/250083a4-8eaa-42b6-a588-c48c2a2935f0/",
-               "versions_href": "/pulp/api/v3/repositories/deb/apt/250083a4-8eaa-42b6-a588-c48c2a2935f0/versions/"
-           }
-       ]
-   }
+   <CONTENT_ORIGIN><CONTENT_PATH_PREFIX><distribution_base_path>
 
-Publications contain extra settings for how to publish.
-You can use the ``apt`` publisher on any repository of the apt type containing ``deb`` packages:
+- ``CONTENT_ORIGIN`` is a required pulpcore setting, containing the protocol, fqdn, and port where the content app is reachable.
+  See also the `pulpcore settings documentation`_.
+- ``CONTENT_PATH_PREFIX`` is a optional pulpcore setting that defaults to ``/pulp/content/``.
+- The distribution base path is what you have supplied to the ``--base-path`` flag in the above example.
+  In the examples in this documentation, we generally just use the repository name for the base path as well, but you may want to depart from that convention.
 
-.. code-block:: bash
+An example ``base_url`` could be:
 
-   http post $BASE_ADDR/pulp/api/v3/publications/deb/apt/ repository=/pulp/api/v3/repositories/deb/apt/250083a4-8eaa-42b6-a588-c48c2a2935f0/ simple=true
+.. code-block:: none
 
-This will return a ``202 Accepted`` response:
-
-.. code-block:: json
-
-   {
-       "task": "/pulp/api/v3/tasks/d49e056f-a637-454a-8797-67f81648b60f/"
-   }
-
-Depending on the size of your repository, this might take a while.
-Check the status of the task by running the following command to see if the publication has been created:
-
-.. code-block:: bash
-
-   http get $BASE_ADDR/pulp/api/v3/tasks/d49e056f-a637-454a-8797-67f81648b60f/
-
-This will return a ``200 OK`` response:
-
-.. code-block:: json
-
-   {
-       "child_tasks": [],
-       "created_resources": [
-           "/pulp/api/v3/publications/deb/apt/ecf87d05-978c-4327-8fe8-f50dc523b1a8/"
-       ],
-       "error": null,
-       "finished_at": "2020-06-29T12:22:06.138655Z",
-       "name": "pulp_deb.app.tasks.publishing.publish",
-       "parent_task": null,
-       "progress_reports": [],
-       "pulp_created": "2020-06-29T12:22:05.892080Z",
-       "pulp_href": "/pulp/api/v3/tasks/d49e056f-a637-454a-8797-67f81648b60f/",
-       "reserved_resources_record": [
-           "/pulp/api/v3/repositories/deb/apt/250083a4-8eaa-42b6-a588-c48c2a2935f0/"
-       ],
-       "started_at": "2020-06-29T12:22:05.994098Z",
-       "state": "completed",
-       "task_group": null,
-       "worker": "/pulp/api/v3/workers/6b8a7389-bafb-4d29-8e0b-184cd616ce10/"
-   }
-
-``state`` equaling ``completed`` indicates that your publication has been created successfully:
-
-.. code-block:: bash
-
-   http get $BASE_ADDR/pulp/api/v3/tasks/d49e056f-a637-454a-8797-67f81648b60f/ | jq '.state'
-
-This returns the path of the created publication:
-
-.. code-block:: bash
-
-   http get $BASE_ADDR/pulp/api/v3/tasks/d49e056f-a637-454a-8797-67f81648b60f/ | jq '.created_resources[0]'
+   http://my-pulp-instance.com:5001/pulp/content/my-repository/
 
 
-Create a Distribution
+.. _workflow_metadata_signing:
+
+Metadata Signing
 --------------------------------------------------------------------------------
 
-View a publication that you want to distribute and make consumable:
+.. attention::
+  This workflow assumes you have already created a signing service of type ``AptReleaseSigningService``.
+  See the workflow on :ref:`signing service creation <workflows_signing_service>` for how to do this.
+
+Once you have created a signing service you can create signed publications from any repository:
 
 .. code-block:: bash
 
-   http get $BASE_ADDR/pulp/api/v3/publications/deb/apt/ecf87d05-978c-4327-8fe8-f50dc523b1a8/
+   pulp deb repository list
+   NAME=my-repository  # Insert some repository name from the list here.
+   pulp signing-service list
+   SIGNING_SERVICE_NAME=my-apt-release-signing-service  # Insert a signing service from the list.
+   pulp deb publication create --repository=${NAME} --signing-service=${SIGNING_SERVICE_NAME}
+   pulp deb distribution create --name=${NAME} --base-path=${NAME} --repository=${NAME}
 
-This will return a ``200 OK`` response:
+The above example, will sign every distribution in your publication using the same signing service, and you will need to explicitly specify the signing service each time you create the publication.
 
-.. code-block:: json
+You can also create a permanent link between a repository and a signing service using the ``signing_service`` parameter on your repository.
+At the time of this writing, this cannot be done via Pulp CLI.
 
-   {
-       "pulp_created": "2020-06-29T12:22:06.006518Z",
-       "pulp_href": "/pulp/api/v3/publications/deb/apt/ecf87d05-978c-4327-8fe8-f50dc523b1a8/",
-       "repository": "/pulp/api/v3/repositories/deb/apt/250083a4-8eaa-42b6-a588-c48c2a2935f0/",
-       "repository_version": "/pulp/api/v3/repositories/deb/apt/250083a4-8eaa-42b6-a588-c48c2a2935f0/versions/1/",
-       "signing_service": null,
-       "simple": true,
-       "structured": false
-   }
+It is also possible to use the ``signing_service_release_overrides`` parameter to specify different signing services for different distributions within a single repository.
+This parameter expects a dict of key-value pairs of the form ``{"<distribution>": "<signing_service_href>"}``.
+At the time of this writing, this cannot be done via Pulp CLI.
 
-To host a publication which makes it consumable by a package manager, users create a distribution which will serve the associated publication at ``/pulp/content/<distribution.base_path>``:
 
-.. code-block:: bash
+Verbatim Publications
+--------------------------------------------------------------------------------
 
-   http post $BASE_ADDR/pulp/api/v3/distributions/deb/apt/ name="nginx" base_path="nginx" publication=/pulp/api/v3/publications/deb/apt/ecf87d05-978c-4327-8fe8-f50dc523b1a8/
+.. attention::
+   For an explanation on what a verbatim publication is, see the corresponding :ref:`feature overview <verbatim_publishing>`.
 
-This will return a ``202 Accepted`` response:
-
-.. code-block:: json
-
-   {
-       "task": "/pulp/api/v3/tasks/18159df8-b337-4ae8-b8cf-7ad0fba44bc7/"
-   }
-
-Viewing the task will indicate if the distribution has been successful:
+The following example uses a verbatim publication to host an official Debian repository, including the installer files:
 
 .. code-block:: bash
 
-   http get $BASE_ADDR/pulp/api/v3/tasks/18159df8-b337-4ae8-b8cf-7ad0fba44bc7/
+   NAME='debian-installer-bookworm-amd64'
+   PULP_URL='http://localhost:5001'
+   REMOTE_OPTIONS=(
+     name=${NAME}
+     url=http://ftp.de.debian.org/debian/
+     distributions=bookworm
+     architectures=amd64
+     sync_udebs=true
+     sync_installer=true
+   )
+   http ${PULP_URL}/pulp/api/v3/remotes/deb/apt/ ${REMOTE_OPTIONS[@]}
+   pulp deb repository create --name=${NAME} --remote=${NAME}
+   pulp deb repository sync --name=${NAME}
+   pulp deb publication --type=verbatim create --repository=${NAME}
+   pulp deb distribution create --name=${NAME} --base-path=${NAME} --repository=${NAME}
 
-This will return a ``200 OK`` response:
+As you can see, we had to create the remote using ``http``, since Pulp CLI does not currently support the ``sync_udebs`` and ``sync_installer`` flags.
+The only other addition was to add ``--type=verbatim`` to the ``publication`` command.
 
-.. code-block:: json
+.. warning::
+   Installing from synced content, as published above, is currently an :ref:`experimental feature <installation_from_synced_content>`.
 
-   {
-       "child_tasks": [],
-       "created_resources": [
-           "/pulp/api/v3/distributions/deb/apt/5cde2b30-7d35-4d64-a46b-0a4e5c984359/"
-       ],
-       "error": null,
-       "finished_at": "2020-06-29T12:26:39.815218Z",
-       "name": "pulpcore.app.tasks.base.general_create",
-       "parent_task": null,
-       "progress_reports": [],
-       "pulp_created": "2020-06-29T12:26:39.575822Z",
-       "pulp_href": "/pulp/api/v3/tasks/18159df8-b337-4ae8-b8cf-7ad0fba44bc7/",
-       "reserved_resources_record": [
-           "/api/v3/distributions/"
-       ],
-       "started_at": "2020-06-29T12:26:39.683538Z",
-       "state": "completed",
-       "task_group": null,
-       "worker": "/pulp/api/v3/workers/50a13e76-fe27-4e3e-8cee-ae5ec41d272a/"
-   }
 
-View the created resource (``created_resources``) to find the URL to the new repository hosted by Pulp:
+Simple Publishing
+--------------------------------------------------------------------------------
 
-.. code-block:: bash
-
-   http get $BASE_ADDR/pulp/api/v3/distributions/deb/apt/5cde2b30-7d35-4d64-a46b-0a4e5c984359/
-
-This will return a ``200 OK`` response:
-
-.. code-block:: json
-
-   {
-       "base_path": "nginx",
-       "base_url": "http://pulp3-source-debian10.hostname.example.com/pulp/content/nginx/",
-       "content_guard": null,
-       "name": "nginx",
-       "publication": "/pulp/api/v3/publications/deb/apt/ecf87d05-978c-4327-8fe8-f50dc523b1a8/",
-       "pulp_created": "2020-06-29T12:26:39.806283Z",
-       "pulp_href": "/pulp/api/v3/distributions/deb/apt/5cde2b30-7d35-4d64-a46b-0a4e5c984359/"
-   }
-
-Running the following command will prove that Pulp exposes the repository as you'd expect:
+It is possible to create ``pulp_deb`` repositories, that contain ``.deb`` packages, without any associated structure content.
+Using the standard APT publisher, such packages are not included in the repo metadata.
+By extension they are not part of the published repository as far as any consuming clients are concerned.
+We recommend to stick to the workflows presented in this documentation, which ensure the creation of structured content.
+However, as an alternate workaround, you can set the ``--simple`` flag when creating your publication:
 
 .. code-block:: bash
 
-   http get http://pulp3-source-debian10.hostname.example.com/pulp/content/nginx/
+   pulp deb publication create --simple --no-structured --repository=${NAME}
 
-This returns a ``200 OK`` response:
-
-.. code-block:: html
-
-   <!DOCTYPE html>
-           <html>
-               <body>
-                   <ul>
-                       <li><a href="dists/">dists/</a></li>
-                       <li><a href="pool/">pool/</a></li>
-                   </ul>
-               </body>
-           </html>
-
-You may use this url (``base_url``) to access Debian content from Pulp via a package manager like apt, i.e. in your ``/etc/apt/sources.list`` file.
-
-An example apt source file could be like,
-
-.. code-block:: ini
-
-   deb [trusted=yes arch=amd64 ] http://pulp3-source-debian10.hostname.example.com/pulp/content/nginx/ default  all
+The ``--simple`` flag causes an additional distribution named ``default`` with a single component named ``all`` to be added to your publication.
+As the name suggests, this distribution-component combination, will simply contain all ``.deb`` packages from the repository, regardless of any structure content.
+If you omit the ``--no-structured`` flag, the ``default/all`` distribution-component combination will be added *in addition* to the usual structured distribution-componen combinations.

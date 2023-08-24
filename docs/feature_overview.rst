@@ -5,27 +5,14 @@ Feature Overview
 
 .. include:: external_references.rst
 
-This chapter aims to give a high level overview of what features the plugin currently supports, as well as any known limitations.
-The aim is to provide users with enough information to make informed decisions about how they may or may not want to use this plugin, as well as to set realistic expectations on what will and will not work.
+This chapter aims to give a high level overview of what features the plugin supports, including known limitations, so as to set realistic expectations on how the plugin can be used.
 
 For detailed usage examples, see :ref:`workflows <workflows>` instead.
 See the :ref:`REST API <rest_api>` documentation for an exhaustive feature reference.
 
 
-.. _content_types:
-
-Content Types
---------------------------------------------------------------------------------
-
-Whether they are obtained via :ref:`synchronization <repository_synchronization>` or :ref:`direct upload <package_uploads>`, the ``pulp_deb`` plugin knows several different content types that it stores in the Pulp database.
-
-Since each content type has its own REST API endpoint, you can find detailed descriptions in the :ref:`pulp_deb REST API documentation <rest_api>`.
-Content types may be associated with certain artifacts (aka files) or contain only metadata.
-For example, every content unit of the ``Packages`` content type is associated with exactly one ``.deb`` package file.
-In other words, each content unit of this type represents exactly one ``.deb`` package.
-
-Currently, the plugin has dedicated content types for various types of metadata, as well as ``.deb`` (binary) packages, and ``.udeb`` installer packages.
-However, the latter can currently only be used in conjunction with the :ref:`verbatim publisher <verbatim_publishing>`.
+Core Features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
 .. _repository_synchronization:
@@ -38,12 +25,21 @@ See :ref:`package uploads <package_uploads>` for the other.
 The aim is for the plugin to be able to synchronize (and publish) arbitrary (valid) APT repositories.
 This also includes repositories using `flat repository format`_.
 
-When synchronizing an upstream repository, only :ref:`content types <content_types>` supported by the ``pulp_deb`` plugin are downloaded.
-Source packages, for example, are currently unsupported.
+When synchronizing an upstream repository, only content supported by the ``pulp_deb`` plugin is downloaded. This includes:
 
-Even if a particular content type is downloaded during synchronization, it depends on the publisher that is used (:ref:`verbatim <verbatim_publishing>` or :ref:`standard APT <simple_and_structured_publishing>` publisher), whether that content is actually served by the Pulp content app as part of the Pulp distribution being created.
-For example, the plugin's APT publisher does not use the downloaded upstream metadata files, but rather generates its own.
-As another example, ``.udeb`` installer packages are currently only supported by the verbatim publisher.
+- ``Release``, ``InRelease``, and ``Release.gpg`` metadata files.
+- Binary package indices, aka ``Packages`` files.
+- Any ``.deb`` binary packages referenced by any package indices being synced.
+- (optionally) Installer package indices, the associated ``.udeb`` installer packages, as well as some other installer file types.
+
+Things that are not synchronized:
+
+- Source indices and source packages.
+- Language and translation files.
+- Anything else not explicitly mentioned above.
+
+If and how this synchronized content is ultimately used, is dependent on the publisher and its options.
+For more information see :ref:`verbatim publishing <verbatim_publishing>` and :ref:`APT publishing <apt_publishing>` below.
 
 
 .. _filtered_synchronization:
@@ -51,28 +47,21 @@ As another example, ``.udeb`` installer packages are currently only supported by
 Filtered Synchronization
 ********************************************************************************
 
-Synchronization works via the use of so called *Pulp remotes*, which describe the upstream repository you intend to synchronize.
-It is possible to synchronize only a subset of a given upstream repository by specifying a set of "distributions", "components", and "architectures" in the remote.
+It is possible to synchronize only a subset of a given upstream repository by specifying a set of distributions (aka releases), components, and architectures to synchronize.
 Specifying the desired distributions is mandatory, while not specifying any components or architectures is interpreted as: "synchronize all that are available".
-
-.. note::
-   There will not be any errors if you specify components or architectures that do not exist for a given upstream distribution.
-   This allows you to filter for components and architectures that may not be present in all of the upstream distributions, but it may also lead to unexpected results.
-   For example, if you have made a typo, your desired component and/or architecture will simply be missing from your Pulp repository, with merely a log warning, to indicate what might have gone wrong.
 
 
 Signature Verification
 ********************************************************************************
-
-You may provide your remotes with the relevant (public) GPG key for ``Release`` file verification.
 
 .. note::
    For APT repositories, only the ``Release`` file of each distribution is signed.
    This file contains various checksums for all other metadata files contained within the distribution, which in turn contain the checksums of the packages themselves.
    As a result, signing the ``Release`` file is sufficient to guarantee the integrity of the entire distribution.
 
-When synchronizing an upstream repository using a remote with GPG key, any ``Release`` (or ``InRelease``) files that do not have a valid signature are discarded.
-If, for a given distribution, there is no ``Release`` file that can be successfully verified, a ``NoReleaseFile`` error is thrown and the sync fails.
+You may provide your remotes with the relevant (public) GPG key for ``Release`` file signature verification.
+When synchronizing an upstream repository using signature verification, any metadata files that cannot be verified are discarded.
+If no relevant metadata files are left, a ``NoReleaseFile`` error is thrown and the sync fails.
 
 
 .. _package_uploads:
@@ -84,76 +73,24 @@ Rather than synchronizing upstream repositories, it is also possible to upload `
 See the corresponding :ref:`workflow documentation <upload_and_manage_content>` for more information.
 In general, uploading content works the same way as for any other Pulp plugin, so you may also wish to consult the `pulpcore upload documentation`_.
 
-.. important::
-   There is currently no way of associating an uploaded ``.deb`` package with an existing distribution or component.
-   There is also no way of manually creating a distribution and component to associate it with in the first place.
-   As a result, manually uploaded packages will only show up in your publications, if you are using the "simple" publisher.
-   For more information, see :ref:`simple and structured publishing <simple_and_structured_publishing>` below.
 
-.. note::
-   As a matter of best practice, the existence of multiple Debian packages with the same name, version, and architecture (but different content/checksum) should be avoided.
-   Since the existence of such packages may be beyond the control of the ``pulp_deb`` user, the plugin takes a maximally permissive approach:
-   Users can upload arbitrary (valid) packages to the Pulp database, but they cannot add multiple colliding packages of the same type (``.deb`` or ``.udeb``), to a single Pulp repository version.
-   If users attempt to add one or more packages to a Pulp repository, and there are collisions with packages from the previous repository version, then the older packages will automatically be removed.
-   If there are still collisions in the new repository version, an error is thrown and the task will fail.
-   (This latter case can only happen if users attempt to add several colliding packages in a single API call.)
+.. _apt_publishing:
 
-
-.. _advanced_copy:
-
-Advanced Copy (EXPERIMENTAL)
+Hosting APT Repositories
 --------------------------------------------------------------------------------
 
-.. warning::
-   This paragraph describes an experimental feature.
-   It may not work as intended for every corner case, or break unexpectedly.
-   The API may still change in non-backwards compatible ways.
+Once you have obtained some content via synchronization, or upload, you will want to publish and distribute this content, so that your clients may consume your hosted APT repositories.
 
-The plugin provides a special API endpoint at ``pulp/api/v3/deb/copy/`` providing advanced copy operations when moving packages between repositories.
-When specifying a set of packages to be copied from one repository into another (using the default ``structured=True`` setting), this copy operation will automatically add any metadata content associated with the packages in question.
-That way, the repository version created in the target repository, can be meaningfully published using :ref:`structured mode <simple_and_structured_publishing>`.
+The default way to do so is to use the ``pulp_deb`` APT publisher.
+This publisher will generate new metadata for any ``.deb`` packages stored in your Pulp repository.
+Any upstream metadata, installer files, and installer packages will be ignored.
+The APT publisher will publish all the distributions (aka releases), components, and architectures, that were synchronized to the Pulp repository being published (or else created during package upload).
+It will also use a default ``pool/`` folder structure regardless of the package file locations used by the relevant upstream repository.
 
-We are planning to add a dependency solving mechanism in a future release.
-The idea is for the copy operation to automatically add any dependencies of any user supplied packages as part of the copy operation.
+This approach guarantees a consistent set of packages and metadata is presented to your clients using the latest APT repository format specification.
+It also allows you to sign the newly generated metadata using your own signing key.
 
-
-.. _import_export:
-
-Import/Export
---------------------------------------------------------------------------------
-
-The pulp_deb plugin implements the pulpcore Import/Export feature.
-This allows users to export content stored on one Pulp instance to a file, which can then be imported on another pulp instance.
-For more information see the `pulpcore import-export docs`_.
-
-
-.. _simple_and_structured_publishing:
-
-Simple and Structured Publishing
---------------------------------------------------------------------------------
-
-You can create an APT publication from your synchronized repositories or your uploaded packages, using the ``/pulp/api/v3/publications/deb/apt/`` :ref:`REST API <rest_api>` endpoint.
-A publication must use ``simple`` or ``structured`` mode (or both).
-
-The simple publisher will publish all packages associated with the pulp repository version you are using in a single APT distribution named ``default``, which will contain a single component named ``all``.
-That is, the simple publisher will add a single ``Release`` file at ``dists/default/Release`` to your published repository.
-There will be one package index for each architecture for which there are packages (in addition to ``dists/default/all/binary-all/Packages``, which will always be created, but may be empty).
-
-.. important::
-   The simple publisher is currently the only way to include manually uploaded packages in your distribution.
-   Be sure to use ``simple=true`` if you have uploaded packages (as opposed to synchronized them) to your repository.
-
-The structured publisher will publish all the distributions (aka releases), components, and architectures, that were synchronized to the Pulp repository being published.
-These various distribution, component, and architecture combinations, will contain the same packages as the upstream originals.
-However, unlike the :ref:`verbatim publisher <verbatim_publishing>`, the APT publisher will generate all new metadata files for the publication.
-It will also use a default ``pool/`` folder structure regardless of the package file locations used by the upstream repositories.
-
-.. important::
-   Since synchronization is currently the only supported way to obtain ``ReleaseComponent`` metadata content units, the structured publisher only makes sense if you have synchronized some upstream APT repository into your Pulp instance.
-
-Finally, the APT publisher (both structured and simple mode) will never append ``Architecture: all`` type packages to any architecture specific package indices.
-It will always publish dedicated ``binary-all`` package indices.
-This behaviour is irrespective of how any upstream repositories might have handled such packages.
+An alternative is to use the ``pulp_deb`` :ref:`verbatim publisher <verbatim_publishing>`.
 
 
 .. _metadata_signing:
@@ -161,54 +98,118 @@ This behaviour is irrespective of how any upstream repositories might have handl
 Metadata Signing
 ********************************************************************************
 
-The ``pulp_deb`` plugin allows you to sign the ``Release`` files created by the simple or structured publishers by providing your publication with a signing service of type ``AptReleaseSigningService`` at the time of creation.
+The ``pulp_deb`` plugin allows you to sign any ``Release`` files generated by the APT publisher by providing it with a signing service of type ``AptReleaseSigningService`` at the time of creation.
+It is also possible to use different signing services for different distributions within your APT repositories.
 
-.. important::
-   We currently lack a workflow documentation for creating and using an ``AptReleaseSigningService``.
-   Until we get around to writing one, you can use the short version below.
-   
-The short version:
 
-1. The `pulpcore metadata signing docs`_ describe the process for creating an ``AsciiArmoredDetachedSigningService``, which is largely analagous to creating an ``AptReleaseSigningService``.
-2. The public key must be imported to ``gpg`` so that Pulp can validate the signatures. ``gpg --import <public.gpg>``
-3. You must have a script available locally (like the `signing service script example`_ used by the ``pulp_deb`` test suite) to sign the ``Release`` file. It must:
+Advanced Features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-   1. Be executable by Pulp.
-   2. Accept one arg that is the location of the unsigned file.
-   3. Clearsign the file and write the output to ``$dir/InRelease``
-   4. Detached-sign the file and write the output to ``$dir/Release.gpg``
-   5. Print this output: ``{"signatures": {"inline": "/path/to/InRelease", "detached": "/path/to/Release.gpg"}}``
-   
-4. Register the script as a signing service:
-
-   ``/usr/local/bin/pulpcore-manager add-signing-service --class deb:AptReleaseSigningService <arbitrary_service_name> /path/to/script <public_key_fingerprint>``
-   
-5. You can now lookup the ``pulp_href`` for your signing service in the Pulp API:
-
-   ``/pulp/api/v3/signing-services/``
-   
-6. And use it when you Publish content. ``pulp_deb`` will call out to your script to sign the ``Release`` file and publish the signatures as part of the Publish action. The three ways you can specify the Signing Service are:
-
-   1. If you specify ``signing_service`` when creating the Publication, that service will sign all the Releases in the Publication.
-   2. You can specify that particular Release in a Repository use particular SigningServices by setting the ``signing_service_release_overrides`` field on the Repository. For example:
-      ``signing_service_release_overrides = {"bionic": "/pulp/api/v3/signing-services/433a1f70-c589-4413-a803-c50b842ea9b5/"}``
-   3. Finally, if you have set a ``signing_service`` on a Repository then the other Releases in that Repo will use that Service.
 
 .. _verbatim_publishing:
 
 Verbatim Publishing
 --------------------------------------------------------------------------------
 
-In addition to the ``pulp_deb`` plugin's main :ref:`APT publisher <simple_and_structured_publishing>`, there is also the "verbatim" publisher using a seperate :ref:`REST API <rest_api>` endpoint at ``/pulp/api/v3/publications/deb/verbatim/``.
+.. note::
+   Even though the interface is very different, the verbatim publisher is comparable to ``pulp_rpm``'s "full mirror" sync feature.
 
-The verbatim publisher will recreate the synced subset of any upstream repositories exactly.
-It could also be referred to as "mirror mode".
-If you have used :ref:`filtered synchronization <filtered_synchronization>` to obtain your repository, this reduces the synced subset as one would expect.
-The synced subset currently includes ``.deb`` packages, ``.udeb`` installer packages, any upstream ``Release`` files, package indices, installer file indices, as well as installer files, but not translation files.
+The verbatim publisher is an alternative to the ``pulp_deb`` plugin's main :ref:`APT publisher <apt_publishing>`.
+It will recreate an exact copy of the subset of an upstream repo that was synchronized into Pulp.
+In other words, every synchronized file, including the upstream metadata will use the exact same relative path it had in the upstream repository.
 
-The verbatim publisher (in combination with synchronization of a suitable upstream repository) is currently the only way to create a Pulp APT repository that can be used to install hosts with the Debian installer.
+**Advantages:**
 
-All files included in the verbatim publication will retain the exact same checksum that they had in the upstream repository.
-Any upstream ``Release`` file signatures are simply retained.
-As a result, hosts consuming the Pulp distribution can use the same GPG keys for repository verification as if they were attached directly to the upstream repository you synchronized.
-On the flip side, it is currently not possible to sign a verbatim publication with your own :ref:`signing services <metadata_signing>`.
+- Upstream ``Release`` file signatures are retained, so clients can verify using the same keys as for the upstream repository.
+- No new metadata is generated, so the verbatim publisher is much faster than the APT publisher.
+- The verbatim publisher is the only way to publish synchronized installer files and packages.
+
+**Disadvantages:**
+
+- Since it relies on upstream metadata, it only works for synced content.
+- It is not possible to sign a verbatim publication using your own :ref:`signing services <metadata_signing>`.
+- Since the upstream repo is mirrored exactly, any errors in the upstream repo are retained.
+- In some cases the upstream metadata may be inconsistent with what was synced into Pulp.
+
+
+.. _advanced_copy:
+
+Advanced Copy
+--------------------------------------------------------------------------------
+
+The plugin provides an advanced copy feature for moving packages between repositories.
+Using this feature, it is possible to specify a set of packages to be copied from one Pulp repository to another, without having to manually specify the structure content that tells Pulp what packages go into what release component.
+That way, the repository version created in the target repository, can be meaningfully published using the :ref:`APT publisher <apt_publishing>`, without relying on the "simple publishing" workaround.
+
+We are also planning to expand the advanced copy feature with a :ref:`dependency solving <dependency_solving>` mechanism in the future.
+
+
+Roadmap and Experimental
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. warning::
+  This section describe features that are either planned for the future, or exist only in an experimental state.
+  These features may lack expected functionality, or break unexpectedly.
+  The API may still change in non-backwards compatible ways.
+
+
+.. _import_export:
+
+Import/Export
+--------------------------------------------------------------------------------
+
+The pulp_deb plugin already implements the pulpcore Import/Export API.
+However, the current implementation is in a very basic state, that is not functionally usable.
+
+.. note::
+   This feature is actively being worked on by the plugin maintainers.
+   For the latest state see the `import export issue`_.
+
+See also the `pulpcore import-export docs`_.
+
+
+Source Packages
+--------------------------------------------------------------------------------
+
+There is a open community contribution to add source package support.
+
+.. note::
+   This feature is an advanced state of development, but still waiting for working test coverage.
+   For more information see the `source package PR`_.
+
+
+.. _installation_from_synced_content:
+
+Installation from Synced Content
+--------------------------------------------------------------------------------
+
+It is currently possible to synchronize installer indices and packages and publish them using the :ref:`verbatim publisher <verbatim_publishing>`.
+However, there is no actual test coverage for installing Debian or Ubuntu hosts from a so published repository using the debian-installer.
+We have also received feedback that the feature is currently broken since ``pulp_deb`` currently lacks the ability to synchronize language and translation files which are needed for the debian-installer.
+
+.. note::
+   There is not yet any firm time table for when this might be worked on.
+   The next step is to solve the `translation file issue`_.
+
+
+.. _dependency_solving:
+
+Dependency Solving
+--------------------------------------------------------------------------------
+
+It is planned to expand the :ref:`advanced copy <advanced_copy>` feature with a dependency solving mechanism analogous to the one provided by ``pulp_rpm``.
+The idea is to make it possible to specify a list of packages and automatically copy them *and their entire dependency trees* into a target repo.
+
+.. note::
+   There is not yet any firm time table for when this might be worked on.
+   See the `dependency solving issue`_ for any new developments.
+
+
+Domain and RBAC (Multi-Tenancy)
+--------------------------------------------------------------------------------
+
+There have been multiple requests for this feature in ``pulp_deb``.
+
+.. note::
+   The plugin maintainers have no plans to implement this.
+   If you are interested in contributing to the development of this feature, please get in touch with us via the `multi tenancy feature request`_.
