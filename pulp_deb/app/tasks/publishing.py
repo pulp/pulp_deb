@@ -2,6 +2,7 @@ import asyncio
 import os
 import shutil
 from contextlib import suppress
+from pathlib import Path
 
 from datetime import datetime, timezone
 from debian import deb822
@@ -34,11 +35,9 @@ from pulp_deb.app.models import (
 
 from pulp_deb.app.serializers import Package822Serializer
 
-from pulp_deb.app.constants import (
-    NO_MD5_WARNING_MESSAGE,
-    CHECKSUM_TYPE_MAP,
-)
+from pulp_deb.app.constants import NO_MD5_WARNING_MESSAGE, CHECKSUM_TYPE_MAP
 
+from pulp_deb.app.settings import APT_BY_HASH
 
 import logging
 from gettext import gettext as _
@@ -272,6 +271,7 @@ class _ComponentHelper:
                 content_artifact=package.contentartifact_set.get(),
             )
             published_artifact.save()
+
         package_serializer = Package822Serializer(package, context={"request": None})
 
         try:
@@ -296,10 +296,29 @@ class _ComponentHelper:
                 publication=self.parent.publication, file=File(open(package_index_path, "rb"))
             )
             package_index.save()
+
             gz_package_index = PublishedMetadata.create_from_file(
                 publication=self.parent.publication, file=File(open(gz_package_index_path, "rb"))
             )
             gz_package_index.save()
+
+            # Generating metadata files using checksum
+            if APT_BY_HASH:
+                for path, index in (
+                    (package_index_path, package_index),
+                    (gz_package_index_path, gz_package_index),
+                ):
+                    for allowed_checksum in settings.ALLOWED_CONTENT_CHECKSUMS:
+                        if allowed_checksum in CHECKSUM_TYPE_MAP:
+                            hashed_index_path = _fetch_file_checksum(path, index, allowed_checksum)
+                            hashed_index = PublishedMetadata.create_from_file(
+                                publication=self.parent.publication,
+                                file=File(open(path, "rb")),
+                                relative_path=hashed_index_path,
+                            )
+                            hashed_index.save()
+            # Done generating
+
             self.parent.add_metadata(package_index)
             self.parent.add_metadata(gz_package_index)
 
@@ -339,6 +358,7 @@ class _ReleaseHelper:
         self.release["Components"] = ""  # Will be set later
         if release.description != NULL_VALUE:
             self.release["Description"] = release.description
+        self.release["Acquire-By-Hash"] = "yes" if APT_BY_HASH else "no"
 
         for checksum_type, deb_field in CHECKSUM_TYPE_MAP.items():
             if checksum_type in settings.ALLOWED_CONTENT_CHECKSUMS:
@@ -413,3 +433,10 @@ def _zip_file(file_path):
         with GzipFile(gz_file_path, "wb") as f_out:
             shutil.copyfileobj(f_in, f_out)
     return gz_file_path
+
+
+def _fetch_file_checksum(file_path, index, allowed_checksum):
+    h = getattr(index.contentartifact_set.first().artifact, allowed_checksum)
+    checksum_type = CHECKSUM_TYPE_MAP[allowed_checksum]
+    hashed_path = Path(file_path).parents[0] / "by-hash" / checksum_type / h
+    return hashed_path
