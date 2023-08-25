@@ -3,10 +3,6 @@ import os
 import shutil
 from contextlib import suppress
 from pathlib import Path
-<<<<<<< HEAD
-=======
-import hashlib
->>>>>>> 2c118f1 (Generating checksum named metadata files for AptByHash (squashed))
 
 from datetime import datetime, timezone
 from debian import deb822
@@ -275,7 +271,6 @@ class _ComponentHelper:
                 content_artifact=package.contentartifact_set.get(),
             )
             published_artifact.save()
-
         package_serializer = Package822Serializer(package, context={"request": None})
 
         try:
