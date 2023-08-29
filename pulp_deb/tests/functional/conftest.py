@@ -19,7 +19,9 @@ from pulpcore.client.pulp_deb import (
     ContentReleasesApi,
     ContentReleaseComponentsApi,
     ContentReleaseFilesApi,
+    Copy,
     DebAptPublication,
+    DebCopyApi,
     DebVerbatimPublication,
     DistributionsAptApi,
     PublicationsAptApi,
@@ -84,6 +86,12 @@ def apt_publication_api(apt_client):
 def apt_verbatim_publication_api(apt_client):
     """Fixture for Verbatim publication API."""
     return PublicationsVerbatimApi(apt_client)
+
+
+@pytest.fixture(scope="session")
+def apt_copy_api(apt_client):
+    """Fixture for APT copy api."""
+    return DebCopyApi(apt_client)
 
 
 @pytest.fixture(scope="session")
@@ -451,6 +459,29 @@ def deb_sync_repository(apt_repository_api, monitor_task):
         return monitor_task(sync_response.task)
 
     return _deb_sync_repository
+
+
+@pytest.fixture(scope="class")
+def deb_copy_content(apt_copy_api, monitor_task):
+    """Fixture that copies deb content from a source repository version to a target repository."""
+
+    def _deb_copy_content(source_repo_version, dest_repo, content=None, structured=True):
+        """Copy deb content from a source repository version to a target repository.
+
+        :param source_repo_version: The repository version href from where the content is copied.
+        :dest_repo: The repository href where the content should be copied to.
+        :content: List of package hrefs that should be copied from the source. Default: None
+        :structured: Whether or not the content should be structured copied. Default: True
+        :returns: The task of the copy operation.
+        """
+        config = {"source_repo_version": source_repo_version, "dest_repo": dest_repo}
+        if content is not None:
+            config["content"] = content
+        data = Copy(config=[config], structured=structured)
+        response = apt_copy_api.copy_content(data)
+        return monitor_task(response.task)
+
+    return _deb_copy_content
 
 
 @pytest.fixture(scope="session")

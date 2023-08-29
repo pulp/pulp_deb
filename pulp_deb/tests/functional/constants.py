@@ -73,6 +73,40 @@ DEB_FULL_FIXTURE_SUMMARY = _clean_dict(
     }
 )
 
+DEB_ADVANCED_COPY_FIXTURE_SUMMARY = _clean_dict(
+    {
+        DEB_RELEASE_NAME: 2,
+        # FIXME: this value needs to be adapted once the copy task is refactored.
+        # see: https://github.com/pulp/pulp_deb/issues/870
+        DEB_RELEASE_ARCHITECTURE_NAME: 3,
+        DEB_RELEASE_COMPONENT_NAME: 2,
+        DEB_RELEASE_FILE_NAME: 0,
+        DEB_PACKAGE_INDEX_NAME: 0,
+        DEB_PACKAGE_RELEASE_COMPONENT_NAME: 2,
+        DEB_INSTALLER_FILE_INDEX_NAME: 0,
+        DEB_PACKAGE_NAME: 1,
+        DEB_INSTALLER_PACKAGE_NAME: 0,
+        DEB_GENERIC_CONTENT_NAME: 0,
+    }
+)
+
+DEB_FULL_ADVANCED_COPY_FIXTURE_SUMMARY = _clean_dict(
+    {
+        DEB_RELEASE_NAME: 2,
+        # FIXME: this value needs to be adapted once the copy task is refactored.
+        # see: https://github.com/pulp/pulp_deb/issues/870
+        DEB_RELEASE_ARCHITECTURE_NAME: 3,
+        DEB_RELEASE_COMPONENT_NAME: 3,
+        DEB_RELEASE_FILE_NAME: 0,
+        DEB_PACKAGE_INDEX_NAME: 0,
+        DEB_PACKAGE_RELEASE_COMPONENT_NAME: 7,
+        DEB_INSTALLER_FILE_INDEX_NAME: 0,
+        DEB_PACKAGE_NAME: 4,
+        DEB_INSTALLER_PACKAGE_NAME: 0,
+        DEB_GENERIC_CONTENT_NAME: 0,
+    }
+)
+
 DEB_FIXTURE_PACKAGE_COUNT = DEB_FIXTURE_SUMMARY.get(DEB_PACKAGE_NAME, 0)
 
 DEB_REPORT_CODE_SKIP_RELEASE = "sync.release_file.was_skipped"
