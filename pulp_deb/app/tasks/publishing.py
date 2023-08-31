@@ -271,7 +271,6 @@ class _ComponentHelper:
                 content_artifact=package.contentartifact_set.get(),
             )
             published_artifact.save()
-
         package_serializer = Package822Serializer(package, context={"request": None})
 
         try:
@@ -317,7 +316,6 @@ class _ComponentHelper:
                                 relative_path=hashed_index_path,
                             )
                             hashed_index.save()
-            # Done generating
 
             self.parent.add_metadata(package_index)
             self.parent.add_metadata(gz_package_index)
