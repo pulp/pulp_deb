@@ -17,6 +17,8 @@ The most important places relating to this project:
 * The `pulp_deb issue tracker`_.
 * The `pulp_deb source repository`_.
 * The `pulp_deb python package`_.
+* The `pulp-cli-deb issue tracker`_.
+* The `pulp-cli-deb python package`_.
 * The `pulp-deb-client package`_ (contains API bindings for Python).
 * The `pulp_deb_client Ruby Gem`_ (contains API bindings for Ruby).
 
@@ -29,7 +31,6 @@ Table of Contents
 
    installation
    feature_overview
-   quickstart
    workflows
    rest_api
    bindings

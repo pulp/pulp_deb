@@ -1,16 +1,15 @@
 #!/usr/bin/env bash
 set -e
 
-export BASE_ADDR=${BASE_ADDR:-http://localhost:24817}
-export CONTENT_ADDR=${CONTENT_ADDR:-http://localhost:24816/pulp/content}
+export PULP_URL=${PULP_URL:-http://localhost:24817}
 
 # Poll a Pulp task until it is finished.
 wait_until_task_finished() {
     echo "Polling the task until it has reached a final state."
-    local task_url=$1
+    local task_url=${1}
     while true
     do
-        local response=$(http $task_url)
+        local response=$(http ${task_url})
         local state=$(echo ${response} | jq -r .state)
         case ${state} in
             failed|canceled)
@@ -18,7 +17,7 @@ wait_until_task_finished() {
                 exit 1
                 ;;
             completed)
-                echo "$task_url complete."
+                echo "${task_url} complete."
                 break
                 ;;
             *)

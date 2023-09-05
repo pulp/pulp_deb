@@ -5,13 +5,13 @@
 .. _pulpcore documentation:
    https://docs.pulpproject.org/pulpcore/
 .. _pulpcore configuration documentation:
-   https://docs.pulpproject.org/pulpcore/installation/configuration.html
+   https://docs.pulpproject.org/pulpcore/configuration/index.html
 .. _pulpcore installation options:
    https://docs.pulpproject.org/pulpcore/installation/index.html
 .. _pulpcore plugin API deprecation policy:
    https://docs.pulpproject.org/pulpcore/plugins/plugin-writer/concepts/index.html#plugin-api-stability-and-deprecation-policy
 .. _pulpcore settings documentation:
-   https://docs.pulpproject.org/pulpcore/settings.html#pulp-settings
+   https://docs.pulpproject.org/pulpcore/configuration/settings.html#pulp-settings
 .. _pulpcore import-export docs:
    https://docs.pulpproject.org/pulpcore/workflows/import-export.html
 .. _pulpcore metadata signing docs:
@@ -67,7 +67,9 @@
 .. _pulp_deb GitHub actions pipelines:
    https://github.com/pulp/pulp_deb/actions
 .. _httpie:
-   https://httpie.org/doc
+   https://httpie.io/
+.. _jq:
+   https://jqlang.github.io/jq/
 .. _nginx.org:
    https://nginx.org/en/linux_packages.html#Debian
 .. _pulp-cli-deb issue tracker:
@@ -78,3 +80,13 @@
    https://pypi.org/project/pulp-cli/
 .. _pulp-cli documentation:
    https://docs.pulpproject.org/pulp_cli/
+.. _import export issue:
+   https://github.com/pulp/pulp_deb/issues/872
+.. _translation file issue:
+   https://github.com/pulp/pulp_deb/issues/408
+.. _dependency solving issue:
+   https://github.com/pulp/pulp_deb/issues/386
+.. _source package PR:
+   https://github.com/pulp/pulp_deb/pull/295
+.. _multi tenancy feature request:
+   https://github.com/pulp/pulp_deb/issues/860
