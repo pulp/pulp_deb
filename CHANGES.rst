@@ -13,6 +13,90 @@ Changelog
 
 .. towncrier release notes start
 
+3.0.0 (2023-09-05)
+==================
+
+Features
+--------
+
+- Added ``version``, ``origin``, ``label``, and ``description`` fields to Releases.
+  These fields can be set when creating new Releases via the API.
+  Going forward, they will also be synced from upstream release files if present.
+  `#449 <https://github.com/pulp/pulp_deb/issues/449>`_
+- Specify and remember the Signing Services we want to use for each Repo / Release.
+  `#641 <https://github.com/pulp/pulp_deb/issues/641>`_
+- Added API filters to limit results by related pulp_deb content types.
+  `#646 <https://github.com/pulp/pulp_deb/issues/646>`_
+- Added the ``publish_upstream_release_fields`` field to the repository model.
+  To avoid a breaking change in publication behaviour, existing repositories are populated with the setting set to ``False``, while any newly created repostiroies will default to ``True``.
+  Whatever the value on the repository, it can be overriden when creating a new publication.
+  `#793 <https://github.com/pulp/pulp_deb/issues/793>`_
+
+
+Bugfixes
+--------
+
+- Fixed KeyError during publish if package has architecture that's not supported in the Packages file.
+  Instead, a warning message will be logged.
+  `#777 <https://github.com/pulp/pulp_deb/issues/777>`_
+- Fixed an async error preventing synchronization with ``sync_installer`` set to ``True``.
+  `#797 <https://github.com/pulp/pulp_deb/issues/797>`_
+- Fixed content creating code triggered in rare edge cases when unapplying DB migration 0021.
+  `#806 <https://github.com/pulp/pulp_deb/issues/806>`_
+- Fixed a bug where structured package upload was only working as intended for the first package uploaded to each repository.
+  Also added logging and ensured structure content is added to the creating tasks ``created_resources`` list.
+  `#807 <https://github.com/pulp/pulp_deb/issues/807>`_
+
+
+Improved Documentation
+----------------------
+
+- Added ``pulp-cli-deb`` installation instructions.
+  `#598 <https://github.com/pulp/pulp_deb/issues/598>`_
+- Replaced references to the Pulp Ansible installer with references to the Pulp OCI images.
+  `#779 <https://github.com/pulp/pulp_deb/issues/779>`_
+- Added workflow documentation for creating and using signing services.
+  `#867 <https://github.com/pulp/pulp_deb/issues/867>`_
+- Completely reworked the "Feature Overview" and "Workflows" docs with an emphasise on Pulp CLI and structured content.
+  `#886 <https://github.com/pulp/pulp_deb/issues/886>`_
+
+
+Removals
+--------
+
+- Since release file fields including "Label" and "Version", are now synced from upstream repositories, we have dropped the PUBLISH_RELEASE_FILE_LABEL and PUBLISH_RELEASE_FILE_VERSION settings.
+  This removes the ability to publish Pulp internal "Label" and "Version" values that never made much sense, and had been disabled by default since at least pulp_deb 2.18.0.
+  `#449 <https://github.com/pulp/pulp_deb/issues/449>`_
+- The codename and suite fields are removed from the ReleaseComponent and ReleaseArchitecture models and all associated filters and viewsets.
+  `#599 <https://github.com/pulp/pulp_deb/issues/599>`_
+- The ``pulp/api/v3/publications/deb/apt/`` API endpoint, used to require users to explicitly set at least one of ``simple`` or ``structured`` to ``True`` on the POST.
+  The new behavior is to default to ``structured=True`` and ``simple=False``.
+  `#858 <https://github.com/pulp/pulp_deb/issues/858>`_
+
+
+Misc
+----
+
+- This change includes a large DB migration to drop 'codename' and 'suite' from the uniqueness constraints of all structure content.
+  The migration will merge any resulting collisions and alter all records with a foreign key relation to the so eliminated content to point at the merge result instead.
+  `#599 <https://github.com/pulp/pulp_deb/issues/599>`_
+- Added test cases for advanced copy task.
+  `#758 <https://github.com/pulp/pulp_deb/issues/758>`_
+- Add tests for content filters, and make filters return empty list if Content not in RepoVersion instead of raising ValidationError.
+  `#780 <https://github.com/pulp/pulp_deb/issues/780>`_
+- Added better scoping for the pytest fixtures.
+  `#790 <https://github.com/pulp/pulp_deb/issues/790>`_
+- Removed the ``pulp-smash`` test dependency.
+  `#796 <https://github.com/pulp/pulp_deb/issues/796>`_
+- Converted the publish tests to use the pytest framework.
+  `#828 <https://github.com/pulp/pulp_deb/issues/828>`_
+- Converted the import/export tests to use the pytest framework.
+  `#846 <https://github.com/pulp/pulp_deb/issues/846>`_
+
+
+----
+
+
 2.21.2 (2023-09-05)
 ===================
 
