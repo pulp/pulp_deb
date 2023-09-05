@@ -13,6 +13,26 @@ Changelog
 
 .. towncrier release notes start
 
+2.20.4 (2023-09-05)
+===================
+
+Bugfixes
+--------
+
+- Improve the pulp_deb "No valid Release file found" error message for gpg validation fail.
+  `#399 <https://github.com/pulp/pulp_deb/issues/399>`_
+
+
+Misc
+----
+
+- Fixed the deb/copy/ API path for scenarios that modify the API root.
+  `#879 <https://github.com/pulp/pulp_deb/issues/879>`_
+
+
+----
+
+
 2.20.3 (2023-07-20)
 ===================
 
