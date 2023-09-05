@@ -1,2 +1,0 @@
-Since release file fields including "Label" and "Version", are now synced from upstream repositories, we have dropped the PUBLISH_RELEASE_FILE_LABEL and PUBLISH_RELEASE_FILE_VERSION settings.
-This removes the ability to publish Pulp internal "Label" and "Version" values that never made much sense, and had been disabled by default since at least pulp_deb 2.18.0.

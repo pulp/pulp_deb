@@ -1,2 +1,0 @@
-The ``pulp/api/v3/publications/deb/apt/`` API endpoint, used to require users to explicitly set at least one of ``simple`` or ``structured`` to ``True`` on the POST.
-The new behavior is to default to ``structured=True`` and ``simple=False``.
