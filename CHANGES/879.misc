@@ -1,1 +1,0 @@
-Fixed the deb/copy/ API path for scenarios that modify the API root.

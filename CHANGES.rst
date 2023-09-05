@@ -13,6 +13,26 @@ Changelog
 
 .. towncrier release notes start
 
+2.21.2 (2023-09-05)
+===================
+
+Bugfixes
+--------
+
+- Fixed advanced copy due to pulpcore deprecations.
+  `#869 <https://github.com/pulp/pulp_deb/issues/869>`_
+
+
+Misc
+----
+
+- Fixed the deb/copy/ API path for scenarios that modify the API root.
+  `#879 <https://github.com/pulp/pulp_deb/issues/879>`_
+
+
+----
+
+
 2.21.1 (2023-07-20)
 ===================
 
