@@ -10,7 +10,7 @@ with open("README.md") as description:
 
 setup(
     name="pulp-deb",
-    version="2.20.4.dev",
+    version="2.20.4",
     description="pulp-deb plugin for the Pulp Project",
     long_description=long_description,
     long_description_content_type="text/markdown",
