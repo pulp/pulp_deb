@@ -49,8 +49,6 @@ def test_copy_all(
     assert DEB_FULL_ADVANCED_COPY_FIXTURE_SUMMARY == deb_get_added_content_summary(target_repo)
 
 
-# FIXME: Can be enabled once the following is fixed: https://github.com/pulp/pulp_deb/issues/870
-@pytest.mark.skip("Skip - due to faulty behaviour in the copy task.")
 @pytest.mark.parallel
 def test_copy_empty_content(
     deb_init_and_sync,

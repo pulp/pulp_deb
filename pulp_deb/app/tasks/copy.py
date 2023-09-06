@@ -1,7 +1,7 @@
 from django.db import transaction
 from django.db.models import Q
 
-from pulpcore.plugin.models import Content, RepositoryVersion
+from pulpcore.plugin.models import RepositoryVersion
 
 from pulp_deb.app.models import (
     AptRepository,
@@ -17,7 +17,7 @@ from gettext import gettext as _
 log = logging.getLogger(__name__)
 
 
-def find_structured_publish_content(content, src_repo_version):
+def find_structured_publish_content(content, source_repo_version):
     """
     Finds the content for structured publish from packages to be copied and returns it all together.
 
@@ -27,43 +27,42 @@ def find_structured_publish_content(content, src_repo_version):
 
     Returns: Queryset of Content objects that extends intial set of content for structured publish
     """
-    # Content in the source repository version
-    package_release_component_ids = src_repo_version.content.filter(
-        pulp_type=PackageReleaseComponent.get_pulp_type()
+    # Packages:
+    package_content_qs = content.filter(pulp_type=Package.get_pulp_type()).only("pk")
+    package_qs = Package.objects.filter(pk__in=package_content_qs)
+
+    # PackageReleaseComponents:
+    package_prc_qs = PackageReleaseComponent.objects.filter(package__in=package_qs.only("pk")).only(
+        "pk"
+    )
+    prc_content_qs = source_repo_version.content.filter(pk__in=package_prc_qs)
+    prc_qs = PackageReleaseComponent.objects.filter(pk__in=prc_content_qs.only("pk"))
+
+    # ReleaseComponents:
+    release_component_ids = set()
+    distributions = set()
+    for prc in prc_qs.select_related("release_component").iterator():
+        release_component_ids.add(prc.release_component.pk)
+        distributions.add(prc.release_component.distribution)
+
+    release_component_content_qs = source_repo_version.content.filter(
+        pk__in=release_component_ids
     ).only("pk")
-    architecture_ids = src_repo_version.content.filter(
-        pulp_type=ReleaseArchitecture.get_pulp_type()
+
+    # ReleaseArchitectures:
+    architectures = list(package_qs.values_list("architecture", flat=True).distinct())
+    architecture_qs = ReleaseArchitecture.objects.filter(
+        architecture__in=architectures, distribution__in=distributions
     ).only("pk")
-    package_release_components = PackageReleaseComponent.objects.filter(
-        pk__in=package_release_component_ids
+
+    # Releases:
+    release_qs = Release.objects.filter(distribution__in=distributions).only("pk")
+
+    combined_content_qs = content.only("pk").union(
+        prc_qs.only("pk"), release_component_content_qs, architecture_qs, release_qs
     )
 
-    structured_publish_content = set()
-
-    # Packages to be copied
-    packages = Package.objects.filter(pk__in=content)
-    structured_publish_content.update(packages.values_list("pk", flat=True))
-
-    if len(content) != len(packages):
-        log.warning(_("Additional data with packages is provided. Removing from the content list."))
-
-    # List of all architectures
-    architectures = ReleaseArchitecture.objects.filter(pk__in=architecture_ids).values_list(
-        "pk", flat=True
-    )
-    structured_publish_content.update(architectures)
-
-    # Package release components, release components, release to be copied based on packages
-    for pckg in package_release_components.iterator():
-        if pckg.package in packages:
-            structured_publish_content.update([pckg.pk, pckg.release_component.pk])
-            release = Release.objects.filter(
-                pk__in=src_repo_version.content, distribution=pckg.release_component.distribution
-            ).first()
-            if release:
-                structured_publish_content.update([release.pk])
-
-    return Content.objects.filter(pk__in=structured_publish_content)
+    return source_repo_version.content.filter(pk__in=combined_content_qs)
 
 
 @transaction.atomic
