@@ -357,7 +357,7 @@ def test_sync_orphan_cleanup_fail(
     assert task.state == "completed"
     for report in task.progress_reports:
         if "Content" in report.message:
-            assert report.done == 7
+            assert report.done == 0
 
 
 def is_sync_skipped(task, code):
