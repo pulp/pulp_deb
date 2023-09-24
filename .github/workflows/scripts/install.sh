@@ -67,6 +67,7 @@ services:
 VARSYAML
 
 cat >> vars/main.yaml << VARSYAML
+pulp_env: {}
 pulp_settings: {"allowed_content_checksums": ["md5", "sha1", "sha256", "sha512"], "allowed_export_paths": ["/tmp"], "allowed_import_paths": ["/tmp"]}
 pulp_scheme: https
 
@@ -98,6 +99,7 @@ if [ "$TEST" = "s3" ]; then
 minio_access_key: "'$MINIO_ACCESS_KEY'"\
 minio_secret_key: "'$MINIO_SECRET_KEY'"\
 pulp_scenario_settings: null\
+pulp_scenario_env: {}\
 ' vars/main.yaml
   export PULP_API_ROOT="/rerouted/djnd/"
 fi
@@ -117,6 +119,7 @@ if [ "$TEST" = "azure" ]; then
     command: "azurite-blob --blobHost 0.0.0.0 --cert /etc/pulp/azcert.pem --key /etc/pulp/azkey.pem"' vars/main.yaml
   sed -i -e '$a azure_test: true\
 pulp_scenario_settings: null\
+pulp_scenario_env: {}\
 ' vars/main.yaml
 fi
 
