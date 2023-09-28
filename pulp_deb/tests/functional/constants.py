@@ -76,9 +76,7 @@ DEB_FULL_FIXTURE_SUMMARY = _clean_dict(
 DEB_ADVANCED_COPY_FIXTURE_SUMMARY = _clean_dict(
     {
         DEB_RELEASE_NAME: 2,
-        # FIXME: this value needs to be adapted once the copy task is refactored.
-        # see: https://github.com/pulp/pulp_deb/issues/870
-        DEB_RELEASE_ARCHITECTURE_NAME: 3,
+        DEB_RELEASE_ARCHITECTURE_NAME: 2,
         DEB_RELEASE_COMPONENT_NAME: 2,
         DEB_RELEASE_FILE_NAME: 0,
         DEB_PACKAGE_INDEX_NAME: 0,
@@ -93,12 +91,10 @@ DEB_ADVANCED_COPY_FIXTURE_SUMMARY = _clean_dict(
 DEB_FULL_ADVANCED_COPY_FIXTURE_SUMMARY = _clean_dict(
     {
         DEB_RELEASE_NAME: 2,
-        # FIXME: this value needs to be adapted once the copy task is refactored.
-        # see: https://github.com/pulp/pulp_deb/issues/870
         DEB_RELEASE_ARCHITECTURE_NAME: 3,
         DEB_RELEASE_COMPONENT_NAME: 3,
-        DEB_RELEASE_FILE_NAME: 0,
-        DEB_PACKAGE_INDEX_NAME: 0,
+        DEB_RELEASE_FILE_NAME: 2,
+        DEB_PACKAGE_INDEX_NAME: 5,
         DEB_PACKAGE_RELEASE_COMPONENT_NAME: 7,
         DEB_INSTALLER_FILE_INDEX_NAME: 0,
         DEB_PACKAGE_NAME: 4,

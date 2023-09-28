@@ -1,7 +1,7 @@
 from django.db import transaction
 from django.db.models import Q
 
-from pulpcore.plugin.models import Content, RepositoryVersion
+from pulpcore.plugin.models import RepositoryVersion
 
 from pulp_deb.app.models import (
     AptRepository,
@@ -17,7 +17,7 @@ from gettext import gettext as _
 log = logging.getLogger(__name__)
 
 
-def find_structured_publish_content(content, src_repo_version):
+def find_structured_publish_content(content, source_repo_version):
     """
     Finds the content for structured publish from packages to be copied and returns it all together.
 
@@ -27,43 +27,42 @@ def find_structured_publish_content(content, src_repo_version):
 
     Returns: Queryset of Content objects that extends intial set of content for structured publish
     """
-    # Content in the source repository version
-    package_release_component_ids = src_repo_version.content.filter(
-        pulp_type=PackageReleaseComponent.get_pulp_type()
+    # Packages:
+    package_content_qs = content.filter(pulp_type=Package.get_pulp_type()).only("pk")
+    package_qs = Package.objects.filter(pk__in=package_content_qs)
+
+    # PackageReleaseComponents:
+    package_prc_qs = PackageReleaseComponent.objects.filter(package__in=package_qs.only("pk")).only(
+        "pk"
+    )
+    prc_content_qs = source_repo_version.content.filter(pk__in=package_prc_qs)
+    prc_qs = PackageReleaseComponent.objects.filter(pk__in=prc_content_qs.only("pk"))
+
+    # ReleaseComponents:
+    release_component_ids = set()
+    distributions = set()
+    for prc in prc_qs.select_related("release_component").iterator():
+        release_component_ids.add(prc.release_component.pk)
+        distributions.add(prc.release_component.distribution)
+
+    release_component_content_qs = source_repo_version.content.filter(
+        pk__in=release_component_ids
     ).only("pk")
-    architecture_ids = src_repo_version.content.filter(
-        pulp_type=ReleaseArchitecture.get_pulp_type()
+
+    # ReleaseArchitectures:
+    architectures = list(package_qs.values_list("architecture", flat=True).distinct())
+    architecture_qs = ReleaseArchitecture.objects.filter(
+        architecture__in=architectures, distribution__in=distributions
     ).only("pk")
-    package_release_components = PackageReleaseComponent.objects.filter(
-        pk__in=package_release_component_ids
+
+    # Releases:
+    release_qs = Release.objects.filter(distribution__in=distributions).only("pk")
+
+    combined_content_qs = content.only("pk").union(
+        prc_qs.only("pk"), release_component_content_qs, architecture_qs, release_qs
     )
 
-    structured_publish_content = set()
-
-    # Packages to be copied
-    packages = Package.objects.filter(pk__in=content)
-    structured_publish_content.update(packages.values_list("pk", flat=True))
-
-    if len(content) != len(packages):
-        log.warning(_("Additional data with packages is provided. Removing from the content list."))
-
-    # List of all architectures
-    architectures = ReleaseArchitecture.objects.filter(pk__in=architecture_ids).values_list(
-        "pk", flat=True
-    )
-    structured_publish_content.update(architectures)
-
-    # Package release components, release components, release to be copied based on packages
-    for pckg in package_release_components.iterator():
-        if pckg.package in packages:
-            structured_publish_content.update([pckg.pk, pckg.release_component.pk])
-            release = Release.objects.filter(
-                pk__in=src_repo_version.content, distribution=pckg.release_component.distribution
-            ).first()
-            if release:
-                structured_publish_content.update([release.pk])
-
-    return Content.objects.filter(pk__in=structured_publish_content)
+    return source_repo_version.content.filter(pk__in=combined_content_qs)
 
 
 @transaction.atomic
@@ -82,12 +81,11 @@ def copy_content(config, structured, dependency_solving):
     def process_entry(entry):
         source_repo_version = RepositoryVersion.objects.get(pk=entry["source_repo_version"])
         dest_repo = AptRepository.objects.get(pk=entry["dest_repo"])
-
-        dest_version_provided = bool(entry.get("dest_base_version"))
-        if dest_version_provided:
-            dest_repo_version = RepositoryVersion.objects.get(pk=entry["dest_base_version"])
-        else:
-            dest_repo_version = dest_repo.latest_version()
+        dest_base_version = (
+            RepositoryVersion.objects.get(pk=entry["dest_base_version"])
+            if bool(entry.get("dest_base_version"))
+            else None
+        )
 
         if entry.get("content") is not None:
             content_filter = Q(pk__in=entry.get("content"))
@@ -98,33 +96,25 @@ def copy_content(config, structured, dependency_solving):
 
         return (
             source_repo_version,
-            dest_repo_version,
             dest_repo,
+            dest_base_version,
             content_filter,
-            dest_version_provided,
         )
 
-    if not dependency_solving:
-        # No Dependency Solving Branch
-        # ============================
-        for entry in config:
-            (
-                source_repo_version,
-                dest_repo_version,
-                dest_repo,
-                content_filter,
-                dest_version_provided,
-            ) = process_entry(entry)
-
-            content_to_copy = source_repo_version.content.filter(content_filter)
-            if structured:
-                content_to_copy = find_structured_publish_content(
-                    content_to_copy, source_repo_version
-                )
-
-            base_version = dest_repo_version if dest_version_provided else None
-
-            with dest_repo.new_version(base_version=base_version) as new_version:
-                new_version.add_content(content_to_copy)
-    else:
+    if dependency_solving:
         raise NotImplementedError("Advanced copy with dependency solving is not yet implemented.")
+
+    for entry in config:
+        (
+            source_repo_version,
+            dest_repo,
+            dest_base_version,
+            content_filter,
+        ) = process_entry(entry)
+
+        content_to_copy = source_repo_version.content.filter(content_filter)
+        if structured:
+            content_to_copy = find_structured_publish_content(content_to_copy, source_repo_version)
+
+        with dest_repo.new_version(base_version=dest_base_version) as new_version:
+            new_version.add_content(content_to_copy)
