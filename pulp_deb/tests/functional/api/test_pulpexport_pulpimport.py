@@ -171,7 +171,11 @@ def deb_perform_import(
             if "toc" not in body:
                 body["toc"] = filenames[0]
         else:
-            filenames = [f for f in list(an_export.output_file_info.keys()) if f.endswith("tar.gz")]
+            filenames = [
+                f
+                for f in list(an_export.output_file_info.keys())
+                if f.endswith("tar") or f.endswith(".tar.gz")
+            ]
             if "path" not in body:
                 body["path"] = filenames[0]
 
