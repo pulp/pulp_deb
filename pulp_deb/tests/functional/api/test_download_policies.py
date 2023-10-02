@@ -48,7 +48,7 @@ def test_lazy_sync_immediate_download_test(
 ):
     """Test whether a immediate sync after a lazy one has all artifacts available."""
     # Cleanup artifacts
-    NON_LAZY_ARTIFACT_COUNT = 14
+    NON_LAZY_ARTIFACT_COUNT = 17
 
     # Create repository and remote and sync them
     repo, remote = deb_init_and_sync(remote_args=remote_args)
