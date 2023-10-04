@@ -176,12 +176,6 @@ def synchronize(remote_pk, repository_pk, mirror, optimize):
     repository = AptRepository.objects.get(pk=repository_pk)
     previous_repo_version = repository.latest_version()
 
-    # TODO: The optimize feature currently does not work in combination with mirror=True! We fall
-    # back to full sync for now, until a proper fix is ready:
-    if mirror:
-        log.info(_("Falling back to optimize=False behaviour since mirror=True is set!"))
-        optimize = False
-
     if not remote.url:
         raise ValueError(_("A remote must have a url specified to synchronize."))
 
@@ -546,7 +540,6 @@ class DebFirstStage(Stage):
         self.remote = remote
         self.optimize = optimize
         self.previous_repo_version = previous_repo_version
-        self.previous_sync_info = defaultdict(dict, previous_repo_version.info)
         self.sync_info = defaultdict()
         self.sync_info["remote_options"] = self._gen_remote_options()
         self.sync_info["sync_options"] = {
@@ -554,11 +547,23 @@ class DebFirstStage(Stage):
             "mirror": mirror,
         }
         self.parsed_url = urlparse(remote.url)
-        self.sync_options_unchanged = (
-            self.previous_sync_info["remote_options"] == self.sync_info["remote_options"]
-            and self.previous_sync_info["sync_options"]["mirror"]
-            == self.sync_info["sync_options"]["mirror"]
-        )
+        if self.optimize:
+            previous_sync_info = defaultdict(dict, self.previous_repo_version.info)
+            if not previous_sync_info:
+                log.info(_("Setting optimize=False since there is no previous_sync_info."))
+                self.optimize = False
+            elif not previous_sync_info["remote_options"] == self.sync_info["remote_options"]:
+                log.info(_("Setting optimize=False since the remote options have changed."))
+                self.optimize = False
+            elif mirror and not previous_sync_info["sync_options"]["mirror"]:
+                log.info(_("Setting optimize=False since this sync switches to mirror=True."))
+                self.optimize = False
+            # TODO: https://github.com/pulp/pulp_deb/issues/631
+            if mirror:
+                log.info(_("Falling back to optimize=False behaviour since mirror=True is set!"))
+                log.info(_("See https://github.com/pulp/pulp_deb/issues/631 for more information."))
+                self.optimize = False
+                self.sync_info["sync_options"]["optimize"] = False
 
     async def run(self):
         """
@@ -618,7 +623,7 @@ class DebFirstStage(Stage):
         release_file = await self._create_unit(release_file_dc)
         if release_file is None:
             return
-        if self.optimize and self.sync_options_unchanged:
+        if self.optimize:
             previous_release_file = await _get_previous_release_file(
                 self.previous_repo_version, distribution
             )
@@ -899,7 +904,7 @@ class DebFirstStage(Stage):
             else:
                 raise NoPackageIndexFile(relative_dir=package_index_dir)
 
-        if self.optimize and self.sync_options_unchanged:
+        if self.optimize:
             previous_package_index = await _get_previous_package_index(
                 self.previous_repo_version, relative_path
             )
