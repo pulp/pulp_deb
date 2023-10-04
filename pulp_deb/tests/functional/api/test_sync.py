@@ -303,6 +303,27 @@ def test_sync_optimize_skip_unchanged_package_index(
     assert apt_release_component_api.list(package=f"{package_href},{repo.pulp_href}").count == 1
 
 
+@pytest.mark.parallel
+def test_sync_optimize_switch_to_no_mirror(
+    deb_init_and_sync,
+):
+    """
+    Test that when syncing a repo with mirror=True, and then re-syncing that repo with
+    mirror=False, optimize=True, the releases will be skipped by optimize mode.
+    """
+
+    sync_args = {"mirror": True}
+    repo, remote, task = deb_init_and_sync(sync_args=sync_args, return_task=True)
+    assert repo.latest_version_href.endswith("/1/")
+    assert not is_sync_skipped(task, DEB_REPORT_CODE_SKIP_RELEASE)
+    sync_args = {"optimize": True, "mirror": False}
+    repo, _, task = deb_init_and_sync(
+        repository=repo, remote=remote, sync_args=sync_args, return_task=True
+    )
+    assert repo.latest_version_href.endswith("/1/")
+    assert is_sync_skipped(task, DEB_REPORT_CODE_SKIP_RELEASE)
+
+
 def test_sync_orphan_cleanup_fail(
     deb_init_and_sync,
     orphans_cleanup_api_client,

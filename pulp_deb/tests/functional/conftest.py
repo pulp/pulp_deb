@@ -447,14 +447,18 @@ def deb_sync_repository(apt_repository_api, monitor_task):
     and returns the monitored task.
     """
 
-    def _deb_sync_repository(remote, repo):
+    def _deb_sync_repository(remote, repo, mirror=False, optimize=True):
         """Sync a given remote and repository.
 
         :param remote: The remote where to sync from.
         :param repo: The repository that needs syncing.
+        :param mirror: Whether the sync should use mirror mode. Default False.
+        :param optimize: Whether the sync should use optimize mode. Default True.
         :returns: The task of the sync operation.
         """
-        repository_sync_data = AptRepositorySyncURL(remote=remote.pulp_href)
+        repository_sync_data = AptRepositorySyncURL(
+            remote=remote.pulp_href, mirror=mirror, optimize=optimize
+        )
         sync_response = apt_repository_api.sync(repo.pulp_href, repository_sync_data)
         return monitor_task(sync_response.task)
 
@@ -580,7 +584,13 @@ def deb_init_and_sync(
     """Initialize a new repository and remote and sync the content from the passed URL."""
 
     def _deb_init_and_sync(
-        repository=None, remote=None, url=None, remote_args={}, repo_args={}, return_task=False
+        repository=None,
+        remote=None,
+        url=None,
+        remote_args={},
+        repo_args={},
+        sync_args={},
+        return_task=False,
     ):
         """Initializes and syncs a repository and remote.
 
@@ -589,6 +599,7 @@ def deb_init_and_sync(
         :param url: The name of the data repository. Default: None -> /debian/.
         :param remote_args: Parameters for the remote creation. Default {}.
         :param repo_args: Parameters for the repository creation. Default {}.
+        :param sync_args: Parameters for the sync API call. Default {}.
         :param return_task: Whether to include the sync task to the return value. Default: False.
         :returns: A tuple containing the repository and remote and optionally the sync task.
         """
@@ -598,7 +609,7 @@ def deb_init_and_sync(
         if remote is None:
             remote = deb_remote_factory(url=url, **remote_args)
 
-        task = deb_sync_repository(remote, repository)
+        task = deb_sync_repository(remote, repository, **sync_args)
 
         repository = apt_repository_api.read(repository.pulp_href)
         return (repository, remote) if not return_task else (repository, remote, task)
