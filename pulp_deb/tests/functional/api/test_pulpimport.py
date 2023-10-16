@@ -153,7 +153,9 @@ class PulpImportTestBase(PulpTestCase):
             import_response = self.imports_api.create(importer.pulp_href, {"toc": filenames[0]})
         else:
             filenames = [
-                f for f in list(self.export.output_file_info.keys()) if f.endswith("tar.gz")
+                f
+                for f in list(self.export.output_file_info.keys())
+                if f.endswith("tar") or f.endswith("tar.gz")
             ]
             import_response = self.imports_api.create(importer.pulp_href, {"path": filenames[0]})
         task_group = monitor_task_group(import_response.task_group)
