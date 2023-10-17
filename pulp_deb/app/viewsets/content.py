@@ -4,6 +4,7 @@ from django_filters import Filter
 from pulpcore.plugin.models import Repository, RepositoryVersion
 from pulpcore.plugin.serializers.content import ValidationError
 from pulpcore.plugin.viewsets import (
+    NAME_FILTER_OPTIONS,
     ContentFilter,
     ContentViewSet,
     NamedModelViewSet,
@@ -180,26 +181,26 @@ class PackageFilter(ContentFilter):
 
     class Meta:
         model = models.Package
-        fields = [
-            "package",
-            "source",
-            "version",
-            "architecture",
-            "section",
-            "priority",
-            "origin",
-            "tag",
-            "essential",
-            "build_essential",
-            "installed_size",
-            "maintainer",
-            "original_maintainer",
-            "built_using",
-            "auto_built_package",
-            "multi_arch",
-            "sha256",
-            "relative_path",
-        ]
+        fields = {
+            "package": NAME_FILTER_OPTIONS,
+            "source": ["exact"],
+            "version": ["exact"],
+            "architecture": ["exact"],
+            "section": ["exact"],
+            "priority": ["exact"],
+            "origin": ["exact"],
+            "tag": ["exact"],
+            "essential": ["exact"],
+            "build_essential": ["exact"],
+            "installed_size": ["exact"],
+            "maintainer": ["exact"],
+            "original_maintainer": ["exact"],
+            "built_using": ["exact"],
+            "auto_built_package": ["exact"],
+            "multi_arch": ["exact"],
+            "sha256": ["exact"],
+            "relative_path": ["exact"],
+        }
 
 
 class PackageViewSet(SingleArtifactContentUploadViewSet):
