@@ -30,9 +30,14 @@ from pulp_deb.app.models import (
     ReleaseComponent,
     VerbatimPublication,
     AptReleaseSigningService,
+    SourcePackage,
+    SourcePackageReleaseComponent,
 )
 
-from pulp_deb.app.serializers import Package822Serializer
+from pulp_deb.app.serializers import (
+    Package822Serializer,
+    DscFile822Serializer,
+)
 
 from pulp_deb.app.constants import (
     NO_MD5_WARNING_MESSAGE,
@@ -145,6 +150,12 @@ def publish(
                     pk__in=repo_version.content.order_by("-pulp_created"),
                 ):
                     release_helper.components[component].add_package(package)
+
+                for source_package in SourcePackage.objects.filter(
+                    pk__in=repo_version.content.order_by("-pulp_created"),
+                ):
+                    release_helper.components[component].add_source_package(source_package)
+
                 release_helper.finish()
 
             if structured:
@@ -230,6 +241,14 @@ def publish(
                             prc.package
                         )
 
+                    for drc in SourcePackageReleaseComponent.objects.filter(
+                        pk__in=repo_version.content.order_by("-pulp_created"),
+                        release_component__in=release_components,
+                    ):
+                        release_helper.components[
+                            drc.release_component.component
+                        ].add_source_package(drc.source_package)
+
                     release_helper.save_unsigned_metadata()
                     release_helpers.append(release_helper)
 
@@ -250,6 +269,7 @@ class _ComponentHelper:
         self.component = component
         self.plain_component = os.path.basename(component)
         self.package_index_files = {}
+        self.source_index_file_info = None
 
         for architecture in self.parent.architectures:
             package_index_path = os.path.join(
@@ -264,6 +284,19 @@ class _ComponentHelper:
                 open(package_index_path, "wb"),
                 package_index_path,
             )
+        # Source indicies file
+        source_index_path = os.path.join(
+            "dists",
+            self.parent.distribution.strip("/"),
+            self.plain_component,
+            "source",
+            "Sources",
+        )
+        os.makedirs(os.path.dirname(source_index_path), exist_ok=True)
+        self.source_index_file_info = (
+            open(source_index_path, "wb"),
+            source_index_path,
+        )
 
     def add_package(self, package):
         with suppress(IntegrityError):
@@ -288,6 +321,24 @@ class _ComponentHelper:
         else:
             self.package_index_files[package.architecture][0].write(b"\n")
 
+    # Publish DSC file and setup to create Sources Indices file
+    def add_source_package(self, source_package):
+        artifact_set = source_package.contentartifact_set.all()
+        for content_artifact in artifact_set:
+            published_artifact = PublishedArtifact(
+                relative_path=source_package.derived_path(
+                    os.path.basename(content_artifact.relative_path), self.component
+                ),
+                publication=self.parent.publication,
+                content_artifact=content_artifact,
+            )
+            published_artifact.save()
+        dsc_file_822_serializer = DscFile822Serializer(source_package, context={"request": None})
+        dsc_file_822_serializer.to822(self.component, paragraph=True).dump(
+            self.source_index_file_info[0]
+        )
+        self.source_index_file_info[0].write(b"\n")
+
     def finish(self):
         # Publish Packages files
         for package_index_file, package_index_path in self.package_index_files.values():
@@ -303,6 +354,21 @@ class _ComponentHelper:
             gz_package_index.save()
             self.parent.add_metadata(package_index)
             self.parent.add_metadata(gz_package_index)
+        # Publish Sources Indices file
+        if self.source_index_file_info is not None:
+            (source_index_file, source_index_path) = self.source_index_file_info
+            source_index_file.close()
+            gz_source_index_path = _zip_file(source_index_path)
+            source_index = PublishedMetadata.create_from_file(
+                publication=self.parent.publication, file=File(open(source_index_path, "rb"))
+            )
+            source_index.save()
+            gz_source_index = PublishedMetadata.create_from_file(
+                publication=self.parent.publication, file=File(open(gz_source_index_path, "rb"))
+            )
+            gz_source_index.save()
+            self.parent.add_metadata(source_index)
+            self.parent.add_metadata(gz_source_index)
 
 
 class _ReleaseHelper:

@@ -6,6 +6,7 @@ from .content.content import (
     GenericContent,
     InstallerPackage,
     Package,
+    SourcePackage,
 )
 
 from .signing_service import AptReleaseSigningService
@@ -18,9 +19,10 @@ from .content.structure_content import (
     ReleaseArchitecture,
     ReleaseComponent,
     PackageReleaseComponent,
+    SourcePackageReleaseComponent,
 )
 
-from .content.verbatim_metadata import ReleaseFile, PackageIndex, InstallerFileIndex
+from .content.verbatim_metadata import ReleaseFile, PackageIndex, InstallerFileIndex, SourceIndex
 
 from .publication import AptDistribution, AptPublication, VerbatimPublication
 

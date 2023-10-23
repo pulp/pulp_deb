@@ -16,7 +16,7 @@ from django.db import models
 
 from pulpcore.plugin.models import Content
 
-from pulp_deb.app.models import Package
+from pulp_deb.app.models import Package, SourcePackage
 
 
 BOOL_CHOICES = [(True, "yes"), (False, "no")]
@@ -101,3 +101,21 @@ class PackageReleaseComponent(Content):
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
         unique_together = (("package", "release_component"),)
+
+
+class SourcePackageReleaseComponent(Content):
+    """
+    The SourcePackageReleaseComponent.
+
+    This is the join table that decides, which Source Package (in which RepositoryVersions) belong
+    to which ReleaseComponents.
+    """
+
+    TYPE = "source_package_release_component"
+
+    source_package = models.ForeignKey(SourcePackage, on_delete=models.CASCADE)
+    release_component = models.ForeignKey(ReleaseComponent, on_delete=models.CASCADE)
+
+    class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
+        unique_together = (("source_package", "release_component"),)

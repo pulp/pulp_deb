@@ -324,6 +324,36 @@ class PackageIndexViewSet(ContentViewSet):
     filterset_class = PackageIndexFilter
 
 
+class SourceIndexFilter(ContentFilter):
+    """
+    FilterSet for SourceIndex.
+    """
+
+    class Meta:
+        model = models.SourceIndex
+        fields = ["component", "relative_path", "sha256"]
+
+
+class SourceIndexViewSet(ContentViewSet):
+    # The doc string is a top level element of the user facing REST API documentation:
+    """
+    A SourceIndex represents the source indices of a single component.
+
+    Associated artifacts: Exactly one 'Sources' file. May optionally include one or more of
+    'Sources.gz', 'Sources.xz', 'Release'. If included, the 'Release' file is a legacy
+    per-component-and-architecture Release file (with architecture always being 'source').
+
+    Note: The verbatim publisher will republish all associated artifacts, while the APT publisher
+    (both simple and structured mode) will generate any 'Sources' files it needs when creating the
+    publication. It does not make use of SourceIndex content.
+    """
+
+    endpoint_name = "source_indices"
+    queryset = models.SourceIndex.objects.all()
+    serializer_class = serializers.SourceIndexSerializer
+    filterset_class = SourceIndexFilter
+
+
 class InstallerFileIndexFilter(ContentFilter):
     """
     FilterSet for InstallerFileIndex.
@@ -487,3 +517,82 @@ class PackageReleaseComponentViewSet(ContentViewSet):
     queryset = models.PackageReleaseComponent.objects.all()
     serializer_class = serializers.PackageReleaseComponentSerializer
     filterset_class = PackageReleaseComponentFilter
+
+
+class SourcePackageFilter(ContentFilter):
+    """
+    FilterSet for Debian Source Packages.
+    """
+
+    class Meta:
+        model = models.SourcePackage
+        fields = [
+            "format",
+            "source",
+            "binary",
+            "architecture",
+            "version",
+            "maintainer",
+            "uploaders",
+            "homepage",
+            "vcs_browser",
+            "vcs_arch",
+            "vcs_bzr",
+            "vcs_cvs",
+            "vcs_darcs",
+            "vcs_git",
+            "vcs_hg",
+            "vcs_mtn",
+            "vcs_snv",
+            "testsuite",
+            "dgit",
+            "standards_version",
+            "build_depends",
+            "build_depends_indep",
+            "build_depends_arch",
+            "build_conflicts",
+            "build_conflicts_indep",
+            "build_conflicts_arch",
+            "package_list",
+        ]
+
+
+class SourcePackageViewSet(SingleArtifactContentUploadViewSet):
+    # The doc string is a top level element of the user facing REST API documentation:
+    """
+    A Debian Source Package file represents a '.dsc' file along with its associated
+    artifacts such as orig.tar.gz, debian.tar.gz...
+
+    Associated artifacts: Exactly one '.dsc' file.
+    """
+
+    endpoint_name = "source_packages"
+    queryset = models.SourcePackage.objects.prefetch_related("_artifacts")
+    serializer_class = serializers.SourcePackageSerializer
+    filterset_class = SourcePackageFilter
+
+
+class SourcePackageReleaseComponentFilter(ContentFilter):
+    """
+    FilterSet for SourcePackageReleaseComponent.
+    """
+
+    class Meta:
+        model = models.SourcePackageReleaseComponent
+        fields = ["source_package", "release_component"]
+
+
+class SourcePackageReleaseComponentViewSet(ContentViewSet):
+    # The doc string is a top level element of the user facing REST API documentation:
+    """
+    A SourcePackageReleaseComponent associates a SourcePackage with a ReleaseComponent.
+
+    Associated artifacts: None; contains only metadata.
+
+    This simply stores the information on which source packages are part of which components.
+    """
+
+    endpoint_name = "source_release_components"
+    queryset = models.SourcePackageReleaseComponent.objects.all()
+    serializer_class = serializers.SourcePackageReleaseComponentSerializer
+    filterset_class = SourcePackageReleaseComponentFilter

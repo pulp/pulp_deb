@@ -115,3 +115,33 @@ class InstallerFileIndex(Content):
         Retrieve the uncompressed SHA256SUMS artifact.
         """
         return self._artifacts.get(sha256=self.sha256)
+
+
+class SourceIndex(Content):
+    """
+    The "SourceIndex" content type.
+
+    This model represents the Sources file for a specific
+    component.
+    It's artifacts should include all (non-)compressed versions
+    of the upstream Sources file.
+    """
+
+    TYPE = "source_index"
+
+    release = models.ForeignKey(ReleaseFile, on_delete=models.CASCADE)
+    component = models.CharField(max_length=255)
+    relative_path = models.TextField()
+    sha256 = models.CharField(max_length=255)
+
+    class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
+        verbose_name_plural = "SourceIndices"
+        unique_together = (("relative_path", "sha256"),)
+
+    @property
+    def main_artifact(self):
+        """
+        Retrieve teh uncompressed SourceIndex artifact.
+        """
+        return self._artifacts.get(sha256=self.sha256)

@@ -12,7 +12,8 @@ from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_STANDARD_REPOSITORY_NAME,
     DEB_FIXTURE_SUMMARY,
     DEB_FIXTURE_UPDATE_REPOSITORY_NAME,
-    DEB_FULL_FIXTURE_SUMMARY,
+    DEB_INSTALLER_FIXTURE_SUMMARY,
+    DEB_INSTALLER_SOURCE_FIXTURE_SUMMARY,
     DEB_REPORT_CODE_SKIP_PACKAGE,
     DEB_REPORT_CODE_SKIP_RELEASE,
     DEB_SIGNING_KEY,
@@ -24,7 +25,11 @@ from pulp_deb.tests.functional.constants import (
     "remote_args, fixture_summary",
     [
         ({"gpgkey": DEB_SIGNING_KEY}, DEB_FIXTURE_SUMMARY),
-        ({"gpgkey": DEB_SIGNING_KEY, "sync_udebs": True}, DEB_FULL_FIXTURE_SUMMARY),
+        ({"gpgkey": DEB_SIGNING_KEY, "sync_udebs": True}, DEB_INSTALLER_FIXTURE_SUMMARY),
+        (
+            {"gpgkey": DEB_SIGNING_KEY, "sync_udebs": True, "sync_sources": True},
+            DEB_INSTALLER_SOURCE_FIXTURE_SUMMARY,
+        ),
     ],
 )
 def test_sync(
