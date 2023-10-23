@@ -144,6 +144,22 @@ That way, the repository version created in the target repository, can be meanin
 We are also planning to expand the advanced copy feature with a :ref:`dependency solving <dependency_solving>` mechanism in the future.
 
 
+.. _apt_by_hash:
+
+ApyByHash
+--------------------------------------------------------------------------------
+
+AptByHash is a feature that mitigates commonplace 'Hash Sum Mismatch' errors during an 'apt-get-update'.
+It adds the checksum of the package metadata to the the packages' names.
+These files are then stored within a 'by-hash' directory within each release architecture in the specified debian repository.
+The client will then use the filename to identify the expected checksum and download a file whose name matches the checksum.
+
+Please note that this feature is disabled by default and should be enabled prior to use.
+To do this, set `APT_BY_HASH = True` in `/pulp_deb/app/settings.py`.
+
+In addition, you are responsible for setting up a reverse proxy with cache in order to cache the by-hash files.
+
+
 Roadmap and Experimental
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
