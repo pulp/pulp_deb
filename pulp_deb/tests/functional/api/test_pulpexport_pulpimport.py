@@ -8,6 +8,8 @@ import pytest
 
 from uuid import uuid4
 
+from pulp_deb.tests.functional.constants import DEB_FIXTURE_SUMMARY
+
 NUM_REPOS = 2
 
 
@@ -103,7 +105,9 @@ def deb_importer_factory(
 ):
     """A fixture that creates a pulp importer."""
 
-    def _deb_importer_factory(import_repos=None, export_repos=None, name=None, mapping=None):
+    def _deb_importer_factory(
+        import_repos=None, export_repos=None, name=None, mapping=None, is_mapped=True
+    ):
         """Creates a pulp importer.
 
         :param import_repos: (Optional) List of already defined import repositories
@@ -112,24 +116,24 @@ def deb_importer_factory(
         :param mapping: (Optional) Mapped import repositories
         :returns: A pulp importer set up with name and mapped import repositories
         """
-        _import_repos, _export_repos = deb_gen_import_export_repos(import_repos, export_repos)
         if not name:
             name = str(uuid4())
 
-        if not mapping:
-            mapping = {}
-            if not import_repos:
-                import_repos = _import_repos
-            if not export_repos:
-                export_repos = _export_repos
+        body = {"name": name}
 
-            for idx, repo in enumerate(export_repos):
-                mapping[repo.name] = import_repos[idx].name
+        if is_mapped:
+            _import_repos, _export_repos = deb_gen_import_export_repos(import_repos, export_repos)
+            if not mapping:
+                mapping = {}
+                if not import_repos:
+                    import_repos = _import_repos
+                if not export_repos:
+                    export_repos = _export_repos
 
-        body = {
-            "name": name,
-            "repo_mapping": mapping,
-        }
+                for idx, repo in enumerate(export_repos):
+                    mapping[repo.name] = import_repos[idx].name
+            body["repo_mapping"] = mapping
+
         return gen_object_with_cleanup(importers_pulp_api_client, body)
 
     return _deb_importer_factory
@@ -145,7 +149,13 @@ def deb_perform_import(
     """A fixture that performs an import with a PulpImporter."""
 
     def _deb_perform_import(
-        importer, import_repos=None, export_repos=None, is_chunked=False, an_export=None, body=None
+        importer,
+        import_repos=None,
+        export_repos=None,
+        is_chunked=False,
+        an_export=None,
+        body=None,
+        generate_export=True,
     ):
         """Performs an import with a PulpImporter.
 
@@ -160,24 +170,19 @@ def deb_perform_import(
         if body is None:
             body = {}
 
-        if not an_export:
-            if not (import_repos or export_repos):
-                import_repos, export_repos = deb_gen_import_export_repos
+        if generate_export:
+            if not an_export:
+                if not (import_repos or export_repos):
+                    import_repos, export_repos = deb_gen_import_export_repos()
 
-            an_export = deb_create_export(import_repos, export_repos, is_chunked=is_chunked)
+                an_export = deb_create_export(import_repos, export_repos, is_chunked=is_chunked)
 
         if is_chunked:
-            filenames = [f for f in list(an_export.output_file_info.keys()) if f.endswith("json")]
             if "toc" not in body:
-                body["toc"] = filenames[0]
+                body["toc"] = _find_toc(an_export)
         else:
-            filenames = [
-                f
-                for f in list(an_export.output_file_info.keys())
-                if f.endswith("tar") or f.endswith(".tar.gz")
-            ]
             if "path" not in body:
-                body["path"] = filenames[0]
+                body["path"] = _find_path(an_export)
 
         import_response = importers_pulp_imports_api_client.create(importer.pulp_href, body)
         task_group = monitor_task_group(import_response.task_group)
@@ -237,3 +242,79 @@ def test_export(deb_create_exporter, deb_create_export, deb_gen_import_export_re
     assert export.output_file_info is not None
     for an_export_filename in export.output_file_info.keys():
         assert "//" not in an_export_filename
+
+
+def test_import_create_repos(
+    apt_repository_api,
+    deb_create_exporter,
+    deb_create_export,
+    deb_delete_remote,
+    deb_delete_repository,
+    deb_get_present_content_summary,
+    deb_importer_factory,
+    deb_init_and_sync,
+    deb_perform_import,
+    exporters_pulp_api_client,
+    monitor_task,
+    orphans_cleanup_api_client,
+    delete_orphans_pre,
+):
+    """Test whether PulpImporter can create repositories."""
+    entity_map = {}
+    repo, remote = deb_init_and_sync(remote_args={"policy": "immediate"})
+    entity_map["repo"] = repo
+    entity_map["remote"] = remote
+
+    # Create an exporter and remember the export path
+    exporter = deb_create_exporter(export_repos=[repo])
+    entity_map["exporter-path"] = exporter.path
+
+    # Export the repos and remember the export file name
+    export = deb_create_export(exporter=exporter)
+    entity_map["export-filename"] = _find_path(export)
+
+    # Assure that the exported_resources matches the count of repos
+    assert len(exporter.repositories) == len(export.exported_resources)
+    assert export.output_file_info is not None
+
+    for an_export_filename in export.output_file_info.keys():
+        assert "//" not in an_export_filename
+
+    # Clean up exporter, repos and orphans
+    exporters_pulp_api_client.delete(exporter.pulp_href)
+    deb_delete_remote(remote)
+    deb_delete_repository(repo)
+    monitor_task(orphans_cleanup_api_client.cleanup({"orphan_protection_time": 0}).task)
+
+    # Remember the amount of repositories present before the import
+    existing_repos = apt_repository_api.list().count
+
+    # Create an importer and import the export files and create repositories
+    importer = deb_importer_factory(is_mapped=False)
+    body = {"path": entity_map["export-filename"], "create_repositories": True}
+    import_task_group = deb_perform_import(importer, body=body, generate_export=False)
+
+    # Verify that 1 import and 1 repository was created
+    assert import_task_group.completed == 2
+
+    # Find the repository
+    repo = apt_repository_api.list(name=entity_map["repo"].name).results[0]
+
+    # Inspect the results
+    assert repo.latest_version_href.endswith("/versions/1/")
+    assert apt_repository_api.list().count == existing_repos + 1
+    assert deb_get_present_content_summary(repo) == DEB_FIXTURE_SUMMARY
+
+
+def _find_path(created_export):
+    filenames = [
+        f
+        for f in list(created_export.output_file_info.keys())
+        if f.endswith("tar") or f.endswith(".tar.gz")
+    ]
+    return filenames[0]
+
+
+def _find_toc(chunked_export):
+    filenames = [f for f in list(chunked_export.output_file_info.keys()) if f.endswith("json")]
+    return filenames[0]
