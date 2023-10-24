@@ -7,6 +7,7 @@ like language and Debian installer files. Not included are models for metadata f
 files or APT repository package indices.
 """
 import os
+from pathlib import Path
 
 from django.db import models
 
@@ -71,9 +72,15 @@ class BasePackage(Content):
     @property
     def name(self):
         """Print a nice name for Packages."""
-        return "{}_{}_{}".format(self.package, self.version, self.architecture)
+        # use relative_path for filename when publishing instead of generating new ones. this will
+        # preserve the filenames from old packages that we've imported from vcurrent
+        # new packages uploaded to vnext will have their relative_path set automatically to
+        # name/version/arch
 
-    def filename(self, component=""):
+        # return "{}_{}_{}".format(self.package, self.version, self.architecture)
+        return Path(self.relative_path).stem
+
+    def filename(self, component="", name=None):
         """Assemble filename in pool directory."""
         sourcename = self.source or self.package
         sourcename = sourcename.split("(", 1)[0].rstrip()
@@ -81,13 +88,25 @@ class BasePackage(Content):
             prefix = sourcename[0:4]
         else:
             prefix = sourcename[0]
+
+        if not name:
+            name = self.name
+
         return os.path.join(
             "pool",
             component,
             prefix,
             sourcename,
-            "{}.{}".format(self.name, self.SUFFIX),
+            "{}.{}".format(name, self.SUFFIX),
         )
+
+    def generate_name(self):
+        """Generate a new name using name/version/arch."""
+        return "{}_{}_{}".format(self.package, self.version, self.architecture)
+
+    def generate_filename(self, component=""):
+        """Generate a new filename using name/version/arch."""
+        return self.filename(component, self.generate_name())
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
