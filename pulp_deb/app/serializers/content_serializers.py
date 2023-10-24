@@ -616,9 +616,9 @@ class BasePackageMixin(Serializer):
         data["sha256"] = data["artifact"].sha256
 
         if "relative_path" not in data:
-            data["relative_path"] = self.Meta.model(**package_data).filename()
+            data["relative_path"] = self.Meta.model(**package_data).generate_filename()
         elif not os.path.basename(data["relative_path"]) == "{}.{}".format(
-            self.Meta.model(**package_data).name, self.Meta.model.SUFFIX
+            self.Meta.model(**package_data).generate_name(), self.Meta.model.SUFFIX
         ):
             data["artifact"].touch()  # Orphan cleanup protection so the user can try again!
             raise ValidationError(_("Invalid relative_path provided, filename does not match."))
