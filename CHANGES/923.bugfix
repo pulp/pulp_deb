@@ -1,0 +1,1 @@
+Fix an edge case where some databases fail to migrate to 3.0.0 with a unique constraint error.
