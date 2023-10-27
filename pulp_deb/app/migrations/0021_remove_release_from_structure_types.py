@@ -78,6 +78,15 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # Turn off the unique constraints temporarily, they will get re-created in migration 0025
+        migrations.AlterUniqueTogether(
+            name='releasearchitecture',
+            unique_together=set(),
+        ),
+        migrations.AlterUniqueTogether(
+            name='releasecomponent',
+            unique_together=set(),
+        ),
         migrations.AddField(
             model_name='releasearchitecture',
             name='codename',
@@ -118,14 +127,6 @@ class Migration(migrations.Migration):
         migrations.RunSQL(
             sql="SET CONSTRAINTS ALL IMMEDIATE;",
             reverse_sql="",
-        ),
-        migrations.AlterUniqueTogether(
-            name='releasearchitecture',
-            unique_together={('architecture', 'distribution', 'codename', 'suite')},
-        ),
-        migrations.AlterUniqueTogether(
-            name='releasecomponent',
-            unique_together={('distribution', 'component', 'codename', 'suite')},
         ),
         migrations.AlterField(
             model_name='releasearchitecture',
