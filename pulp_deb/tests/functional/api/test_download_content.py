@@ -169,3 +169,37 @@ def test_download_content(
         content = download_content_unit(distribution.base_path, unit_path[1])
         pulp_hashes.append(hashlib.sha256(content).hexdigest())
     assert fixtures_hashes == pulp_hashes
+
+
+@pytest.mark.parallel
+def test_download_cached_content(
+    deb_init_and_sync,
+    deb_distribution_factory,
+    deb_publication_factory,
+    deb_fixture_server,
+    download_content_unit,
+    http_get,
+    deb_get_content_types,
+    deb_modify_repository,
+):
+    """Verify that previously published content can still be downloaded."""
+    # Create/sync a repo and then a distro
+    repo, _ = deb_init_and_sync()
+    distribution = deb_distribution_factory(repository=repo)
+    deb_publication_factory(repo, structured=True, simple=True)
+
+    # Find a random package and get its hash digest
+    package_content = deb_get_content_types("apt_package_api", DEB_PACKAGE_NAME, repo)
+    package = choice(package_content)
+    url = deb_fixture_server.make_url(DEB_FIXTURE_STANDARD_REPOSITORY_NAME)
+    package_hash = hashlib.sha256(http_get(urljoin(url, package.relative_path))).hexdigest()
+
+    # Remove content and republish
+    deb_modify_repository(repo, {"remove_content_units": ["*"]})
+    deb_publication_factory(repo, structured=True, simple=True)
+
+    # Download the package and check its checksum
+    content = download_content_unit(distribution.base_path, package.relative_path)
+    content_hash = hashlib.sha256(content).hexdigest()
+
+    assert package_hash == content_hash
