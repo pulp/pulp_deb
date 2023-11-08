@@ -618,73 +618,6 @@ def deb_init_and_sync(
 
 
 @pytest.fixture
-def deb_get_content(apt_repository_versions_api):
-    """A fixture that fetches the content from a repository."""
-
-    def _deb_get_content(repo, version_href=None):
-        """Fetches the content from a given repository.
-        :param repo: The repository where the content is fetched from.
-        :param version_href: The repository version from where the content should be fetched.
-            Default: latest repository version.
-        :returns: The content summary of the repository.
-        """
-        version_href = version_href or repo.latest_version_href
-        if version_href is None:
-            return {}
-        return apt_repository_versions_api.read(version_href).content_summary
-
-    return _deb_get_content
-
-
-@pytest.fixture
-def deb_get_present_content(deb_get_content):
-    """A fixture that fetches the present content from a repository."""
-
-    def _deb_get_present_content(repo, version_href=None):
-        """Fetches the present content from a given repository.
-
-        :param repo: The repository where the content is fetched from.
-        :param version_href: The repository version from where the content is fetched freom.
-        :returns: The present content of the repository.
-        """
-        return deb_get_content(repo, version_href).present
-
-    return _deb_get_present_content
-
-
-@pytest.fixture
-def deb_get_added_content(deb_get_content):
-    """A fixture that fetches the added content from a repository."""
-
-    def _deb_get_added_content(repo, version_href=None):
-        """Fetches the added content from a given repository.
-
-        :param repo: The repository where the content is fetched from.
-        :param version_href: The repository version from where the content is fetched freom.
-        :returns: The added content of the repository.
-        """
-        return deb_get_content(repo, version_href).added
-
-    return _deb_get_added_content
-
-
-@pytest.fixture
-def deb_get_removed_content(deb_get_content):
-    """A fixture that fetches the removed content from a repository."""
-
-    def _deb_get_removed_content(repo, version_href=None):
-        """Fetches the removed content from a given repository.
-
-        :param repo: The repository where the content is fetched from.
-        :param version_href: The repository version from where the content is fetched freom.
-        :returns: The removed content of the repository.
-        """
-        return deb_get_content(repo, version_href).removed
-
-    return _deb_get_removed_content
-
-
-@pytest.fixture
 def deb_get_content_summary(apt_repository_versions_api):
     """A fixture that fetches the content summary from a repository."""
 
@@ -705,64 +638,7 @@ def deb_get_content_summary(apt_repository_versions_api):
 
 
 @pytest.fixture
-def deb_get_added_content_summary(deb_get_content_summary):
-    """A fixture that fetches the added content summary from a repository version."""
-
-    def _deb_get_added_content_summary(repo, version_href=None):
-        """Fetches the added content summary from a given repository.
-
-        :param repo: The repository where content is fetched from.
-        :param version_href: The repository version from where content should be fetched from.
-        :returns: The added content of the repository version.
-        """
-        content = deb_get_content_summary(repo, version_href).added
-        for key in content:
-            content[key] = content[key]["count"]
-        return content
-
-    return _deb_get_added_content_summary
-
-
-@pytest.fixture
-def deb_get_present_content_summary(deb_get_content_summary):
-    """A fixture that fetches the present content summary from a repository version."""
-
-    def _deb_get_present_content_summary(repo, version_href=None):
-        """Fetches the present content summary from a given repository.
-
-        :param repo: The repository where content is fetched from.
-        :param version_href: The repository version from where content should be fetched from.
-        :returns: The added content of the repository version.
-        """
-        content = deb_get_content_summary(repo, version_href).present
-        for key in content:
-            content[key] = content[key]["count"]
-        return content
-
-    return _deb_get_present_content_summary
-
-
-@pytest.fixture
-def deb_get_removed_content_summary(deb_get_content_summary):
-    """A fixture that fetches the removed content summary from a repository version."""
-
-    def _deb_get_removed_content_summary(repo, version_href=None):
-        """Fetches the removed content from a given repository.
-
-        :param repo: The repository where the content is fetched from.
-        :param version_href: The repository version from where content should be fetched from.
-        :returns: The removed content of the repository version.
-        """
-        content = deb_get_content_summary(repo, version_href).removed
-        for key in content:
-            content[key] = content[key]["count"]
-        return content
-
-    return _deb_get_removed_content_summary
-
-
-@pytest.fixture
-def deb_get_content_types(deb_get_present_content, request):
+def deb_get_content_types(deb_get_content_summary, request):
     """A fixture that fetches content by type."""
 
     def _deb_get_content_types(content_api_name, content_type, repo, version_href=None):
@@ -775,7 +651,7 @@ def deb_get_content_types(deb_get_present_content, request):
         :returns: List of the fetched content type.
         """
         api = request.getfixturevalue(content_api_name)
-        content = deb_get_present_content(repo, version_href)
+        content = deb_get_content_summary(repo, version_href).present
         if content_type not in content.keys():
             return {}
         content_hrefs = content[content_type]["href"]

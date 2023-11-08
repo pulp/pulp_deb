@@ -9,6 +9,7 @@ import pytest
 from uuid import uuid4
 
 from pulp_deb.tests.functional.constants import DEB_FIXTURE_SUMMARY
+from pulp_deb.tests.functional.utils import get_counts_from_content_summary
 
 NUM_REPOS = 2
 
@@ -250,7 +251,7 @@ def test_import_create_repos(
     deb_create_export,
     deb_delete_remote,
     deb_delete_repository,
-    deb_get_present_content_summary,
+    deb_get_content_summary,
     deb_importer_factory,
     deb_init_and_sync,
     deb_perform_import,
@@ -299,11 +300,12 @@ def test_import_create_repos(
 
     # Find the repository
     repo = apt_repository_api.list(name=entity_map["repo"].name).results[0]
+    summary = deb_get_content_summary(repo).present
 
     # Inspect the results
     assert repo.latest_version_href.endswith("/versions/1/")
     assert apt_repository_api.list().count == existing_repos + 1
-    assert deb_get_present_content_summary(repo) == DEB_FIXTURE_SUMMARY
+    assert get_counts_from_content_summary(summary) == DEB_FIXTURE_SUMMARY
 
 
 def _find_path(created_export):
