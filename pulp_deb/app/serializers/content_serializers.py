@@ -1190,13 +1190,13 @@ class SourcePackageReleaseComponentSerializer(NoArtifactContentSerializer):
         help_text="Source package that is contained in release_component.",
         many=False,
         queryset=SourcePackage.objects.all(),
-        view_name="deb-souce_package_component-detail",
+        view_name="content-deb/source_packages-detail",
     )
     release_component = DetailRelatedField(
         help_text="ReleaseComponent this source package is contained in.",
         many=False,
         queryset=ReleaseComponent.objects.all(),
-        view_name="deb-release_component-detail",
+        view_name="content-deb/release_components-detail",
     )
 
     class Meta(NoArtifactContentSerializer.Meta):
