@@ -18,6 +18,7 @@ from pulp_deb.tests.functional.constants import (
     DEB_REPORT_CODE_SKIP_RELEASE,
     DEB_SIGNING_KEY,
 )
+from pulp_deb.tests.functional.utils import get_counts_from_content_summary
 
 
 @pytest.mark.parallel
@@ -34,8 +35,7 @@ from pulp_deb.tests.functional.constants import (
 )
 def test_sync(
     deb_init_and_sync,
-    deb_get_added_content_summary,
-    deb_get_present_content_summary,
+    deb_get_content_summary,
     deb_get_repository_by_href,
     deb_sync_repository,
     fixture_summary,
@@ -43,25 +43,27 @@ def test_sync(
 ):
     """Test whether synchronizations with and without udebs works as expected."""
     repo, remote, task = deb_init_and_sync(remote_args=remote_args, return_task=True)
+    summary = deb_get_content_summary(repo)
 
     # Verify latest `repository_version` is 1 and sync was not skipped
     assert repo.latest_version_href.endswith("/1/")
     assert not is_sync_skipped(task, DEB_REPORT_CODE_SKIP_RELEASE)
 
     # Verify that the repo content and added content matches the summary
-    assert deb_get_present_content_summary(repo) == fixture_summary
-    assert deb_get_added_content_summary(repo) == fixture_summary
+    assert get_counts_from_content_summary(summary.present) == fixture_summary
+    assert get_counts_from_content_summary(summary.added) == fixture_summary
 
     # Sync the repository again
     task_skip = deb_sync_repository(remote, repo)
     repo = deb_get_repository_by_href(repo.pulp_href)
+    summary = deb_get_content_summary(repo)
 
     # Verify that the latest `repository_version` is still 1 and sync was skipped
     assert repo.latest_version_href.endswith("/1/")
     assert is_sync_skipped(task_skip, DEB_REPORT_CODE_SKIP_RELEASE)
 
     # Verify that the repo content still matches the summary
-    assert deb_get_present_content_summary(repo) == fixture_summary
+    assert get_counts_from_content_summary(summary.present) == fixture_summary
 
 
 @pytest.mark.skip("Skip - ignore_missing_package_indices sync parameter does currently not work")

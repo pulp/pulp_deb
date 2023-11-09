@@ -98,3 +98,11 @@ def gen_repo(**kwargs):
     data = {"name": str(uuid4())}
     data.update(kwargs)
     return data
+
+
+def get_counts_from_content_summary(content_summary):
+    """Returns only the counts from a given content summary."""
+    content = content_summary
+    for key in content:
+        content[key] = content[key]["count"]
+    return content

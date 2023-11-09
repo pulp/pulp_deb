@@ -4,6 +4,7 @@ from pulp_deb.tests.functional.constants import (
     DEB_ADVANCED_COPY_FIXTURE_SUMMARY,
     DEB_FULL_ADVANCED_COPY_FIXTURE_SUMMARY,
 )
+from pulp_deb.tests.functional.utils import get_counts_from_content_summary
 
 
 @pytest.mark.parallel
@@ -13,7 +14,7 @@ def test_copy(
     apt_package_api,
     deb_copy_content,
     deb_get_repository_by_href,
-    deb_get_added_content_summary,
+    deb_get_content_summary,
 ):
     """Test whether the copy operation can successfully copy a single package."""
     source_repo, _ = deb_init_and_sync()
@@ -26,7 +27,8 @@ def test_copy(
     )
 
     target_repo = deb_get_repository_by_href(target_repo.pulp_href)
-    assert DEB_ADVANCED_COPY_FIXTURE_SUMMARY == deb_get_added_content_summary(target_repo)
+    added_summary = deb_get_content_summary(target_repo).added
+    assert DEB_ADVANCED_COPY_FIXTURE_SUMMARY == get_counts_from_content_summary(added_summary)
 
 
 @pytest.mark.parallel
@@ -35,7 +37,7 @@ def test_copy_all(
     deb_repository_factory,
     deb_copy_content,
     deb_get_repository_by_href,
-    deb_get_added_content_summary,
+    deb_get_content_summary,
 ):
     """Test whether the copy operation can successfully copy all packages of a repository."""
     source_repo, _ = deb_init_and_sync()
@@ -46,7 +48,8 @@ def test_copy_all(
     )
 
     target_repo = deb_get_repository_by_href(target_repo.pulp_href)
-    assert DEB_FULL_ADVANCED_COPY_FIXTURE_SUMMARY == deb_get_added_content_summary(target_repo)
+    added_summary = deb_get_content_summary(target_repo).added
+    assert DEB_FULL_ADVANCED_COPY_FIXTURE_SUMMARY == get_counts_from_content_summary(added_summary)
 
 
 @pytest.mark.parallel
