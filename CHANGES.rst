@@ -13,6 +13,40 @@ Changelog
 
 .. towncrier release notes start
 
+3.1.0 (2023-11-09)
+================
+
+Features
+--------
+
+- Add support for handling source packages.
+  `#409 <https://github.com/pulp/pulp_deb/issues/409>`_
+- Added an option to publish `by-hash/` files to mitigate the Hash Sum Mismatch error in debian repos as specified here: https://wiki.debian.org/DebianRepository/Format#indices_acquisition_via_hashsums_.28by-hash.29.
+  Use the APT_BY_HASH setting to enable this feature.
+  `#795 <https://github.com/pulp/pulp_deb/issues/795>`_
+- Fixed the ``create_repositories=True`` parameter for importing content.
+  `#872 <https://github.com/pulp/pulp_deb/issues/872>`_
+- Add additional package name filters such as ``name__contains`` and ``name__startswith``.
+  Check the REST docs for a complete list.
+  `#909 <https://github.com/pulp/pulp_deb/issues/909>`_
+- Added extra filters linking SourcePackages to Releases and ReleaseComponents.
+  `#926 <https://github.com/pulp/pulp_deb/issues/926>`_
+- Made the plugin compatible with pulpcore 3.40.1+.
+  `#928 <https://github.com/pulp/pulp_deb/issues/928>`_
+
+
+Bugfixes
+--------
+
+- Improved the performance of structured ``/pulp/api/v3/deb/copy/`` actions.
+  `#870 <https://github.com/pulp/pulp_deb/issues/870>`_
+- Optimize mode can now take effect, when switching from mirrored to not mirrored mode between syncs.
+  `#903 <https://github.com/pulp/pulp_deb/issues/903>`_
+
+
+----
+
+
 3.0.0 (2023-09-05)
 ==================
 
