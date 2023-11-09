@@ -290,7 +290,7 @@ def test_publish_repository_version_verbatim(
 def test_publish_empty_repository(
     create_publication_and_verify_repo_version,
     deb_distribution_factory,
-    deb_get_present_content,
+    deb_get_content_summary,
     download_content_unit,
 ):
     """Test whether an empty respository with no packages can be published."""
@@ -300,9 +300,9 @@ def test_publish_empty_repository(
         publication_args=DEB_PUBLICATION_ARGS_SIMPLE_AND_STRUCTURED,
     )
 
-    release = deb_get_present_content(
+    release = deb_get_content_summary(
         repo=publication.to_dict(), version_href=publication.repository_version
-    )
+    ).present
 
     package_index_paths = DEB_PUBLISH_EMPTY_REPOSITORY["package_index_paths"]
     assert DEB_PACKAGE_NAME not in release.keys()
