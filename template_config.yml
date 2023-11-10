@@ -16,6 +16,7 @@ ci_update_branches:
 - '2.20'
 - '2.21'
 - '3.0'
+- '3.1'
 ci_update_docs: false
 ci_update_release_behavior: null
 cli_package: pulp-cli-deb
