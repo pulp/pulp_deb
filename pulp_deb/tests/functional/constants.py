@@ -195,6 +195,22 @@ DEB_P2P_SIMPLE_THEN_STRUCTURED = _clean_dict(
     }
 )
 
+DEB_PERF_DEBIAN_URL = "https://ftp.debian.org/debian/"
+DEB_PERF_BOOKWORN = {
+    "distributions": "bookworm",
+    "components": "main",
+    "architectures": "ppc64",
+    "policy": "on_demand",
+}
+
+DEB_PERF_UBUNTU_URL = "http://archive.ubuntu.com/ubuntu/"
+DEB_PERF_JAMMY = {
+    "distributions": "jammy",
+    "components": "main",
+    "policy": "on_demand",
+    "ignore_missing_package_indices": True,
+}
+
 DEB_FIXTURE_PACKAGE_COUNT = DEB_FIXTURE_SUMMARY.get(DEB_PACKAGE_NAME, 0)
 
 DEB_REPORT_CODE_SKIP_RELEASE = "sync.release_file.was_skipped"
