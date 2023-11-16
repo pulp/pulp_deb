@@ -1,0 +1,3 @@
+Fixed repo uniqueness constraints.
+Duplicate packages with identical checksums are now allowed.
+In addition, duplicates are now also handled for the set of incoming content.
