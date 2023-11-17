@@ -65,15 +65,16 @@ def gen_deb_remote_verbose(url=None, remove_policy=False):
     return data
 
 
-def get_local_package_absolute_path(package_name):
+def get_local_package_absolute_path(package_name, relative_path="data/packages/"):
     """Looks up the local package of the given name under the relative path
     'data/packages/' and returns the absolute path.
 
     :param package_name: Name of the package to look up.
+    :param relative_path: The relative path of the directory below pulp_deb/tests/functional/.
     :returns: The absolute path to the package.
     """
     p = Path(__file__).parent.absolute()
-    return p.joinpath(f"data/packages/{package_name}")
+    return p.joinpath(relative_path).joinpath(package_name)
 
 
 def gen_distribution(**kwargs):
