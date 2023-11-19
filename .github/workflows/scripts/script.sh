@@ -47,6 +47,7 @@ fi
 REPORTED_STATUS="$(pulp status)"
 
 if [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
+  # TODO Move this to prerelease checks
   REPORTED_VERSION="$(echo $REPORTED_STATUS | jq --arg plugin deb --arg legacy_plugin pulp_deb -r '.versions[] | select(.component == $plugin or .component == $legacy_plugin) | .version')"
   response=$(curl --write-out %{http_code} --silent --output /dev/null https://pypi.org/project/pulp-deb/$REPORTED_VERSION/)
   if [ "$response" == "200" ];
@@ -117,25 +118,15 @@ fi
 if [ -f $FUNC_TEST_SCRIPT ]; then
   source $FUNC_TEST_SCRIPT
 else
-
-    if [[ "$GITHUB_WORKFLOW" == "Deb Nightly CI/CD" ]] || [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
+    if [[ "$GITHUB_WORKFLOW" == "Deb Nightly CI/CD" ]]
+    then
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulp_deb.tests.functional -m parallel -n 8 --nightly"
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --pyargs pulp_deb.tests.functional -m 'not parallel' --nightly"
 
-    
-        cmd_user_prefix bash -c "pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulpcore.tests.functional -m 'from_pulpcore_for_all_plugins and parallel' -n  8 --nightly"
-        cmd_user_prefix bash -c "pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulpcore.tests.functional -m 'from_pulpcore_for_all_plugins and not parallel'  --nightly"
-    
     else
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulp_deb.tests.functional -m parallel -n 8"
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --pyargs pulp_deb.tests.functional -m 'not parallel'"
-
-    
-        cmd_user_prefix bash -c "pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulpcore.tests.functional -m 'from_pulpcore_for_all_plugins and parallel' -n  8"
-        cmd_user_prefix bash -c "pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulpcore.tests.functional -m 'from_pulpcore_for_all_plugins and not parallel'"
-    
     fi
-
 fi
 
 if [ -f $POST_SCRIPT ]; then
