@@ -4,10 +4,10 @@ Architecture: ppc64
 Maintainer: Equivs Dummy Package Generator <root@>
 Installed-Size: 9
 Filename: ./frigg_1.0_ppc64.deb
-Size: 2120
-MD5sum: f238ab02613a10b8647a1a667f4b7be9
-SHA1: efd0ae64cd9e9c493595d9ea02909c50512708a5
-SHA256: 96ea71a376d5e49617e3f67bc9fcc539eb72c0b1f23415a18c91336c765790fe
+Size: 2124
+MD5sum: ca640f1014ac09d6575ab121d66408e9
+SHA1: cede86e32e4193cb073c42581984e603a942fe18
+SHA256: 07dd8c0731ab4096a62ddf21ecf3bfeb736efcb786af16fcee8b9eb28d62e92f
 Section: misc
 Priority: optional
 Multi-Arch: foreign
@@ -22,9 +22,9 @@ Maintainer: Equivs Dummy Package Generator <root@>
 Installed-Size: 9
 Filename: ./odin_1.0_ppc64.deb
 Size: 2220
-MD5sum: 19785a25a80d0fc873e5173f5c190425
-SHA1: e3aa3a2eff26372c72a190766e6fbe6f5c945151
-SHA256: d685d3b2d8448ecb843cc40bb19770022cc61c40a1ad4894028b657c2007b4e0
+MD5sum: 018a7812a538f7125f5919884487740a
+SHA1: b6ad4edf2907431354a8ce0a7c2a004eb2472f9c
+SHA256: 9cff9cfa3d986a258ecf4d49a7a2309a1c8a71dceb9c441efa4d18cd6c9e2a0b
 Section: misc
 Priority: optional
 Multi-Arch: foreign
@@ -39,10 +39,10 @@ Architecture: ppc64
 Maintainer: Equivs Dummy Package Generator <root@>
 Installed-Size: 9
 Filename: ./thor_1.0_ppc64.deb
-Size: 2196
-MD5sum: 061ea1333e50bcba25a9ae51027e8427
-SHA1: cecc572a0a890f49cfac13d1ae3216ab32f0c930
-SHA256: ebfa07cf85137ef7935215f47fa006c60ef6ba24cdce87db6f3651ecb38842a9
+Size: 2200
+MD5sum: 2a22336c926a8fa976fbe3a65285d7cd
+SHA1: 905c5d2e27c1052b596cc83030ac9392a15d3fd2
+SHA256: d19020a8d4974e3abf79366285e19dbb79a18bd33209e5a1d48599e2b8850264
 Section: misc
 Priority: optional
 Multi-Arch: foreign

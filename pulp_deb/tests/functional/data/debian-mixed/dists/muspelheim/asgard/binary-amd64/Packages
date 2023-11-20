@@ -8,9 +8,9 @@ Priority: optional
 Section: misc
 Filename: pool/asgard/b/baldr/baldr_1.0_amd64.deb
 Size: 2144
-SHA256: c045f260ef0ad083093de053610299b615e49199a603b3e57b6bbc6f075f364e
-SHA1: 113e44700436278721c313b45d722af7fb029bb0
-MD5sum: cf04dcc6bec8e006c02622bb702f06d5
+SHA256: 9442c063242e12dcccaa2338d4f462f2ca90296bee3eae3e2f840946c0f550bc
+SHA1: fd10ddc317fc5f032aa71337714284255513d580
+MD5sum: bb6bb36b53e0f6c52d1633fd33bd8eec
 Description: Baldr
  Baldr is a god associated with light, joy, purity, and the summer sun.
 
@@ -23,10 +23,10 @@ Multi-Arch: foreign
 Priority: optional
 Section: misc
 Filename: pool/asgard/e/eir/eir_1.0_all.deb
-Size: 2124
-SHA256: 8b4bdfa0e7ff53b6f3b63533370d53dc34295b4eb162dbf03297773ba1c6e4d5
-SHA1: 457d8f06b712831cecd9e7d21b0fa483e2abf7a5
-MD5sum: b11bf095834a6e74d24bc63e147a22fa
+Size: 2128
+SHA256: 5e5bc93a1fa088860ed9ed490f9c79d7768228c0fdf87a9f82776c0c6e4cd8b4
+SHA1: 82f804174b06731e994678d66f051d5deda1bc0c
+MD5sum: b06c6762d44cb68d8c2c0fe9463c2af2
 Description: Eir
  Eir is a valkyrie and goddess associated with medical skill.
 
