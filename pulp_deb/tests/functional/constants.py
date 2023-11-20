@@ -351,3 +351,37 @@ gAMUtmcqiACuLWVpljMJKzuVaIqXq9nNMRTUzGFIG0dSmA6pNeym9RFPW2ro3G11
 uUBsbCg=
 =8Is3
 -----END PGP PUBLIC KEY BLOCK-----"""
+
+DEB_SIGNING_SCRIPT_STRING = r"""#!/bin/bash
+
+set -e
+
+export GNUPGHOME="HOMEDIRHERE"
+RELEASE_FILE="$(/usr/bin/readlink -f $1)"
+OUTPUT_DIR="$(/usr/bin/mktemp -d)"
+DETACHED_SIGNATURE_PATH="${OUTPUT_DIR}/Release.gpg"
+INLINE_SIGNATURE_PATH="${OUTPUT_DIR}/InRelease"
+GPG_KEY_ID="GPGKEYIDHERE"
+COMMON_GPG_OPTS="--batch --armor --digest-algo SHA256"
+
+# Create a detached signature
+/usr/bin/gpg ${COMMON_GPG_OPTS} \
+        --detach-sign \
+        --output "${DETACHED_SIGNATURE_PATH}" \
+        --local-user "${GPG_KEY_ID}" \
+        "${RELEASE_FILE}"
+
+# Create an inline signature
+/usr/bin/gpg ${COMMON_GPG_OPTS} \
+        --clearsign \
+        --output "${INLINE_SIGNATURE_PATH}" \
+        --local-user "${GPG_KEY_ID}" \
+        "${RELEASE_FILE}"
+
+echo { \
+       \"signatures\": { \
+         \"inline\": \"${INLINE_SIGNATURE_PATH}\", \
+         \"detached\": \"${DETACHED_SIGNATURE_PATH}\" \
+       } \
+     }
+"""
