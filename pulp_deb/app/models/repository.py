@@ -1,12 +1,11 @@
 from django.db import models
-from pulpcore.plugin.models import BaseModel, Repository
+
+from pulpcore.plugin.models import BaseModel, Content, Repository
 from pulpcore.plugin.repo_version_utils import (
     remove_duplicates,
     validate_version_paths,
     validate_duplicate_content,
 )
-
-from pulpcore.plugin.models import Content
 
 from pulp_deb.app.models import (
     AptReleaseSigningService,
