@@ -603,7 +603,12 @@ def deb_init_and_sync(
         :param return_task: Whether to include the sync task to the return value. Default: False.
         :returns: A tuple containing the repository and remote and optionally the sync task.
         """
-        url = deb_get_fixture_server_url() if url is None else deb_get_fixture_server_url(url)
+        if url is None:
+            url = deb_get_fixture_server_url()
+        elif url.startswith("http"):
+            url = url
+        else:
+            url = deb_get_fixture_server_url(url)
         if repository is None:
             repository = deb_repository_factory(**repo_args)
         if remote is None:

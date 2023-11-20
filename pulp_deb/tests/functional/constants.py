@@ -46,6 +46,11 @@ DEB_PUBLICATION_ARGS_ONLY_STRUCTURED = {"simple": False, "structured": True}
 DEB_PUBLICATION_ARGS_SIMPLE_AND_STRUCTURED = {"simple": True, "structured": True}
 DEB_PUBLICATION_ARGS_ALL = {"simple": True, "structured": True, "signing_service": ""}
 
+DEB_P2P_REMOTE_ARGS_SIMPLE = {"distributions": "default", "policy": "immediate"}
+DEB_P2P_REMOTE_ARGS_STRUCTURED = {"distributions": "ragnarok nosuite", "policy": "immediate"}
+DEB_P2P_REMOTE_ARGS_BOTH = {"distributions": "ragnarok nosuite default", "policy": "immediate"}
+DEB_P2P_REMOTE_ARGS_VERBATIM = {"distributions": "ragnarok nosuite", "policy": "immediate"}
+
 DEB_FIXTURE_SUMMARY = _clean_dict(
     {
         DEB_RELEASE_NAME: 2,
@@ -122,6 +127,66 @@ DEB_FULL_ADVANCED_COPY_FIXTURE_SUMMARY = _clean_dict(
         DEB_RELEASE_COMPONENT_NAME: 3,
         DEB_RELEASE_FILE_NAME: 2,
         DEB_PACKAGE_INDEX_NAME: 5,
+        DEB_PACKAGE_RELEASE_COMPONENT_NAME: 7,
+        DEB_INSTALLER_FILE_INDEX_NAME: 0,
+        DEB_PACKAGE_NAME: 4,
+        DEB_INSTALLER_PACKAGE_NAME: 0,
+        DEB_GENERIC_CONTENT_NAME: 0,
+    }
+)
+
+DEB_P2P_ONLY_SIMPLE = _clean_dict(
+    {
+        DEB_RELEASE_NAME: 1,
+        DEB_RELEASE_ARCHITECTURE_NAME: 3,
+        DEB_RELEASE_COMPONENT_NAME: 1,
+        DEB_RELEASE_FILE_NAME: 1,
+        DEB_PACKAGE_INDEX_NAME: 3,
+        DEB_PACKAGE_RELEASE_COMPONENT_NAME: 4,
+        DEB_INSTALLER_FILE_INDEX_NAME: 0,
+        DEB_PACKAGE_NAME: 4,
+        DEB_INSTALLER_PACKAGE_NAME: 0,
+        DEB_GENERIC_CONTENT_NAME: 0,
+    }
+)
+
+DEB_P2P_ONLY_STRUCTURED = _clean_dict(
+    {
+        DEB_RELEASE_NAME: 2,
+        DEB_RELEASE_ARCHITECTURE_NAME: 5,
+        DEB_RELEASE_COMPONENT_NAME: 3,
+        DEB_RELEASE_FILE_NAME: 2,
+        DEB_PACKAGE_INDEX_NAME: 8,
+        DEB_PACKAGE_RELEASE_COMPONENT_NAME: 7,
+        DEB_INSTALLER_FILE_INDEX_NAME: 0,
+        DEB_PACKAGE_NAME: 4,
+        DEB_INSTALLER_PACKAGE_NAME: 0,
+        DEB_GENERIC_CONTENT_NAME: 0,
+    }
+)
+
+DEB_P2P_SIMPLE_AND_STRUCTURED = _clean_dict(
+    {
+        DEB_RELEASE_NAME: 3,
+        DEB_RELEASE_ARCHITECTURE_NAME: 8,
+        DEB_RELEASE_COMPONENT_NAME: 4,
+        DEB_RELEASE_FILE_NAME: 3,
+        DEB_PACKAGE_INDEX_NAME: 11,
+        DEB_PACKAGE_RELEASE_COMPONENT_NAME: 11,
+        DEB_INSTALLER_FILE_INDEX_NAME: 0,
+        DEB_PACKAGE_NAME: 8,
+        DEB_INSTALLER_PACKAGE_NAME: 0,
+        DEB_GENERIC_CONTENT_NAME: 0,
+    }
+)
+
+DEB_P2P_SIMPLE_THEN_STRUCTURED = _clean_dict(
+    {
+        DEB_RELEASE_NAME: 2,
+        DEB_RELEASE_ARCHITECTURE_NAME: 5,
+        DEB_RELEASE_COMPONENT_NAME: 3,
+        DEB_RELEASE_FILE_NAME: 2,
+        DEB_PACKAGE_INDEX_NAME: 8,
         DEB_PACKAGE_RELEASE_COMPONENT_NAME: 7,
         DEB_INSTALLER_FILE_INDEX_NAME: 0,
         DEB_PACKAGE_NAME: 4,
