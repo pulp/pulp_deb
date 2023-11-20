@@ -415,7 +415,7 @@ class _ReleaseHelper:
             self.release["Label"] = release.label
         if release.suite:
             self.release["Suite"] = release.suite
-        if release.version != NULL_VALUE:
+        if release.version and release.version != NULL_VALUE:
             self.release["Version"] = release.version
         if not release.codename:
             release.codename = distribution.split("/")[0] if distribution != "/" else "flat-repo"
@@ -423,7 +423,7 @@ class _ReleaseHelper:
         self.release["Date"] = datetime.now(tz=timezone.utc).strftime("%a, %d %b %Y %H:%M:%S %z")
         self.release["Architectures"] = " ".join(architectures)
         self.release["Components"] = ""  # Will be set later
-        if release.description != NULL_VALUE:
+        if release.description and release.description != NULL_VALUE:
             self.release["Description"] = release.description
         self.release["Acquire-By-Hash"] = "yes" if APT_BY_HASH else "no"
 

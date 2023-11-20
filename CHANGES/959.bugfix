@@ -1,0 +1,1 @@
+Fixed a bug where publish failed if release ``version`` or ``description`` fields are null.
