@@ -1,12 +1,12 @@
 from django.db import models
-from pulpcore.plugin.models import BaseModel, Repository
+
+from pulpcore.plugin.models import BaseModel, Content, Repository
 from pulpcore.plugin.repo_version_utils import (
     remove_duplicates,
     validate_version_paths,
     validate_duplicate_content,
 )
-
-from pulpcore.plugin.models import Content
+from pulpcore.plugin.util import batch_qs
 
 from pulp_deb.app.models import (
     AptReleaseSigningService,
@@ -195,22 +195,3 @@ def handle_duplicate_packages(new_version):
                     log.warning(message.format(pulp_type))
                     new_version.remove_content(package_qs_duplicates)
                     new_version.remove_content(prc_qs_duplicates)
-
-
-# The following helper function is copy and pasted from pulpcore. As soon as
-# https://github.com/pulp/pulpcore/issues/4607 is ready, we should replace it with an import!
-def batch_qs(qs, batch_size=1000):
-    """
-    Returns a queryset batch in the given queryset.
-
-    Usage:
-        # Make sure to order your querset
-        article_qs = Article.objects.order_by('id')
-        for qs in batch_qs(article_qs):
-            for article in qs:
-                print article.body
-    """
-    total = qs.count()
-    for start in range(0, total, batch_size):
-        end = min(start + batch_size, total)
-        yield qs[start:end]
