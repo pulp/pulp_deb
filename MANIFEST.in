@@ -2,6 +2,7 @@ include CHANGES.rst
 include COMMITMENT
 include COPYRIGHT
 include functest_requirements.txt
+include HISTORY.rst
 include LICENSE
 include pulp_deb/app/schema/*
 include pulp_deb/tests/functional/sign_deb_release.sh
