@@ -7,10 +7,10 @@ Multi-Arch: foreign
 Priority: optional
 Section: misc
 Filename: pool/asgard/e/eir/eir_1.0_all.deb
-Size: 2124
-SHA256: 8b4bdfa0e7ff53b6f3b63533370d53dc34295b4eb162dbf03297773ba1c6e4d5
-SHA1: 457d8f06b712831cecd9e7d21b0fa483e2abf7a5
-MD5sum: b11bf095834a6e74d24bc63e147a22fa
+Size: 2128
+SHA256: 5e5bc93a1fa088860ed9ed490f9c79d7768228c0fdf87a9f82776c0c6e4cd8b4
+SHA1: 82f804174b06731e994678d66f051d5deda1bc0c
+MD5sum: b06c6762d44cb68d8c2c0fe9463c2af2
 Description: Eir
  Eir is a valkyrie and goddess associated with medical skill.
 
@@ -24,9 +24,9 @@ Priority: optional
 Section: misc
 Filename: pool/asgard/f/frigg/frigg_1.0_ppc64.deb
 Size: 2120
-SHA256: 9febca80c9dea2b6de69b9e031d1c790db5c2ba922404d5cc10125538ad375a1
-SHA1: efcba4a8d065c07cd791f3503ab554805f70df9f
-MD5sum: a1906433674f2b0232242f196dd7ac3d
+SHA256: 3094fa9667aefc9b7cd66603cd95bd04bff82d6042504225c7a94aed80f21eca
+SHA1: cc8543589be31255c1f1c3d11e97eff081fe921b
+MD5sum: 212094e9aa0fbb42e6293f8f0d03617f
 Description: Frigg
  Frigg is described as the wife of the god Odin.
 

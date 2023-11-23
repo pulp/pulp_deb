@@ -1,5 +1,5 @@
 Format: 1.8
-Date: Mon, 19 Jun 2023 10:31:25 +0000
+Date: Thu, 16 Nov 2023 17:44:30 +0000
 Source: odin
 Binary: odin
 Architecture: ppc64
@@ -15,11 +15,11 @@ Changes:
  .
    * First version
 Checksums-Sha1:
- 0bb0b39dacc78183f71b89f590d5a560befb9ade 4725 odin_1.0_ppc64.buildinfo
- e3aa3a2eff26372c72a190766e6fbe6f5c945151 2220 odin_1.0_ppc64.deb
+ aa22c4a04ae86c3fd5a77f5e7c22cb4c63073c17 4749 odin_1.0_ppc64.buildinfo
+ b6ad4edf2907431354a8ce0a7c2a004eb2472f9c 2220 odin_1.0_ppc64.deb
 Checksums-Sha256:
- cac761e4281f45fb14fb38d5ab5e30dbcd82777808650b2fc6dbe128faa54cd7 4725 odin_1.0_ppc64.buildinfo
- d685d3b2d8448ecb843cc40bb19770022cc61c40a1ad4894028b657c2007b4e0 2220 odin_1.0_ppc64.deb
+ 0646015f94680522c67a9f1addc43654df4d8596589e38e04800693cb6cfbfff 4749 odin_1.0_ppc64.buildinfo
+ 9cff9cfa3d986a258ecf4d49a7a2309a1c8a71dceb9c441efa4d18cd6c9e2a0b 2220 odin_1.0_ppc64.deb
 Files:
- 32839cdbfb49a5c3ee7c9fde89b4af61 4725 misc optional odin_1.0_ppc64.buildinfo
- 19785a25a80d0fc873e5173f5c190425 2220 misc optional odin_1.0_ppc64.deb
+ 30c9d1511e3d7b06029f508bfb16f040 4749 misc optional odin_1.0_ppc64.buildinfo
+ 018a7812a538f7125f5919884487740a 2220 misc optional odin_1.0_ppc64.deb
