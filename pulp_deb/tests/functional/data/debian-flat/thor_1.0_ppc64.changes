@@ -1,5 +1,5 @@
 Format: 1.8
-Date: Mon, 19 Jun 2023 10:31:28 +0000
+Date: Thu, 16 Nov 2023 17:44:33 +0000
 Source: thor
 Binary: thor
 Architecture: ppc64
@@ -15,11 +15,11 @@ Changes:
  .
    * First version
 Checksums-Sha1:
- 429a31d53e1fe5884102a2caf0b791e6d30f9d63 4725 thor_1.0_ppc64.buildinfo
- cecc572a0a890f49cfac13d1ae3216ab32f0c930 2196 thor_1.0_ppc64.deb
+ 589dc968fc55a18f0b94e376cbcd26db8b4b85cf 4749 thor_1.0_ppc64.buildinfo
+ 905c5d2e27c1052b596cc83030ac9392a15d3fd2 2200 thor_1.0_ppc64.deb
 Checksums-Sha256:
- 861e040b160f3da912965654e8e585782820b670d6395e0e25cb3d73348fd46d 4725 thor_1.0_ppc64.buildinfo
- ebfa07cf85137ef7935215f47fa006c60ef6ba24cdce87db6f3651ecb38842a9 2196 thor_1.0_ppc64.deb
+ f07e70f37a20e91a64c3259f39681958a99a3c8328f76d6d0c35627044fedd45 4749 thor_1.0_ppc64.buildinfo
+ d19020a8d4974e3abf79366285e19dbb79a18bd33209e5a1d48599e2b8850264 2200 thor_1.0_ppc64.deb
 Files:
- bed532747761dd828316538123d6c5d4 4725 misc optional thor_1.0_ppc64.buildinfo
- 061ea1333e50bcba25a9ae51027e8427 2196 misc optional thor_1.0_ppc64.deb
+ eca666515547e5be0f07fa3a073b7611 4749 misc optional thor_1.0_ppc64.buildinfo
+ 2a22336c926a8fa976fbe3a65285d7cd 2200 misc optional thor_1.0_ppc64.deb

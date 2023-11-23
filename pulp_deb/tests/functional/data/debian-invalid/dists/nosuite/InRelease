@@ -2,30 +2,35 @@
 Hash: SHA512
 
 Codename: nosuite
-Date: Mon, 19 Jun 2023 10:31:02 UTC
+Date: Thu, 16 Nov 2023 17:44:08 UTC
 Architectures: ppc64
 Components: asgard
 Description: This is a invalid Debian repository.
 MD5Sum:
- c115d505c01db3acbbd4b282748f0582 1810 asgard/binary-ppc64/Packages
- 758de4bf6c1461e392700ac392aa4529 901 asgard/binary-ppc64/Packages.gz
+ b7b75990b0debbb55524c12e3edca976 1810 asgard/binary-ppc64/Packages
+ a39eb439896955d77feb4c51d5955545 897 asgard/binary-ppc64/Packages.gz
  fbe88cf2b501dbd3526e5b4846a51f90 86 asgard/binary-ppc64/Release
 SHA1:
- a1f6393f932f8b365b224f75896d1b075e176d37 1810 asgard/binary-ppc64/Packages
- e31157118050794cdc5733e1dfa020cff4845535 901 asgard/binary-ppc64/Packages.gz
+ 1f60860d7a8e63df01968d183fd2115c86fc9273 1810 asgard/binary-ppc64/Packages
+ cde6e0407880dfc7d503a2ef102179502961a8b6 897 asgard/binary-ppc64/Packages.gz
  a536e2e2126e95fbb820e421ecac4d9867e5976b 86 asgard/binary-ppc64/Release
 SHA256:
- b8563c8114e3a9d7ef7f25b2a7ff8f41cb40b7911db428bd19e4121b00923c20 1810 asgard/binary-ppc64/Packages
- 4fbfcffef2cb396b30da5dd9bf55f278d81dc323b1542b36d1897146a380f109 901 asgard/binary-ppc64/Packages.gz
+ b8b58dbeebe7b71b3e23914307416cb292351dd0c0a8c46e5689d0dcfa4064ba 1810 asgard/binary-ppc64/Packages
+ d8ca4bbdb6f0e140a7376cc428139cdbdfdb9609ff5f89fcae5cd2c300e11b37 897 asgard/binary-ppc64/Packages.gz
  fc35f45c0ab9a27275b300446de5d6fa390feb6dff017bccda9f998133a7bd5e 86 asgard/binary-ppc64/Release
 -----BEGIN PGP SIGNATURE-----
 
-iQEzBAEBCgAdFiEEbt8wElZIC5uAHro9BaXm2iadnZgFAmSQLmYACgkQBaXm2iad
-nZjD8wf7BSo8DbF1v16qbQ+5M27rU0AMaAFdY/CQ+s+W2jG5M9/Hcl9S7PMXdg32
-M9q6keVftZt4f/1Mf3YvQuJAdHpBiaV5EMHZqTlmNXrAAuoPXuq+GLGEEDbUvgrJ
-BfBK/JILtgpxyV4SH+Y6rjrcpKt8+FL+94Nqq6tOL991ddo/CLiS2phcY1LxtAXi
-PLl9pp80QAVQGEVMeMxyL1Pmd3XyUy+rsAAUpU+ItHiegvxT3NGmp1CeXJXtKptj
-Z6e3oomq0/5HW/P1VnXaObRvJYIeMtQkWQDEhaBsiyThbudHVxltF5IYXMOQsa6D
-No7t8xmSkIpq42Y/KyuewLftiE/Rbw==
-=+0hF
+iQIzBAEBCgAdFiEEDBqJTruGr64hhCTK3e8wGcLUqM8FAmVWVOgACgkQ3e8wGcLU
+qM/7Fw/+I6Mhsi6lrsrgTdkA0ZgIhRj7MRS3irw1wutO/EDUeCKUANDZfvGTin35
+rB7itqgk/l1Jb8KknO0Lwcw8kXaGiMNCQfZUPyc9yySdLTMEOAugK8TVfc5E85ad
+O/Bt14lFB1Jpv/YAJqVgcaM7Q7MsR8tL1Cc9Nlj5CkwTHkZG1c3y6wANa8TWUxZV
+Nst+VFkmuo/4QVC2zGXdrQaoBgYFyZaYkMtqh/jBHLWywDteusPc6/d8nklr/8QL
+89ScT+3M0Doc6EiRXMdSVLxeBrJwKFPgKZBTCIm+2QUcCUsx7TyseH8fU5bTcdIq
+Xluwkf/Cs4YNb4MEz63gzDVxHylWXVcWH9v7snHSwAVrlElQjY3t40+9wxBxq/xE
+3G2Doo1je0WOm2gN3mtaMEqJMJ0W21invPLmhDC4y761ncXJKfQTtsA4pe7/DZq3
+Axzfg7Os3c2MEynxjplGNh6AeKKhpwB+F2igwDI5koenBV+PboKju6DPqYaNUq1R
+rQY5apanpUUb1zaiy4njlEuQrBfN3AXlH6OOU4PirXjLdmQKoEUYYr3mgZbwBVez
+gf1mPjsWEQx3Iu4NCRER74kb5gqsXOVBv2W25Z2f+E/vZKovhC2lGYz1/2KVabM+
+5QVfUC0NZuflCMpqDmTqnYy59bF65GehTPrk1am6W5XyyZu121M=
+=pRSr
 -----END PGP SIGNATURE-----

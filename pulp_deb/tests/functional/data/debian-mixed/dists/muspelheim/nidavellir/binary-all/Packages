@@ -8,9 +8,9 @@ Priority: optional
 Section: misc
 Filename: pool/nidavellir/r/regin/regin_1.0_all.deb
 Size: 2136
-SHA256: 418f91ac621d6ba93aebd74a96b806901922511f8d04965a26f942af56ed78a2
-SHA1: a21597e6cfbe541256c2af72f8fbfc4dba458883
-MD5sum: 49def75bc66a959a47fd0571e8b7a16d
+SHA256: a34dc5d8e05dd1a9e03ff09f7de8824d75313c10e446b0c4c0c8c57e04743d5a
+SHA1: 1f6e63b07e9304638a5111364f82002bd3e04578
+MD5sum: a1375dde7146ff2c9b5c6e64ce45af5d
 Description: Regin
  Regin the son of Hreidmar is the most skillful, and a dwarf of size.
 

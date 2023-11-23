@@ -9,9 +9,9 @@ Priority: optional
 Section: misc
 Filename: pool/asgard/f/frigg/frigg_1.0_ppc64.deb
 Size: 2120
-SHA256: 9b5f4278260d95c71e19aec8c44c41c217fc4cc0e3351ec22047708abe8fc334
-SHA1: 84f829892684b867999dda02d0cf44ca12d7f6d4
-MD5sum: 0e79dfb78b3a502159de46805b81c7a4
+SHA256: 1ffa6a25c16e1095613011e5b26257d44334596fdcfec7e4ed7687fe2e3ecd74
+SHA1: dc8ac2986f436d07e4bebf141521d294c59140f0
+MD5sum: fae837134a4db51bf696b6cc054a698d
 Description: Frigg
  Frigg is described as the wife of the god Odin.
 
@@ -28,9 +28,9 @@ Priority: optional
 Section: misc
 Filename: pool/asgard/o/odin/odin_1.0_ppc64.deb
 Size: 2220
-SHA256: 79ae7e0c2674b3d780475462609a02b5e76f06fe47c3393b0d503d1b4b9210f8
-SHA1: d911f778cdef4aa2ced1977684d4f77241ba02a3
-MD5sum: cc5bdfc544affcc6d4fd9b2ba24277ef
+SHA256: 76a6e889ac282740da2490f889734dee3a0f6779bb7642291394cc60ecb44d42
+SHA1: 6578f0a4eb86661e09a6e99812acf24640aa534c
+MD5sum: c07c8e1ca952f65091c0141695c59cee
 Description: Odin
  Odin is associated with wisdom, healing, death, royalty, the gallows,
  knowledge, battle, sorcery, poetry, frenzy, and the runic alphabet, and is
@@ -48,10 +48,10 @@ Task: Æsir
 Priority: optional
 Section: misc
 Filename: pool/asgard/t/thor/thor_1.0_ppc64.deb
-Size: 2196
-SHA256: c98ad00099bc569054a3848ee46a37943f846392cf2f0cecb4a9650342b094ff
-SHA1: eb35f20a1c34e9584f80787a8743e5eafb9159e6
-MD5sum: 3985719d360e5b2ba8506732d7ea7829
+Size: 2200
+SHA256: 2d593055891a68cda6b885324184cc13c770ff097c2cab2dde0206a6c4a6b68a
+SHA1: 17b77112ff48d2a0dc55394a4a000ea93e67608a
+MD5sum: 4e1688979c25dddc7b3fe01219b0c277
 Description: Thor
  Thor is a hammer-wielding god associated with thunder, lightning, storms, oak
  trees, strength, the protection of mankind, and also hallowing and fertility.

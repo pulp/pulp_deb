@@ -4,20 +4,20 @@ Binary: frigg
 Architecture: ppc64
 Version: 1.0
 Checksums-Md5:
- f238ab02613a10b8647a1a667f4b7be9 2120 frigg_1.0_ppc64.deb
+ ca640f1014ac09d6575ab121d66408e9 2124 frigg_1.0_ppc64.deb
 Checksums-Sha1:
- efd0ae64cd9e9c493595d9ea02909c50512708a5 2120 frigg_1.0_ppc64.deb
+ cede86e32e4193cb073c42581984e603a942fe18 2124 frigg_1.0_ppc64.deb
 Checksums-Sha256:
- 96ea71a376d5e49617e3f67bc9fcc539eb72c0b1f23415a18c91336c765790fe 2120 frigg_1.0_ppc64.deb
+ 07dd8c0731ab4096a62ddf21ecf3bfeb736efcb786af16fcee8b9eb28d62e92f 2124 frigg_1.0_ppc64.deb
 Build-Origin: Debian
 Build-Architecture: amd64
-Build-Date: Mon, 19 Jun 2023 10:31:25 +0000
+Build-Date: Thu, 16 Nov 2023 17:44:30 +0000
 Installed-Build-Depends:
  autoconf (= 2.69-14),
  automake (= 1:1.16.3-2),
  autopoint (= 0.21-4),
  autotools-dev (= 20180224.1+nmu1),
- base-files (= 11.1+deb11u7),
+ base-files (= 11.1+deb11u8),
  base-passwd (= 3.5.51),
  bash (= 5.1-2+deb11u1),
  binutils (= 2.35.2-2),
@@ -37,10 +37,10 @@ Installed-Build-Depends:
  dh-autoreconf (= 20),
  dh-strip-nondeterminism (= 1.12.0-1),
  diffutils (= 1:3.7-5),
- dpkg (= 1.20.12),
- dpkg-dev (= 1.20.12),
+ dpkg (= 1.20.13),
+ dpkg-dev (= 1.20.13),
  dwz (= 0.13+20210201-1),
- file (= 1:5.39-3),
+ file (= 1:5.39-3+deb11u1),
  findutils (= 4.8.0-1),
  g++ (= 4:10.2.1-1),
  g++-10 (= 10.2.1-6),
@@ -65,10 +65,10 @@ Installed-Build-Depends:
  libbinutils (= 2.35.2-2),
  libblkid1 (= 2.36.1-8+deb11u1),
  libbz2-1.0 (= 1.0.8-4),
- libc-bin (= 2.31-13+deb11u6),
- libc-dev-bin (= 2.31-13+deb11u6),
- libc6 (= 2.31-13+deb11u6),
- libc6-dev (= 2.31-13+deb11u6),
+ libc-bin (= 2.31-13+deb11u7),
+ libc-dev-bin (= 2.31-13+deb11u7),
+ libc6 (= 2.31-13+deb11u7),
+ libc6-dev (= 2.31-13+deb11u7),
  libcap-ng0 (= 0.7.9-2.2+b1),
  libcc1-0 (= 10.2.1-6),
  libcom-err2 (= 1.46.2-2),
@@ -79,7 +79,7 @@ Installed-Build-Depends:
  libdb5.3 (= 5.3.28+dfsg1-0.8),
  libdebconfclient0 (= 0.260),
  libdebhelper-perl (= 13.3.4),
- libdpkg-perl (= 1.20.12),
+ libdpkg-perl (= 1.20.13),
  libelf1 (= 0.183-1),
  libfile-stripnondeterminism-perl (= 1.12.0-1),
  libgcc-10-dev (= 10.2.1-6),
@@ -90,19 +90,19 @@ Installed-Build-Depends:
  libgmp10 (= 2:6.2.1+dfsg-1+deb11u1),
  libgomp1 (= 10.2.1-6),
  libgpg-error0 (= 1.38-2),
- libgssapi-krb5-2 (= 1.18.3-6+deb11u3),
+ libgssapi-krb5-2 (= 1.18.3-6+deb11u4),
  libicu67 (= 67.1-7),
  libisl23 (= 0.23-1),
  libitm1 (= 10.2.1-6),
- libk5crypto3 (= 1.18.3-6+deb11u3),
+ libk5crypto3 (= 1.18.3-6+deb11u4),
  libkeyutils1 (= 1.6.1-2),
- libkrb5-3 (= 1.18.3-6+deb11u3),
- libkrb5support0 (= 1.18.3-6+deb11u3),
+ libkrb5-3 (= 1.18.3-6+deb11u4),
+ libkrb5support0 (= 1.18.3-6+deb11u4),
  liblsan0 (= 10.2.1-6),
  liblz4-1 (= 1.9.3-2),
  liblzma5 (= 5.2.5-2.1~deb11u1),
- libmagic-mgc (= 1:5.39-3),
- libmagic1 (= 1:5.39-3),
+ libmagic-mgc (= 1:5.39-3+deb11u1),
+ libmagic1 (= 1:5.39-3+deb11u1),
  libmount1 (= 2.36.1-8+deb11u1),
  libmpc3 (= 1.2.0-1),
  libmpfr6 (= 4.1.0-3),
@@ -121,12 +121,12 @@ Installed-Build-Depends:
  libselinux1 (= 3.1-3),
  libsigsegv2 (= 2.13-1),
  libsmartcols1 (= 2.36.1-8+deb11u1),
- libssl1.1 (= 1.1.1n-0+deb11u5),
+ libssl1.1 (= 1.1.1w-0+deb11u1),
  libstdc++-10-dev (= 10.2.1-6),
  libstdc++6 (= 10.2.1-6),
  libsub-override-perl (= 0.09-2),
- libsystemd0 (= 247.3-7+deb11u2),
- libtinfo6 (= 6.2+20201114-2+deb11u1),
+ libsystemd0 (= 247.3-7+deb11u4),
+ libtinfo6 (= 6.2+20201114-2+deb11u2),
  libtirpc-common (= 1.3.1-1+deb11u1),
  libtirpc-dev (= 1.3.1-1+deb11u1),
  libtirpc3 (= 1.3.1-1+deb11u1),
@@ -134,20 +134,20 @@ Installed-Build-Depends:
  libtsan0 (= 10.2.1-6),
  libubsan1 (= 10.2.1-6),
  libuchardet0 (= 0.0.7-1),
- libudev1 (= 247.3-7+deb11u2),
+ libudev1 (= 247.3-7+deb11u4),
  libunistring2 (= 0.9.10-4),
  libuuid1 (= 2.36.1-8+deb11u1),
  libxml2 (= 2.9.10+dfsg-6.7+deb11u4),
  libzstd1 (= 1.4.8+dfsg-2.1),
- linux-libc-dev (= 5.10.179-1),
+ linux-libc-dev (= 5.10.197-1),
  login (= 1:4.8.1-1),
  lsb-base (= 11.1.0),
  m4 (= 1.4.18-5),
  make (= 4.3-4.1),
  man-db (= 2.9.4-2),
  mawk (= 1.3.4.20200120-2),
- ncurses-base (= 6.2+20201114-2+deb11u1),
- ncurses-bin (= 6.2+20201114-2+deb11u1),
+ ncurses-base (= 6.2+20201114-2+deb11u2),
+ ncurses-bin (= 6.2+20201114-2+deb11u2),
  patch (= 2.7.6-7),
  perl (= 5.32.1-4+deb11u2),
  perl-base (= 5.32.1-4+deb11u2),
@@ -163,4 +163,4 @@ Installed-Build-Depends:
 Environment:
  DEB_BUILD_OPTIONS="parallel=4"
  MAKEFLAGS="w"
- SOURCE_DATE_EPOCH="1687170683"
+ SOURCE_DATE_EPOCH="1700156668"
