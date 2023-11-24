@@ -8,9 +8,9 @@ Priority: optional
 Section: misc
 Filename: pool/nidavellir/h/hreidmar/hreidmar_1.0_amd64.deb
 Size: 2136
-SHA256: 7756129942b65996671d1cb3f8a264bc574818a68de543a8534fa0220095caf7
-SHA1: 023d8d59e277b6de8e986ba34e9fa48655fa4fd1
-MD5sum: d23e8120c250497b9e33be53ff188e61
+SHA256: 0a399fafe7572afba400c97eb79b0bdf6488c5f2aeb57f502b0ca6dfa907a45e
+SHA1: 22e4392ea93c0883f94654b7222e016c59bfe8fe
+MD5sum: afac1a473332d8ce5970acabef335f2d
 Description: Hreidmar
  Hreidmar is a dwarf sorcerer and the king of Nidavellir.
 
@@ -24,9 +24,9 @@ Priority: optional
 Section: misc
 Filename: pool/nidavellir/r/regin/regin_1.0_all.deb
 Size: 2136
-SHA256: 418f91ac621d6ba93aebd74a96b806901922511f8d04965a26f942af56ed78a2
-SHA1: a21597e6cfbe541256c2af72f8fbfc4dba458883
-MD5sum: 49def75bc66a959a47fd0571e8b7a16d
+SHA256: a34dc5d8e05dd1a9e03ff09f7de8824d75313c10e446b0c4c0c8c57e04743d5a
+SHA1: 1f6e63b07e9304638a5111364f82002bd3e04578
+MD5sum: a1375dde7146ff2c9b5c6e64ce45af5d
 Description: Regin
  Regin the son of Hreidmar is the most skillful, and a dwarf of size.
 

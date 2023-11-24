@@ -3,11 +3,15 @@ from pathlib import Path
 from uuid import uuid4
 import pytest
 import os
+import re
 import stat
 import subprocess
 
 from pulp_deb.tests.functional.utils import gen_deb_remote, gen_distribution, gen_repo
-from pulp_deb.tests.functional.constants import DEB_FIXTURE_STANDARD_REPOSITORY_NAME
+from pulp_deb.tests.functional.constants import (
+    DEB_FIXTURE_STANDARD_REPOSITORY_NAME,
+    DEB_SIGNING_SCRIPT_STRING,
+)
 
 from pulpcore.client.pulp_deb import (
     ApiClient,
@@ -489,24 +493,24 @@ def deb_copy_content(apt_copy_api, monitor_task):
 
 
 @pytest.fixture(scope="session")
-def deb_signing_script_path(signing_gpg_homedir_path):
-    """A fixture for a script that is suited for signing packages."""
-    dir_path = os.path.dirname(__file__)
-    file_path = os.path.join(dir_path, "sign_deb_release.sh")
+def deb_signing_script_path(
+    signing_script_temp_dir, signing_gpg_homedir_path, signing_gpg_metadata
+):
+    _, _, keyid = signing_gpg_metadata
+    """A fixture that provides a signing script path for signing debian packages."""
+    signing_script_filename = signing_script_temp_dir / "sign_deb_release.sh"
+    rep = {"HOMEDIRHERE": str(signing_gpg_homedir_path), "GPGKEYIDHERE": str(keyid)}
+    rep = dict((re.escape(k), v) for k, v in rep.items())
+    pattern = re.compile("|".join(rep.keys()))
+    with open(signing_script_filename, "w", 0o770) as sign_metadata_file:
+        sign_metadata_file.write(
+            pattern.sub(lambda m: rep[re.escape(m.group(0))], DEB_SIGNING_SCRIPT_STRING)
+        )
 
-    with open(file_path) as fp:
-        lines = [line.rstrip() for line in fp]
-        # For the test environment the GNUPGHOME environment variable
-        # needs to be part of the script. Otherwise the test containers
-        # will not find the right gpg key.
-        lines = lines[0:3] + [f'export GNUPGHOME="{signing_gpg_homedir_path}"'] + lines[3:]
+    st = os.stat(signing_script_filename)
+    os.chmod(signing_script_filename, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
-    raw_script = tuple(line for line in lines)
-
-    with open(os.path.join(signing_gpg_homedir_path, "bash-script.sh"), "w") as f:
-        f.write("\n".join(raw_script))
-
-    return f.name
+    return signing_script_filename
 
 
 @pytest.fixture(scope="class")
@@ -516,20 +520,18 @@ def deb_signing_service_factory(
     signing_service_api_client,
 ):
     """A fixture for the debian signing service."""
-    st = os.stat(deb_signing_script_path)
-    os.chmod(deb_signing_script_path, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
     gpg, fingerprint, keyid = signing_gpg_metadata
     service_name = str(uuid4())
     cmd = (
         "pulpcore-manager",
         "add-signing-service",
         service_name,
-        deb_signing_script_path,
-        keyid,
+        str(deb_signing_script_path),
+        fingerprint,
         "--class",
         "deb:AptReleaseSigningService",
         "--gnupghome",
-        gpg.gnupghome,
+        str(gpg.gnupghome),
     )
     process = subprocess.run(cmd, capture_output=True)
 

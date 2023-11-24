@@ -7,10 +7,10 @@ Multi-Arch: foreign
 Priority: optional
 Section: debian-installer
 Filename: pool/asgard/m/mundilfari/mundilfari_1.0_ppc64.udeb
-Size: 2188
-SHA256: f4a51d75a735eab6ad0e6920f1b73d389ed6b57f20962031daeabbea64443c97
-SHA1: ffeb6316ea4a3edf87a323e235decb2dc3a61a7a
-MD5sum: eaffc6edc3e3a3b0787e38d2d700aae3
+Size: 2192
+SHA256: fd72929fc2d4fd7ed7eb5d29784d83af7e649e3f7188fe3877832814c9b2f315
+SHA1: 68498dcc2424abbed19364ef3f0d8b3e54ff3af8
+MD5sum: a70f96fa0a0c53daf0d8f9461c8ef77f
 Description: Mundilfari
  In Norse mythology Mundilfari is the father of Sól, goddess associated with
  the Sun, and Máni, associated with the Moon.

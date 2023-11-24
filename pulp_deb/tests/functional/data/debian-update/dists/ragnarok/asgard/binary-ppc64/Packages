@@ -9,9 +9,9 @@ Priority: optional
 Section: misc
 Filename: pool/asgard/f/frigg/frigg_2.0_ppc64.deb
 Size: 2120
-SHA256: 9a1289b69202c0d32c36ceb3884bfd3e3affc4a07adff5cb8dc011167ba67128
-SHA1: 6fe4c84ada8c5352696f6eff9af48883cfa64aae
-MD5sum: 40d20d0b68a7f15024082ad593ca2514
+SHA256: 5bce9042a7b4d9e1136c6770f0b964bcabf2559bda72eaf0bfba76c3a85da816
+SHA1: 5eca2557697cf8c4cb9b46c2439247b4e11f1fe0
+MD5sum: e0d8028473da4db1e6cf4c74d6fa930c
 Description: Frigg
  Frigg is described as the wife of the god Odin.
 
@@ -26,9 +26,9 @@ Priority: optional
 Section: misc
 Filename: pool/asgard/h/heimdallr/heimdallr_1.0_ppc64.deb
 Size: 2236
-SHA256: 1d4dc0012d8ddf2b945de6d27e86a13c68952664169105c3d5a3cca78140b8bd
-SHA1: 244e727687f04fc7b515d27bc308490233397ce8
-MD5sum: 23aebf093f0507eea499c5bc8a4fb4fa
+SHA256: a8b78f1450d634dab7d47e68a948f96f8f7fed0844f5828f06d1acb82a6b7163
+SHA1: 35e5ff52a20b334b8c6088e7aed2c946178b8b6a
+MD5sum: 5e235e5f166d32b891ff0650a11835f2
 Description: Heimdallr
  Heimdallr is attested as possessing foreknowledge, keen eyesight and hearing,
  and keeps watch for invaders and the onset of Ragnarök.
@@ -47,9 +47,9 @@ Priority: optional
 Section: misc
 Filename: pool/asgard/o/odin/odin_1.0_ppc64.deb
 Size: 2220
-SHA256: 79ae7e0c2674b3d780475462609a02b5e76f06fe47c3393b0d503d1b4b9210f8
-SHA1: d911f778cdef4aa2ced1977684d4f77241ba02a3
-MD5sum: cc5bdfc544affcc6d4fd9b2ba24277ef
+SHA256: 76a6e889ac282740da2490f889734dee3a0f6779bb7642291394cc60ecb44d42
+SHA1: 6578f0a4eb86661e09a6e99812acf24640aa534c
+MD5sum: c07c8e1ca952f65091c0141695c59cee
 Description: Odin
  Odin is associated with wisdom, healing, death, royalty, the gallows,
  knowledge, battle, sorcery, poetry, frenzy, and the runic alphabet, and is

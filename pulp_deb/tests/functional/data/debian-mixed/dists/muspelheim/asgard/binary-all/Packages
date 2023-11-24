@@ -7,10 +7,10 @@ Multi-Arch: foreign
 Priority: optional
 Section: misc
 Filename: pool/asgard/e/eir/eir_1.0_all.deb
-Size: 2124
-SHA256: 8b4bdfa0e7ff53b6f3b63533370d53dc34295b4eb162dbf03297773ba1c6e4d5
-SHA1: 457d8f06b712831cecd9e7d21b0fa483e2abf7a5
-MD5sum: b11bf095834a6e74d24bc63e147a22fa
+Size: 2128
+SHA256: 5e5bc93a1fa088860ed9ed490f9c79d7768228c0fdf87a9f82776c0c6e4cd8b4
+SHA1: 82f804174b06731e994678d66f051d5deda1bc0c
+MD5sum: b06c6762d44cb68d8c2c0fe9463c2af2
 Description: Eir
  Eir is a valkyrie and goddess associated with medical skill.
 
