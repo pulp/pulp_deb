@@ -9,45 +9,34 @@
 
 set -mveuo pipefail
 
-export PULP_URL="${PULP_URL:-https://pulp}"
-
 # make sure this script runs at the repo root
 cd "$(dirname "$(realpath -e "$0")")"/../../..
 
-pip install twine wheel
+source .github/workflows/scripts/utils.sh
 
-export REPORTED_VERSION=$(http $PULP_URL/pulp/api/v3/status/ | jq --arg plugin deb --arg legacy_plugin pulp_deb -r '.versions[] | select(.component == $plugin or .component == $legacy_plugin) | .version')
-export DESCRIPTION="$(git describe --all --exact-match `git rev-parse HEAD`)"
-if [[ $DESCRIPTION == 'tags/'$REPORTED_VERSION ]]; then
-  export VERSION=${REPORTED_VERSION}
-else
-  export EPOCH="$(date +%s)"
-  export VERSION=${REPORTED_VERSION}${EPOCH}
-fi
+export PULP_URL="${PULP_URL:-https://pulp}"
 
-export response=$(curl --write-out %{http_code} --silent --output /dev/null https://pypi.org/project/pulp-deb-client/$VERSION/)
+REPORTED_STATUS="$(pulp status)"
+REPORTED_VERSION="$(echo "$REPORTED_STATUS" | jq --arg plugin "deb" -r '.versions[] | select(.component == $plugin) | .version')"
+VERSION="$(echo "$REPORTED_VERSION" | python -c 'from packaging.version import Version; print(Version(input()))')"
 
-if [ "$response" == "200" ];
-then
-  echo "pulp_deb client $VERSION has already been released. Installing from PyPI."
-  docker exec pulp pip3 install pulp-deb-client==$VERSION
-  mkdir -p dist
-  tar cvf python-client.tar ./dist
-  exit
-fi
-
-cd ../pulp-openapi-generator
+pushd ../pulp-openapi-generator
 rm -rf pulp_deb-client
-./generate.sh pulp_deb python $VERSION
-cd pulp_deb-client
+./generate.sh pulp_deb python "$VERSION"
+pushd pulp_deb-client
 python setup.py sdist bdist_wheel --python-tag py3
-find . -name "*.whl" -exec docker exec pulp pip3 install /root/pulp-openapi-generator/pulp_deb-client/{} \;
-tar cvf ../../pulp_deb/python-client.tar ./dist
+
+twine check "dist/pulp_deb_client-$VERSION-py3-none-any.whl" || exit 1
+twine check "dist/pulp_deb-client-$VERSION.tar.gz" || exit 1
+
+cmd_prefix pip3 install "/root/pulp-openapi-generator/pulp_deb-client/dist/pulp_deb_client-${VERSION}-py3-none-any.whl"
+tar cvf ../../pulp_deb/deb-python-client.tar ./dist
 
 find ./docs/* -exec sed -i 's/Back to README/Back to HOME/g' {} \;
 find ./docs/* -exec sed -i 's/README//g' {} \;
 cp README.md docs/index.md
 sed -i 's/docs\///g' docs/index.md
 find ./docs/* -exec sed -i 's/\.md//g' {} \;
-tar cvf ../../pulp_deb/python-client-docs.tar ./docs
-exit $?
+tar cvf ../../pulp_deb/deb-python-client-docs.tar ./docs
+popd
+popd
