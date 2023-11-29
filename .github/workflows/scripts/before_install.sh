@@ -55,14 +55,6 @@ then
   echo $COMMIT_MSG | sed -n -e 's/.*CI Base Image:\s*\([-_/[:alnum:]]*:[-_[:alnum:]]*\).*/ci_base: "\1"/p' >> .ci/ansible/vars/main.yaml
 fi
 
-
-cd ..
-
-git clone --depth=1 https://github.com/pulp/pulp-openapi-generator.git
-
-# Intall requirements for ansible playbooks
-pip install docker netaddr boto3 ansible
-
 for i in {1..3}
 do
   ansible-galaxy collection install "amazon.aws:1.5.0" && s=0 && break || s=$? && sleep 3
@@ -72,8 +64,6 @@ then
   echo "Failed to install amazon.aws"
   exit $s
 fi
-
-cd pulp_deb
 
 if [[ "$TEST" = "lowerbounds" ]]; then
   python3 .ci/scripts/calc_deps_lowerbounds.py > lowerbounds_requirements.txt
