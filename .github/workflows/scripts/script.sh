@@ -29,7 +29,7 @@ export PULP_URL="https://pulp"
 
 if [[ "$TEST" = "docs" ]]; then
   if [[ "$GITHUB_WORKFLOW" == "Deb CI" ]]; then
-    towncrier --yes --version 4.0.0.ci
+    towncrier build --yes --version 4.0.0.ci
   fi
   cd docs
   make PULP_URL="$PULP_URL" diagrams html

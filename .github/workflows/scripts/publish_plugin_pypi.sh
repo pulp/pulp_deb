@@ -7,21 +7,27 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
+set -euv
+
 # make sure this script runs at the repo root
 cd "$(dirname "$(realpath -e "$0")")"/../../..
 
-set -euv
+VERSION="$1"
 
-export response=$(curl --write-out %{http_code} --silent --output /dev/null https://pypi.org/project/pulp-deb/$1/)
-if [ "$response" == "200" ];
+if [[ -z "$VERSION" ]]; then
+  echo "No version specified."
+  exit 1
+fi
+
+RESPONSE="$(curl --write-out '%{http_code}' --silent --output /dev/null "https://pypi.org/project/pulp-deb/$VERSION/")"
+
+if [ "$RESPONSE" == "200" ];
 then
-  echo "pulp_deb $1 has already been released. Skipping."
+  echo "pulp_deb $VERSION has already been released. Skipping."
   exit
 fi
 
-twine check dist/pulp_deb-$1-py3-none-any.whl || exit 1
-twine check dist/pulp-deb-$1.tar.gz || exit 1
-twine upload dist/pulp_deb-$1-py3-none-any.whl -u pulp -p $PYPI_PASSWORD
-twine upload dist/pulp-deb-$1.tar.gz -u pulp -p $PYPI_PASSWORD
-
-exit $?
+twine upload -u pulp -p "$PYPI_PASSWORD" \
+"dist/pulp_deb-$VERSION-py3-none-any.whl" \
+"dist/pulp-deb-$VERSION.tar.gz" \
+;
