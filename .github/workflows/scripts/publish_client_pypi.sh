@@ -10,28 +10,24 @@
 set -euv
 
 # make sure this script runs at the repo root
-cd "$(dirname "$(realpath -e "$0")")"/../../..
+cd "$(dirname "$(realpath -e "$0")")/../../.."
 
-pip install twine
-
-export VERSION=$(ls dist | sed -rn 's/pulp_deb-client-(.*)\.tar.gz/\1/p')
+VERSION="$1"
 
 if [[ -z "$VERSION" ]]; then
-  echo "No client package found."
-  exit
+  echo "No version specified."
+  exit 1
 fi
 
-export response=$(curl --write-out %{http_code} --silent --output /dev/null https://pypi.org/project/pulp-deb-client/$VERSION/)
+RESPONSE="$(curl --write-out '%{http_code}' --silent --output /dev/null "https://pypi.org/project/pulp-deb-client/$VERSION/")"
 
-if [ "$response" == "200" ];
+if [ "$RESPONSE" == "200" ];
 then
   echo "pulp_deb client $VERSION has already been released. Skipping."
   exit
 fi
 
-twine check dist/pulp_deb_client-$VERSION-py3-none-any.whl || exit 1
-twine check dist/pulp_deb-client-$VERSION.tar.gz || exit 1
-twine upload dist/pulp_deb_client-$VERSION-py3-none-any.whl -u pulp -p $PYPI_PASSWORD
-twine upload dist/pulp_deb-client-$VERSION.tar.gz -u pulp -p $PYPI_PASSWORD
-
-exit $?
+twine upload -u pulp -p "$PYPI_PASSWORD" \
+"dist/pulp_deb_client-$VERSION-py3-none-any.whl" \
+"dist/pulp_deb-client-$VERSION.tar.gz" \
+;
