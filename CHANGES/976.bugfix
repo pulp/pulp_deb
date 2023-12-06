@@ -1,0 +1,1 @@
+Fixed a bug where pulp_deb was serving unpublished content when distributing a repository that has content but no publications.
