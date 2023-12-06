@@ -8,6 +8,8 @@ ADD ./{{ item.name }} ./{{ item.name }}
 {% endfor %}
 
 # Install python packages
+# S3 botocore needs to be patched to handle responses from minio during 0-byte uploads
+# Hacking botocore (https://github.com/boto/botocore/pull/1990)
 
 RUN pip3 install
 {%- for item in plugins -%}
@@ -17,7 +19,7 @@ RUN pip3 install
 {{ " " }}{{ item.source }}
 {%- if item.name == "pulpcore" -%}
 {%- if s3_test | default(false) -%}
-[s3]
+[s3] git+https://github.com/fabricio-aguiar/botocore.git@fix-100-continue
 {%- elif azure_test | default(false) -%}
 [azure]
 {%- elif gcp_test | default(false) -%}
