@@ -39,19 +39,6 @@ fi
 mkdir -p ../deb-bindings
 tar -xvf deb-python-client-docs.tar --directory ../deb-bindings
 pushd ../deb-bindings
-cat >> mkdocs.yml << DOCSYAML
----
-site_name: PulpDeb Client
-site_description: Deb bindings
-site_author: Pulp Team
-site_url: https://docs.pulpproject.org/pulp_deb_client/
-repo_name: pulp/pulp_deb
-repo_url: https://github.com/pulp/pulp_deb
-theme: readthedocs
-DOCSYAML
-
-# Building the bindings docs
-mkdocs build
 
 # publish to docs.pulpproject.org/pulp_deb_client
 rsync -avzh site/ doc_builder_pulp_deb@docs.pulpproject.org:/var/www/docs.pulpproject.org/pulp_deb_client/
