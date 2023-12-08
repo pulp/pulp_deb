@@ -26,8 +26,8 @@ rm -rf pulp_deb-client
 pushd pulp_deb-client
 python setup.py sdist bdist_wheel --python-tag py3
 
-twine check "dist/pulp_deb_client-$VERSION-py3-none-any.whl" || exit 1
-twine check "dist/pulp_deb-client-$VERSION.tar.gz" || exit 1
+twine check "dist/pulp_deb_client-$VERSION-py3-none-any.whl"
+twine check "dist/pulp_deb-client-$VERSION.tar.gz"
 
 cmd_prefix pip3 install "/root/pulp-openapi-generator/pulp_deb-client/dist/pulp_deb_client-${VERSION}-py3-none-any.whl"
 tar cvf ../../pulp_deb/deb-python-client.tar ./dist
@@ -37,6 +37,22 @@ find ./docs/* -exec sed -i 's/README//g' {} \;
 cp README.md docs/index.md
 sed -i 's/docs\///g' docs/index.md
 find ./docs/* -exec sed -i 's/\.md//g' {} \;
-tar cvf ../../pulp_deb/deb-python-client-docs.tar ./docs
+
+cat >> mkdocs.yml << DOCSYAML
+---
+site_name: PulpDeb Client
+site_description: Deb bindings
+site_author: Pulp Team
+site_url: https://docs.pulpproject.org/pulp_deb_client/
+repo_name: pulp/pulp_deb
+repo_url: https://github.com/pulp/pulp_deb
+theme: readthedocs
+DOCSYAML
+
+# Building the bindings docs
+mkdocs build
+
+# Pack the built site.
+tar cvf ../../pulp_deb/deb-python-client-docs.tar ./site
 popd
 popd
