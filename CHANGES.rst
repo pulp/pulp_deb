@@ -13,6 +13,30 @@ Changelog
 
 .. towncrier release notes start
 
+3.1.1 (2023-12-12)
+==================
+
+Bugfixes
+--------
+
+- Fixed repo uniqueness constraints.
+  Duplicate packages with identical checksums are now allowed.
+  In addition, duplicates are now also handled for the set of incoming content.
+  `#921 <https://github.com/pulp/pulp_deb/issues/921>`_
+- Fixed a bug where pulp_deb was serving unpublished content when distributing a repository that has content but no publications.
+  `#976 <https://github.com/pulp/pulp_deb/issues/976>`_
+
+
+Misc
+----
+
+- Added tests that verify the download of content served by ``pulp_deb``.
+  `#919 <https://github.com/pulp/pulp_deb/issues/919>`_
+
+
+----
+
+
 3.1.0 (2023-11-09)
 ==================
 
@@ -42,6 +66,41 @@ Bugfixes
   `#870 <https://github.com/pulp/pulp_deb/issues/870>`_
 - Optimize mode can now take effect, when switching from mirrored to not mirrored mode between syncs.
   `#903 <https://github.com/pulp/pulp_deb/issues/903>`_
+
+
+----
+
+
+3.0.1 (2023-12-12)
+==================
+
+Features
+--------
+
+- Fixed the ``create_repositories=True`` parameter for importing content.
+  `#872 <https://github.com/pulp/pulp_deb/issues/872>`_
+
+
+Bugfixes
+--------
+
+- Improved the performance of structured ``/pulp/api/v3/deb/copy/`` actions.
+  `#870 <https://github.com/pulp/pulp_deb/issues/870>`_
+- Optimize mode can now take effect, when switching from mirrored to not mirrored mode between syncs.
+  `#903 <https://github.com/pulp/pulp_deb/issues/903>`_
+- Fixed repo uniqueness constraints.
+  Duplicate packages with identical checksums are now allowed.
+  In addition, duplicates are now also handled for the set of incoming content.
+  `#921 <https://github.com/pulp/pulp_deb/issues/921>`_
+- Fixed a bug where pulp_deb was serving unpublished content when distributing a repository that has content but no publications.
+  `#976 <https://github.com/pulp/pulp_deb/issues/976>`_
+
+
+Misc
+----
+
+- Added tests that verify the download of content served by ``pulp_deb``.
+  `#919 <https://github.com/pulp/pulp_deb/issues/919>`_
 
 
 ----
