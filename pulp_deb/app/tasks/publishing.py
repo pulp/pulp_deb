@@ -45,8 +45,6 @@ from pulp_deb.app.constants import (
     CHECKSUM_TYPE_MAP,
 )
 
-from pulp_deb.app.settings import APT_BY_HASH
-
 import logging
 from gettext import gettext as _
 
@@ -356,7 +354,7 @@ class _ComponentHelper:
             gz_package_index.save()
 
             # Generating metadata files using checksum
-            if APT_BY_HASH:
+            if settings.APT_BY_HASH:
                 for path, index in (
                     (package_index_path, package_index),
                     (gz_package_index_path, gz_package_index),
@@ -425,7 +423,7 @@ class _ReleaseHelper:
         self.release["Components"] = ""  # Will be set later
         if release.description != NULL_VALUE:
             self.release["Description"] = release.description
-        self.release["Acquire-By-Hash"] = "yes" if APT_BY_HASH else "no"
+        self.release["Acquire-By-Hash"] = "yes" if settings.APT_BY_HASH else "no"
 
         for checksum_type, deb_field in CHECKSUM_TYPE_MAP.items():
             if checksum_type in settings.ALLOWED_CONTENT_CHECKSUMS:
