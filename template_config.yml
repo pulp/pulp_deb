@@ -79,7 +79,10 @@ test_cli: true
 test_deprecations: true
 test_gcp: false
 test_lowerbounds: true
-test_performance: false
+test_performance:
+- sync
+- publish
+- pulp_to_pulp
 test_reroute: true
 test_s3: true
 use_issue_template: true
