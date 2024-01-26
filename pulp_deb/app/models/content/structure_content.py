@@ -10,6 +10,7 @@ IMPORTANT: It is essential that these models don't contain anything that isn't s
 information. This ensures, that copying structure content between different Pulp repositories, does
 not inadvertantly copy anything that is not structure relevant.
 """
+
 import os
 
 from django.db import models

@@ -1,4 +1,5 @@
 """Tests that verify download of deb content served by Pulp."""
+
 import pytest
 
 from pulp_deb.tests.functional.utils import get_counts_from_content_summary

@@ -1,4 +1,5 @@
 """Tests that sync deb plugin repositories."""
+
 import pytest
 
 from pulp_deb.tests.functional.constants import (
