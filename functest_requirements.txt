@@ -1,4 +1,4 @@
-pytest
+pytest<8
 python-debian>=0.1.36
 pytest-custom_exit_code
 pytest-xdist
