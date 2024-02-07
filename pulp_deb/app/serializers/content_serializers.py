@@ -11,6 +11,7 @@ from pulpcore.plugin.serializers import (
     ContentChecksumSerializer,
     MultipleArtifactContentSerializer,
     NoArtifactContentSerializer,
+    NoArtifactContentUploadSerializer,
     SingleArtifactContentSerializer,
     SingleArtifactContentUploadSerializer,
     DetailRelatedField,
@@ -716,7 +717,7 @@ class InstallerPackageSerializer(
         from822_serializer = InstallerPackage822Serializer
 
 
-class ReleaseSerializer(NoArtifactContentSerializer):
+class ReleaseSerializer(NoArtifactContentUploadSerializer):
     """
     A Serializer for Release.
     """
@@ -729,9 +730,9 @@ class ReleaseSerializer(NoArtifactContentSerializer):
     label = NullableCharField(required=False, allow_null=True, default=None)
     description = NullableCharField(required=False, allow_null=True, default=None)
 
-    class Meta(NoArtifactContentSerializer.Meta):
+    class Meta(NoArtifactContentUploadSerializer.Meta):
         model = Release
-        fields = NoArtifactContentSerializer.Meta.fields + (
+        fields = NoArtifactContentUploadSerializer.Meta.fields + (
             "codename",
             "suite",
             "distribution",
@@ -742,7 +743,7 @@ class ReleaseSerializer(NoArtifactContentSerializer):
         )
 
 
-class ReleaseArchitectureSerializer(NoArtifactContentSerializer):
+class ReleaseArchitectureSerializer(NoArtifactContentUploadSerializer):
     """
     A Serializer for ReleaseArchitecture.
     """
@@ -750,15 +751,15 @@ class ReleaseArchitectureSerializer(NoArtifactContentSerializer):
     architecture = CharField(help_text="Name of the architecture.")
     distribution = CharField(help_text="Name of the distribution.")
 
-    class Meta(NoArtifactContentSerializer.Meta):
+    class Meta(NoArtifactContentUploadSerializer.Meta):
         model = ReleaseArchitecture
-        fields = NoArtifactContentSerializer.Meta.fields + (
+        fields = NoArtifactContentUploadSerializer.Meta.fields + (
             "architecture",
             "distribution",
         )
 
 
-class ReleaseComponentSerializer(NoArtifactContentSerializer):
+class ReleaseComponentSerializer(NoArtifactContentUploadSerializer):
     """
     A Serializer for ReleaseComponent.
     """
@@ -766,9 +767,9 @@ class ReleaseComponentSerializer(NoArtifactContentSerializer):
     component = CharField(help_text="Name of the component.")
     distribution = CharField(help_text="Name of the distribution.")
 
-    class Meta(NoArtifactContentSerializer.Meta):
+    class Meta(NoArtifactContentUploadSerializer.Meta):
         model = ReleaseComponent
-        fields = NoArtifactContentSerializer.Meta.fields + (
+        fields = NoArtifactContentUploadSerializer.Meta.fields + (
             "component",
             "distribution",
         )
