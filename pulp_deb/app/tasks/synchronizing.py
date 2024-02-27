@@ -923,7 +923,9 @@ class DebFirstStage(Stage):
         # parse package_index
         package_futures = []
         package_index_artifact = await _get_main_artifact_blocking(package_index)
-        for package_paragraph in deb822.Packages.iter_paragraphs(package_index_artifact.file):
+        for package_paragraph in deb822.Packages.iter_paragraphs(
+            package_index_artifact.file, use_apt_pkg=False
+        ):
             # Sanity check the architecture from the package paragraph:
             package_paragraph_architecture = package_paragraph["Architecture"]
             if release_file.distribution[-1] == "/":
