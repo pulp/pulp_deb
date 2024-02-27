@@ -932,7 +932,9 @@ class DebFirstStage(Stage):
         # parse package_index
         package_futures = []
         package_index_artifact = await _get_main_artifact_blocking(package_index)
-        for package_paragraph in deb822.Packages.iter_paragraphs(package_index_artifact.file):
+        for package_paragraph in deb822.Packages.iter_paragraphs(
+            package_index_artifact.file, use_apt_pkg=False
+        ):
             # Sanity check the architecture from the package paragraph:
             package_paragraph_architecture = package_paragraph["Architecture"]
             if release_file.distribution[-1] == "/":
@@ -1108,7 +1110,9 @@ class DebFirstStage(Stage):
         # parse source_index
         source_package_content_futures = []
         source_index_artifact = await _get_main_artifact_blocking(source_index)
-        for source_paragraph in deb822.Sources.iter_paragraphs(source_index_artifact.file):
+        for source_paragraph in deb822.Sources.iter_paragraphs(
+            source_index_artifact.file, use_apt_pkg=False
+        ):
             try:
                 source_dir = source_paragraph["Directory"]
                 source_relpath = os.path.join(source_dir, "blah")
