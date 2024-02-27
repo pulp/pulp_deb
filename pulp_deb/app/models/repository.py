@@ -117,6 +117,28 @@ class AptRepositoryReleaseServiceOverride(BaseModel):
         unique_together = (("repository", "release_distribution"),)
 
 
+def find_dist_components(package_ids, content_set):
+    """
+    Given a list of package_ids and a content_set, this function will find all distribution-
+    component combinations that exist for the given package_ids within the given content_set.
+
+    Returns a set of strings, e.g.: "buster main".
+    """
+    # PackageReleaseComponents:
+    package_prc_qs = PackageReleaseComponent.objects.filter(package__in=package_ids).only("pk")
+    prc_content_qs = content_set.filter(pk__in=package_prc_qs)
+    prc_qs = PackageReleaseComponent.objects.filter(pk__in=prc_content_qs.only("pk"))
+
+    # ReleaseComponents:
+    distribution_components = set()
+    for prc in prc_qs.select_related("release_component").iterator():
+        distribution = prc.release_component.distribution
+        component = prc.release_component.component
+        distribution_components.add(distribution + " " + component)
+
+    return distribution_components
+
+
 def handle_duplicate_packages(new_version):
     """
     pulpcore's remove_duplicates does not work for .deb packages, since identical duplicate
@@ -148,19 +170,26 @@ def handle_duplicate_packages(new_version):
         added_checksum_unique = package_qs_added.distinct(*repo_key_fields, "sha256")
 
         if added_unique.count() < added_checksum_unique.count():
-            package_qs_added_duplicates = added_checksum_unique.difference(added_unique)
             if log.isEnabledFor(logging.DEBUG):
                 message = _(
-                    "New repository version contains multiple packages with '{}', but differing "
-                    "checksum!"
+                    'New repository version is trying to add different versions, of package "{}", '
+                    'to each of the following distribution-component combinations "{}"!'
                 )
-                for package_fields in package_qs_added_duplicates.values(*repo_key_fields):
-                    log.debug(message.format(package_fields))
+                package_qs_added_dups = added_checksum_unique.difference(added_unique)
+                for package_fields in package_qs_added_dups.values(*repo_key_fields, "sha256"):
+                    package_fields.pop("sha256")
+                    duplicate_package_ids = package_qs_added.filter(**package_fields).only("pk")
+                    distribution_components = find_dist_components(
+                        duplicate_package_ids, content_qs_added
+                    )
+                    log.debug(message.format(package_fields, distribution_components))
 
             message = _(
                 "Cannot create repository version since there are newly added packages with the "
                 "same name, version, and architecture, but a different checksum. If the log level "
-                "is DEBUG, you can find a list of affected packages in the Pulp log."
+                "is DEBUG, you can find a list of affected packages in the Pulp log. You can often "
+                "work around this issue by restricting syncs to only those distirbution component "
+                "combinations, that do not contain colliding duplicates!"
             )
             raise ValueError(message)
 
