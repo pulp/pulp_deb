@@ -496,7 +496,7 @@ def parse_package_index(pkg_idx):
     Returns a dict of the packages by '<Package>-<Version>-<Architecture>'.
     """
     packages = {}
-    for package in deb822.Packages.iter_paragraphs(pkg_idx):
+    for package in deb822.Packages.iter_paragraphs(pkg_idx, use_apt_pkg=False):
         packages[
             "-".join([package["Package"], package["Version"], package["Architecture"]])
         ] = package
