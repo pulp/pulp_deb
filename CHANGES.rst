@@ -13,6 +13,23 @@ Changelog
 
 .. towncrier release notes start
 
+3.1.2 (2024-02-29)
+==================
+
+Bugfixes
+--------
+
+- Fixed a bug where enabling the ``APT_BY_HASH`` setting did not enable the feature.
+  `#984 <https://github.com/pulp/pulp_deb/issues/984>`_
+- Fixed DEBUG logging of prohibited duplicate packages.
+  `#994 <https://github.com/pulp/pulp_deb/issues/994>`_
+- Suppressed deb822's confusing log warning about python-apt not being installed.
+  `#1019 <https://github.com/pulp/pulp_deb/issues/1019>`_
+
+
+----
+
+
 3.1.1 (2023-12-12)
 ==================
 
