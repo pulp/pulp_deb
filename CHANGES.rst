@@ -13,6 +13,21 @@ Changelog
 
 .. towncrier release notes start
 
+3.0.2 (2024-02-29)
+==================
+
+Bugfixes
+--------
+
+- Fixed DEBUG logging of prohibited duplicate packages.
+  `#994 <https://github.com/pulp/pulp_deb/issues/994>`_
+- Suppressed deb822's confusing log warning about python-apt not being installed.
+  `#1019 <https://github.com/pulp/pulp_deb/issues/1019>`_
+
+
+----
+
+
 3.0.1 (2023-12-12)
 ==================
 
