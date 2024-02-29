@@ -16,6 +16,7 @@ from pulp_deb.tests.functional.constants import (
     DEB_INSTALLER_SOURCE_FIXTURE_SUMMARY,
     DEB_REPORT_CODE_SKIP_PACKAGE,
     DEB_REPORT_CODE_SKIP_RELEASE,
+    DEB_REPORT_CODE_SKIP_COMPLETE,
     DEB_SIGNING_KEY,
 )
 from pulp_deb.tests.functional.utils import get_counts_from_content_summary
@@ -311,9 +312,7 @@ def test_sync_optimize_skip_unchanged_package_index(
 
 
 @pytest.mark.parallel
-def test_sync_optimize_switch_to_no_mirror(
-    deb_init_and_sync,
-):
+def test_sync_optimize_switch_to_no_mirror(deb_init_and_sync):
     """
     Test that when syncing a repo with mirror=True, and then re-syncing that repo with
     mirror=False, optimize=True, the releases will be skipped by optimize mode.
@@ -329,6 +328,23 @@ def test_sync_optimize_switch_to_no_mirror(
     )
     assert repo.latest_version_href.endswith("/1/")
     assert is_sync_skipped(task, DEB_REPORT_CODE_SKIP_RELEASE)
+
+
+@pytest.mark.parallel
+def test_sync_optimize_with_mirror_enabled(deb_init_and_sync):
+    """Test if enabling mirror sync option will skip syncing (optimize) on resync."""
+
+    sync_args = {"mirror": True}
+    repo, remote, task = deb_init_and_sync(sync_args=sync_args, return_task=True)
+    assert repo.latest_version_href.endswith("/1/")
+    assert not is_sync_skipped(task, DEB_REPORT_CODE_SKIP_COMPLETE)
+
+    # resync
+    repo, _, task = deb_init_and_sync(
+        repository=repo, remote=remote, sync_args=sync_args, return_task=True
+    )
+    assert repo.latest_version_href.endswith("/1/")
+    assert is_sync_skipped(task, DEB_REPORT_CODE_SKIP_COMPLETE)
 
 
 def test_sync_orphan_cleanup_fail(

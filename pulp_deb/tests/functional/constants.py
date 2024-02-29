@@ -213,6 +213,7 @@ DEB_PERF_JAMMY = {
 
 DEB_FIXTURE_PACKAGE_COUNT = DEB_FIXTURE_SUMMARY.get(DEB_PACKAGE_NAME, 0)
 
+DEB_REPORT_CODE_SKIP_COMPLETE = "sync.complete_skip.was_skipped"
 DEB_REPORT_CODE_SKIP_RELEASE = "sync.release_file.was_skipped"
 DEB_REPORT_CODE_SKIP_PACKAGE = "sync.package_index.was_skipped"
 
