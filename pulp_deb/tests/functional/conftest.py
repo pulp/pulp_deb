@@ -13,11 +13,14 @@ from pulpcore.client.pulp_deb import (
     ContentPackageIndicesApi,
     ContentPackageReleaseComponentsApi,
     ContentReleasesApi,
+    ContentReleaseArchitecturesApi,
     ContentReleaseComponentsApi,
     ContentReleaseFilesApi,
     Copy,
     DebAptPublication,
     DebCopyApi,
+    DebReleaseArchitecture,
+    DebReleaseComponent,
     DebVerbatimPublication,
     PublicationsVerbatimApi,
 )
@@ -65,8 +68,14 @@ def apt_release_api(apt_client):
 
 
 @pytest.fixture(scope="session")
+def apt_release_architecture_api(apt_client):
+    """Fixture for APT release architecture API."""
+    return ContentReleaseArchitecturesApi(apt_client)
+
+
+@pytest.fixture(scope="session")
 def apt_release_component_api(apt_client):
-    """Fixture for APT release API."""
+    """Fixture for APT release component API."""
     return ContentReleaseComponentsApi(apt_client)
 
 
@@ -102,6 +111,40 @@ def deb_package_factory(apt_package_api, gen_object_with_cleanup):
         return gen_object_with_cleanup(apt_package_api, **kwargs)
 
     return _deb_package_factory
+
+
+@pytest.fixture(scope="class")
+def deb_release_component_factory(apt_release_component_api, gen_object_with_cleanup):
+    """Fixture that generates deb package with cleanup."""
+
+    def _deb_release_component_factory(component, distribution, **kwargs):
+        """Create an APT ReleaseComponent.
+
+        :returns: The created ReleaseComponent.
+        """
+        release_component_object = DebReleaseComponent(
+            component=component, distribution=distribution, **kwargs
+        )
+        return gen_object_with_cleanup(apt_release_component_api, release_component_object)
+
+    return _deb_release_component_factory
+
+
+@pytest.fixture(scope="class")
+def deb_release_architecture_factory(apt_release_architecture_api, gen_object_with_cleanup):
+    """Fixture that generates deb package with cleanup."""
+
+    def _deb_release_architecture_factory(architecture, distribution, **kwargs):
+        """Create an APT ReleaseArchitecture.
+
+        :returns: The created ReleaseArchitecture.
+        """
+        release_architecture_object = DebReleaseArchitecture(
+            architecture=architecture, distribution=distribution, **kwargs
+        )
+        return gen_object_with_cleanup(apt_release_architecture_api, release_architecture_object)
+
+    return _deb_release_architecture_factory
 
 
 @pytest.fixture
