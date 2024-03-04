@@ -1,2 +1,0 @@
-The API endpoints for ReleaseArchitecture and ReleaseComponent creation will no longer return a 400 ``non_field_errors`` if the content to be created already exists.
-Instead a task is triggered that will list the existing content in its ``created_resources`` field.

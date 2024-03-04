@@ -1,1 +1,0 @@
-Fixed a bug where enabling the ``APT_BY_HASH`` setting did not enable the feature.
