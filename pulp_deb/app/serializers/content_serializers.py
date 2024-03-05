@@ -750,21 +750,6 @@ class ReleaseArchitectureSerializer(NoArtifactContentSerializer):
     architecture = CharField(help_text="Name of the architecture.")
     distribution = CharField(help_text="Name of the distribution.")
 
-    def get_unique_together_validators(self):
-        """
-        We do not want UniqueTogetherValidator since we have retrieve logic!
-        """
-        return []
-
-    def retrieve(self, validated_data):
-        """
-        If the ReleaseArchitecture already exists, retrieve it!
-        """
-        return ReleaseArchitecture.objects.filter(
-            architecture=validated_data["architecture"],
-            distribution=validated_data["distribution"],
-        ).first()
-
     class Meta(NoArtifactContentSerializer.Meta):
         model = ReleaseArchitecture
         fields = NoArtifactContentSerializer.Meta.fields + (
@@ -777,21 +762,6 @@ class ReleaseComponentSerializer(NoArtifactContentSerializer):
     """
     A Serializer for ReleaseComponent.
     """
-
-    def get_unique_together_validators(self):
-        """
-        We do not want UniqueTogetherValidator since we have retrieve logic!
-        """
-        return []
-
-    def retrieve(self, validated_data):
-        """
-        If the ReleaseComponent already exists, retrieve it!
-        """
-        return ReleaseComponent.objects.filter(
-            distribution=validated_data["distribution"],
-            component=validated_data["component"],
-        ).first()
 
     component = CharField(help_text="Name of the component.")
     distribution = CharField(help_text="Name of the distribution.")

@@ -1,52 +1,17 @@
 from gettext import gettext as _  # noqa
 
 from django_filters import Filter
-from drf_spectacular.utils import extend_schema
-from pulpcore.plugin.tasking import general_create
 from pulpcore.plugin.models import Repository, RepositoryVersion
-from pulpcore.plugin.serializers import AsyncOperationResponseSerializer
 from pulpcore.plugin.serializers.content import ValidationError
-from pulpcore.plugin.tasking import dispatch
 from pulpcore.plugin.viewsets import (
     NAME_FILTER_OPTIONS,
     ContentFilter,
     ContentViewSet,
     NamedModelViewSet,
-    OperationPostponedResponse,
     SingleArtifactContentUploadViewSet,
 )
-from pulpcore.plugin.viewsets.content import DefaultDeferredContextMixin
 
 from pulp_deb.app import models, serializers
-
-
-class NoArtifactContentViewSet(DefaultDeferredContextMixin, ContentViewSet):
-    """A ViewSet for content creation that does not require a file to be uploaded."""
-
-    @extend_schema(
-        description="Trigger an asynchronous task to create content,"
-        "optionally create new repository version.",
-        responses={202: AsyncOperationResponseSerializer},
-    )
-    def create(self, request):
-        """Create a content unit."""
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        exclusive_resources = [
-            item for item in (serializer.validated_data.get(key) for key in ("repository",)) if item
-        ]
-
-        task = dispatch(
-            general_create,
-            exclusive_resources=exclusive_resources,
-            args=(self.queryset.model._meta.app_label, serializer.__class__.__name__),
-            kwargs={
-                "data": {k: v for k, v in request.data.items()},
-                "context": self.get_deferred_context(request),
-            },
-        )
-        return OperationPostponedResponse(task, request)
 
 
 class GenericContentFilter(ContentFilter):
@@ -475,7 +440,7 @@ class ReleaseArchitectureFilter(ContentFilter):
         fields = ["architecture", "distribution"]
 
 
-class ReleaseArchitectureViewSet(NoArtifactContentViewSet):
+class ReleaseArchitectureViewSet(ContentViewSet):
     # The doc string is a top level element of the user facing REST API documentation:
     """
     A ReleaseArchitecture represents a single dpkg architecture string.
@@ -514,7 +479,7 @@ class ReleaseComponentFilter(ContentFilter):
         fields = ["component", "distribution"]
 
 
-class ReleaseComponentViewSet(NoArtifactContentViewSet):
+class ReleaseComponentViewSet(ContentViewSet):
     # The doc string is a top level element of the user facing REST API documentation:
     """
     A ReleaseComponent represents a single APT repository component.
