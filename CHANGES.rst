@@ -13,6 +13,59 @@ Changelog
 
 .. towncrier release notes start
 
+3.2.0 (2024-03-04)
+==================
+
+Features
+--------
+
+- Added feature to serve published artifacts from previous publications for 3 days.
+  This fulfills the apt-by-hash/acquire-by-hash spec by allowing by-hash files to be cached for a
+  period of 3 days.
+  `#911 <https://github.com/pulp/pulp_deb/issues/911>`_
+- Added retrieve functionality for ReleaseArchitecture and ReleaseComponent content.
+  `#1010 <https://github.com/pulp/pulp_deb/issues/1010>`_
+- Allow optimize with mirror mode if nothing at all has changed in the repository being synced.
+  `#1027 <https://github.com/pulp/pulp_deb/issues/1027>`_
+
+
+Bugfixes
+--------
+
+- Fixed repo uniqueness constraints.
+  Duplicate packages with identical checksums are now allowed.
+  In addition, duplicates are now also handled for the set of incoming content.
+  `#921 <https://github.com/pulp/pulp_deb/issues/921>`_
+- Fixed a bug where pulp_deb was serving unpublished content when distributing a repository that has content but no publications.
+  `#976 <https://github.com/pulp/pulp_deb/issues/976>`_
+- Fixed a bug where enabling the ``APT_BY_HASH`` setting did not enable the feature.
+  `#984 <https://github.com/pulp/pulp_deb/issues/984>`_
+- Fixed DEBUG logging of prohibited duplicate packages.
+  `#994 <https://github.com/pulp/pulp_deb/issues/994>`_
+- Suppressed deb822's confusing log warning about python-apt not being installed.
+  `#1019 <https://github.com/pulp/pulp_deb/issues/1019>`_
+
+
+Removals
+--------
+
+- The API endpoints for ReleaseArchitecture and ReleaseComponent creation will no longer return a 400 ``non_field_errors`` if the content to be created already exists.
+  Instead a task is triggered that will list the existing content in its ``created_resources`` field.
+  `#1010 <https://github.com/pulp/pulp_deb/issues/1010>`_
+
+
+Misc
+----
+
+- Added tests that verify the download of content served by ``pulp_deb``.
+  `#919 <https://github.com/pulp/pulp_deb/issues/919>`_
+- Added sync, publish and pulp2pulp performance tests to run with the nightly CI.
+  `#970 <https://github.com/pulp/pulp_deb/issues/970>`_
+
+
+----
+
+
 3.1.2 (2024-02-29)
 ==================
 
