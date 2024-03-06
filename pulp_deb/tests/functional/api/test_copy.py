@@ -7,7 +7,6 @@ from pulp_deb.tests.functional.constants import (
 from pulp_deb.tests.functional.utils import get_counts_from_content_summary
 
 
-@pytest.mark.parallel
 def test_copy(
     deb_init_and_sync,
     deb_repository_factory,
@@ -15,6 +14,7 @@ def test_copy(
     deb_copy_content,
     deb_get_repository_by_href,
     deb_get_content_summary,
+    delete_orphans_pre,
 ):
     """Test whether the copy operation can successfully copy a single package."""
     source_repo, _ = deb_init_and_sync()
