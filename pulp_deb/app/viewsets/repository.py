@@ -22,6 +22,7 @@ from pulpcore.plugin.viewsets import (
     RepositoryVersionViewSet,
     RepositoryViewSet,
     NamedModelViewSet,
+    RolesMixin,
 )
 
 from pulp_deb.app import models, serializers, tasks
@@ -53,7 +54,7 @@ class AptModifyRepositoryActionMixin(ModifyRepositoryActionMixin):
         return prc_hrefs
 
 
-class AptRepositoryViewSet(AptModifyRepositoryActionMixin, RepositoryViewSet):
+class AptRepositoryViewSet(AptModifyRepositoryActionMixin, RepositoryViewSet, RolesMixin):
     # The doc string is a top level element of the user facing REST API documentation:
     """
     An AptRepository is the locally stored, Pulp-internal representation of a APT repository.
@@ -65,6 +66,140 @@ class AptRepositoryViewSet(AptModifyRepositoryActionMixin, RepositoryViewSet):
     endpoint_name = "apt"
     queryset = models.AptRepository.objects.all()
     serializer_class = serializers.AptRepositorySerializer
+    queryset_filtering_required_permission = "deb.view_aptrepository"
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list", "my_permissions"],
+                "principal": ["authenticated"],
+                "effect": "allow",
+            },
+            {
+                "action": ["create"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_remote_param_model_or_domain_or_obj_perms:deb.view_aptremote",
+                    "has_model_or_domain_perms:deb.add_aptrepository",
+                ],
+            },
+            {
+                "action": ["retrieve"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_domain_or_obj_perms:deb.view_aptrepository",
+            },
+            {
+                "action": ["update", "partial_update", "set_label", "unset_label"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_model_or_domain_or_obj_perms:deb.change_aptrepository",
+                    "has_model_or_domain_or_obj_perms:deb.view_aptrepository",
+                    "has_remote_param_model_or_domain_or_obj_perms:deb.view_aptremote",
+                ],
+            },
+            {
+                "action": ["modify"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_model_or_domain_or_obj_perms:deb.modify_content_aptrepository",
+                    "has_model_or_domain_or_obj_perms:deb.view_aptrepository",
+                ],
+            },
+            {
+                "action": ["destroy"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_model_or_domain_or_obj_perms:deb.delete_aptrepository",
+                    "has_model_or_domain_or_obj_perms:deb.view_aptrepository",
+                ],
+            },
+            {
+                "action": ["sync"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_model_or_domain_or_obj_perms:deb.sync_aptrepository",
+                    "has_model_or_domain_or_obj_perms:deb.view_aptrepository",
+                    "has_remote_param_model_or_domain_or_obj_perms:deb.view_aptremote",
+                ],
+            },
+            {
+                "action": ["list_roles", "add_role", "remove_role"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_domain_or_obj_perms:deb.manage_roles_aptrepository",
+            },
+        ],
+        "creation_hooks": [
+            {
+                "function": "add_roles_for_object_creator",
+                "parameters": {"roles": "deb.aptrepository_owner"},
+            }
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
+
+    LOCKED_ROLES = {
+        "deb.aptrepository_owner": [
+            "deb.change_aptrepository",
+            "deb.delete_aptrepository",
+            "deb.delete_aptrepository_version",
+            "deb.manage_roles_aptrepository",
+            "deb.modify_content_aptrepository",
+            "deb.repair_aptrepository",
+            "deb.sync_aptrepository",
+            "deb.view_aptrepository",
+        ],
+        "deb.aptrepository_creator": [
+            "deb.add_aptrepository",
+        ],
+        "deb.aptrepository_viewer": [
+            "deb.view_aptrepository",
+        ],
+        # A locked role to allow all APT permissions
+        "deb.admin": [
+            "deb.add_aptdistribution",
+            "deb.add_aptpublication",
+            "deb.add_aptremote",
+            "deb.add_aptrepository",
+            "deb.add_verbatimpublication",
+            "deb.change_aptdistribution",
+            "deb.change_aptremote",
+            "deb.change_aptrepository",
+            "deb.delete_aptdistribution",
+            "deb.delete_aptpublication",
+            "deb.delete_aptremote",
+            "deb.delete_aptrepository",
+            "deb.delete_aptrepository_version",
+            "deb.delete_verbatimpublication",
+            "deb.manage_roles_aptdistribution",
+            "deb.manage_roles_aptpublication",
+            "deb.manage_roles_aptremote",
+            "deb.manage_roles_aptrepository",
+            "deb.manage_roles_verbatimpublication",
+            "deb.modify_content_aptrepository",
+            "deb.repair_aptrepository",
+            "deb.sync_aptrepository",
+            "deb.view_aptdistribution",
+            "deb.view_aptpublication",
+            "deb.view_aptremote",
+            "deb.view_aptrepository",
+            "deb.view_verbatimpublication",
+        ],
+        # A locked role to allow APT view permissions
+        "deb.viewer": [
+            "deb.view_aptdistribution",
+            "deb.view_aptpublication",
+            "deb.view_aptremote",
+            "deb.view_aptrepository",
+            "deb.view_verbatimpublication",
+        ],
+    }
 
     # This decorator is necessary since a sync operation is asyncrounous and returns
     # the id and href of the sync task.
@@ -113,6 +248,35 @@ class AptRepositoryVersionViewSet(RepositoryVersionViewSet):
     """
 
     parent_viewset = AptRepositoryViewSet
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list", "retrieve"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_repository_model_or_domain_or_obj_perms:deb.view_aptrepository",
+            },
+            {
+                "action": ["destroy"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_repository_model_or_domain_or_obj_perms:deb.delete_aptrepository_version",
+                    "has_repository_model_or_domain_or_obj_perms:deb.view_aptrepository",
+                ],
+            },
+            {
+                "action": ["repair"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_repository_model_or_domain_or_obj_perms:deb.repair_aptrepository",
+                    "has_repository_model_or_domain_or_obj_perms:deb.view_aptrepository",
+                ],
+            },
+        ],
+    }
 
 
 class CopyViewSet(viewsets.ViewSet):

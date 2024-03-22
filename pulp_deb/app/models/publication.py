@@ -6,6 +6,7 @@ from django.utils import timezone
 from django_lifecycle import hook, AFTER_CREATE, AFTER_UPDATE
 
 from pulpcore.plugin.models import (
+    AutoAddObjPermsMixin,
     BaseModel,
     Distribution,
     Publication,
@@ -37,7 +38,7 @@ def latest_publication(repo_pk):
         )
 
 
-class VerbatimPublication(Publication):
+class VerbatimPublication(Publication, AutoAddObjPermsMixin):
     """
     A verbatim Publication for Content.
 
@@ -54,9 +55,12 @@ class VerbatimPublication(Publication):
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
+        permissions = [
+            ("manage_roles_verbatimpublication", "Can manage roles on a verbatim publication"),
+        ]
 
 
-class AptPublication(Publication):
+class AptPublication(Publication, AutoAddObjPermsMixin):
     """
     A Publication for DebContent.
 
@@ -79,9 +83,12 @@ class AptPublication(Publication):
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
+        permissions = [
+            ("manage_roles_aptpublication", "Can manage roles on an APT publication"),
+        ]
 
 
-class AptDistribution(Distribution):
+class AptDistribution(Distribution, AutoAddObjPermsMixin):
     """
     A Distribution for DebContent.
     """
@@ -120,6 +127,9 @@ class AptDistribution(Distribution):
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
+        permissions = [
+            ("manage_roles_aptdistribution", "Can manage roles on an APT distribution"),
+        ]
 
 
 class DistributedPublication(BaseModel):
