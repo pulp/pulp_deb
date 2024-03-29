@@ -356,19 +356,9 @@ class _ComponentHelper:
 
             # Generating metadata files using checksum
             if settings.APT_BY_HASH:
-                for path, index in (
-                    (package_index_path, package_index),
-                    (gz_package_index_path, gz_package_index),
-                ):
-                    for checksum in settings.ALLOWED_CONTENT_CHECKSUMS:
-                        if checksum in CHECKSUM_TYPE_MAP:
-                            hashed_index_path = _fetch_file_checksum(path, index, checksum)
-                            hashed_index = PublishedMetadata.create_from_file(
-                                publication=self.parent.publication,
-                                file=File(open(path, "rb")),
-                                relative_path=hashed_index_path,
-                            )
-                            hashed_index.save()
+                self.generate_by_hash(
+                    package_index_path, package_index, gz_package_index_path, gz_package_index
+                )
 
             self.parent.add_metadata(package_index)
             self.parent.add_metadata(gz_package_index)
@@ -385,8 +375,30 @@ class _ComponentHelper:
                 publication=self.parent.publication, file=File(open(gz_source_index_path, "rb"))
             )
             gz_source_index.save()
+
+            # Generating metadata files using checksum
+            if settings.APT_BY_HASH:
+                self.generate_by_hash(
+                    source_index_path, source_index, gz_source_index_path, gz_source_index
+                )
+
             self.parent.add_metadata(source_index)
             self.parent.add_metadata(gz_source_index)
+
+    def generate_by_hash(self, index_path, index, gz_index_path, gz_index):
+        for path, index in (
+            (index_path, index),
+            (gz_index_path, gz_index),
+        ):
+            for checksum in settings.ALLOWED_CONTENT_CHECKSUMS:
+                if checksum in CHECKSUM_TYPE_MAP:
+                    hashed_index_path = _fetch_file_checksum(path, index, checksum)
+                    hashed_index = PublishedMetadata.create_from_file(
+                        publication=self.parent.publication,
+                        file=File(open(path, "rb")),
+                        relative_path=hashed_index_path,
+                    )
+                    hashed_index.save()
 
 
 class _ReleaseHelper:
