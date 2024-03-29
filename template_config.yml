@@ -56,6 +56,7 @@ pulp_settings:
   - /tmp
   allowed_import_paths:
   - /tmp
+  apt_by_hash: true
 pulp_settings_azure: null
 pulp_settings_gcp: null
 pulp_settings_s3: null
