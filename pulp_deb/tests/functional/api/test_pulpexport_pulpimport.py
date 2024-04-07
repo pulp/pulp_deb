@@ -4,6 +4,7 @@ Tests PulpImporter/PulpExporter and PulpImport/PulpExport functionality.
 NOTE: assumes ALLOWED_EXPORT_PATHS and ALLOWED_IMPORT_PATHS settings contain "/tmp"
 all tests will fail if that is not the case.
 """
+
 import pytest
 
 from uuid import uuid4

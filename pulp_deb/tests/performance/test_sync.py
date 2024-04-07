@@ -1,4 +1,5 @@
 """Tests that sync deb plugin repositories."""
+
 import pytest
 
 from pulp_deb.tests.performance.utils import write_csv_to_tmp
