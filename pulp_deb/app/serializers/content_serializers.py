@@ -1169,9 +1169,9 @@ class SourcePackageSerializer(MultipleArtifactContentSerializer):
                         " and sha256 '{sha256}'."
                     ).format(name=source["name"], sha256=source["sha256"])
                 )
-            artifacts[
-                os.path.join(os.path.dirname(data["relative_path"]), source["name"])
-            ] = content.first()
+            artifacts[os.path.join(os.path.dirname(data["relative_path"]), source["name"])] = (
+                content.first()
+            )
 
         data["artifacts"] = artifacts
         return data
