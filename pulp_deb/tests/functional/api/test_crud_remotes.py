@@ -1,4 +1,5 @@
 """Tests that CRUD deb remotes."""
+
 from random import choice
 from uuid import uuid4
 import pytest
