@@ -8,6 +8,7 @@ contain identical packages, but may not contain any duplicates.
 To ensure this is the case we use the handle_duplicate_packages function. As such, these tests are
 primarily intended to test this function.
 """
+
 import pytest
 from uuid import uuid4
 

@@ -6,6 +6,7 @@ obvious example would be a model to represent .deb packages, but other examples 
 like language and Debian installer files. Not included are models for metadata files like Release
 files or APT repository package indices.
 """
+
 import os
 
 from django.db import models
