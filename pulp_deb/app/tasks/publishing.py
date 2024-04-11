@@ -325,14 +325,15 @@ class _ComponentHelper:
     def add_source_package(self, source_package):
         artifact_set = source_package.contentartifact_set.all()
         for content_artifact in artifact_set:
-            published_artifact = PublishedArtifact(
-                relative_path=source_package.derived_path(
-                    os.path.basename(content_artifact.relative_path), self.component
-                ),
-                publication=self.parent.publication,
-                content_artifact=content_artifact,
-            )
-            published_artifact.save()
+            with suppress(IntegrityError):
+                published_artifact = PublishedArtifact(
+                    relative_path=source_package.derived_path(
+                        os.path.basename(content_artifact.relative_path), self.component
+                    ),
+                    publication=self.parent.publication,
+                    content_artifact=content_artifact,
+                )
+                published_artifact.save()
         dsc_file_822_serializer = DscFile822Serializer(source_package, context={"request": None})
         dsc_file_822_serializer.to822(self.component, paragraph=True).dump(
             self.source_index_file_info[0]

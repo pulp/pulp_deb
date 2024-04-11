@@ -16,11 +16,14 @@ from pulpcore.client.pulp_deb import (
     ContentReleaseArchitecturesApi,
     ContentReleaseComponentsApi,
     ContentReleaseFilesApi,
+    ContentSourcePackagesApi,
+    ContentSourceReleaseComponentsApi,
     Copy,
     DebAptPublication,
     DebCopyApi,
     DebReleaseArchitecture,
     DebReleaseComponent,
+    DebSourcePackageReleaseComponent,
     DebVerbatimPublication,
     PublicationsVerbatimApi,
 )
@@ -44,6 +47,12 @@ def apt_package_release_components_api(apt_client):
 
 
 @pytest.fixture(scope="session")
+def apt_source_release_components_api(apt_client):
+    """Fixture for APT source package release components API."""
+    return ContentSourceReleaseComponentsApi(apt_client)
+
+
+@pytest.fixture(scope="session")
 def apt_verbatim_publication_api(apt_client):
     """Fixture for Verbatim publication API."""
     return PublicationsVerbatimApi(apt_client)
@@ -59,6 +68,12 @@ def apt_copy_api(apt_client):
 def apt_package_api(apt_client):
     """Fixture for APT package API."""
     return ContentPackagesApi(apt_client)
+
+
+@pytest.fixture(scope="session")
+def apt_source_package_api(apt_client):
+    """Fixture for APT source package API."""
+    return ContentSourcePackagesApi(apt_client)
 
 
 @pytest.fixture(scope="session")
@@ -111,6 +126,41 @@ def deb_package_factory(apt_package_api, gen_object_with_cleanup):
         return gen_object_with_cleanup(apt_package_api, **kwargs)
 
     return _deb_package_factory
+
+
+@pytest.fixture(scope="class")
+def deb_source_package_factory(apt_source_package_api, gen_object_with_cleanup):
+    """Fixture that generates deb source package with cleanup."""
+
+    def _deb_source_package_factory(**kwargs):
+        """Create a deb source package.
+
+        :returns: The created source package.
+        """
+        return gen_object_with_cleanup(apt_source_package_api, deb_source_package=kwargs)
+
+    return _deb_source_package_factory
+
+
+@pytest.fixture(scope="class")
+def deb_source_release_component_factory(
+    apt_source_release_components_api, gen_object_with_cleanup
+):
+    """Fixture that generates source release comopnent with cleanup."""
+
+    def _deb_source_release_component_factory(source_package, release_component, **kwargs):
+        """Create an APT SourceReleaseComponent.
+
+        :returns: The created SourceReleaseComponent.
+        """
+        source_release_component_object = DebSourcePackageReleaseComponent(
+            source_package=source_package, release_component=release_component, **kwargs
+        )
+        return gen_object_with_cleanup(
+            apt_source_release_components_api, source_release_component_object
+        )
+
+    return _deb_source_release_component_factory
 
 
 @pytest.fixture(scope="class")

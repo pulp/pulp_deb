@@ -1,0 +1,2 @@
+Fixed a bug where an ``IntegrityError`` was raised during publish when a source package belonged to
+two dists.
