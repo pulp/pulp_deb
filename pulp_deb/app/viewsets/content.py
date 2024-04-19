@@ -443,7 +443,7 @@ class ReleaseFilter(ContentFilter):
         fields = ["codename", "suite", "distribution", "version", "label", "origin"]
 
 
-class ReleaseViewSet(ContentViewSet):
+class ReleaseViewSet(NoArtifactContentViewSet):
     # The doc string is a top level element of the user facing REST API documentation:
     """
     The Release contains release file fields, that are not relevant to the APT repo structure.
