@@ -5,7 +5,11 @@ from rest_framework.decorators import action
 from rest_framework import viewsets
 from rest_framework.serializers import ValidationError as DRFValidationError
 
-from pulp_deb.app.serializers import AptRepositorySyncURLSerializer
+from pulp_deb.app.serializers import (
+    AptRepositorySyncURLSerializer,
+    AptRepositoryAddRemoveContentSerializer,
+)
+from pulp_deb.app.tasks import add_and_remove
 
 from pulpcore.plugin.util import extract_pk
 from pulpcore.plugin.actions import ModifyRepositoryActionMixin
@@ -70,6 +74,36 @@ class AptRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin):
             },
         )
         return OperationPostponedResponse(result, request)
+
+    @extend_schema(
+        description="Trigger an asynchronous task to modify content.",
+        summary="Modify repository",
+        responses={202: AsyncOperationResponseSerializer},
+    )
+    @action(detail=True, methods=["POST"], serializer_class=AptRepositoryAddRemoveContentSerializer)
+    def modify(self, request, pk):
+        repository = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        if "base_version" in request.data:
+            base_version_pk = self.get_resource(request.data["base_version"], RepositoryVersion).pk
+        else:
+            base_version_pk = None
+
+        task = dispatch(
+            add_and_remove,
+            exclusive_resources=[repository],
+            kwargs={
+                "repository_pk": pk,
+                "base_version_pk": base_version_pk,
+                "add_content_units": serializer.validated_data.get("add_content_units", []),
+                "remove_content_units": serializer.validated_data.get("remove_content_units", []),
+                "distribution": serializer.validated_data.get("distribution", None),
+                "component": serializer.validated_data.get("component", None),
+            },
+        )
+        return OperationPostponedResponse(task, request)
 
 
 class AptRepositoryVersionViewSet(RepositoryVersionViewSet):
