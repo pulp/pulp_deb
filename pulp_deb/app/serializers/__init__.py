@@ -29,7 +29,6 @@ from .remote_serializers import AptRemoteSerializer
 
 from .repository_serializers import (
     AptRepositorySerializer,
-    AptRepositoryAddRemoveContentSerializer,
     AptRepositorySyncURLSerializer,
     CopySerializer,
 )

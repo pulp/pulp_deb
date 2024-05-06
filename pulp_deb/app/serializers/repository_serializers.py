@@ -1,9 +1,8 @@
 from gettext import gettext as _
 from django.db import transaction
-from pulpcore.plugin.models import SigningService, RepositoryVersion
+from pulpcore.plugin.models import SigningService
 from pulpcore.plugin.serializers import (
     RelatedField,
-    RepositoryAddRemoveContentSerializer,
     RepositorySerializer,
     RepositorySyncURLSerializer,
     validate_unknown_fields,
@@ -19,7 +18,6 @@ from pulp_deb.app.models import (
 from jsonschema import Draft7Validator
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError as DRFValidationError
-from rest_framework.serializers import CharField
 from pulp_deb.app.schema import COPY_CONFIG_SCHEMA
 
 
@@ -198,15 +196,3 @@ class CopySerializer(serializers.Serializer):
                 )
 
         return data
-
-
-class AptRepositoryAddRemoveContentSerializer(RepositoryAddRemoveContentSerializer):
-    distribution = CharField(help_text="Name of the distribution.", required=False)
-    component = CharField(help_text="Name of the component.", required=False)
-
-    class Meta:
-        fields = RepositoryAddRemoveContentSerializer.Meta.fields + [
-            "distribution",
-            "component",
-        ]
-        model = RepositoryVersion
