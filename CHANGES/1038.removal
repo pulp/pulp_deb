@@ -1,0 +1,3 @@
+When creating a release, the API now returns a task instead of the release being created.
+In addition, attempting to create a release that already exists will no longer return an error.
+Instead the resulting task will simply list the existing content in its ``created_resources`` field.

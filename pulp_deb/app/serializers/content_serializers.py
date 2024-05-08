@@ -5,8 +5,15 @@ from django.conf import settings
 
 from debian import deb822, debfile
 
-from rest_framework.serializers import CharField, DictField, Field, ValidationError, Serializer
-from pulpcore.plugin.models import Artifact, CreatedResource, RemoteArtifact
+from rest_framework.serializers import (
+    CharField,
+    DictField,
+    ListField,
+    Field,
+    ValidationError,
+    Serializer,
+)
+from pulpcore.plugin.models import Artifact, Content, CreatedResource, RemoteArtifact
 from pulpcore.plugin.serializers import (
     ContentChecksumSerializer,
     MultipleArtifactContentSerializer,
@@ -721,6 +728,12 @@ class ReleaseSerializer(NoArtifactContentSerializer):
     A Serializer for Release.
     """
 
+    def get_unique_together_validators(self):
+        """
+        We do not want UniqueTogetherValidator since we have retrieve logic!
+        """
+        return []
+
     codename = CharField()
     suite = CharField()
     distribution = CharField()
@@ -728,6 +741,59 @@ class ReleaseSerializer(NoArtifactContentSerializer):
     origin = NullableCharField(required=False, allow_null=True, default=None)
     label = NullableCharField(required=False, allow_null=True, default=None)
     description = NullableCharField(required=False, allow_null=True, default=None)
+    architectures = ListField(child=CharField(), required=False)
+    components = ListField(child=CharField(), required=False)
+
+    @staticmethod
+    def _get_or_create_content_pk(model, **data):
+        content, created = model.objects.get_or_create(**data)
+        CreatedResource(content_object=content).save()
+        if not created:
+            content.touch()
+        return content.pk
+
+    def retrieve(self, validated_data):
+        """
+        If the Release already exists, retrieve it!
+        """
+        return Release.objects.filter(
+            codename=validated_data["codename"],
+            suite=validated_data["suite"],
+            distribution=validated_data["distribution"],
+            version=validated_data.get("version", NULL_VALUE),
+            origin=validated_data.get("origin", NULL_VALUE),
+            label=validated_data.get("label", NULL_VALUE),
+            description=validated_data.get("description", NULL_VALUE),
+        ).first()
+
+    def create(self, validated_data):
+        architectures = validated_data.pop("architectures", [])
+        components = validated_data.pop("components", [])
+        repository = validated_data.pop("repository", None)
+
+        content_pks = []
+
+        release = super().create(validated_data)
+        content_pks.append(release.pk)
+
+        for arch in architectures:
+            architecture_pk = self._get_or_create_content_pk(
+                ReleaseArchitecture, distribution=release.distribution, architecture=arch
+            )
+            content_pks.append(architecture_pk)
+
+        for comp in components:
+            component_pk = self._get_or_create_content_pk(
+                ReleaseComponent, distribution=release.distribution, component=comp
+            )
+            content_pks.append(component_pk)
+
+        if repository:
+            repository.cast()
+            with repository.new_version() as new_version:
+                new_version.add_content(Content.objects.filter(pk__in=content_pks))
+
+        return release
 
     class Meta(NoArtifactContentSerializer.Meta):
         model = Release
@@ -739,6 +805,8 @@ class ReleaseSerializer(NoArtifactContentSerializer):
             "origin",
             "label",
             "description",
+            "architectures",
+            "components",
         )
 
 
