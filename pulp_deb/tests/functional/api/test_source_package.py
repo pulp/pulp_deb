@@ -121,3 +121,31 @@ def test_upload_source_package_and_publish(
     # attempt to publish the repo
     publication = deb_publication_factory(repository, structured=True)
     assert publication.repository_version == repository.latest_version_href
+
+
+def test_upload_same_source_package(
+    artifact_factory,
+    apt_source_package_api,
+    deb_source_package_factory,
+    delete_orphans_pre,
+):
+    """Test whether uploading the same source package works and that it stays unique."""
+    artifact_factory(SOURCE_PACKAGE_SOURCE)
+    artifact = artifact_factory(SOURCE_PACKAGE_RELPATH)
+    attrs = {
+        "artifact": artifact.pulp_href,
+        "relative_path": SOURCE_PACKAGE_RELPATH,
+    }
+
+    # Create the first source package and verify its attributes
+    package_1 = deb_source_package_factory(**attrs)
+    assert package_1.relative_path == attrs["relative_path"]
+
+    # Create the second package and verify it has the same href as the first one
+    package_2 = deb_source_package_factory(**attrs)
+    assert package_2.pulp_href == package_1.pulp_href
+    assert apt_source_package_api.read(package_1.pulp_href).pulp_href == package_2.pulp_href
+
+    # Verify the package count is one
+    package_list = apt_source_package_api.list(relative_path=SOURCE_PACKAGE_RELPATH)
+    assert package_list.count == 1
