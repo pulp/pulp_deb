@@ -161,3 +161,61 @@ def test_release_architecture_upload(
 
     assert repository.latest_version_href.endswith("/1/")
     assert architecture.pulp_href == architecture2.pulp_href
+
+
+def test_release_comp_arch_upload(
+    deb_get_repository_by_href,
+    deb_repository_factory,
+    deb_release_factory,
+    apt_release_api,
+    apt_release_component_api,
+    apt_release_architecture_api,
+):
+    """Test creating a Release with Components and Architectures directly in a repository."""
+    repository = deb_repository_factory()
+    assert repository.latest_version_href.endswith("/0/")
+
+    distribution = str(uuid4())
+    architectures = [str(uuid4()), str(uuid4())]
+    components = [str(uuid4()), str(uuid4())]
+
+    release_attr = {
+        "repository": repository.pulp_href,
+        "distribution": distribution,
+        "codename": distribution,
+        "suite": distribution,
+        "architectures": architectures,
+        "components": components,
+    }
+
+    release = deb_release_factory(**release_attr)
+    repository = deb_get_repository_by_href(repository.pulp_href)
+    assert repository.latest_version_href.endswith("/1/")
+
+    repo_version_releases = apt_release_api.list(repository_version=repository.latest_version_href)
+    assert len(repo_version_releases.results) == 1
+    assert repo_version_releases.results[0].pulp_href == release.pulp_href
+
+    repo_version_components = apt_release_component_api.list(
+        repository_version=repository.latest_version_href
+    )
+
+    assert len(repo_version_components.results) == 2
+    for component in repo_version_components.results:
+        assert component.distribution == distribution
+        assert component.component in components
+
+    repo_version_architectures = apt_release_architecture_api.list(
+        repository_version=repository.latest_version_href
+    )
+
+    assert len(repo_version_architectures.results) == 2
+    for architecture in repo_version_architectures.results:
+        assert architecture.distribution == distribution
+        assert architecture.architecture in architectures
+
+    release2 = deb_release_factory(**release_attr)
+    repository = deb_get_repository_by_href(repository.pulp_href)
+
+    assert repository.latest_version_href.endswith("/1/")
+    assert release.pulp_href == release2.pulp_href

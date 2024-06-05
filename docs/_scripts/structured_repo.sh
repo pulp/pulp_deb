@@ -26,15 +26,13 @@ REPO_HREF=$(http ${PULP_URL}/pulp/api/v3/repositories/deb/apt/ name=${NAME} | jq
 TASK_HREF=$(http ${PULP_URL}/pulp/api/v3/distributions/deb/apt/ name=${NAME} base_path=${NAME} repository=${REPO_HREF} | jq -r .task)
 wait_until_task_finished ${PULP_URL}${TASK_HREF}
 
-# upload the package to create Package, ReleaseComponent, PackageReleaseComponent, and Architecture content and add it to the repo in a single action
-TASK_HREF=$(http --form ${PULP_URL}/pulp/api/v3/content/deb/packages/ file@frigg_1.0_ppc64.deb repository=${REPO_HREF} distribution=${DIST} component=${COMP} | jq -r .task)
+# Create a Release, ReleaseArchitecture, and ReleaseComponent content to set various release file fields and add them to the repo in a single action
+TASK_HREF=$(http ${PULP_URL}/pulp/api/v3/content/deb/releases/ repository=${REPO_HREF} distribution=${DIST} ${RELEASE_FILE_FIELDS[@]} architectures:='["amd64", "ppc64"]' components:=['"'${COMP}'"'] | jq -r .task)
 wait_until_task_finished ${PULP_URL}${TASK_HREF}
 
-# Also create a Release content to set various release file fields
-RELEASE_HREF=$(http ${PULP_URL}/pulp/api/v3/content/deb/releases/ distribution=${DIST} ${RELEASE_FILE_FIELDS[@]} | jq -r .pulp_href)
-
-# add our content to the repository
-TASK_HREF=$(http ${PULP_URL}${REPO_HREF}modify/ add_content_units:="[\"${RELEASE_HREF}\"]" | jq -r .task)
+# upload the package to create Package and PackageReleaseComponent content and add it to the repo in a single action
+# the ReleaseComponent and ReleaseArchitecture were created in the previous step but could have been created in this step
+TASK_HREF=$(http --form ${PULP_URL}/pulp/api/v3/content/deb/packages/ file@frigg_1.0_ppc64.deb repository=${REPO_HREF} distribution=${DIST} component=${COMP} | jq -r .task)
 wait_until_task_finished ${PULP_URL}${TASK_HREF}
 
 # publish our repo

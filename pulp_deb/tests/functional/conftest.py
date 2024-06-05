@@ -21,6 +21,7 @@ from pulpcore.client.pulp_deb import (
     Copy,
     DebAptPublication,
     DebCopyApi,
+    DebRelease,
     DebReleaseArchitecture,
     DebReleaseComponent,
     DebSourcePackageReleaseComponent,
@@ -161,6 +162,23 @@ def deb_source_release_component_factory(
         )
 
     return _deb_source_release_component_factory
+
+
+@pytest.fixture(scope="class")
+def deb_release_factory(apt_release_api, gen_object_with_cleanup):
+    """Fixture that generates deb release with cleanup."""
+
+    def _deb_release_factory(codename, suite, distribution, **kwargs):
+        """Create a deb release.
+
+        :returns: The created release.
+        """
+        release_object = DebRelease(
+            codename=codename, suite=suite, distribution=distribution, **kwargs
+        )
+        return gen_object_with_cleanup(apt_release_api, release_object)
+
+    return _deb_release_factory
 
 
 @pytest.fixture(scope="class")
