@@ -153,11 +153,16 @@ AptByHash is a feature that mitigates commonplace 'Hash Sum Mismatch' errors dur
 It adds the checksum of the package metadata to the the packages' names.
 These files are then stored within a 'by-hash' directory within each release architecture in the specified debian repository.
 The client will then use the filename to identify the expected checksum and download a file whose name matches the checksum.
+The pulp_deb plugin will cache and continue to serve previous publications' published artifacts
+including the by-hash files for up to 3 days so that users can still fetch these files after a new
+publication is created.
+If a previous publication is removed, pulp_deb will stop serving that publication's artifacts.
 
 Please note that this feature is disabled by default and should be enabled prior to use.
 To do this, set `APT_BY_HASH = True` in `/pulp_deb/app/settings.py`.
+Also, note that this does not apply to verbatim publications.
+For more information see [this feature request](https://github.com/pulp/pulp_deb/issues/1084).
 
-In addition, you are responsible for setting up a reverse proxy with cache in order to cache the by-hash files.
 
 
 Roadmap and Experimental
