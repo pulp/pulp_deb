@@ -1,3 +1,4 @@
-.. _pulp_deb-changes:
+Changes
+*********
 
-.. include:: ../CHANGES.rst
+Removed due to docs migration process.
