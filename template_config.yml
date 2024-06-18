@@ -68,8 +68,6 @@ stalebot_days_until_close: 30
 stalebot_days_until_stale: 90
 stalebot_limit_to_pulls: true
 supported_release_branches:
-- '3.0'
-- '3.1'
 - '3.2'
 sync_ci: true
 test_azure: true
