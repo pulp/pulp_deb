@@ -686,14 +686,9 @@ Compatible with: `pulpcore>=3.14,<3.16`
 
 ## 2.14.0 (2021-07-22) {: #2.14.0 }
 
-::: warning
-::: title
-Warning
-:::
-
-This version was released in a broken state and has been yanked from pypi.
-The issues are addressed in the 2.14.1 release.
-:::
+!!! warning
+    This version was released in a broken state and has been yanked from pypi.
+    The issues are addressed in the 2.14.1 release.
 
 ### Bugfixes
 
