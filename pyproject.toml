@@ -53,6 +53,7 @@ ignore = [
     "dev_requirements.txt",
     "doc_requirements.txt",
     "docs/**",
+    "staging_docs/**",
     "template_config.yml",
     ".pep8speaks.yml",
     ".ci/**",
