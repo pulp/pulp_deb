@@ -149,7 +149,7 @@ We recommend sticking to the following best practice recommendations:
   For example ``nginx-bookworm-amd64`` is a good name using the structure ``<repo_name>-<distribution>-<architecture>``.
 
 
-Flat Reposiotry Format Example
+Flat Repository Format Example
 --------------------------------------------------------------------------------
 
 ``pulp_deb`` supports synchronization from repositories using the deprecated `flat repository format`_.
@@ -199,7 +199,7 @@ This contrasts with how you would configure the upstream flat repository:
    deb http://developer.download.nvidia.com/compute/cuda/repos/debian11/x86_64/ /
 
 
-Debian Security Reposiotry Example
+Debian Security Repository Example
 --------------------------------------------------------------------------------
 
 The debian security repository up to the ``buster`` release, uses a rare variation on the standard APT repository structure, where the distribution includes a ``/`` in it.
