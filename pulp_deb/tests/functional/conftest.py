@@ -490,7 +490,7 @@ def deb_signing_script_path(
 def deb_signing_service_factory(
     deb_signing_script_path,
     signing_gpg_metadata,
-    signing_service_api_client,
+    pulpcore_bindings,
 ):
     """A fixture for the debian signing service."""
     gpg, fingerprint, keyid = signing_gpg_metadata
@@ -510,7 +510,7 @@ def deb_signing_service_factory(
 
     assert process.returncode == 0
 
-    signing_service = signing_service_api_client.list(name=service_name).results[0]
+    signing_service = pulpcore_bindings.SigningServicesApi.list(name=service_name).results[0]
 
     assert signing_service.pubkey_fingerprint == fingerprint
     assert signing_service.public_key == gpg.export_keys(keyid)

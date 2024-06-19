@@ -34,7 +34,7 @@ def _find_existing_artifact(artifacts_api, exc):
 
 @pytest.fixture
 def artifact_factory(
-    artifacts_api_client,
+    pulpcore_bindings,
     gen_object_with_cleanup,
 ):
     """Factory to create an artifact."""
@@ -42,9 +42,9 @@ def artifact_factory(
     def _artifact_factory(relative_name, relative_path=SOURCE_PACKAGE_PATH):
         try:
             file = get_local_package_absolute_path(relative_name, relative_path=relative_path)
-            artifact = gen_object_with_cleanup(artifacts_api_client, file)
+            artifact = gen_object_with_cleanup(pulpcore_bindings.ArtifactsApi, file)
         except ApiException as exc:
-            if artifact := _find_existing_artifact(artifacts_api_client, exc):
+            if artifact := _find_existing_artifact(pulpcore_bindings.ArtifactsApi, exc):
                 return artifact
             else:
                 raise

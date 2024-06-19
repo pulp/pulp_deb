@@ -350,7 +350,7 @@ def test_sync_optimize_with_mirror_enabled(deb_init_and_sync):
 
 def test_sync_orphan_cleanup_fail(
     deb_init_and_sync,
-    orphans_cleanup_api_client,
+    pulpcore_bindings,
     monitor_task,
     delete_orphans_pre,
 ):
@@ -372,7 +372,9 @@ def test_sync_orphan_cleanup_fail(
 
     # Trigger orphan cleanup without protection time and verify the task completed
     # and Content and Artifacts have been removed.
-    task = monitor_task(orphans_cleanup_api_client.cleanup({"orphan_protection_time": 0}).task)
+    task = monitor_task(
+        pulpcore_bindings.OrphansCleanupApi.cleanup({"orphan_protection_time": 0}).task
+    )
     assert task.state == "completed"
     for report in task.progress_reports:
         if "Content" in report.message:
