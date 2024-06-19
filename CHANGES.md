@@ -8,6 +8,43 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.3.0 (2024-06-19) {: #3.3.0 }
+
+
+#### Features {: #3.3.0-feature }
+
+- Added the ``architectures`` and ``components`` parameters to the release API in order to create releases with accompanying architectures and components in a single API call.
+  Also added retrieve functionality to the release API.
+  [#1038](https://github.com/pulp/pulp_deb/issues/1038)
+- Added support for duplicate source debs. If an source deb already exists, return it instead of raising an exception.
+  [#1077](https://github.com/pulp/pulp_deb/issues/1077)
+- Made the plugin compatible with pulpcore 3.55.0+.
+  [#1100](https://github.com/pulp/pulp_deb/issues/1100)
+
+#### Bugfixes {: #3.3.0-bugfix }
+
+- Fixed a bug where an ``IntegrityError`` was raised during publish when a source package belonged to
+  two dists.
+  [#1053](https://github.com/pulp/pulp_deb/issues/1053)
+
+#### Improved Documentation {: #3.3.0-doc }
+
+- Added initial staging docs.
+  [#1014](https://github.com/pulp/pulp_deb/issues/1014)
+
+#### Removals {: #3.3.0-removal }
+
+- When creating a release, the API now returns a task instead of the release being created.
+  In addition, attempting to create a release that already exists will no longer return an error.
+  Instead the resulting task will simply list the existing content in its ``created_resources`` field.
+  [#1038](https://github.com/pulp/pulp_deb/issues/1038)
+- Dropped support for Python 3.8. pulp_deb now supports Python >=3.9.
+  [#1039](https://github.com/pulp/pulp_deb/issues/1039)
+- When uploading a source deb that already exists, instead of throwing an exception it will now return the existing source package.
+  [#1077](https://github.com/pulp/pulp_deb/issues/1077)
+
+---
+
 ## 3.2.0 (2024-03-04) {: #3.2.0 }
 
 ### Features
