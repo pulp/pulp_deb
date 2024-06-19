@@ -52,9 +52,7 @@ def deb_gen_import_export_repos(
 
 
 @pytest.fixture
-def deb_create_exporter(
-    gen_object_with_cleanup, exporters_pulp_api_client, deb_gen_import_export_repos
-):
+def deb_create_exporter(gen_object_with_cleanup, pulpcore_bindings, deb_gen_import_export_repos):
     """A fixture that creates a pulp exporter."""
 
     def _deb_create_exporter(import_repos=None, export_repos=None):
@@ -72,13 +70,13 @@ def deb_create_exporter(
             "repositories": [r.pulp_href for r in export_repos],
             "path": f"/tmp/{uuid4()}/",
         }
-        return gen_object_with_cleanup(exporters_pulp_api_client, body)
+        return gen_object_with_cleanup(pulpcore_bindings.ExportersPulpApi, body)
 
     return _deb_create_exporter
 
 
 @pytest.fixture
-def deb_create_export(exporters_pulp_exports_api_client, deb_create_exporter, monitor_task):
+def deb_create_export(pulpcore_bindings, deb_create_exporter, monitor_task):
     """A fixture that creates a pulp export."""
 
     def _deb_create_export(import_repos=None, export_repos=None, exporter=None, is_chunked=False):
@@ -94,17 +92,15 @@ def deb_create_export(exporters_pulp_exports_api_client, deb_create_exporter, mo
             exporter = deb_create_exporter(import_repos, export_repos)
 
         body = {"chunk_size": "5KB"} if is_chunked else {}
-        export_response = exporters_pulp_exports_api_client.create(exporter.pulp_href, body)
+        export_response = pulpcore_bindings.ExportersPulpExportsApi.create(exporter.pulp_href, body)
         export_href = monitor_task(export_response.task).created_resources[0]
-        return exporters_pulp_exports_api_client.read(export_href)
+        return pulpcore_bindings.ExportersPulpExportsApi.read(export_href)
 
     return _deb_create_export
 
 
 @pytest.fixture
-def deb_importer_factory(
-    gen_object_with_cleanup, deb_gen_import_export_repos, importers_pulp_api_client
-):
+def deb_importer_factory(gen_object_with_cleanup, deb_gen_import_export_repos, pulpcore_bindings):
     """A fixture that creates a pulp importer."""
 
     def _deb_importer_factory(
@@ -136,7 +132,7 @@ def deb_importer_factory(
                     mapping[repo.name] = import_repos[idx].name
             body["repo_mapping"] = mapping
 
-        return gen_object_with_cleanup(importers_pulp_api_client, body)
+        return gen_object_with_cleanup(pulpcore_bindings.ImportersPulpApi, body)
 
     return _deb_importer_factory
 
@@ -145,7 +141,7 @@ def deb_importer_factory(
 def deb_perform_import(
     deb_create_export,
     deb_gen_import_export_repos,
-    importers_pulp_imports_api_client,
+    pulpcore_bindings,
     monitor_task_group,
 ):
     """A fixture that performs an import with a PulpImporter."""
@@ -186,7 +182,7 @@ def deb_perform_import(
             if "path" not in body:
                 body["path"] = _find_path(an_export)
 
-        import_response = importers_pulp_imports_api_client.create(importer.pulp_href, body)
+        import_response = pulpcore_bindings.ImportersPulpImportsApi.create(importer.pulp_href, body)
         task_group = monitor_task_group(import_response.task_group)
 
         return task_group
@@ -218,7 +214,7 @@ def test_double_import(
     deb_get_repository_by_href,
     deb_importer_factory,
     deb_perform_import,
-    importers_pulp_imports_api_client,
+    pulpcore_bindings,
 ):
     """Test two PulpImports for a PulpExport."""
     import_repos, export_repos = deb_gen_import_export_repos()
@@ -226,7 +222,7 @@ def test_double_import(
     deb_perform_import(importer, import_repos, export_repos)
     deb_perform_import(importer, import_repos, export_repos)
 
-    imports = importers_pulp_imports_api_client.list(importer.pulp_href).results
+    imports = pulpcore_bindings.ImportersPulpImportsApi.list(importer.pulp_href).results
     assert len(imports) == 2
 
     for repo in import_repos:
@@ -256,9 +252,8 @@ def test_import_create_repos(
     deb_importer_factory,
     deb_init_and_sync,
     deb_perform_import,
-    exporters_pulp_api_client,
+    pulpcore_bindings,
     monitor_task,
-    orphans_cleanup_api_client,
     delete_orphans_pre,
 ):
     """Test whether PulpImporter can create repositories."""
@@ -283,10 +278,10 @@ def test_import_create_repos(
         assert "//" not in an_export_filename
 
     # Clean up exporter, repos and orphans
-    exporters_pulp_api_client.delete(exporter.pulp_href)
+    pulpcore_bindings.ExportersPulpApi.delete(exporter.pulp_href)
     deb_delete_remote(remote)
     deb_delete_repository(repo)
-    monitor_task(orphans_cleanup_api_client.cleanup({"orphan_protection_time": 0}).task)
+    monitor_task(pulpcore_bindings.OrphansCleanupApi.cleanup({"orphan_protection_time": 0}).task)
 
     # Remember the amount of repositories present before the import
     existing_repos = apt_repository_api.list().count

@@ -42,7 +42,7 @@ def test_download_policy(
 
 @pytest.mark.parametrize("remote_args", [{"policy": "on_demand"}, {"policy": "streamed"}])
 def test_lazy_sync_immediate_download_test(
-    artifacts_api_client,
+    pulpcore_bindings,
     deb_init_and_sync,
     deb_get_remote_by_href,
     deb_patch_remote,
@@ -57,7 +57,7 @@ def test_lazy_sync_immediate_download_test(
     repo, remote = deb_init_and_sync(remote_args=remote_args)
 
     # Verify amount of artifacts are equal to NON_LAZY_ARTIFACT_COUNT
-    artifacts = artifacts_api_client.list()
+    artifacts = pulpcore_bindings.ArtifactsApi.list()
     assert artifacts.count == NON_LAZY_ARTIFACT_COUNT
 
     # Update remote policy to immediate and verify it is set
@@ -67,5 +67,5 @@ def test_lazy_sync_immediate_download_test(
 
     # Sync with updated remote and verify the correct amount artifacts
     repo, _ = deb_init_and_sync(repository=repo, remote=remote)
-    artifacts = artifacts_api_client.list()
+    artifacts = pulpcore_bindings.ArtifactsApi.list()
     assert artifacts.count == NON_LAZY_ARTIFACT_COUNT + DEB_FIXTURE_PACKAGE_COUNT
