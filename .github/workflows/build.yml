@@ -35,11 +35,28 @@ jobs:
         run: |
           python3 setup.py sdist bdist_wheel --python-tag py3
           twine check dist/*
+      - name: "Install built packages"
+        run: |
+          pip install dist/pulp_deb-*-py3-none-any.whl
+      - name: "Generate api specs"
+        run: |
+          pulpcore-manager openapi --file "api.json"
+          pulpcore-manager openapi --bindings --component "deb" --file "deb-api.json"
       - name: "Upload Package whl"
         uses: "actions/upload-artifact@v4"
         with:
           name: "plugin_package"
           path: "pulp_deb/dist/"
+          if-no-files-found: "error"
+          retention-days: 5
+          overwrite: true
+      - name: "Upload API specs"
+        uses: "actions/upload-artifact@v4"
+        with:
+          name: "api_spec"
+          path: |
+            pulp_deb/api.json
+            pulp_deb/deb-api.json
           if-no-files-found: "error"
           retention-days: 5
           overwrite: true
