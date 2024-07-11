@@ -95,10 +95,9 @@ def publish(
         log.warning(_(NO_MD5_WARNING_MESSAGE))
 
     repo_version = RepositoryVersion.objects.get(pk=repository_version_pk)
-    if signing_service_pk:
-        signing_service = AptReleaseSigningService.objects.get(pk=signing_service_pk)
-    else:
-        signing_service = None
+    signing_service = (
+        AptReleaseSigningService.objects.get(pk=signing_service_pk) if signing_service_pk else None
+    )
 
     log.info(
         _(
@@ -127,14 +126,13 @@ def publish(
                     release.description = repository.description
 
                 component = "all"
-                architectures = (
+                architectures = list(
                     Package.objects.filter(
                         pk__in=repo_version.content.order_by("-pulp_created"),
                     )
                     .distinct("architecture")
                     .values_list("architecture", flat=True)
                 )
-                architectures = list(architectures)
                 if "all" not in architectures:
                     architectures.append("all")
 
@@ -146,25 +144,29 @@ def publish(
                     signing_service=repository.signing_service,
                 )
 
-                for package in Package.objects.filter(
-                    pk__in=repo_version.content.order_by("-pulp_created"),
-                ):
+                packages = Package.objects.filter(
+                    pk__in=repo_version.content.order_by("-pulp_created")
+                )
+                for package in packages:
                     release_helper.components[component].add_package(package)
 
-                for source_package in SourcePackage.objects.filter(
+                source_packages = SourcePackage.objects.filter(
                     pk__in=repo_version.content.order_by("-pulp_created"),
-                ):
+                )
+                for source_package in source_packages:
                     release_helper.components[component].add_source_package(source_package)
 
                 release_helper.finish()
 
             if structured:
+                release_components = ReleaseComponent.objects.filter(
+                    pk__in=repo_version.content.order_by("-pulp_created")
+                )
+
                 distributions = list(
-                    ReleaseComponent.objects.filter(
-                        pk__in=repo_version.content.order_by("-pulp_created"),
+                    release_components.distinct("distribution").values_list(
+                        "distribution", flat=True
                     )
-                    .distinct("distribution")
-                    .values_list("distribution", flat=True)
                 )
 
                 if simple and "default" in distributions:
@@ -217,34 +219,41 @@ def publish(
                         if repository.description:
                             release.description = repository.description
 
-                    release_components = ReleaseComponent.objects.filter(
-                        pk__in=repo_version.content.order_by("-pulp_created"),
-                        distribution=distribution,
+                    release_components_filtered = release_components.filter(
+                        distribution=distribution
                     )
                     components = list(
-                        release_components.distinct("component").values_list("component", flat=True)
+                        release_components_filtered.distinct("component").values_list(
+                            "component", flat=True
+                        )
                     )
+
+                    signing_service = repository.release_signing_service(release)
 
                     release_helper = _ReleaseHelper(
                         publication=publication,
                         components=components,
                         architectures=architectures,
                         release=release,
-                        signing_service=repository.release_signing_service(release),
+                        signing_service=signing_service,
                     )
 
-                    for prc in PackageReleaseComponent.objects.filter(
+                    package_release_components = PackageReleaseComponent.objects.filter(
                         pk__in=repo_version.content.order_by("-pulp_created"),
-                        release_component__in=release_components,
-                    ):
+                        release_component__in=release_components_filtered,
+                    ).select_related("release_component", "package")
+                    for prc in package_release_components:
                         release_helper.components[prc.release_component.component].add_package(
                             prc.package
                         )
 
-                    for drc in SourcePackageReleaseComponent.objects.filter(
-                        pk__in=repo_version.content.order_by("-pulp_created"),
-                        release_component__in=release_components,
-                    ):
+                    source_package_release_components = (
+                        SourcePackageReleaseComponent.objects.filter(
+                            pk__in=repo_version.content.order_by("-pulp_created"),
+                            release_component__in=release_components,
+                        ).select_related("release_component", "source_package")
+                    )
+                    for drc in source_package_release_components:
                         release_helper.components[
                             drc.release_component.component
                         ].add_source_package(drc.source_package)
