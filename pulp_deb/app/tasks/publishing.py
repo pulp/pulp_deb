@@ -250,7 +250,7 @@ def publish(
                     source_package_release_components = (
                         SourcePackageReleaseComponent.objects.filter(
                             pk__in=repo_version.content.order_by("-pulp_created"),
-                            release_component__in=release_components,
+                            release_component__in=release_components_filtered,
                         ).select_related("release_component", "source_package")
                     )
                     for drc in source_package_release_components:
