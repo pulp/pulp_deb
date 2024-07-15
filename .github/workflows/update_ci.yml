@@ -79,7 +79,7 @@ jobs:
       - name: "Run update"
         working-directory: "pulp_deb"
         run: |
-          ../plugin_template/scripts/update_ci.sh
+          ../plugin_template/scripts/update_ci.sh --release
 
       - name: "Create Pull Request for CI files"
         uses: "peter-evans/create-pull-request@v6"
