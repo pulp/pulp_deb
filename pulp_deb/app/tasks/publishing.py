@@ -298,14 +298,14 @@ class _ComponentHelper:
                 "dists",
                 self.parent.dists_subfolder,
                 self.plain_component,
-                "binary-{}".format(architecture),                                              
-                "Release",             
+                "binary-{}".format(architecture),
+                "Release",
             )
             with open(release_path, "w") as file:
                 file.write("Origin: {}\n".format(self.parent._release.origin))
                 file.write("Label: {}\n".format(self.parent._release.label))
                 file.write("Suite: {}\n".format(self.parent._release.suite))
-                file.write("Architecture: {}\n".format(architecture) )
+                file.write("Architecture: {}\n".format(architecture))
                 file.write("Component: {}\n".format(self.plain_component))
             self.release_file_paths[architecture] = release_path
 
@@ -323,7 +323,6 @@ class _ComponentHelper:
             source_index_path,
         )
 
-    
     def add_package(self, package):
         with suppress(IntegrityError):
             published_artifact = PublishedArtifact(
