@@ -278,6 +278,7 @@ class _ComponentHelper:
         self.component = component
         self.plain_component = os.path.basename(component)
         self.package_index_files = {}
+        self.release_file_paths = {}
         self.source_index_file_info = None
 
         for architecture in self.parent.architectures:
@@ -293,6 +294,21 @@ class _ComponentHelper:
                 open(package_index_path, "wb"),
                 package_index_path,
             )
+            release_path = os.path.join(
+                "dists",
+                self.parent.dists_subfolder,
+                self.plain_component,
+                "binary-{}".format(architecture),                                              
+                "Release",             
+            )
+            with open(release_path, "w") as file:
+                file.write("Origin: {}\n".format(self.parent._release.origin))
+                file.write("Label: {}\n".format(self.parent._release.label))
+                file.write("Suite: {}\n".format(self.parent._release.suite))
+                file.write("Architecture: {}\n".format(architecture) )
+                file.write("Component: {}\n".format(self.plain_component))
+            self.release_file_paths[architecture] = release_path
+
         # Source indicies file
         source_index_path = os.path.join(
             "dists",
@@ -307,6 +323,7 @@ class _ComponentHelper:
             source_index_path,
         )
 
+    
     def add_package(self, package):
         with suppress(IntegrityError):
             published_artifact = PublishedArtifact(
@@ -393,6 +410,12 @@ class _ComponentHelper:
 
             self.parent.add_metadata(source_index)
             self.parent.add_metadata(gz_source_index)
+        # Publish per-component/architecture Release files
+        for release_path in self.release_file_paths.values():
+            release = PublishedMetadata.create_from_file(
+                publication=self.parent.publication, file=File(open(release_path, "rb"))
+            )
+            self.parent.add_metadata(release)
 
     def generate_by_hash(self, index_path, index, gz_index_path, gz_index):
         for path, index in (
@@ -425,6 +448,7 @@ class _ReleaseHelper:
         if distribution[-1] == "/":
             message = "Using dists subfolder '{}' for structured publish of originally flat repo!"
             log.info(_(message).format(self.dists_subfolder))
+        self._release = release
         # Note: The order in which fields are added to self.release is retained in the
         # published Release file. As a "nice to have" for human readers, we try to use
         # the same order of fields that official Debian repositories use.
