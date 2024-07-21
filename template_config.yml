@@ -12,7 +12,7 @@ check_stray_pulpcore_imports: true
 ci_base_image: ghcr.io/pulp/pulp-ci-centos9
 ci_env: {}
 ci_trigger: '{pull_request: {branches: [''*'']}}'
-ci_update_docs: true
+ci_update_docs: false
 cli_package: pulp-cli-deb
 cli_repo: https://github.com/pulp/pulp-cli-deb.git
 core_import_allowed: []
@@ -22,7 +22,7 @@ deploy_to_pypi: true
 disabled_redis_runners: []
 doc_requirements_from_pulpcore: false
 docker_fixtures: true
-docs_test: true
+docs_test: false
 flake8: true
 flake8_ignore: []
 github_org: pulp
