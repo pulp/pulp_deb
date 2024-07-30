@@ -1,0 +1,1 @@
+Fixed throwing the wrong error when pointing to an invalid repository with a custom signing service.
