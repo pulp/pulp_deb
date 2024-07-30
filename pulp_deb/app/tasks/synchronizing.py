@@ -399,7 +399,7 @@ class DebUpdateReleaseFileAttributes(Stage):
                                 release_file.relative_path = da_names["Release"].relative_path
                         else:
                             if self.gpgkey:
-                                d_content.d_artifacts.delete(da_names["Release"])
+                                d_content.d_artifacts.remove(da_names["Release"])
                             else:
                                 release_file_artifact = da_names["Release"].artifact
                                 release_file.relative_path = da_names["Release"].relative_path
