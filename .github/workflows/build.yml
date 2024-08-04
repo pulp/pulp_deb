@@ -23,18 +23,30 @@ jobs:
         with:
           fetch-depth: 1
           path: "pulp_deb"
+      - uses: "actions/checkout@v4"
+        with:
+          fetch-depth: 1
+          repository: "pulp/pulp-openapi-generator"
+          path: "pulp-openapi-generator"
       - uses: "actions/setup-python@v5"
         with:
           python-version: "3.11"
       - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
-          pip install packaging twine wheel
+          pip install packaging twine wheel mkdocs jq
           echo ::endgroup::
       - name: "Build package"
         run: |
           python3 setup.py sdist bdist_wheel --python-tag py3
           twine check dist/*
+      - name: "Install built packages"
+        run: |
+          pip install dist/pulp_deb-*-py3-none-any.whl -c .ci/assets/ci_constraints.txt
+      - name: "Generate api specs"
+        run: |
+          pulpcore-manager openapi --file "api.json"
+          pulpcore-manager openapi --bindings --component "deb" --file "deb-api.json"
       - name: "Upload Package whl"
         uses: "actions/upload-artifact@v4"
         with:
@@ -43,3 +55,59 @@ jobs:
           if-no-files-found: "error"
           retention-days: 5
           overwrite: true
+      - name: "Upload API specs"
+        uses: "actions/upload-artifact@v4"
+        with:
+          name: "api_spec"
+          path: |
+            pulp_deb/api.json
+            pulp_deb/deb-api.json
+          if-no-files-found: "error"
+          retention-days: 5
+          overwrite: true
+      - name: "Build Python bindings packages"
+        run: |
+          .github/workflows/scripts/build_python_client.sh
+        shell: "bash"
+        env:
+          PY_COLORS: "1"
+          ANSIBLE_FORCE_COLOR: "1"
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          GITHUB_CONTEXT: "${{ github.event.pull_request.commits_url }}"
+      - name: "Upload python client packages"
+        uses: "actions/upload-artifact@v4"
+        with:
+          name: "python-client.tar"
+          path: |
+            pulp_deb/deb-python-client.tar
+          if-no-files-found: "error"
+          retention-days: 5
+          overwrite: true
+      - name: "Upload python client docs"
+        uses: "actions/upload-artifact@v4"
+        with:
+          name: "python-client-docs.tar"
+          path: |
+            pulp_deb/deb-python-client-docs.tar
+          if-no-files-found: "error"
+          retention-days: 5
+          overwrite: true
+      - name: "Build Ruby bindings packages"
+        run: |
+          .github/workflows/scripts/build_ruby_client.sh
+        shell: "bash"
+        env:
+          PY_COLORS: "1"
+          ANSIBLE_FORCE_COLOR: "1"
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          GITHUB_CONTEXT: "${{ github.event.pull_request.commits_url }}"
+      - name: "Upload Ruby client"
+        uses: "actions/upload-artifact@v4"
+        with:
+          name: "ruby-client.tar"
+          path: |
+            pulp_deb/deb-ruby-client.tar
+          if-no-files-found: "error"
+          retention-days: 5
+          overwrite: true
+...

@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-326-ge5addc7
+# generated with plugin_template@2021.08.26-364-g6f9579c
 
 api_root: /pulp/
 black: true
@@ -12,7 +12,7 @@ check_stray_pulpcore_imports: true
 ci_base_image: ghcr.io/pulp/pulp-ci-centos
 ci_env: {}
 ci_trigger: '{pull_request: {branches: [''*'']}}'
-ci_update_docs: true
+ci_update_docs: false
 cli_package: pulp-cli-deb
 cli_repo: https://github.com/pulp/pulp-cli-deb.git
 core_import_allowed: []
@@ -22,16 +22,15 @@ deploy_to_pypi: true
 disabled_redis_runners: []
 doc_requirements_from_pulpcore: false
 docker_fixtures: true
-docs_test: true
-extra_docs_requirements: []
+docs_test: false
 flake8: true
 flake8_ignore: []
 github_org: pulp
 issue_tracker: github
-kanban: false
 latest_release_branch: null
 lint_requirements: true
 noissue_marker: '[noissue]'
+os_required_packages: []
 parallel_test_workers: 8
 plugin_app_label: deb
 plugin_default_branch: main
@@ -41,7 +40,6 @@ plugins:
   name: pulp_deb
 post_job_template: null
 pre_job_template: null
-publish_docs_to_pulpprojectdotorg: true
 pulp_env: {}
 pulp_env_azure: {}
 pulp_env_gcp: {}
@@ -83,6 +81,4 @@ test_performance:
 test_reroute: true
 test_s3: true
 use_issue_template: true
-use_legacy_docs: true
-use_unified_docs: false
 
