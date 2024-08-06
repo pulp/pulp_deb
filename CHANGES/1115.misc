@@ -1,1 +1,0 @@
-Improved the publish task performance by optimizing the database queries used in that task.

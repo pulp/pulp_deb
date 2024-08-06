@@ -8,6 +8,20 @@
 
 [//]: # (towncrier release notes start)
 
+# ## 3.3.1 (2024-08-06) {: #3.3.1 }
+
+#### Bugfixes {: #3.3.1-bugfix }
+
+- Fixed throwing the wrong error when pointing to an invalid repository with a custom signing service.
+  [#1122](https://github.com/pulp/pulp_deb/issues/1122)
+
+#### Misc {: #3.3.1-misc }
+
+- Improved the publish task performance by optimizing the database queries used in that task.
+  [#1115](https://github.com/pulp/pulp_deb/issues/1115)
+
+---
+
 ## 3.3.0 (2024-06-19) {: #3.3.0 }
 
 
