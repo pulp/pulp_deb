@@ -55,6 +55,11 @@ if [[ -f ../../ci_requirements.txt ]]; then
     ci_requirements: true
 VARSYAML
 fi
+if [ "$TEST" = "pulp" ]; then
+  cat >> vars/main.yaml << VARSYAML
+    upperbounds: true
+VARSYAML
+fi
 if [ "$TEST" = "lowerbounds" ]; then
   cat >> vars/main.yaml << VARSYAML
     lowerbounds: true
@@ -79,7 +84,7 @@ cat >> vars/main.yaml << VARSYAML
 pulp_env: {}
 pulp_settings: {"allowed_content_checksums": ["md5", "sha1", "sha256", "sha512"], "allowed_export_paths": ["/tmp"], "allowed_import_paths": ["/tmp"]}
 pulp_scheme: https
-pulp_default_container: ghcr.io/pulp/pulp-ci-centos:latest
+pulp_default_container: ghcr.io/pulp/pulp-ci-centos9:latest
 VARSYAML
 
 SCENARIOS=("pulp" "performance" "azure" "gcp" "s3" "generate-bindings" "lowerbounds")
