@@ -8,6 +8,20 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.3.1 (2024-08-06) {: #3.3.1 }
+
+#### Bugfixes {: #3.3.1-bugfix }
+
+- Fixed throwing the wrong error when pointing to an invalid repository with a custom signing service.
+  [#1122](https://github.com/pulp/pulp_deb/issues/1122)
+
+#### Misc {: #3.3.1-misc }
+
+- Improved the publish task performance by optimizing the database queries used in that task.
+  [#1115](https://github.com/pulp/pulp_deb/issues/1115)
+
+---
+
 ## 3.3.0 (2024-06-19) {: #3.3.0 }
 
 
@@ -42,6 +56,23 @@
   [#1039](https://github.com/pulp/pulp_deb/issues/1039)
 - When uploading a source deb that already exists, instead of throwing an exception it will now return the existing source package.
   [#1077](https://github.com/pulp/pulp_deb/issues/1077)
+
+---
+
+## 3.2.1 (2024-08-06) {: #3.2.1 }
+
+#### Bugfixes {: #3.2.1-bugfix }
+
+- Fixed a bug where an ``IntegrityError`` was raised during publish when a source package belonged to
+  two dists.
+  [#1053](https://github.com/pulp/pulp_deb/issues/1053)
+- Fixed throwing the wrong error when pointing to an invalid repository with a custom signing service.
+  [#1122](https://github.com/pulp/pulp_deb/issues/1122)
+
+#### Misc {: #3.2.1-misc }
+
+- Improved the publish task performance by optimizing the database queries used in that task.
+  [#1115](https://github.com/pulp/pulp_deb/issues/1115)
 
 ---
 
