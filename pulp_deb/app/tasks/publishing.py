@@ -503,15 +503,24 @@ class _ReleaseHelper:
             self.signed = await self.signing_service.asign(self.release_path)
 
     def save_signed_metadata(self):
-        for signature_file in self.signed["signatures"].values():
-            file_name = os.path.basename(signature_file)
-            relative_path = os.path.join(self.release_dir, file_name)
-            metadata = PublishedMetadata.create_from_file(
-                publication=self.publication,
-                file=File(open(signature_file, "rb")),
-                relative_path=relative_path,
-            )
-            metadata.save()
+        try:
+            for signature_file in self.signed["signatures"].values():
+                with open(signature_file, "rb") as sig_file:
+                    file_name = os.path.basename(signature_file)
+                    relative_path = os.path.join(self.release_dir, file_name)
+                    metadata = PublishedMetadata.create_from_file(
+                        publication=self.publication,
+                        file=File(sig_file),
+                        relative_path=relative_path,
+                    )
+                    metadata.save()
+        finally:
+            for signature_file in self.signed["signatures"].values():
+                if os.path.exists(signature_file):
+                    os.remove(signature_file)
+                    signature_dir = os.path.dirname(signature_file)
+                    if os.path.exists(signature_dir) and not os.listdir(signature_dir):
+                        os.rmdir(signature_dir)
 
 
 def _zip_file(file_path):

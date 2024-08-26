@@ -502,16 +502,22 @@ class DebUpdatePackageIndexAttributes(Stage):  # TODO: Needs a new name
                         # No main_artifact found, uncompress one
                         relative_dir = os.path.dirname(d_content.content.relative_path)
                         filename = _uncompress_artifact(d_content.d_artifacts, relative_dir)
-                        da = DeclarativeArtifact(
-                            artifact=Artifact.init_and_validate(
-                                filename, expected_digests={"sha256": content.sha256}
-                            ),
-                            url=filename,
-                            relative_path=content.relative_path,
-                            remote=d_content.d_artifacts[0].remote,
-                        )
-                        d_content.d_artifacts.append(da)
-                        await _save_artifact_blocking(da)
+
+                        try:
+                            da = DeclarativeArtifact(
+                                artifact=Artifact.init_and_validate(
+                                    filename, expected_digests={"sha256": content.sha256}
+                                ),
+                                url=filename,
+                                relative_path=content.relative_path,
+                                remote=d_content.d_artifacts[0].remote,
+                            )
+                            d_content.d_artifacts.append(da)
+                            await _save_artifact_blocking(da)
+                        finally:
+                            # Ensure the uncompressed file is deleted after usage
+                            if os.path.exists(filename):
+                                os.remove(filename)
                     content.artifact_set_sha256 = _get_artifact_set_sha256(
                         d_content, PackageIndex.SUPPORTED_ARTIFACTS
                     )

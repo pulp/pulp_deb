@@ -9,6 +9,8 @@ INLINE_SIGNATURE_PATH="${OUTPUT_DIR}/InRelease"
 GPG_KEY_ID="Pulp QE"
 COMMON_GPG_OPTS="--batch --armor --digest-algo SHA256"
 
+echo "${OUTPUT_DIR}" > /tmp/signing_temp_dir.log
+
 # Create a detached signature
 /usr/bin/gpg ${COMMON_GPG_OPTS} \
   --detach-sign \
