@@ -482,22 +482,15 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
         try:
             artifact = self.instance._artifacts.get()
             artifact.touch()  # Orphan cleanup protection until we are done!
-            if artifact.md5:
-                ret["MD5sum"] = artifact.md5
-            if artifact.sha1:
-                ret["SHA1"] = artifact.sha1
-            ret["SHA256"] = artifact.sha256
-            ret["Size"] = str(artifact.size)
         except Artifact.DoesNotExist:
             artifact = RemoteArtifact.objects.filter(sha256=self.instance.sha256).first()
-            if artifact.md5:
-                ret["MD5sum"] = artifact.md5
-            if artifact.sha1:
-                ret["SHA1"] = artifact.sha1
-            ret["SHA256"] = artifact.sha256
-            ret["Size"] = str(artifact.size)
 
-        ret["Filename"] = self.instance.filename(component)
+        if artifact:
+            ret.update({"MD5sum": artifact.md5} if artifact.md5 else {})
+            ret.update({"SHA1": artifact.sha1} if artifact.sha1 else {})
+            ret.update({"SHA256": artifact.sha256})
+            ret.update({"Size": str(artifact.size)})
+        ret.update({"Filename": self.instance.filename(component)})
 
         return ret
 
