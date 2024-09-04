@@ -16,8 +16,10 @@ from django.db.utils import IntegrityError
 from django.forms.models import model_to_dict
 
 from pulpcore.plugin.models import (
+    Artifact,
     PublishedArtifact,
     PublishedMetadata,
+    RemoteArtifact,
     RepositoryVersion,
 )
 
@@ -147,8 +149,11 @@ def publish(
 
                 packages = Package.objects.filter(
                     pk__in=repo_version.content.order_by("-pulp_created")
+                ).prefetch_related("contentartifact_set", "_artifacts")
+                artifact_dict, remote_artifact_dict = _batch_fetch_artifacts(packages)
+                release_helper.components[component].add_packages(
+                    packages, artifact_dict, remote_artifact_dict
                 )
-                release_helper.components[component].add_packages(packages)
 
                 source_packages = SourcePackage.objects.filter(
                     pk__in=repo_version.content.order_by("-pulp_created"),
@@ -250,12 +255,19 @@ def publish(
                     )
 
                     for component in components:
-                        packages = [
-                            prc.package
-                            for prc in package_release_components
-                            if prc.release_component.component == component
-                        ]
-                        release_helper.components[component].add_packages(packages)
+                        packages = Package.objects.filter(
+                            pk__in=[
+                                prc.package.pk
+                                for prc in package_release_components
+                                if prc.release_component.component == component
+                            ]
+                        ).prefetch_related("contentartifact_set", "_artifacts")
+                        artifact_dict, remote_artifact_dict = _batch_fetch_artifacts(packages)
+                        release_helper.components[component].add_packages(
+                            packages,
+                            artifact_dict,
+                            remote_artifact_dict,
+                        )
 
                         source_packages = [
                             drc.source_package
@@ -313,13 +325,17 @@ class _ComponentHelper:
             source_index_path,
         )
 
-    def add_packages(self, packages):
+    def add_packages(self, packages, artifact_dict, remote_artifact_dict):
         published_artifacts = []
         package_data = []
 
+        content_artifacts = {
+            package.pk: list(package.contentartifact_set.all()) for package in packages
+        }
+
         for package in packages:
             with suppress(IntegrityError):
-                content_artifact = package.contentartifact_set.get()
+                content_artifact = content_artifacts.get(package.pk, [None])[0]
                 relative_path = package.filename(self.component)
 
                 published_artifact = PublishedArtifact(
@@ -337,7 +353,7 @@ class _ComponentHelper:
         for package, architecture in package_data:
             package_serializer = Package822Serializer(package, context={"request": None})
             try:
-                package_serializer.to822(self.component).dump(
+                package_serializer.to822(self.component, artifact_dict, remote_artifact_dict).dump(
                     self.package_index_files[architecture][0]
                 )
             except KeyError:
@@ -559,3 +575,14 @@ def _fetch_file_checksum(file_path, index, checksum):
     checksum_type = CHECKSUM_TYPE_MAP[checksum]
     hashed_path = Path(file_path).parents[0] / "by-hash" / checksum_type / digest
     return hashed_path
+
+
+def _batch_fetch_artifacts(packages):
+    sha256_values = [package.sha256 for package in packages if package.sha256]
+    artifacts = Artifact.objects.filter(sha256__in=sha256_values)
+    artifact_dict = {artifact.sha256: artifact for artifact in artifacts}
+
+    remote_artifacts = RemoteArtifact.objects.filter(sha256__in=sha256_values)
+    remote_artifact_dict = {artifact.sha256: artifact for artifact in remote_artifacts}
+
+    return artifact_dict, remote_artifact_dict
