@@ -62,13 +62,8 @@ jobs:
           committer: "pulpbot <pulp-infra@redhat.com>"
           author: "pulpbot <pulp-infra@redhat.com>"
           title: "Update CI files for branch main"
-          body: ""
           branch: "update-ci/main"
           base: "main"
-          commit-message: |
-            Update CI files
-
-            [noissue]
           delete-branch: true
       - uses: "actions/checkout@v4"
         with:
@@ -89,11 +84,7 @@ jobs:
           committer: "pulpbot <pulp-infra@redhat.com>"
           author: "pulpbot <pulp-infra@redhat.com>"
           title: "Update CI files for branch 3.2"
-          body: ""
           branch: "update-ci/3.2"
           base: "3.2"
-          commit-message: |
-            Update CI files
-
-            [noissue]
           delete-branch: true
+...
