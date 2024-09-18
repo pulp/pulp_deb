@@ -62,8 +62,9 @@ class TestPackage(TestCase):
 
     def test_to822(self):
         """Test if package transforms correctly into 822dict."""
+        artifact_dict = {self.package1.sha256: self.artifact1}
         package_dict = Package822Serializer(self.package1, context={"request": None}).to822(
-            "joetunn"
+            "joetunn", artifact_dict=artifact_dict
         )
         self.assertEqual(package_dict["package"], self.package1.package)
         self.assertEqual(package_dict["version"], self.package1.version)
@@ -77,7 +78,10 @@ class TestPackage(TestCase):
 
     def test_to822_dump(self):
         """Test dump to package index."""
+        artifact_dict = {self.package1.sha256: self.artifact1}
         self.assertEqual(
-            Package822Serializer(self.package1, context={"request": None}).to822().dump(),
+            Package822Serializer(self.package1, context={"request": None})
+            .to822(artifact_dict=artifact_dict)
+            .dump(),
             self.PACKAGE_PARAGRAPH,
         )

@@ -13,7 +13,7 @@ from rest_framework.serializers import (
     ValidationError,
     Serializer,
 )
-from pulpcore.plugin.models import Artifact, Content, CreatedResource, RemoteArtifact
+from pulpcore.plugin.models import Artifact, Content, CreatedResource
 from pulpcore.plugin.serializers import (
     ContentChecksumSerializer,
     MultipleArtifactContentSerializer,
@@ -466,7 +466,7 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
         package_fields["custom_fields"] = custom_fields
         return cls(data=package_fields, **kwargs)
 
-    def to822(self, component=""):
+    def to822(self, component="", artifact_dict=None, remote_artifact_dict=None):
         """Create deb822.Package object from model."""
         ret = deb822.Packages()
 
@@ -479,11 +479,11 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
         if custom_fields:
             ret.update(custom_fields)
 
-        try:
-            artifact = self.instance._artifacts.get()
-            artifact.touch()  # Orphan cleanup protection until we are done!
-        except Artifact.DoesNotExist:
-            artifact = RemoteArtifact.objects.filter(sha256=self.instance.sha256).first()
+        artifact = None
+        if artifact_dict and self.instance.sha256 in artifact_dict:
+            artifact = artifact_dict[self.instance.sha256]
+        elif remote_artifact_dict and self.instance.sha256 in remote_artifact_dict:
+            artifact = remote_artifact_dict[self.instance.sha256]
 
         if artifact:
             ret.update({"MD5sum": artifact.md5} if artifact.md5 else {})
