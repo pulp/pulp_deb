@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.4.0 (2024-10-02) {: #3.4.0 }
+
+#### Features {: #3.4.0-feature }
+
+- Extend publishing at by-hash paths to source files.
+  [#1059](https://github.com/pulp/pulp_deb/issues/1059)
+- Improved performance when creating publications, by creating PublishedArtifacts in bulk, greatly reducing the number of database calls.
+  [#1147](https://github.com/pulp/pulp_deb/issues/1147)
+- Improved performance by prefetching relevant Artifacts and RemoteArtifacts during publishing, reducing the number of database calls.
+  [#1148](https://github.com/pulp/pulp_deb/issues/1148)
+
+#### Bugfixes {: #3.4.0-bugfix }
+
+- Fixed throwing the wrong error when pointing to an invalid repository with a custom signing service.
+  [#1122](https://github.com/pulp/pulp_deb/issues/1122)
+
+#### Misc {: #3.4.0-misc }
+
+- Improved the publish task performance by optimizing the database queries used in that task.
+  [#1115](https://github.com/pulp/pulp_deb/issues/1115)
+
+---
+
 ## 3.3.1 (2024-08-06) {: #3.3.1 }
 
 #### Bugfixes {: #3.3.1-bugfix }
