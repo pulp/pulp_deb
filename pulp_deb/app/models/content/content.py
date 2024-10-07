@@ -197,6 +197,11 @@ class SourcePackage(Content):
                 kwargs.pop(kw)
         super().__init__(*args, **kwargs)
 
+    @property
+    def sha256(self):
+        """Return the sha256 of the dsc file."""
+        return self.contentartifact_set.get(relative_path=self.relative_path).artifact.sha256
+
     def derived_dsc_filename(self):
         """Print a nice name for the Dsc file."""
         return "{}_{}.{}".format(self.source, self.version, self.SUFFIX)
