@@ -856,12 +856,16 @@ class ReleaseComponentSerializer(NoArtifactContentSerializer):
 
     component = CharField(help_text="Name of the component.")
     distribution = CharField(help_text="Name of the distribution.")
+    plain_component = CharField(
+        help_text="Name of the component without any path prefixes.", read_only=True
+    )
 
     class Meta(NoArtifactContentSerializer.Meta):
         model = ReleaseComponent
         fields = NoArtifactContentSerializer.Meta.fields + (
             "component",
             "distribution",
+            "plain_component",
         )
 
 
