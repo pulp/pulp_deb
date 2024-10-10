@@ -596,7 +596,7 @@ class SourcePackageViewSet(SingleArtifactContentUploadViewSet):
     """
 
     endpoint_name = "source_packages"
-    queryset = models.SourcePackage.objects.prefetch_related("_artifacts")
+    queryset = models.SourcePackage.objects.prefetch_related("_artifacts", "contentartifact_set")
     serializer_class = serializers.SourcePackageSerializer
     filterset_class = SourcePackageFilter
 

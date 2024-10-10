@@ -1143,6 +1143,7 @@ class SourcePackageSerializer(MultipleArtifactContentSerializer):
         ),
         required=False,
     )
+    sha256 = CharField(help_text=_("sha256 digest of the dsc file."), read_only=True)
     format = CharField(read_only=True)
     source = CharField(read_only=True)
     binary = CharField(read_only=True)
@@ -1242,6 +1243,7 @@ class SourcePackageSerializer(MultipleArtifactContentSerializer):
         fields = MultipleArtifactContentSerializer.Meta.fields + (
             "artifact",
             "relative_path",
+            "sha256",
             "format",
             "source",
             "binary",
