@@ -12,3 +12,4 @@ include unittest_requirements.txt
 include TESTING.md
 recursive-include pulp_deb/tests/functional/data *
 recursive-include pulp_deb/tests/functional/fixtures *
+exclude releasing.md
