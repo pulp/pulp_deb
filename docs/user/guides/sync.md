@@ -169,12 +169,9 @@ pulp deb distribution create --name=${NAME} --base-path=${NAME} --repository=${N
 - Since flat repositories do not contain components, there is no reason to use the `--component` flag.
 - You may still filter by architecture using the `--architecture` flag.
 
-```
-:::{important}
-```
-Even though you are synchronizing a flat repository, `pulp_deb` will convert it to a regular structured APT repository on the publish.
-A distribution of `/` will be converted into a single distribution named `flat-repo`, which will contain a single component named `flat-repo-component`.
-
+!!! warning
+    Even though you are synchronizing a flat repository, `pulp_deb` will convert it to a regular structured APT repository on the publish.
+    A distribution of `/` will be converted into a single distribution named `flat-repo`, which will contain a single component named `flat-repo-component`.
 
 To configure the above repo in the `/etc/apt/sources.list` file on a consuming host:
 

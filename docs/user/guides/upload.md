@@ -30,7 +30,7 @@ deb http://<your_pulp_host>/pulp/content/quickstart-uploaded-vim-amd64/ pulp upl
     In other words, you can upload the same package to your Pulp repository multiple times, and the task will succeed each time, but only the first time will result in any changes to your Pulp repository.
 
 
-!!! important
+!!! warning
     It is possible to have an uploaded package added to an arbitrary distribution-component combination, by supplying the `distribution` and `component` parameters to the package upload API endpoint.
     However, at the time of writing it is not possible to do this via Pulp CLI.
     It is also not possible to use Pulp CLI to create a release content in order to customize the release file fields.
