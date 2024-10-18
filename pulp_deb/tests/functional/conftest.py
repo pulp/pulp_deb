@@ -3,6 +3,7 @@ from uuid import uuid4
 import pytest
 import os
 import re
+import shutil
 import stat
 import subprocess
 
@@ -506,7 +507,7 @@ def deb_signing_service_factory(
         "--gnupghome",
         str(gpg.gnupghome),
     )
-    process = subprocess.run(cmd, capture_output=True)
+    process = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     assert process.returncode == 0
 
@@ -517,11 +518,23 @@ def deb_signing_service_factory(
 
     yield signing_service
 
+    temp_dir_log = "/tmp/signing_temp_dir.log"
+    if os.path.exists(temp_dir_log):
+        with open(temp_dir_log, "r") as f:
+            temp_dir = f.read().strip()
+
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
+        os.remove(temp_dir_log)
+
     cmd = (
-        "from pulpcore.app.models import SigningService;"
-        f"SigningService.objects.filter(name='{service_name}').delete()"
+        "pulpcore-manager",
+        "remove-signing-service",
+        service_name,
+        "--class",
+        "deb:AptReleaseSigningService",
     )
-    process = subprocess.run(["pulpcore-manager", "shell", "-c", cmd], capture_output=True)
+    process = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     assert process.returncode == 0
 
 
