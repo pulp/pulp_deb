@@ -1,6 +1,8 @@
 import asyncio
 import os
 import shutil
+import random
+import string
 from contextlib import suppress
 from pathlib import Path
 
@@ -112,7 +114,7 @@ def publish(
             structured=structured,
         )
     )
-    with tempfile.TemporaryDirectory("."):
+    with tempfile.TemporaryDirectory(".") as temp_dir:
         with AptPublication.create(repo_version, pass_through=False) as publication:
             publication.simple = simple
             publication.structured = structured
@@ -144,6 +146,7 @@ def publish(
                     release=release,
                     components=[component],
                     architectures=architectures,
+                    temp_dir=temp_dir,
                     signing_service=repository.signing_service,
                 )
 
@@ -239,6 +242,7 @@ def publish(
                         components=components,
                         architectures=architectures,
                         release=release,
+                        temp_dir=temp_dir,
                         signing_service=signing_service,
                     )
 
@@ -465,9 +469,11 @@ class _ReleaseHelper:
         components,
         architectures,
         release,
+        temp_dir,
         signing_service=None,
     ):
         self.publication = publication
+        self.temp_env = {"PULP_TEMP_WORKING_DIR": _create_random_directory(temp_dir)}
         self.distribution = distribution = release.distribution
         self.dists_subfolder = distribution.strip("/") if distribution != "/" else "flat-repo"
         if distribution[-1] == "/":
@@ -548,7 +554,9 @@ class _ReleaseHelper:
     async def sign_metadata(self):
         self.signed = {"signatures": {}}
         if self.signing_service:
-            self.signed = await self.signing_service.asign(self.release_path)
+            self.signed = await self.signing_service.asign(
+                self.release_path, env_vars=self.temp_env
+            )
 
     def save_signed_metadata(self):
         for signature_file in self.signed["signatures"].values():
@@ -586,3 +594,10 @@ def _batch_fetch_artifacts(packages):
     remote_artifact_dict = {artifact.sha256: artifact for artifact in remote_artifacts}
 
     return artifact_dict, remote_artifact_dict
+
+
+def _create_random_directory(path):
+    dir_name = "".join(random.choices(string.ascii_letters + string.digits, k=10))
+    dir_path = path + "/" + dir_name
+    os.makedirs(dir_path, exist_ok=True)
+    return dir_path

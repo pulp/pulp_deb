@@ -34,11 +34,12 @@ class AptReleaseSigningService(SigningService):
         """
         with tempfile.TemporaryDirectory() as temp_directory_name:
             test_release_path = os.path.join(temp_directory_name, "Release")
+            temp_env = {"PULP_TEMP_WORKING_DIR": temp_directory_name}
             with open(test_release_path, "wb") as test_file:
                 test_data = b"arbitrary data"
                 test_file.write(test_data)
                 test_file.flush()
-                return_value = self.sign(test_release_path)
+                return_value = self.sign(test_release_path, env_vars=temp_env)
 
                 signatures = return_value.get("signatures")
 

@@ -486,10 +486,11 @@ def deb_signing_script_path(
     return signing_script_filename
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="session")
 def deb_signing_service_factory(
     deb_signing_script_path,
     signing_gpg_metadata,
+    signing_gpg_homedir_path,
     pulpcore_bindings,
 ):
     """A fixture for the debian signing service."""
@@ -518,10 +519,17 @@ def deb_signing_service_factory(
     yield signing_service
 
     cmd = (
-        "from pulpcore.app.models import SigningService;"
-        f"SigningService.objects.filter(name='{service_name}').delete()"
+        "pulpcore-manager",
+        "remove-signing-service",
+        service_name,
+        "--class",
+        "deb:AptReleaseSigningService",
     )
-    process = subprocess.run(["pulpcore-manager", "shell", "-c", cmd], capture_output=True)
+    process = subprocess.run(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
     assert process.returncode == 0
 
 
