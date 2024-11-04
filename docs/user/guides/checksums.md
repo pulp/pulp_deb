@@ -2,7 +2,7 @@
 
 What checksum algorithems are available on any given Pulp instance, is controlled by the pulpcore `ALLOWED_CONTENT_CHECKSUMS` setting. If enabled, `pulp_deb` will make use of MD5, SHA-1, SHA-256, and SHA-512. SHA-256 is required and cannot be disabled.
 
-!!! important
+!!! warning
     For compliance reasons, MD5 and SHA-1 have been disabled by default since pulpcore 3.11.
 
 !!! note

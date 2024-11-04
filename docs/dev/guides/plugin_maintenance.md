@@ -65,7 +65,7 @@ It is also possible (and sometimes useful) to run the plugin template locally.
 Make sure you clone the `plugin_template` repository in the same folder as the `pulp_deb` repository.
 You can then issue the below template commands within the root of the plugin template repository to apply changes.
 
-!!! important
+!!! warning
     The following commands are usually applied via the GitHub actions pipeline, which is the preferred way for creating the needed PRs.
 
 ```none
@@ -73,7 +73,7 @@ You can then issue the below template commands within the root of the plugin tem
 ./plugin-template --github pulp_deb
 ```
 
-!!! important
+!!! warning
     The following plugin template commands are primarily intended for creating the skeleton for a new plugin.
     It sometimes makes sense to apply them to an existing plugin, but the applied changes will clash with the existing plugin content, and need to be manually evaluated.
 
