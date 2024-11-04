@@ -1,0 +1,1 @@
+Fixed an issue where the signing service did not properly clean up temporary files after completion.
