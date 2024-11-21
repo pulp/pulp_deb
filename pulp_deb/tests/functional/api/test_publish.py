@@ -12,6 +12,7 @@ from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_SINGLE_DIST,
     DEB_PACKAGE_INDEX_NAME,
     DEB_PACKAGE_NAME,
+    DEB_PACKAGE_RELEASE_COMPONENT_NAME,
     DEB_PUBLICATION_ARGS_ALL,
     DEB_PUBLICATION_ARGS_ONLY_SIMPLE,
     DEB_PUBLICATION_ARGS_ONLY_STRUCTURED,
@@ -473,6 +474,76 @@ def test_publish_complex_dists(
         print(f"url: {url}")
         remote = http_get(url)
         assert_equal_package_index(remote, published)
+
+
+@pytest.mark.parallel
+def test_remove_package_from_repository(
+    create_publication_and_verify_repo_version,
+    deb_get_content_types,
+    deb_modify_repository,
+    deb_get_repository_by_href,
+):
+    """Test whether removing content in a structured publication removes all relevant content."""
+    remote_args = {"distributions": DEB_FIXTURE_DISTRIBUTIONS}
+    _, repo, _, _ = create_publication_and_verify_repo_version(
+        remote_args,
+        publication_args=DEB_PUBLICATION_ARGS_ONLY_STRUCTURED,
+        is_modified=False,
+    )
+
+    package = deb_get_content_types(
+        "apt_package_api", DEB_PACKAGE_NAME, repo, repo.latest_version_href
+    )[0]
+    prcs = deb_get_content_types(
+        "apt_package_release_components_api",
+        DEB_PACKAGE_RELEASE_COMPONENT_NAME,
+        repo,
+        repo.latest_version_href,
+    )
+    deb_modify_repository(
+        repo,
+        {"remove_content_units": [package.pulp_href]},
+    )
+    repo = deb_get_repository_by_href(repo.pulp_href)
+    prcs_new = deb_get_content_types(
+        "apt_package_release_components_api",
+        DEB_PACKAGE_RELEASE_COMPONENT_NAME,
+        repo,
+        repo.latest_version_href,
+    )
+
+    assert not any(package.pulp_href == prc.package for prc in prcs_new)
+    assert len(prcs_new) == len(prcs) - 1
+
+
+@pytest.mark.parallel
+def test_remove_all_content_from_repository(
+    create_publication_and_verify_repo_version,
+    deb_get_content_types,
+    deb_modify_repository,
+    deb_get_repository_by_href,
+):
+    """Test whether removing all content from a structured publication removes relevant content."""
+    remote_args = {"distributions": DEB_FIXTURE_DISTRIBUTIONS}
+    _, repo, _, _ = create_publication_and_verify_repo_version(
+        remote_args,
+        publication_args=DEB_PUBLICATION_ARGS_ONLY_STRUCTURED,
+        is_modified=False,
+    )
+
+    deb_modify_repository(
+        repo,
+        {"remove_content_units": ["*"]},
+    )
+    repo = deb_get_repository_by_href(repo.pulp_href)
+    prcs = deb_get_content_types(
+        "apt_package_release_components_api",
+        DEB_PACKAGE_RELEASE_COMPONENT_NAME,
+        repo,
+        repo.latest_version_href,
+    )
+
+    assert len(prcs) == 0
 
 
 def assert_equal_package_index(orig, new):
