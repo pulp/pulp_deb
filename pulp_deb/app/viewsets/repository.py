@@ -5,11 +5,16 @@ from rest_framework.decorators import action
 from rest_framework import viewsets
 from rest_framework.serializers import ValidationError as DRFValidationError
 
+from pulp_deb.app.models.content.content import Package
+from pulp_deb.app.models.content.structure_content import PackageReleaseComponent
 from pulp_deb.app.serializers import AptRepositorySyncURLSerializer
 
-from pulpcore.plugin.util import extract_pk
+from pulpcore.plugin.util import extract_pk, get_url
 from pulpcore.plugin.actions import ModifyRepositoryActionMixin
-from pulpcore.plugin.serializers import AsyncOperationResponseSerializer
+from pulpcore.plugin.serializers import (
+    AsyncOperationResponseSerializer,
+    RepositoryAddRemoveContentSerializer,
+)
 from pulpcore.plugin.models import RepositoryVersion
 from pulpcore.plugin.tasking import dispatch
 from pulpcore.plugin.viewsets import (
@@ -22,7 +27,33 @@ from pulpcore.plugin.viewsets import (
 from pulp_deb.app import models, serializers, tasks
 
 
-class AptRepositoryViewSet(RepositoryViewSet, ModifyRepositoryActionMixin):
+class AptModifyRepositoryActionMixin(ModifyRepositoryActionMixin):
+    @extend_schema(
+        description="Trigger an asynchronous task to create a new repository version.",
+        summary="Modify Repository Content",
+        responses={202: AsyncOperationResponseSerializer},
+    )
+    @action(detail=True, methods=["post"], serializer_class=RepositoryAddRemoveContentSerializer)
+    def modify(self, request, pk):
+        remove_content_units = request.data.get("remove_content_units", [])
+        package_hrefs = [href for href in remove_content_units if "/packages/" in href]
+
+        if package_hrefs:
+            prc_hrefs = self._get_matching_prc_hrefs(package_hrefs)
+            remove_content_units.extend(prc_hrefs)
+            request.data["remove_content_units"] = remove_content_units
+
+        return super().modify(request, pk)
+
+    def _get_matching_prc_hrefs(self, package_hrefs):
+        package_ids = [extract_pk(href) for href in package_hrefs]
+        matching_packages = Package.objects.filter(pulp_id__in=package_ids)
+        matching_prcs = PackageReleaseComponent.objects.filter(package__in=matching_packages)
+        prc_hrefs = [get_url(component) for component in matching_prcs]
+        return prc_hrefs
+
+
+class AptRepositoryViewSet(AptModifyRepositoryActionMixin, RepositoryViewSet):
     # The doc string is a top level element of the user facing REST API documentation:
     """
     An AptRepository is the locally stored, Pulp-internal representation of a APT repository.
