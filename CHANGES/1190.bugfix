@@ -1,0 +1,1 @@
+Removing packages from a repository using the modify API endpoint now also removes all associated PackageReleaseComponents.
