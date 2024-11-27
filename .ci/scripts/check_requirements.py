@@ -62,7 +62,10 @@ def main():
                 else:
                     if check_prereleases and req.specifier.prereleases:
                         # Do not even think about begging for more exceptions!
-                        if req.name != "pulp-deb-client":
+                        if (
+                            not req.name.startswith("opentelemetry")
+                            and req.name != "pulp-deb-client"
+                        ):
                             errors.append(f"{filename}:{nr}: Prerelease versions found in {line}.")
                     ops = [spec.operator for spec in req.specifier]
                     if "~=" in ops:

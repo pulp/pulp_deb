@@ -29,6 +29,9 @@ jobs:
   test:
     needs: "build"
     uses: "./.github/workflows/test.yml"
+    with:
+      matrix_env: |
+        [{"TEST": "pulp"}, {"TEST": "azure"}, {"TEST": "s3"}, {"TEST": "lowerbounds"}, {"PERFORMANCE_TEST": "sync", "TEST": "performance"}, {"PERFORMANCE_TEST": "publish", "TEST": "performance"}, {"PERFORMANCE_TEST": "pulp_to_pulp", "TEST": "performance"}]
 
   changelog:
     runs-on: ubuntu-latest
@@ -65,124 +68,4 @@ jobs:
           branch: "changelog/update"
           delete-branch: true
           path: "pulp_deb"
-
-  performance:
-    runs-on: ubuntu-latest
-    needs: test
-
-    strategy:
-      fail-fast: false
-      matrix:
-        env:
-          - TEST: performance
-            PERFORMANCE_TEST: sync
-          - TEST: performance
-            PERFORMANCE_TEST: publish
-          - TEST: performance
-            PERFORMANCE_TEST: pulp_to_pulp
-
-    steps:
-      - uses: "actions/checkout@v4"
-        with:
-          fetch-depth: 1
-          path: "pulp_deb"
-
-      - uses: "actions/checkout@v4"
-        with:
-          fetch-depth: 1
-          repository: "pulp/pulp-openapi-generator"
-          path: "pulp-openapi-generator"
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: "plugin_package"
-          path: "pulp_deb/dist/"
-
-      - name: "Download API specs"
-        uses: "actions/download-artifact@v4"
-        with:
-          name: "api_spec"
-          path: "pulp_deb/"
-
-      - name: "Download client packages"
-        uses: "actions/download-artifact@v4"
-        with:
-          name: "python-client.tar"
-          path: "pulp_deb"
-
-      - name: "Unpack client packages"
-        working-directory: "pulp-openapi-generator"
-        run: |
-          mkdir -p "pulp_deb-client"
-          pushd "pulp_deb-client"
-          tar xvf "../../pulp_deb/deb-python-client.tar"
-          popd
-
-      - uses: "actions/setup-python@v5"
-        with:
-          python-version: "3.11"
-
-      - name: "Set environment variables"
-        run: |
-          echo "TEST=${{ matrix.env.TEST }}" >> $GITHUB_ENV
-          echo "PERFORMANCE_TEST=${{ matrix.env.PERFORMANCE_TEST }}" >> $GITHUB_ENV
-
-      - name: "Install python dependencies"
-        run: |
-          echo ::group::PYDEPS
-          pip install towncrier twine wheel httpie docker netaddr boto3 ansible mkdocs
-          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/pulp_deb/.ci/assets/httpie/" >> $GITHUB_ENV
-          echo ::endgroup::
-
-      - name: "Before Install"
-        run: |
-          .github/workflows/scripts/before_install.sh
-        shell: "bash"
-        env:
-          PY_COLORS: "1"
-          ANSIBLE_FORCE_COLOR: "1"
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          GITHUB_CONTEXT: "${{ github.event.pull_request.commits_url }}"
-
-      - name: "Install"
-        run: |
-          .github/workflows/scripts/install.sh
-        shell: "bash"
-        env:
-          PY_COLORS: "1"
-          ANSIBLE_FORCE_COLOR: "1"
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          GITHUB_CONTEXT: "${{ github.event.pull_request.commits_url }}"
-
-      - name: "Before Script"
-        run: |
-          .github/workflows/scripts/before_script.sh
-        shell: "bash"
-        env:
-          PY_COLORS: "1"
-          ANSIBLE_FORCE_COLOR: "1"
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          GITHUB_CONTEXT: "${{ github.event.pull_request.commits_url }}"
-          REDIS_DISABLED: "${{ contains('', matrix.env.TEST) }}"
-
-      - name: "Performance Test"
-        run: |
-          .github/workflows/scripts/script.sh
-        shell: "bash"
-        env:
-          PY_COLORS: "1"
-          ANSIBLE_FORCE_COLOR: "1"
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          GITHUB_CONTEXT: "${{ github.event.pull_request.commits_url }}"
-
-      - name: "Logs"
-        if: always()
-        run: |
-          echo "Need to debug? Please check: https://github.com/marketplace/actions/debugging-with-tmate"
-          http --timeout 30 --check-status --pretty format --print hb "https://pulp${PULP_API_ROOT}api/v3/status/" || true
-          docker images || true
-          docker ps -a || true
-          docker logs pulp || true
-          docker exec pulp ls -latr /etc/yum.repos.d/ || true
-          docker exec pulp cat /etc/yum.repos.d/* || true
-          docker exec pulp bash -c "pip3 list" || true
+...
