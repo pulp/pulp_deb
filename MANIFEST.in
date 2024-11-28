@@ -1,8 +1,8 @@
 include CHANGES.md
 include COMMITMENT
+exclude CONTRIBUTING.md
 include COPYRIGHT
 include functest_requirements.txt
-include HISTORY.rst
 include LICENSE
 include pulp_deb/app/schema/*
 include pulp_deb/tests/functional/sign_deb_release.sh

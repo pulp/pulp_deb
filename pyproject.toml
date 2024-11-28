@@ -5,6 +5,49 @@ requires = [
 ]
 build-backend = 'setuptools.build_meta'
 
+[project]
+name = "pulp-deb"
+version = "3.5.0.dev"
+description = "pulp-deb plugin for the Pulp Project"
+readme = "README.md"
+authors = [
+  {name="Matthias Dellweg", email="dellweg@atix.de"},
+]
+classifiers=[
+  "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
+  "Operating System :: POSIX :: Linux",
+  "Development Status :: 5 - Production/Stable",
+  "Framework :: Django",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.9"
+dependencies = [
+  # All things django and asyncio are deliberately left to pulpcore
+  # Example transitive requirements: asgiref, asyncio, aiohttp
+  "pulpcore>=3.49.0,<3.70",
+  "python-debian>=0.1.44,<0.2.0",
+  "python-gnupg>=0.5,<0.6",
+  "jsonschema>=4.6,<5.0",
+]
+
+[project.urls]
+Homepage = "https://pulpproject.org"
+Documentation = "https://pulpproject.org/pulp_deb/"
+Repository = "https://github.com/pulp/pulp_deb"
+"Bug Tracker" = "https://github.com/pulp/pulp_deb/issues"
+Changelog = "https://pulpproject.org/pulp_deb/changes/"
+
+[project.entry-points."pulpcore.plugin"]
+pulp_deb = "pulp_deb:default_app_config"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
 [tool.towncrier]
 package = "pulp_deb"
 filename = "CHANGES.md"
@@ -47,13 +90,10 @@ underlines = ["", "", ""]
 
 [tool.check-manifest]
 ignore = [
-    ".bumpversion.cfg",
     "CHANGES/**",
-    "CONTRIBUTING.rst",
     "dev_requirements.txt",
     "doc_requirements.txt",
     "docs/**",
-    "staging_docs/**",
     "template_config.yml",
     ".pep8speaks.yml",
     ".ci/**",
@@ -107,4 +147,8 @@ search = "version = \"{current_version}\""
 replace = "version = \"{new_version}\""
 
 [[tool.bumpversion.files]]
-filename = "./setup.py"
+# This section is managed by the plugin template. Do not edit manually.
+
+filename = "./pyproject.toml"
+search = "version = \"{current_version}\""
+replace = "version = \"{new_version}\""
