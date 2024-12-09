@@ -8,12 +8,13 @@ from pulpcore.plugin.viewsets import (
     DistributionViewSet,
     OperationPostponedResponse,
     PublicationViewSet,
+    RolesMixin,
 )
 
 from pulp_deb.app import models, serializers, tasks
 
 
-class VerbatimPublicationViewSet(PublicationViewSet):
+class VerbatimPublicationViewSet(PublicationViewSet, RolesMixin):
     # The doc string is a top level element of the user facing REST API documentation:
     """
     An VerbatimPublication is the Pulp-internal representation of a "mirrored" AptRepositoryVersion.
@@ -27,6 +28,70 @@ class VerbatimPublicationViewSet(PublicationViewSet):
     endpoint_name = "verbatim"
     queryset = models.VerbatimPublication.objects.exclude(complete=False)
     serializer_class = serializers.VerbatimPublicationSerializer
+    queryset_filtering_required_permission = "deb.view_verbatimpublication"
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list", "my_permissions"],
+                "principal": ["authenticated"],
+                "effect": "allow",
+            },
+            {
+                "action": ["create"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_model_or_domain_perms:deb.add_verbatimpublication",
+                    "has_repo_or_repo_ver_param_model_or_domain_or_obj_perms:"
+                    "deb.view_aptrepository",
+                ],
+            },
+            {
+                "action": ["retrieve"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_domain_or_obj_perms:deb.view_verbatimpublication",
+            },
+            {
+                "action": ["destroy"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_model_or_domain_or_obj_perms:deb.delete_verbatimpublication",
+                    "has_model_or_domain_or_obj_perms:deb.view_verbatimpublication",
+                ],
+            },
+            {
+                "action": ["list_roles", "add_role", "remove_role"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_domain_or_obj_perms:"
+                "deb.manage_roles_verbatimpublication",
+            },
+        ],
+        "creation_hooks": [
+            {
+                "function": "add_roles_for_object_creator",
+                "parameters": {"roles": "deb.verbatimpublication_owner"},
+            }
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
+
+    LOCKED_ROLES = {
+        "deb.verbatimpublication_owner": [
+            "deb.delete_verbatimpublication",
+            "deb.manage_roles_verbatimpublication",
+            "deb.view_verbatimpublication",
+        ],
+        "deb.verbatimpublication_creator": [
+            "deb.add_verbatimpublication",
+        ],
+        "deb.verbatimpublication_viewer": [
+            "deb.view_verbatimpublication",
+        ],
+    }
 
     @extend_schema(
         description="Trigger an asynchronous task to publish content",
@@ -51,7 +116,7 @@ class VerbatimPublicationViewSet(PublicationViewSet):
         return OperationPostponedResponse(result, request)
 
 
-class AptPublicationViewSet(PublicationViewSet):
+class AptPublicationViewSet(PublicationViewSet, RolesMixin):
     # The doc string is a top level element of the user facing REST API documentation:
     """
     An AptPublication is the ready to serve Pulp-internal representation of an AptRepositoryVersion.
@@ -66,6 +131,69 @@ class AptPublicationViewSet(PublicationViewSet):
     endpoint_name = "apt"
     queryset = models.AptPublication.objects.exclude(complete=False)
     serializer_class = serializers.AptPublicationSerializer
+    queryset_filtering_required_permission = "deb.view_aptpublication"
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list", "my_permissions"],
+                "principal": ["authenticated"],
+                "effect": "allow",
+            },
+            {
+                "action": ["create"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_model_or_domain_perms:deb.add_aptpublication",
+                    "has_repo_or_repo_ver_param_model_or_domain_or_obj_perms:"
+                    "deb.view_aptrepository",
+                ],
+            },
+            {
+                "action": ["retrieve"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_domain_or_obj_perms:deb.view_aptpublication",
+            },
+            {
+                "action": ["destroy"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_model_or_domain_or_obj_perms:deb.delete_aptpublication",
+                    "has_model_or_domain_or_obj_perms:deb.view_aptpublication",
+                ],
+            },
+            {
+                "action": ["list_roles", "add_role", "remove_role"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_domain_or_obj_perms:deb.manage_roles_aptpublication",
+            },
+        ],
+        "creation_hooks": [
+            {
+                "function": "add_roles_for_object_creator",
+                "parameters": {"roles": "deb.aptpublication_owner"},
+            }
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
+
+    LOCKED_ROLES = {
+        "deb.aptpublication_owner": [
+            "deb.delete_aptpublication",
+            "deb.manage_roles_aptpublication",
+            "deb.view_aptpublication",
+        ],
+        "deb.aptpublication_creator": [
+            "deb.add_aptpublication",
+        ],
+        "deb.aptpublication_viewer": [
+            "deb.view_aptpublication",
+        ],
+    }
 
     @extend_schema(
         description="Trigger an asynchronous task to publish content",
@@ -102,7 +230,7 @@ class AptPublicationViewSet(PublicationViewSet):
         return OperationPostponedResponse(result, request)
 
 
-class AptDistributionViewSet(DistributionViewSet):
+class AptDistributionViewSet(DistributionViewSet, RolesMixin):
     # The doc string is a top level element of the user facing REST API documentation:
     """
     An AptDistribution is just an AptPublication made available via the content app.
@@ -115,3 +243,80 @@ class AptDistributionViewSet(DistributionViewSet):
     endpoint_name = "apt"
     queryset = models.AptDistribution.objects.all()
     serializer_class = serializers.AptDistributionSerializer
+    queryset_filtering_required_permission = "deb.view_aptdistribution"
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list", "my_permissions"],
+                "principal": ["authenticated"],
+                "effect": "allow",
+            },
+            {
+                "action": ["create"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_model_or_domain_perms:deb.add_aptdistribution",
+                    "has_publication_param_model_or_domain_or_obj_perms:deb.view_aptpublication",
+                    "has_repo_or_repo_ver_param_model_or_domain_or_obj_perms:"
+                    "deb.view_aptrepository",
+                ],
+            },
+            {
+                "action": ["retrieve"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_domain_or_obj_perms:deb.view_aptdistribution",
+            },
+            {
+                "action": ["update", "partial_update", "set_label", "unset_label"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_model_or_domain_or_obj_perms:deb.change_aptdistribution",
+                    "has_model_or_domain_or_obj_perms:deb.view_aptdistribution",
+                    "has_publication_param_model_or_domain_or_obj_perms:deb.view_aptpublication",
+                    "has_repo_or_repo_ver_param_model_or_domain_or_obj_perms:"
+                    "deb.view_aptrepository",
+                ],
+            },
+            {
+                "action": ["destroy"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_model_or_domain_or_obj_perms:deb.delete_aptdistribution",
+                    "has_model_or_domain_or_obj_perms:deb.view_aptdistribution",
+                ],
+            },
+            {
+                "action": ["list_roles", "add_role", "remove_role"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_domain_or_obj_perms:deb.manage_roles_aptdistribution",
+            },
+        ],
+        "creation_hooks": [
+            {
+                "function": "add_roles_for_object_creator",
+                "parameters": {"roles": "deb.aptdistribution_owner"},
+            }
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
+
+    LOCKED_ROLES = {
+        "deb.aptdistribution_owner": [
+            "deb.change_aptdistribution",
+            "deb.delete_aptdistribution",
+            "deb.manage_roles_aptdistribution",
+            "deb.view_aptdistribution",
+        ],
+        "deb.aptdistribution_creator": [
+            "deb.add_aptdistribution",
+        ],
+        "deb.aptdistribution_viewer": [
+            "deb.view_aptdistribution",
+        ],
+    }
