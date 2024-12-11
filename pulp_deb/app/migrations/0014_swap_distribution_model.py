@@ -48,7 +48,6 @@ class Migration(migrations.Migration):
     atomic = False
 
     dependencies = [
-        ('core', '0062_add_new_distribution_mastermodel'),
         ('deb', '0013_aptremote_ignore_missing_package_indices'),
     ]
 
