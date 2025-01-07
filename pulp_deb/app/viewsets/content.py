@@ -41,6 +41,26 @@ class GenericContentViewSet(SingleArtifactContentUploadViewSet):
     serializer_class = serializers.GenericContentSerializer
     filterset_class = GenericContentFilter
 
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list", "retrieve"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+            {
+                "action": ["create"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_required_repo_perms_on_upload:deb.modify_content_aptrepository",
+                    "has_required_repo_perms_on_upload:deb.view_aptrepository",
+                ],
+            },
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
+
 
 class ContentRelationshipFilter(Filter):
     """
@@ -217,6 +237,26 @@ class PackageViewSet(SingleArtifactContentUploadViewSet):
     serializer_class = serializers.PackageSerializer
     filterset_class = PackageFilter
 
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list", "retrieve"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+            {
+                "action": ["create"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_required_repo_perms_on_upload:deb.modify_content_aptrepository",
+                    "has_required_repo_perms_on_upload:deb.view_aptrepository",
+                ],
+            },
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
+
 
 class InstallerPackageFilter(ContentFilter):
     """
@@ -262,6 +302,26 @@ class InstallerPackageViewSet(SingleArtifactContentUploadViewSet):
     serializer_class = serializers.InstallerPackageSerializer
     filterset_class = InstallerPackageFilter
 
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list", "retrieve"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+            {
+                "action": ["create"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_required_repo_perms_on_upload:deb.modify_content_aptrepository",
+                    "has_required_repo_perms_on_upload:deb.view_aptrepository",
+                ],
+            },
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
+
 
 # Metadata
 
@@ -294,6 +354,26 @@ class ReleaseFileViewSet(ContentViewSet):
     serializer_class = serializers.ReleaseFileSerializer
     filterset_class = ReleaseFileFilter
 
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list", "retrieve"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+            {
+                "action": ["create"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_required_repo_perms_on_upload:deb.modify_content_aptrepository",
+                    "has_required_repo_perms_on_upload:deb.view_aptrepository",
+                ],
+            },
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
+
 
 class PackageIndexFilter(ContentFilter):
     """
@@ -323,6 +403,26 @@ class PackageIndexViewSet(ContentViewSet):
     queryset = models.PackageIndex.objects.all()
     serializer_class = serializers.PackageIndexSerializer
     filterset_class = PackageIndexFilter
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list", "retrieve"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+            {
+                "action": ["create"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_required_repo_perms_on_upload:deb.modify_content_aptrepository",
+                    "has_required_repo_perms_on_upload:deb.view_aptrepository",
+                ],
+            },
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
 
 
 class SourceIndexFilter(ContentFilter):
@@ -354,6 +454,26 @@ class SourceIndexViewSet(ContentViewSet):
     serializer_class = serializers.SourceIndexSerializer
     filterset_class = SourceIndexFilter
 
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list", "retrieve"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+            {
+                "action": ["create"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_required_repo_perms_on_upload:deb.modify_content_aptrepository",
+                    "has_required_repo_perms_on_upload:deb.view_aptrepository",
+                ],
+            },
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
+
 
 class InstallerFileIndexFilter(ContentFilter):
     """
@@ -382,6 +502,26 @@ class InstallerFileIndexViewSet(ContentViewSet):
     queryset = models.InstallerFileIndex.objects.all()
     serializer_class = serializers.InstallerFileIndexSerializer
     filterset_class = InstallerFileIndexFilter
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list", "retrieve"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+            {
+                "action": ["create"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_required_repo_perms_on_upload:deb.modify_content_aptrepository",
+                    "has_required_repo_perms_on_upload:deb.view_aptrepository",
+                ],
+            },
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
 
 
 class ReleaseToPackageFilter(ContentRelationshipFilter):
@@ -429,6 +569,26 @@ class ReleaseViewSet(NoArtifactContentViewSet):
     queryset = models.Release.objects.all()
     serializer_class = serializers.ReleaseSerializer
     filterset_class = ReleaseFilter
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list", "retrieve"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+            {
+                "action": ["create"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_required_repo_perms_on_upload:deb.modify_content_aptrepository",
+                    "has_required_repo_perms_on_upload:deb.view_aptrepository",
+                ],
+            },
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
 
 
 class ReleaseArchitectureFilter(ContentFilter):
@@ -519,6 +679,26 @@ class PackageReleaseComponentViewSet(ContentViewSet):
     serializer_class = serializers.PackageReleaseComponentSerializer
     filterset_class = PackageReleaseComponentFilter
 
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list", "retrieve"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+            {
+                "action": ["create"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_required_repo_perms_on_upload:deb.modify_content_aptrepository",
+                    "has_required_repo_perms_on_upload:deb.view_aptrepository",
+                ],
+            },
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
+
 
 class SourcePackageToReleaseComponentFilter(ContentRelationshipFilter):
     HELP = "Filter results where SourcePackage in ReleaseComponent"
@@ -600,6 +780,26 @@ class SourcePackageViewSet(SingleArtifactContentUploadViewSet):
     serializer_class = serializers.SourcePackageSerializer
     filterset_class = SourcePackageFilter
 
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list", "retrieve"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+            {
+                "action": ["create"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_required_repo_perms_on_upload:deb.modify_content_aptrepository",
+                    "has_required_repo_perms_on_upload:deb.view_aptrepository",
+                ],
+            },
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
+
 
 class SourcePackageReleaseComponentFilter(ContentFilter):
     """
@@ -625,3 +825,23 @@ class SourcePackageReleaseComponentViewSet(ContentViewSet):
     queryset = models.SourcePackageReleaseComponent.objects.all()
     serializer_class = serializers.SourcePackageReleaseComponentSerializer
     filterset_class = SourcePackageReleaseComponentFilter
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list", "retrieve"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+            {
+                "action": ["create"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_required_repo_perms_on_upload:deb.modify_content_aptrepository",
+                    "has_required_repo_perms_on_upload:deb.view_aptrepository",
+                ],
+            },
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }

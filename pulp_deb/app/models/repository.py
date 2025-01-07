@@ -1,6 +1,11 @@
 from django.db import models
 
-from pulpcore.plugin.models import BaseModel, Content, Repository
+from pulpcore.plugin.models import (
+    AutoAddObjPermsMixin,
+    BaseModel,
+    Content,
+    Repository,
+)
 from pulpcore.plugin.repo_version_utils import (
     remove_duplicates,
     validate_version_paths,
@@ -32,7 +37,7 @@ from gettext import gettext as _
 log = logging.getLogger(__name__)
 
 
-class AptRepository(Repository):
+class AptRepository(Repository, AutoAddObjPermsMixin):
     """
     A Repository for DebContent.
     """
@@ -66,6 +71,13 @@ class AptRepository(Repository):
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
+        permissions = [
+            ("manage_roles_aptrepository", "Can manage roles on APT repositories"),
+            ("modify_content_aptrepository", "Add content to, or remove content from a repository"),
+            ("repair_aptrepository", "Copy an APT repository"),
+            ("sync_aptrepository", "Sync an APT repository"),
+            ("delete_aptrepository_version", "Delete a repository version"),
+        ]
 
     def release_signing_service(self, release):
         """
