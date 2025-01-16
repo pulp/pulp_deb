@@ -443,6 +443,8 @@ class DebUpdateReleaseFileAttributes(Stage):
 
                     if "components" in release_file_dict:
                         release_file.components = release_file_dict["Components"]
+                    elif "component" in release_file_dict and settings.PERMISSIVE_SYNC:
+                        release_file.components = release_file_dict["Component"]
                     elif release_file.distribution[-1] == "/":
                         message = (
                             "The Release file for distribution '{}' contains no 'Components' "
@@ -457,6 +459,8 @@ class DebUpdateReleaseFileAttributes(Stage):
 
                     if "architectures" in release_file_dict:
                         release_file.architectures = release_file_dict["Architectures"]
+                    elif "architecture" in release_file_dict and settings.PERMISSIVE_SYNC:
+                        release_file.architectures = release_file_dict["Architecture"]
                     elif release_file.distribution[-1] == "/":
                         message = (
                             "The Release file for distribution '{}' contains no 'Architectures' "
