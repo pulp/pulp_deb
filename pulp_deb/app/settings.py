@@ -8,3 +8,4 @@ Check `Plugin Writer's Guide`_ for more details.
 APT_BY_HASH = False
 FORBIDDEN_CHECKSUM_WARNINGS = True
 FORCE_IGNORE_MISSING_PACKAGE_INDICES = False
+PERMISSIVE_SYNC = False
