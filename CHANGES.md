@@ -8,6 +8,30 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.5.0 (2025-01-22) {: #3.5.0 }
+
+#### Features {: #3.5.0-feature }
+
+- Added initial RBAC support.
+  [#860](https://github.com/pulp/pulp_deb/issues/860)
+- Exposed the plain component when retrieving ReleaseComponent content via the API.
+  [#1167](https://github.com/pulp/pulp_deb/issues/1167)
+- Expose a sha256 column for source packages that contains the digest of the dsc file.
+
+#### Bugfixes {: #3.5.0-bugfix }
+
+- Fixed an issue where the signing service did not properly clean up temporary files after completion.
+  [#1141](https://github.com/pulp/pulp_deb/issues/1141)
+- Removing packages from a repository using the modify API endpoint now also removes all associated PackageReleaseComponents.
+  [#1190](https://github.com/pulp/pulp_deb/issues/1190)
+
+#### Misc {: #3.5.0-misc }
+
+- Rebase migrations to prepare for pulpcore 3.70.
+  [#1204](https://github.com/pulp/pulp_deb/issues/1204)
+
+---
+
 ## 3.4.0 (2024-10-02) {: #3.4.0 }
 
 #### Features {: #3.4.0-feature }
