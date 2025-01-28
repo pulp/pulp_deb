@@ -1,4 +1,5 @@
 from rest_framework.serializers import BooleanField, ValidationError
+from rest_framework import serializers
 from pulpcore.plugin.models import Publication
 from pulpcore.plugin.serializers import (
     RelatedField,
@@ -36,6 +37,7 @@ class AptPublicationSerializer(PublicationSerializer):
     )
     structured = BooleanField(help_text="Activate structured publishing mode.", default=True)
     publish_upstream_release_fields = BooleanField(help_text="", required=False)
+    checkpoint = serializers.BooleanField(required=False)
     signing_service = RelatedField(
         help_text="Sign Release files with this signing key",
         many=False,
@@ -57,6 +59,7 @@ class AptPublicationSerializer(PublicationSerializer):
         fields = PublicationSerializer.Meta.fields + (
             "simple",
             "structured",
+            "checkpoint",
             "signing_service",
             "publish_upstream_release_fields",
         )
@@ -75,7 +78,8 @@ class AptDistributionSerializer(DistributionSerializer):
         queryset=Publication.objects.exclude(complete=False),
         allow_null=True,
     )
+    checkpoint = serializers.BooleanField(required=False)
 
     class Meta:
-        fields = DistributionSerializer.Meta.fields + ("publication",)
+        fields = DistributionSerializer.Meta.fields + ("publication", "checkpoint")
         model = AptDistribution
