@@ -413,6 +413,15 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
             log.warning(message)
             del package_fields[key]
 
+        # Also for Custom fields
+        empty_fields = [k for k, v in custom_fields.items() if not v]
+        for key in empty_fields:
+            message = _('Dropping empty "{}" custom field from "{}" package!').format(
+                key, unique_package_name
+            )
+            log.warning(message)
+            del custom_fields[key]
+
         # Delete package fields with values of incorrect type
         if "installed_size" in package_fields:
             try:
