@@ -42,7 +42,7 @@ def artifact_factory(
     def _artifact_factory(relative_name, relative_path=SOURCE_PACKAGE_PATH):
         try:
             file = get_local_package_absolute_path(relative_name, relative_path=relative_path)
-            artifact = gen_object_with_cleanup(pulpcore_bindings.ArtifactsApi, file)
+            artifact = gen_object_with_cleanup(pulpcore_bindings.ArtifactsApi, str(file))
         except ApiException as exc:
             if artifact := _find_existing_artifact(pulpcore_bindings.ArtifactsApi, exc):
                 return artifact
@@ -84,13 +84,13 @@ def test_upload_source_package_and_publish(
         source_package = source_packages.results[0]
     else:
         # source package doesn't exist
-        artifact_factory(SOURCE_PACKAGE_SOURCE)
-        artifact = artifact_factory(SOURCE_PACKAGE_RELPATH)
+        artifact_factory(str(SOURCE_PACKAGE_SOURCE))
+        artifact = artifact_factory(str(SOURCE_PACKAGE_RELPATH))
 
         # Upload a test  source package
         package_upload_params = {
             "artifact": artifact.pulp_href,
-            "relative_path": SOURCE_PACKAGE_RELPATH,
+            "relative_path": str(SOURCE_PACKAGE_RELPATH),
         }
         source_package = deb_source_package_factory(**package_upload_params)
     deb_modify_repository(repository, {"add_content_units": [source_package.pulp_href]})

@@ -42,7 +42,7 @@ def test_rbac_upload(deb_repository_factory, deb_package_factory, gen_user):
     user_denied = gen_user()
     repo = deb_repository_factory()
     package_attrs = {
-        "file": get_local_package_absolute_path(DEB_PACKAGE_RELPATH),
+        "file": str(get_local_package_absolute_path(DEB_PACKAGE_RELPATH)),
         "relative_path": DEB_PACKAGE_RELPATH,
         "repository": repo.pulp_href,
     }
