@@ -279,6 +279,7 @@ class _ComponentHelper:
         self.plain_component = os.path.basename(component)
         self.package_index_files = {}
         self.source_index_file_info = None
+        self.release_file_paths = {}
 
         for architecture in self.parent.architectures:
             package_index_path = os.path.join(
@@ -293,6 +294,21 @@ class _ComponentHelper:
                 open(package_index_path, "wb"),
                 package_index_path,
             )
+            release_path = os.path.join(
+                "dists",
+                self.parent.dists_subfolder,
+                self.plain_component,
+                "binary-{}".format(architecture),
+                "Release",
+            )
+            with open(release_path, "w") as file:
+                file.write("Origin: {}\n".format(self.parent._release.origin))
+                file.write("Label: {}\n".format(self.parent._release.label))
+                file.write("Suite: {}\n".format(self.parent._release.suite))
+                file.write("Architecture: {}\n".format(architecture))
+                file.write("Component: {}\n".format(self.plain_component))
+            self.release_file_paths[architecture] = release_path
+
         # Source indicies file
         source_index_path = os.path.join(
             "dists",
@@ -396,6 +412,13 @@ class _ComponentHelper:
             gz_source_index.save()
             self.parent.add_metadata(source_index)
             self.parent.add_metadata(gz_source_index)
+        # Publish per-component/architecture Release files
+        for release_path in self.release_file_paths.values():
+            log.info(f"finish: Release path '{release_path}'")
+            release = PublishedMetadata.create_from_file(
+                publication=self.parent.publication, file=File(open(release_path, "rb"))
+            )
+            self.parent.add_metadata(release)
 
 
 class _ReleaseHelper:
@@ -407,6 +430,7 @@ class _ReleaseHelper:
         release,
         signing_service=None,
     ):
+        self._release = release
         self.publication = publication
         self.distribution = distribution = release.distribution
         self.dists_subfolder = distribution.strip("/") if distribution != "/" else "flat-repo"
