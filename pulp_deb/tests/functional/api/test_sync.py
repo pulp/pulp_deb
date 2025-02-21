@@ -162,7 +162,7 @@ def test_sync_invalid_cases(
     with pytest.raises(PulpTaskError) as exc:
         deb_sync_repository(remote, repo)
     for exp in expected:
-        assert exp in str(exc.value)
+        assert exp in str(exc.value.task.error["description"])
 
 
 @pytest.mark.parallel

@@ -60,8 +60,8 @@ def test_create_remote_repository_with_same_name(
 @pytest.mark.parallel
 def test_create_remote_repository_without_url(deb_remote_custom_data_factory):
     """Verify whether it is possible to create a remote without an URL."""
+    pytest.skip("pydantic catches this before we get to the server")
     data = gen_deb_remote_verbose()
-
     with pytest.raises(ApiException) as exc:
         deb_remote_custom_data_factory(data)
 
@@ -154,10 +154,9 @@ def test_remote_download_policies(
     # Create a snapshot of the remote for later reference
     remote_snapshot = deb_get_remote_by_href(remote.pulp_href)
 
-    # Attempt to change the remote policy to an invalid string
-    with pytest.raises(ApiException) as exc:
+    # Attempt to change the remote policy to an invalid string (now caught by pydantic)
+    with pytest.raises(Exception):
         deb_patch_remote(remote, {"policy": str(uuid4())})
-    assert exc.value.status == 400
 
     # Verify that the remote policy remains unchanged
     remote = deb_get_remote_by_href(remote.pulp_href)

@@ -13,7 +13,7 @@ def test_create_package(apt_package_api, deb_package_factory):
     # Create a package and verify its attributes
     attrs = {
         "relative_path": DEB_PACKAGE_RELPATH,
-        "file": get_local_package_absolute_path(DEB_PACKAGE_RELPATH),
+        "file": str(get_local_package_absolute_path(DEB_PACKAGE_RELPATH)),
     }
     package = deb_package_factory(**attrs)
     assert package.relative_path == DEB_PACKAGE_RELPATH
@@ -47,7 +47,7 @@ def test_same_sha256_same_relative_path_no_repo(
 ):
     """Test whether uploading the same package works and that it stays unique."""
     attrs = {
-        "file": get_local_package_absolute_path(DEB_PACKAGE_RELPATH),
+        "file": str(get_local_package_absolute_path(DEB_PACKAGE_RELPATH)),
         "relative_path": DEB_PACKAGE_RELPATH,
     }
 
@@ -74,7 +74,7 @@ def test_structured_package_upload(
 ):
     """Test whether uploading a structured package works and creates the correct paths."""
     attrs = {
-        "file": get_local_package_absolute_path(DEB_PACKAGE_RELPATH),
+        "file": str(get_local_package_absolute_path(DEB_PACKAGE_RELPATH)),
         "relative_path": DEB_PACKAGE_RELPATH,
         "distribution": str(uuid4()),
         "component": str(uuid4()),

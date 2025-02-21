@@ -43,7 +43,7 @@ def test_upload_package_and_duplicate(
 
     # Upload a test package to a component in the repo.
     package_upload_params = {
-        "file": get_local_package_absolute_path(DEB_PACKAGE_RELPATH),
+        "file": str(get_local_package_absolute_path(DEB_PACKAGE_RELPATH)),
         "relative_path": DEB_PACKAGE_RELPATH,
         "distribution": str(uuid4()),
         "component": str(uuid4()),
@@ -70,8 +70,10 @@ def test_upload_package_and_duplicate(
     )
 
     # Upload a duplicate of the first package into the repo.
-    package_upload_params["file"] = get_local_package_absolute_path(
-        package_name=DEB_PACKAGE_RELPATH, relative_path=DUPLICATE_PACKAGE_DIR
+    package_upload_params["file"] = str(
+        get_local_package_absolute_path(
+            package_name=DEB_PACKAGE_RELPATH, relative_path=DUPLICATE_PACKAGE_DIR
+        )
     )
     deb_package_factory(**package_upload_params)
 
@@ -110,13 +112,15 @@ def test_add_duplicates_to_repo(
     """
     # Upload two duplicate packages.
     package_upload_params = {
-        "file": get_local_package_absolute_path(
-            package_name=DEB_PACKAGE_RELPATH, relative_path=DUPLICATE_PACKAGE_DIR
+        "file": str(
+            get_local_package_absolute_path(
+                package_name=DEB_PACKAGE_RELPATH, relative_path=DUPLICATE_PACKAGE_DIR
+            )
         ),
         "relative_path": DEB_PACKAGE_RELPATH,
     }
     href1 = deb_package_factory(**package_upload_params).pulp_href
-    package_upload_params["file"] = get_local_package_absolute_path(DEB_PACKAGE_RELPATH)
+    package_upload_params["file"] = str(get_local_package_absolute_path(DEB_PACKAGE_RELPATH))
     href2 = deb_package_factory(**package_upload_params).pulp_href
 
     # Generate an empty test repo.
@@ -129,5 +133,5 @@ def test_add_duplicates_to_repo(
 
     # Assert the error message.
     assert "Cannot create repository version since there are newly added packages with" in str(
-        exception.value
+        exception.value.task.error["description"]
     )
