@@ -221,7 +221,7 @@ def publish(
                             distribution=release.distribution,
                             codename=release.codename,
                             suite=release.suite,
-                            origin="Pulp 3",
+                            origin="Pulp 3" if release.origin == NULL_VALUE else release.origin,
                         )
                         if repository.description:
                             release.description = repository.description
