@@ -8,6 +8,14 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.5.1 (2025-02-24) {: #3.5.1 }
+
+#### Features {: #3.5.1-feature }
+
+- Added compatibility with pulpcore 3.70+.
+
+---
+
 ## 3.5.0 (2025-01-22) {: #3.5.0 }
 
 #### Features {: #3.5.0-feature }
