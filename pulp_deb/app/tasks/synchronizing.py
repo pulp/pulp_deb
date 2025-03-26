@@ -624,16 +624,19 @@ class DebFirstStage(Stage):
         )
 
     async def _handle_distribution(self, distribution):
+        is_flat = distribution.endswith("/")
+        stored_distribution = "flat-repo" if is_flat else distribution
+
         log.info(_('Downloading Release file for distribution: "{}"').format(distribution))
         # Create release_file
-        if distribution[-1] == "/":
-            release_file_dir = distribution.strip("/")
+        if is_flat:
+            upstream_file_dir = distribution.strip("/")
         else:
-            release_file_dir = os.path.join("dists", distribution)
+            upstream_file_dir = os.path.join("dists", distribution)
         release_file_dc = DeclarativeContent(
-            content=ReleaseFile(distribution=distribution, relative_path=release_file_dir),
+            content=ReleaseFile(distribution=stored_distribution, relative_path=upstream_file_dir),
             d_artifacts=[
-                self._to_d_artifact(os.path.join(release_file_dir, filename))
+                self._to_d_artifact(os.path.join(upstream_file_dir, filename))
                 for filename in ReleaseFile.SUPPORTED_ARTIFACTS
             ],
         )
@@ -665,7 +668,7 @@ class DebFirstStage(Stage):
         release_fields = {
             "codename": release_file.codename,
             "suite": release_file.suite,
-            "distribution": distribution,
+            "distribution": stored_distribution,
         }
 
         if "version" in release_file_dict:
@@ -680,17 +683,17 @@ class DebFirstStage(Stage):
         await self.put(DeclarativeContent(content=Release(**release_fields)))
 
         # Create release architectures
-        if release_file.architectures:
-            architectures = _filter_split_architectures(
-                release_file.architectures, self.remote.architectures, distribution
-            )
-        elif distribution[-1] == "/":
+        if is_flat:
             message = (
-                "The ReleaseFile content unit architecrures are unset for the flat repo with "
+                "The ReleaseFile content unit architectures are unset for the flat repo with "
                 "distribution '{}'. ReleaseArchitecture content creation is deferred!"
             )
             log.warning(_(message).format(distribution))
             architectures = []
+        elif release_file.architectures:
+            architectures = _filter_split_architectures(
+                release_file.architectures, self.remote.architectures, distribution
+            )
 
         for architecture in architectures:
             release_architecture_dc = DeclarativeContent(
@@ -719,9 +722,16 @@ class DebFirstStage(Stage):
                 for unit in release_file_dict[digest_name]:
                     file_references[unit["Name"]].update(unit)
 
-        if distribution[-1] == "/":
+        if is_flat:
             # Handle flat repo
-            sub_tasks = [self._handle_flat_repo(file_references, release_file, distribution)]
+            sub_tasks = [
+                self._handle_flat_repo(
+                    file_references,
+                    release_file,
+                    distribution=stored_distribution,
+                    upstream_dist_path=upstream_file_dir,
+                )
+            ]
         else:
             # Handle components
             sub_tasks = [
@@ -833,7 +843,9 @@ class DebFirstStage(Stage):
             )
         await asyncio.gather(*pending_tasks)
 
-    async def _handle_flat_repo(self, file_references, release_file, distribution):
+    async def _handle_flat_repo(
+        self, file_references, release_file, distribution, upstream_dist_path
+    ):
         # We are creating a component so the flat repo can be published as a structured repo!
         release_component_dc = DeclarativeContent(
             content=ReleaseComponent(component="flat-repo-component", distribution=distribution)
@@ -849,6 +861,7 @@ class DebFirstStage(Stage):
                 architecture="",
                 file_references=file_references,
                 distribution=distribution,
+                is_flat=True,
             )
         )
 
@@ -868,15 +881,19 @@ class DebFirstStage(Stage):
         infix="",
         distribution=None,
         hybrid_format=False,
+        is_flat=False,
     ):
+        if is_flat:
+            release_file_package_index_dir = ""
+        else:
+            release_file_package_index_dir = os.path.join(
+                release_component.plain_component,
+                infix,
+                f"binary-{architecture}",
+            )
         # Create package_index
         release_base_path = os.path.dirname(release_file.relative_path)
-        # Package index directory relative to the release file:
-        release_file_package_index_dir = (
-            os.path.join(release_component.plain_component, infix, "binary-{}".format(architecture))
-            if release_file.distribution[-1] != "/"
-            else ""
-        )
+
         # Package index directory relative to the repository root:
         package_index_dir = os.path.join(release_base_path, release_file_package_index_dir)
         d_artifacts = []
@@ -948,7 +965,7 @@ class DebFirstStage(Stage):
         ):
             # Sanity check the architecture from the package paragraph:
             package_paragraph_architecture = package_paragraph["Architecture"]
-            if release_file.distribution[-1] == "/":
+            if is_flat:
                 if (
                     self.remote.architectures
                     and package_paragraph_architecture != "all"
@@ -1035,32 +1052,23 @@ class DebFirstStage(Stage):
                 )
             )
             await self.put(package_release_component_dc)
-            if release_file.distribution[-1] == "/":
+            if is_flat:
                 package_architectures.add(package.architecture)
 
         # For flat repos we may still need to create ReleaseArchitecture content:
-        if release_file.distribution[-1] == "/":
+        if is_flat:
             if release_file.architectures:
                 for architecture in package_architectures:
-                    if architecture not in release_file.architectures.split():
-                        message = (
-                            "The flat repo with distribution '{}' contains packages with "
-                            "architecture '{}' but this is not included in the ReleaseFile's "
-                            "architectures field '{}'!"
+                    log.debug(
+                        "Flat Repo Architecture handling: "
+                        f"Creating ReleaseArchitecture for architecture {architecture}."
+                    )
+                    release_architecture_dc = DeclarativeContent(
+                        content=ReleaseArchitecture(
+                            architecture=architecture, distribution="flat-repo"
                         )
-                        log.warning(
-                            _(message).format(
-                                release_file.distribution, architecture, release_file.architectures
-                            )
-                        )
-                        message = "Creating additional ReleaseArchitecture for architecture '{}'!"
-                        log.warning(_(message).format(architecture))
-                        release_architecture_dc = DeclarativeContent(
-                            content=ReleaseArchitecture(
-                                architecture=architecture, distribution=distribution
-                            )
-                        )
-                        await self.put(release_architecture_dc)
+                    )
+                    await self.put(release_architecture_dc)
             else:
                 package_architectures_string = " ".join(package_architectures)
                 message = (
@@ -1076,7 +1084,7 @@ class DebFirstStage(Stage):
                 for architecture in package_architectures:
                     release_architecture_dc = DeclarativeContent(
                         content=ReleaseArchitecture(
-                            architecture=architecture, distribution=distribution
+                            architecture=architecture, distribution="flat-repo"
                         )
                     )
                     await self.put(release_architecture_dc)
@@ -1340,7 +1348,7 @@ def _parse_release_file_attributes(d_content, main_artifact):
         d_content.content.components = release_dict["Components"]
     elif "component" in release_dict and settings.PERMISSIVE_SYNC:
         d_content.content.components = release_dict["Component"]
-    elif d_content.content.distribution[-1] == "/":
+    elif d_content.content.distribution == "flat-repo":
         message = (
             "The Release file for distribution '{}' contains no 'Components' "
             "field, but since we are dealing with a flat repo, we can continue "
@@ -1356,7 +1364,7 @@ def _parse_release_file_attributes(d_content, main_artifact):
         d_content.content.architectures = release_dict["Architectures"]
     elif "architecture" in release_dict and settings.PERMISSIVE_SYNC:
         d_content.content.architectures = release_dict["Architecture"]
-    elif d_content.content.distribution[-1] == "/":
+    elif d_content.content.distribution == "flat-repo":
         message = (
             "The Release file for distribution '{}' contains no 'Architectures' "
             "field, but since we are dealing with a flat repo, we can extract them "

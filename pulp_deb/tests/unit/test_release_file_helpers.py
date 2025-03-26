@@ -149,7 +149,7 @@ def test_parse_release_file_attributes_missing_fields_flat_repo(mock_d_content, 
     """
     If fields are missing in a flat repository, we log a warning and set them to "".
     """
-    mock_d_content.content.distribution = "buster/"
+    mock_d_content.content.distribution = "flat-repo"
 
     data = "Codename: buster\n" "Suite: stable\n"
     mock_main_artifact._fake_file_path.write_text(data)

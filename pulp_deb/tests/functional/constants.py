@@ -37,6 +37,7 @@ DEB_FIXTURE_STANDARD_REPOSITORY_NAME = "/debian/"
 DEB_FIXTURE_UPDATE_REPOSITORY_NAME = "/debian-update/"
 DEB_FIXTURE_INVALID_REPOSITORY_NAME = "/debian-invalid/"
 DEB_FIXTURE_FLAT_REPOSITORY_NAME = "/debian-flat/"
+DEB_FIXTURE_BASE = "/"
 DEB_FIXTURE_COMPLEX_REPOSITORY_NAME = "/debian-complex-dists"
 DEB_FIXTURE_MISSING_ARCHITECTURE_REPOSITORY_NAME = "/debian-missing-architecture/"
 
@@ -50,6 +51,7 @@ DEB_P2P_REMOTE_ARGS_SIMPLE = {"distributions": "default", "policy": "immediate"}
 DEB_P2P_REMOTE_ARGS_STRUCTURED = {"distributions": "ragnarok nosuite", "policy": "immediate"}
 DEB_P2P_REMOTE_ARGS_BOTH = {"distributions": "ragnarok nosuite default", "policy": "immediate"}
 DEB_P2P_REMOTE_ARGS_VERBATIM = {"distributions": "ragnarok nosuite", "policy": "immediate"}
+DEB_P2P_REMOTE_ARGS_FLAT = {"distributions": "flat-repo", "policy": "immediate"}
 
 DEB_FIXTURE_SUMMARY = _clean_dict(
     {
@@ -195,6 +197,21 @@ DEB_P2P_SIMPLE_THEN_STRUCTURED = _clean_dict(
     }
 )
 
+DEB_P2P_FLAT_STRUCTURED = _clean_dict(
+    {
+        DEB_RELEASE_NAME: 1,
+        DEB_RELEASE_ARCHITECTURE_NAME: 2,
+        DEB_RELEASE_COMPONENT_NAME: 1,
+        DEB_RELEASE_FILE_NAME: 1,
+        DEB_PACKAGE_INDEX_NAME: 2,
+        DEB_PACKAGE_RELEASE_COMPONENT_NAME: 3,
+        DEB_INSTALLER_FILE_INDEX_NAME: 0,
+        DEB_PACKAGE_NAME: 3,
+        DEB_INSTALLER_PACKAGE_NAME: 0,
+        DEB_GENERIC_CONTENT_NAME: 0,
+    }
+)
+
 DEB_PERF_DEBIAN_URL = "https://ftp.debian.org/debian/"
 DEB_PERF_BOOKWORN = {
     "distributions": "bookworm",
@@ -249,7 +266,7 @@ DEB_PUBLISH_COMPLEX_DEBIAN_SECURITY = {
 }
 
 DEB_PUBLISH_FLAT_STRUCTURED = {
-    "distribution": "/",
+    "distribution": "flat-repo",
     "codename": "ragnarok",
     "suite": "mythology",
     "components": ["flat-repo-component"],
@@ -260,7 +277,7 @@ DEB_PUBLISH_FLAT_STRUCTURED = {
 }
 
 DEB_PUBLISH_FLAT_SIMPLE = {
-    "distribution": "/",
+    "distribution": "flat-repo",
     "codename": "ragnarok",
     "suite": "mythology",
     "components": ["flat-repo-component"],
@@ -271,7 +288,7 @@ DEB_PUBLISH_FLAT_SIMPLE = {
 }
 
 DEB_PUBLISH_FLAT_VERBATIM = {
-    "distribution": "/",
+    "distribution": "flat-repo",
     "codename": "ragnarok",
     "suite": "mythology",
     "components": ["flat-repo-component"],
@@ -282,18 +299,18 @@ DEB_PUBLISH_FLAT_VERBATIM = {
 }
 
 DEB_PUBLISH_FLAT_NESTED_STRUCTURED = {
-    "distribution": "nest/fjalar/",
+    "distribution": "flat-repo",
     "codename": "ragnarok",
     "suite": "mythology",
     "components": ["flat-repo-component"],
     "release_file_folder_sync": "nest/fjalar/",
-    "release_file_folder_dist": "dists/nest/fjalar",
+    "release_file_folder_dist": "dists/flat-repo",
     "package_index_paths_sync": ["nest/fjalar/Packages"],
-    "package_index_paths_dist": ["dists/nest/fjalar/flat-repo-component/binary-ppc64/Packages"],
+    "package_index_paths_dist": ["dists/flat-repo/flat-repo-component/binary-ppc64/Packages"],
 }
 
 DEB_PUBLISH_FLAT_NESTED_SIMPLE = {
-    "distribution": "nest/fjalar/",
+    "distribution": "flat-repo",
     "codename": "ragnarok",
     "suite": "mythology",
     "components": ["flat-repo-component"],
@@ -304,7 +321,7 @@ DEB_PUBLISH_FLAT_NESTED_SIMPLE = {
 }
 
 DEB_PUBLISH_FLAT_NESTED_VERBATIM = {
-    "distribution": "nest/fjalar/",
+    "distribution": "flat-repo",
     "codename": "ragnarok",
     "suite": "mythology",
     "components": ["flat-repo-component"],
