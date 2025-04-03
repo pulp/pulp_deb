@@ -59,7 +59,7 @@ def apt_repository_versions_api(apt_client):
 def deb_distribution_factory(apt_distribution_api, gen_object_with_cleanup):
     """Fixture that generates a deb distribution with cleanup from a given publication."""
 
-    def _deb_distribution_factory(publication=None, repository=None):
+    def _deb_distribution_factory(publication=None, repository=None, checkpoint=None):
         """Create a deb distribution.
 
         :param publication: The publication the distribution is based on.
@@ -70,6 +70,8 @@ def deb_distribution_factory(apt_distribution_api, gen_object_with_cleanup):
             body["publication"] = publication.pulp_href
         if repository:
             body["repository"] = repository.pulp_href
+        if checkpoint is not None:
+            body["checkpoint"] = checkpoint
         return gen_object_with_cleanup(apt_distribution_api, body)
 
     return _deb_distribution_factory

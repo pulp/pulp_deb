@@ -82,6 +82,7 @@ def publish(
     repository_version_pk,
     simple,
     structured,
+    checkpoint=False,
     signing_service_pk=None,
     publish_upstream_release_fields=None,
 ):
@@ -92,6 +93,7 @@ def publish(
         repository_version_pk (str): Create a publication from this repository version.
         simple (bool): Create a simple publication with all packages contained in default/all.
         structured (bool): Create a structured publication with releases and components.
+        checkpoint (bool): Whether to create a checkpoint publication.
         signing_service_pk (str): Use this SigningService to sign the Release files.
 
     """
@@ -115,7 +117,9 @@ def publish(
         )
     )
     with tempfile.TemporaryDirectory(".") as temp_dir:
-        with AptPublication.create(repo_version, pass_through=False) as publication:
+        with AptPublication.create(
+            repo_version, pass_through=False, checkpoint=checkpoint
+        ) as publication:
             publication.simple = simple
             publication.structured = structured
             publication.signing_service = signing_service
