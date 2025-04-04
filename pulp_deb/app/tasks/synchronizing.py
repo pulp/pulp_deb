@@ -1348,7 +1348,7 @@ def _parse_release_file_attributes(d_content, main_artifact):
         d_content.content.components = release_dict["Components"]
     elif "component" in release_dict and settings.PERMISSIVE_SYNC:
         d_content.content.components = release_dict["Component"]
-    elif d_content.content.distribution[-1] == "/":
+    elif d_content.content.distribution == "flat-repo":
         message = (
             "The Release file for distribution '{}' contains no 'Components' "
             "field, but since we are dealing with a flat repo, we can continue "
@@ -1364,7 +1364,7 @@ def _parse_release_file_attributes(d_content, main_artifact):
         d_content.content.architectures = release_dict["Architectures"]
     elif "architecture" in release_dict and settings.PERMISSIVE_SYNC:
         d_content.content.architectures = release_dict["Architecture"]
-    elif d_content.content.distribution[-1] == "/":
+    elif d_content.content.distribution == "flat-repo":
         message = (
             "The Release file for distribution '{}' contains no 'Architectures' "
             "field, but since we are dealing with a flat repo, we can extract them "
