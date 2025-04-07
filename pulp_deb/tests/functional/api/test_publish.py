@@ -5,6 +5,7 @@ import pytest
 
 from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_ALT_SINGLE_DIST,
+    DEB_FIXTURE_BASE,
     DEB_FIXTURE_COMPLEX_REPOSITORY_NAME,
     DEB_FIXTURE_DISTRIBUTIONS,
     DEB_FIXTURE_FLAT_REPOSITORY_NAME,
@@ -320,7 +321,8 @@ def test_publish_empty_repository(
 
 @pytest.mark.parallel
 @pytest.mark.parametrize(
-    "expected_data", [DEB_PUBLISH_FLAT_VERBATIM, DEB_PUBLISH_FLAT_NESTED_VERBATIM]
+    "expected_data, flat_dist",
+    [(DEB_PUBLISH_FLAT_VERBATIM, "/"), (DEB_PUBLISH_FLAT_NESTED_VERBATIM, "nest/fjalar/")],
 )
 def test_publish_flat_repository_verbatim(
     create_publication_and_verify_repo_version,
@@ -328,6 +330,7 @@ def test_publish_flat_repository_verbatim(
     verify_distribution,
     verify_publication_data,
     expected_data,
+    flat_dist,
 ):
     """Test whether a particular flat repository can be published verbatim.
 
@@ -336,7 +339,7 @@ def test_publish_flat_repository_verbatim(
     * `Publish a flat repository verbatim.`_
     * `Publish a nested flat repository verbatim.`_
     """
-    remote_args = {"distributions": expected_data["distribution"]}
+    remote_args = {"distributions": flat_dist}
 
     # Create a publication
     publication, _, _, _ = create_publication_and_verify_repo_version(
@@ -351,12 +354,12 @@ def test_publish_flat_repository_verbatim(
 
 @pytest.mark.parallel
 @pytest.mark.parametrize(
-    "expected_data, publication_args",
+    "expected_data, publication_args, flat_dist",
     [
-        (DEB_PUBLISH_FLAT_STRUCTURED, DEB_PUBLICATION_ARGS_ONLY_STRUCTURED),
-        (DEB_PUBLISH_FLAT_SIMPLE, DEB_PUBLICATION_ARGS_ONLY_SIMPLE),
-        (DEB_PUBLISH_FLAT_NESTED_STRUCTURED, DEB_PUBLICATION_ARGS_ONLY_STRUCTURED),
-        (DEB_PUBLISH_FLAT_NESTED_SIMPLE, DEB_PUBLICATION_ARGS_ONLY_SIMPLE),
+        (DEB_PUBLISH_FLAT_STRUCTURED, DEB_PUBLICATION_ARGS_ONLY_STRUCTURED, "/"),
+        (DEB_PUBLISH_FLAT_SIMPLE, DEB_PUBLICATION_ARGS_ONLY_SIMPLE, "/"),
+        (DEB_PUBLISH_FLAT_NESTED_STRUCTURED, DEB_PUBLICATION_ARGS_ONLY_STRUCTURED, "nest/fjalar/"),
+        (DEB_PUBLISH_FLAT_NESTED_SIMPLE, DEB_PUBLICATION_ARGS_ONLY_SIMPLE, "nest/fjalar/"),
     ],
 )
 def test_publish_flat_repository(
@@ -366,6 +369,7 @@ def test_publish_flat_repository(
     verify_distribution,
     verify_publication_data,
     publication_args,
+    flat_dist,
 ):
     """Test whether a particular flat repository can be published.
 
@@ -376,7 +380,7 @@ def test_publish_flat_repository(
     * `Publish a nested flat repository structured.`_
     * `Publish a nested flat repository simple.`_
     """
-    remote_args = {"distributions": expected_data["distribution"]}
+    remote_args = {"distributions": flat_dist}
 
     # Create a publication
     publication, _, _, _ = create_publication_and_verify_repo_version(
@@ -389,6 +393,49 @@ def test_publish_flat_repository(
     # Create a distribution
     distribution = deb_distribution_factory(publication)
     verify_distribution(distribution, expected_data)
+
+
+@pytest.mark.parallel
+@pytest.mark.parametrize(
+    "remote_args, remote_name",
+    [
+        ({"distributions": "/"}, DEB_FIXTURE_FLAT_REPOSITORY_NAME),
+        ({"distributions": "debian-flat/"}, DEB_FIXTURE_BASE),
+    ],
+)
+def test_published_flat_repo_content(
+    create_publication_and_verify_repo_version,
+    deb_distribution_factory,
+    download_content_unit,
+    remote_args,
+    remote_name,
+):
+    """
+    Test that published flat repository results in a normalized Release file and package indices.
+    """
+    publication, _, _, _ = create_publication_and_verify_repo_version(
+        remote_args=remote_args,
+        remote_name=remote_name,
+    )
+
+    distribution = deb_distribution_factory(publication)
+    base_url = distribution.base_path
+
+    expected_release_path = os.path.join("dists", "flat-repo", "Release")
+    expected_pkg_index_path = os.path.join(
+        "dists", "flat-repo", "flat-repo-component", "binary-ppc64", "Packages"
+    )
+
+    release_file = download_content_unit(base_url, expected_release_path)
+    release_file_str = release_file.decode("utf-8")
+    assert "flat-repo" in release_file_str
+
+    pkg_index = download_content_unit(base_url, expected_pkg_index_path)
+    from debian import deb822
+
+    pkgs = list(deb822.Packages.iter_paragraphs(pkg_index, use_apt_pkg=False))
+    ppc64_pkgs = [pkg for pkg in pkgs if pkg.get("Architecture") == "ppc64"]
+    assert ppc64_pkgs, "No packages with architecture 'ppc64' found in the published package index."
 
 
 @pytest.mark.skip("Skip - ignore_missing_package_indices sync parameter does currently not work")
