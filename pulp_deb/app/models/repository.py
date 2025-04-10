@@ -99,6 +99,7 @@ class AptRepository(Repository, AutoAddObjPermsMixin):
         metadata (which may no longer be appropriate for the new RepositoryVersion is never
         retained.
         """
+        # this causes problems for domains and I haven't figured out why yet
         new_version.remove_content(ReleaseFile.objects.all())
         new_version.remove_content(PackageIndex.objects.all())
         new_version.remove_content(InstallerFileIndex.objects.all())

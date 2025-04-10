@@ -8,6 +8,7 @@ to encode APT repository structure. In particular this includes any fields withi
 from django.db import models
 
 from pulpcore.plugin.models import Content
+from pulpcore.plugin.util import get_domain_pk
 
 from pulp_deb.app.constants import NULL_VALUE
 
@@ -28,11 +29,21 @@ class Release(Content):
     origin = models.TextField(default=NULL_VALUE)
     label = models.TextField(default=NULL_VALUE)
     description = models.TextField(default=NULL_VALUE)
+    _pulp_domain = models.ForeignKey("core.Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     repo_key_fields = ("distribution",)
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
         unique_together = (
-            ("codename", "suite", "distribution", "version", "origin", "label", "description"),
+            (
+                "codename",
+                "suite",
+                "distribution",
+                "version",
+                "origin",
+                "label",
+                "description",
+                "_pulp_domain",
+            ),
         )
