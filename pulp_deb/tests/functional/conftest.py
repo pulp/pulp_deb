@@ -5,6 +5,7 @@ import os
 import re
 import stat
 import subprocess
+import uuid
 
 from pulp_deb.tests.functional.constants import DEB_SIGNING_SCRIPT_STRING
 from pulpcore.client.pulp_deb import (
@@ -555,3 +556,83 @@ def deb_get_content_types(deb_get_content_summary, request):
         return api.list(repository_version=latest_version_href).results
 
     return _deb_get_content_types
+
+
+@pytest.fixture
+def deb_setup_domain(
+    gen_object_with_cleanup,
+    domains_api_client,
+    deb_remote_factory,
+    deb_repository_factory,
+    deb_get_fixture_server,
+    deb_sync_repository,
+    monitor_task,
+):
+    def _deb_setup_domain(sync=True, pulp_domain=None, url=None):
+        if url == None:
+            url = deb_get_fixture_server()
+        elif url.startswith("http"):
+            url = url
+        else:
+            url = deb_get_fixture_server(url)
+
+        if not pulp_domain:
+            body = {
+                "name": str(uuid.uuid4()),
+                "storage_class": "pulpcore.app.models.storage.FileSystem",
+                "storage_settings": {"MEDIA_ROOT": "/var/lib/pulp/media/"},
+            }
+            pulp_domain = gen_object_with_cleanup(domains_api_client, body)
+
+        remote = deb_remote_factory(url, pulp_domain=pulp_domain.name)
+        repo = deb_repository_factory(pulp_domain=pulp_domain.name)
+
+        if sync:
+            deb_sync_repository(remote, repo)
+
+
+@pytest.fixture
+def deb_cleanup_domains(pulpcore_bindings, monitor_task, apt_repository_api):
+    def _deb_cleanup_domains(
+        domains,
+        content_api_client=None,
+        cleanup_repositories=False,
+        repository_api_client=apt_repository_api,
+    ):
+        for domain in domains:
+            # clean up each domain specified
+            if domain:
+                if cleanup_repositories:
+                    # delete repos from the domain
+                    for repo in repository_api_client.list(pulp_domain=domain.name).results:
+                        monitor_task(repository_api_client.delete(repo.pulp_href).task)
+                # let orphan cleanup reap the resulting abandoned content
+                monitor_task(
+                    pulpcore_bindings.OrphansCleanupApi.cleanup(
+                        {"orphan_protection_time": 0}, pulp_domain=domain.name
+                    ).task
+                )
+
+        if content_api_client:
+            # if we have a client, check that each domain is empty of that kind-of entity
+            for domain in domains:
+                if domain:
+                    assert content_api_client.list(pulp_domain=domain.name).count == 0
+
+    return _deb_cleanup_domains
+
+
+@pytest.fixture
+def deb_domain_factory(pulpcore_bindings, gen_object_with_cleanup):
+    """Fixture to create a domain."""
+
+    def _deb_domain_factory(name=None):
+        name = str(uuid.uuid4()) if name is None else name
+        body = {
+            "name": name,
+            "storage_class": "pulpcore.app.models.storage.FileSystem",
+            "storage_settings": {"MEDIA_ROOT": "/var/lib/pulp/media/"},
+        }
+        return gen_object_with_cleanup(pulpcore_bindings.DomainsApi, body)
+
+    return _deb_domain_factory
