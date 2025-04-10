@@ -59,7 +59,9 @@ def apt_repository_versions_api(apt_client):
 def deb_distribution_factory(apt_distribution_api, gen_object_with_cleanup):
     """Fixture that generates a deb distribution with cleanup from a given publication."""
 
-    def _deb_distribution_factory(publication=None, repository=None, checkpoint=None):
+    def _deb_distribution_factory(
+        publication=None, repository=None, checkpoint=None, pulp_domain=None
+    ):
         """Create a deb distribution.
 
         :param publication: The publication the distribution is based on.
@@ -72,6 +74,8 @@ def deb_distribution_factory(apt_distribution_api, gen_object_with_cleanup):
             body["repository"] = repository.pulp_href
         if checkpoint is not None:
             body["checkpoint"] = checkpoint
+        if pulp_domain:
+            body["pulp_domain"] = pulp_domain
         return gen_object_with_cleanup(apt_distribution_api, body)
 
     return _deb_distribution_factory
@@ -81,12 +85,14 @@ def deb_distribution_factory(apt_distribution_api, gen_object_with_cleanup):
 def deb_publication_factory(apt_publication_api, gen_object_with_cleanup):
     """Fixture that generates a deb publication with cleanup from a given repository."""
 
-    def _deb_publication_factory(repo, **kwargs):
+    def _deb_publication_factory(repo, pulp_domain=None, **kwargs):
         """Create a deb publication.
 
         :param repo: The repository the publication is based on.
         :returns: The created publication.
         """
+        if pulp_domain:
+            kwargs["pulp_domain"] = pulp_domain
         publication_data = DebAptPublication(repository=repo.pulp_href, **kwargs)
         return gen_object_with_cleanup(apt_publication_api, publication_data)
 
@@ -97,12 +103,14 @@ def deb_publication_factory(apt_publication_api, gen_object_with_cleanup):
 def deb_repository_factory(apt_repository_api, gen_object_with_cleanup):
     """Fixture that generates a deb repository with cleanup."""
 
-    def _deb_repository_factory(**kwargs):
+    def _deb_repository_factory(pulp_domain=None, **kwargs):
         """Create a deb repository.
 
         :returns: The created repository.
         """
-        return gen_object_with_cleanup(apt_repository_api, gen_repo(**kwargs))
+        return gen_object_with_cleanup(
+            apt_repository_api, gen_repo(pulp_domain=pulp_domain, **kwargs)
+        )
 
     return _deb_repository_factory
 
@@ -111,13 +119,15 @@ def deb_repository_factory(apt_repository_api, gen_object_with_cleanup):
 def deb_remote_factory(apt_remote_api, gen_object_with_cleanup):
     """Fixture that generates a deb remote with cleanup."""
 
-    def _deb_remote_factory(url, **kwargs):
+    def _deb_remote_factory(url, pulp_domain=None, **kwargs):
         """Creats a remote from the given url.
 
         :param url: The name of the local data repository.
         :returns: The created remote.
         """
-        return gen_object_with_cleanup(apt_remote_api, gen_deb_remote(url=str(url), **kwargs))
+        return gen_object_with_cleanup(
+            apt_remote_api, gen_deb_remote(url=str(url), pulp_domain=pulp_domain, **kwargs)
+        )
 
     return _deb_remote_factory
 
@@ -183,6 +193,7 @@ def deb_init_and_sync(
         repository=None,
         remote=None,
         url=None,
+        pulp_domain=None,
         remote_args={},
         repo_args={},
         sync_args={},
@@ -206,9 +217,9 @@ def deb_init_and_sync(
         else:
             url = deb_get_fixture_server_url(url)
         if repository is None:
-            repository = deb_repository_factory(**repo_args)
+            repository = deb_repository_factory(pulp_domain=pulp_domain, **repo_args)
         if remote is None:
-            remote = deb_remote_factory(url=url, **remote_args)
+            remote = deb_remote_factory(url=url, pulp_domain=pulp_domain, **remote_args)
 
         task = deb_sync_repository(remote, repository, **sync_args)
 
