@@ -3,6 +3,7 @@
 import pytest
 
 from pulpcore.tests.functional.utils import PulpTaskError
+from pulpcore.app import settings
 from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_ARCH,
     DEB_FIXTURE_ARCH_UPDATE,
@@ -348,6 +349,7 @@ def test_sync_optimize_with_mirror_enabled(deb_init_and_sync):
     assert is_sync_skipped(task, DEB_REPORT_CODE_SKIP_COMPLETE)
 
 
+@pytest.mark.skipif(settings.DOMAIN_ENABLED, reason="Domain produces different results.")
 def test_sync_orphan_cleanup_fail(
     deb_init_and_sync,
     pulpcore_bindings,

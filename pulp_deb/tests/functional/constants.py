@@ -276,6 +276,15 @@ DEB_PUBLISH_FLAT_STRUCTURED = {
     "package_index_paths_dist": ["dists/flat-repo/flat-repo-component/binary-ppc64/Packages"],
 }
 
+DEB_PUBLISH_STANDARD = {
+    "package_index_paths": [
+        "dists/ragnarok/asgard/binary-ppc64/Packages",
+        "dists/ragnarok/asgard/binary-armeb/Packages",
+        "dists/ragnarok/jotunheimr/binary-ppc64/Packages",
+        "dists/ragnarok/jotunheimr/binary-armeb/Packages",
+    ]
+}
+
 DEB_PUBLISH_FLAT_SIMPLE = {
     "distribution": "flat-repo",
     "codename": "ragnarok",

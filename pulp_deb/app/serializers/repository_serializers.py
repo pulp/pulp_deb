@@ -1,13 +1,14 @@
 from gettext import gettext as _
+from django.conf import settings
 from django.db import transaction
 from pulpcore.plugin.models import SigningService
 from pulpcore.plugin.serializers import (
     RelatedField,
     RepositorySerializer,
     RepositorySyncURLSerializer,
-    validate_unknown_fields,
+    ValidateFieldsMixin,
 )
-from pulpcore.plugin.util import get_url
+from pulpcore.plugin.util import get_url, get_domain
 
 from pulp_deb.app.models import (
     AptRepositoryReleaseServiceOverride,
@@ -146,7 +147,7 @@ class AptRepositorySyncURLSerializer(RepositorySyncURLSerializer):
     )
 
 
-class CopySerializer(serializers.Serializer):
+class CopySerializer(ValidateFieldsMixin, serializers.Serializer):
     """
     A serializer for Content Copy API.
     """
@@ -175,16 +176,38 @@ class CopySerializer(serializers.Serializer):
     def validate(self, data):
         """
         Validate that the Serializer contains valid data.
-        Set the DebRepository based on the RepositoryVersion if only the latter is provided.
-        Set the RepositoryVersion based on the DebRepository if only the latter is provided.
-        Convert the human-friendly names of the content types into what Pulp needs to query on.
+
+        Make sure the config-JSON matches the config-schema.
+        Check for cross-domain references (if domain-enabled).
         """
+
+        def check_domain(domain, href, name):
+            # We're doing just a string-check here rather than checking objects
+            # because there can be A LOT of objects, and this is happening in the view-layer
+            # where we have strictly-limited timescales to work with
+            if href and domain not in href:
+                raise serializers.ValidationError(
+                    _("{} must be part of the {} domain.").format(name, domain)
+                )
+
+        def check_cross_domain_config(cfg):
+            """Check that all config-elts are in 'our' domain."""
+            # copy-cfg is a list of dictionaries.
+            # source_repo_version and dest_repo are required fiels.
+            # Insure curr-domain exists in src/dest/dest_base_version/content-list hrefs
+            curr_domain_name = get_domain().name
+            for entry in cfg:
+                check_domain(curr_domain_name, entry["source_repo_version"], "dest_repo")
+                check_domain(curr_domain_name, entry["dest_repo"], "dest_repo")
+                check_domain(
+                    curr_domain_name, entry.get("dest_base_version", None), "dest_base_version"
+                )
+                for content_href in entry.get("content", []):
+                    check_domain(curr_domain_name, content_href, "content")
+
         super().validate(data)
-
-        if hasattr(self, "initial_data"):
-            validate_unknown_fields(self.initial_data, self.fields)
-
         if "config" in data:
+            # Make sure config is valid JSON
             validator = Draft7Validator(COPY_CONFIG_SCHEMA)
 
             err = []
@@ -194,5 +217,8 @@ class CopySerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     _("Provided copy criteria is invalid:'{}'".format(err))
                 )
+
+            if settings.DOMAIN_ENABLED:
+                check_cross_domain_config(data["config"])
 
         return data

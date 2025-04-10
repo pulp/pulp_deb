@@ -11,7 +11,7 @@ from pulpcore.plugin.repo_version_utils import (
     validate_version_paths,
     validate_duplicate_content,
 )
-from pulpcore.plugin.util import batch_qs
+from pulpcore.plugin.util import batch_qs, get_domain_pk
 
 from pulp_deb.app.models import (
     AptReleaseSigningService,
@@ -99,9 +99,9 @@ class AptRepository(Repository, AutoAddObjPermsMixin):
         metadata (which may no longer be appropriate for the new RepositoryVersion is never
         retained.
         """
-        new_version.remove_content(ReleaseFile.objects.all())
-        new_version.remove_content(PackageIndex.objects.all())
-        new_version.remove_content(InstallerFileIndex.objects.all())
+        new_version.remove_content(ReleaseFile.objects.filter(pulp_domain=get_domain_pk()))
+        new_version.remove_content(PackageIndex.objects.filter(pulp_domain=get_domain_pk()))
+        new_version.remove_content(InstallerFileIndex.objects.filter(pulp_domain=get_domain_pk()))
 
     def finalize_new_version(self, new_version):
         """
