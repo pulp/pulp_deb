@@ -8,6 +8,7 @@ exclusively used for verbatim publications.
 from django.db import models
 
 from pulpcore.plugin.models import Content
+from pulpcore.plugin.util import get_domain_pk
 
 
 BOOL_CHOICES = [(True, "yes"), (False, "no")]
@@ -31,6 +32,7 @@ class ReleaseFile(Content):
     relative_path = models.TextField()
     sha256 = models.CharField(max_length=255)
     artifact_set_sha256 = models.CharField(max_length=255)
+    _pulp_domain = models.ForeignKey("core.Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
@@ -44,6 +46,7 @@ class ReleaseFile(Content):
                 "relative_path",
                 "sha256",
                 "artifact_set_sha256",
+                "_pulp_domain",
             ),
         )
 
@@ -72,11 +75,12 @@ class PackageIndex(Content):
     relative_path = models.TextField()
     sha256 = models.CharField(max_length=255)
     artifact_set_sha256 = models.CharField(max_length=255)
+    _pulp_domain = models.ForeignKey("core.Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
         verbose_name_plural = "PackageIndices"
-        unique_together = (("relative_path", "sha256", "artifact_set_sha256"),)
+        unique_together = (("relative_path", "sha256", "artifact_set_sha256", "_pulp_domain"),)
 
     @property
     def main_artifact(self):
@@ -104,11 +108,12 @@ class InstallerFileIndex(Content):
     architecture = models.TextField()
     relative_path = models.TextField()
     sha256 = models.CharField(max_length=255)
+    _pulp_domain = models.ForeignKey("core.Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
         verbose_name_plural = "InstallerFileIndices"
-        unique_together = (("relative_path", "sha256"),)
+        unique_together = (("relative_path", "sha256", "_pulp_domain"),)
 
     @property
     def main_artifact(self):
@@ -134,11 +139,12 @@ class SourceIndex(Content):
     component = models.CharField(max_length=255)
     relative_path = models.TextField()
     sha256 = models.CharField(max_length=255)
+    _pulp_domain = models.ForeignKey("core.Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
         verbose_name_plural = "SourceIndices"
-        unique_together = (("relative_path", "sha256"),)
+        unique_together = (("relative_path", "sha256", "_pulp_domain"),)
 
     @property
     def main_artifact(self):

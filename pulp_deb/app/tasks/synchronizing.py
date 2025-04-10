@@ -39,6 +39,7 @@ from pulpcore.plugin.stages import (
     RemoteArtifactSaver,
     ResolveContentFutures,
 )
+from pulpcore.plugin.util import get_domain
 
 from pulp_deb.app.models import (
     GenericContent,
@@ -1312,7 +1313,9 @@ def _save_artifact_blocking(d_artifact):
     try:
         d_artifact.artifact.save()
     except IntegrityError:
-        d_artifact.artifact = Artifact.objects.get(sha256=d_artifact.artifact.sha256)
+        d_artifact.artifact = Artifact.objects.get(
+            sha256=d_artifact.artifact.sha256, pulp_domain=get_domain()
+        )
         d_artifact.artifact.touch()
 
 

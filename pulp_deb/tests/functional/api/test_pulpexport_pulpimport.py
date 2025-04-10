@@ -9,10 +9,14 @@ import pytest
 
 from uuid import uuid4
 
+from pulpcore.app import settings
 from pulp_deb.tests.functional.constants import DEB_FIXTURE_SUMMARY
 from pulp_deb.tests.functional.utils import get_counts_from_content_summary
 
 NUM_REPOS = 2
+
+if settings.DOMAIN_ENABLED:
+    pytest.skip("Domains do not support import.", allow_module_level=True)
 
 
 @pytest.fixture

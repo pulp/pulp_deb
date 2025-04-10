@@ -23,6 +23,7 @@ from pulpcore.plugin.serializers import (
     DetailRelatedField,
     SingleContentArtifactField,
 )
+from pulpcore.plugin.util import get_domain_pk
 from pulp_deb.app.constants import (
     PACKAGE_UPLOAD_DEFAULT_COMPONENT,
     PACKAGE_UPLOAD_DEFAULT_DISTRIBUTION,
@@ -131,7 +132,9 @@ class GenericContentSerializer(SingleArtifactContentUploadSerializer, ContentChe
 
     def retrieve(self, validated_data):
         content = GenericContent.objects.filter(
-            sha256=validated_data["sha256"], relative_path=validated_data["relative_path"]
+            sha256=validated_data["sha256"],
+            relative_path=validated_data["relative_path"],
+            pulp_domain=get_domain_pk(),
         )
 
         return content.first()
@@ -636,7 +639,9 @@ class BasePackageMixin(Serializer):
 
     def retrieve(self, validated_data):
         content = self.Meta.model.objects.filter(
-            sha256=validated_data["sha256"], relative_path=validated_data["relative_path"]
+            sha256=validated_data["sha256"],
+            relative_path=validated_data["relative_path"],
+            pulp_domain=get_domain_pk(),
         )
 
         return content.first()
@@ -766,6 +771,7 @@ class ReleaseSerializer(NoArtifactContentSerializer):
             origin=validated_data.get("origin", NULL_VALUE),
             label=validated_data.get("label", NULL_VALUE),
             description=validated_data.get("description", NULL_VALUE),
+            pulp_domain=get_domain_pk(),
         ).first()
 
     def create(self, validated_data):
@@ -833,6 +839,7 @@ class ReleaseArchitectureSerializer(NoArtifactContentSerializer):
         return ReleaseArchitecture.objects.filter(
             architecture=validated_data["architecture"],
             distribution=validated_data["distribution"],
+            pulp_domain=get_domain_pk(),
         ).first()
 
     class Meta(NoArtifactContentSerializer.Meta):
@@ -861,6 +868,7 @@ class ReleaseComponentSerializer(NoArtifactContentSerializer):
         return ReleaseComponent.objects.filter(
             distribution=validated_data["distribution"],
             component=validated_data["component"],
+            pulp_domain=get_domain_pk(),
         ).first()
 
     component = CharField(help_text="Name of the component.")
