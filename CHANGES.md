@@ -86,7 +86,9 @@
 
 ## 3.5.2 (2025-04-23) {: #3.5.2 }
 
-No significant changes.
+#### Features {: #3.5.1-feature }
+
+- Added compatibility with pulpcore 3.70+.
 
 ---
 
