@@ -8,7 +8,7 @@ from pathlib import Path
 
 from datetime import datetime, timezone
 from debian import deb822
-from gzip import GzipFile
+import gzip
 import tempfile
 
 from django.conf import settings
@@ -23,6 +23,7 @@ from pulpcore.plugin.models import (
     PublishedMetadata,
     RemoteArtifact,
     RepositoryVersion,
+    ContentArtifact,
 )
 
 from pulp_deb.app.constants import NULL_VALUE
@@ -38,6 +39,7 @@ from pulp_deb.app.models import (
     AptReleaseSigningService,
     SourcePackage,
     SourcePackageReleaseComponent,
+    GenericContent,
 )
 
 from pulp_deb.app.serializers import (
@@ -244,7 +246,58 @@ def publish(
                         release=release,
                         temp_dir=temp_dir,
                         signing_service=signing_service,
+                        dep11_file_paths=[],
                     )
+
+                    log.info("publish(): looking for dep11 files ...")
+                    dep11_files = GenericContent.objects.filter(
+                        pk__in=repo_version.content.order_by("-pulp_created"),
+                        relative_path__contains="/dep11/",
+                    )
+
+                    for dep11_file in dep11_files:
+                        release_helper.dep11_file_paths.append(dep11_file.relative_path)
+                        # make sure that there actually are artifacts for dep11 files
+                        try:
+                            artifact = ContentArtifact.objects.get(
+                                content_id=dep11_file.content_ptr_id
+                            )
+                        except Exception as e:
+                            log.warning(
+                                f"DEP11: artifact not found for {dep11_file}: {e}, skipping"
+                            )
+                            continue
+
+                        artifact_path = f"{settings.MEDIA_ROOT}/{artifact.artifact.file}"
+                        dep11_metadata = PublishedMetadata.create_from_file(
+                            publication=publication,
+                            file=File(open(artifact_path, "rb")),
+                            relative_path=dep11_file.relative_path,
+                        )
+                        dep11_metadata.save()
+                        release_helper.add_metadata(dep11_metadata)
+
+                        # this is a "hack" because we need a mention of the
+                        # uncompressed files in the Release file,
+                        # for Appstream to find them
+                        # We normally don't care about the artifact of the
+                        # uncompressed files but every logic like
+                        # sync and publish relies on the availability of an artifact.
+                        # We also need to decompress those files to avoid hash mismatch errors
+                        if "CID-Index" not in dep11_file.relative_path:
+                            if dep11_file.relative_path.endswith(".gz"):
+                                dep11_file_uncompressed = dep11_file.relative_path.strip(".gz")
+                                with gzip.open(artifact_path, "rb") as f_in:
+                                    with open(dep11_file_uncompressed, "wb") as f_out:
+                                        shutil.copyfileobj(f_in, f_out)
+
+                                dep11_metadata_uncompressed = PublishedMetadata.create_from_file(
+                                    publication=publication,
+                                    file=File(open(dep11_file_uncompressed, "rb")),
+                                    relative_path=dep11_file_uncompressed,
+                                )
+                                dep11_metadata_uncompressed.save()
+                                release_helper.add_metadata(dep11_metadata_uncompressed)
 
                     package_release_components = PackageReleaseComponent.objects.filter(
                         pk__in=repo_version.content.order_by("-pulp_created"),
@@ -301,6 +354,8 @@ class _ComponentHelper:
         self.plain_component = os.path.basename(component)
         self.package_index_files = {}
         self.source_index_file_info = None
+        self.dep11_path = None
+        self.dep11_file_paths = []
 
         for architecture in self.parent.architectures:
             package_index_path = os.path.join(
@@ -328,6 +383,12 @@ class _ComponentHelper:
             open(source_index_path, "wb"),
             source_index_path,
         )
+
+        # DEP11 directory
+        self.dep11_dir = os.path.join(
+            "dists", self.parent.dists_subfolder, self.plain_component, "dep11"
+        )
+        os.makedirs(self.dep11_dir, exist_ok=True)
 
     def add_packages(self, packages, artifact_dict, remote_artifact_dict):
         published_artifacts = []
@@ -471,6 +532,7 @@ class _ReleaseHelper:
         release,
         temp_dir,
         signing_service=None,
+        dep11_file_paths=None,
     ):
         self.publication = publication
         self.temp_env = {"PULP_TEMP_WORKING_DIR": _create_random_directory(temp_dir)}
@@ -508,6 +570,7 @@ class _ReleaseHelper:
         self.architectures = architectures
         self.components = {component: _ComponentHelper(self, component) for component in components}
         self.signing_service = publication.signing_service or signing_service
+        self.dep11_file_paths = dep11_file_paths
 
     def add_metadata(self, metadata):
         artifact = metadata._artifacts.get()
@@ -573,7 +636,7 @@ class _ReleaseHelper:
 def _zip_file(file_path):
     gz_file_path = file_path + ".gz"
     with open(file_path, "rb") as f_in:
-        with GzipFile(gz_file_path, "wb") as f_out:
+        with gzip.GzipFile(gz_file_path, "wb") as f_out:
             shutil.copyfileobj(f_in, f_out)
     return gz_file_path
 
