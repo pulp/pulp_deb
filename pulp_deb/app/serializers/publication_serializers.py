@@ -45,6 +45,10 @@ class AptPublicationSerializer(PublicationSerializer):
         view_name="signing-services-detail",
         required=False,
     )
+    publish_legacy_release_files = BooleanField(
+        help_text="Whether or not to publish Legacy per-component-and-architecture Release files.",
+        default=False,
+    )
 
     def validate(self, data):
         """
@@ -62,6 +66,7 @@ class AptPublicationSerializer(PublicationSerializer):
             "checkpoint",
             "signing_service",
             "publish_upstream_release_fields",
+            "publish_legacy_release_files",
         )
         model = AptPublication
 
