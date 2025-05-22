@@ -3,6 +3,9 @@
 import pytest
 
 from pulp_deb.tests.functional.constants import (
+    DEB_FIXTURE_FLAT_REPOSITORY_NAME,
+    DEB_P2P_FLAT_STRUCTURED,
+    DEB_P2P_REMOTE_ARGS_FLAT,
     DEB_P2P_SIMPLE_THEN_STRUCTURED,
     DEB_PUBLICATION_ARGS_ONLY_SIMPLE,
     DEB_PUBLICATION_ARGS_ONLY_STRUCTURED,
@@ -206,3 +209,28 @@ def test_pulp_to_pulp_sync_simple_to_structured(
     added_both = get_counts_from_content_summary(summary_both.added)
     assert added_both == DEB_P2P_SIMPLE_THEN_STRUCTURED
     assert present_both == DEB_P2P_SIMPLE_AND_STRUCTURED
+
+
+def test_pulp_to_pulp_sync_flat(
+    deb_init_and_sync,
+    deb_publication_factory,
+    deb_distribution_factory,
+    deb_get_content_summary,
+    delete_orphans_pre,
+):
+    """Verify whether a repository served by Pulp can sync its content originally
+    stemming from a flat repository.
+    """
+    repo_flat, _ = deb_init_and_sync(
+        remote_args={"distributions": "/", "policy": "immediate"},
+        url=DEB_FIXTURE_FLAT_REPOSITORY_NAME,
+    )
+    publication = deb_publication_factory(repo_flat, **DEB_PUBLICATION_ARGS_ONLY_STRUCTURED)
+    distribution = deb_distribution_factory(publication)
+
+    repo_new, _ = deb_init_and_sync(url=distribution.base_url, remote_args=DEB_P2P_REMOTE_ARGS_FLAT)
+    summary_new = deb_get_content_summary(repo_new)
+    present_new = get_counts_from_content_summary(summary_new.present)
+    added_new = get_counts_from_content_summary(summary_new.added)
+    assert present_new == DEB_P2P_FLAT_STRUCTURED
+    assert added_new == DEB_P2P_FLAT_STRUCTURED
