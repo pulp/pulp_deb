@@ -645,11 +645,11 @@ class DebFirstStage(Stage):
             return
         if self.optimize:
             previous_release_file = await _get_previous_release_file(
-                self.previous_repo_version, distribution
+                self.previous_repo_version, stored_distribution
             )
             if previous_release_file.artifact_set_sha256 == release_file.artifact_set_sha256:
                 await _readd_previous_package_indices(
-                    self.previous_repo_version, self.new_version, distribution
+                    self.previous_repo_version, self.new_version, stored_distribution
                 )
                 message = 'ReleaseFile has not changed for distribution="{}". Skipping.'
                 log.info(_(message).format(distribution))
