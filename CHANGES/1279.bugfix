@@ -1,0 +1,1 @@
+Flat repo syncs no longer consider the Release file for download as part of package index creation, avoiding unnecessary downloads as well as a rare edge case where the sync fails with a duplicate-path error if the Release file references itself with a checksum that already exists as an artifact within Pulp.

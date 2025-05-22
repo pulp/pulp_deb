@@ -898,6 +898,8 @@ class DebFirstStage(Stage):
         package_index_dir = os.path.join(release_base_path, release_file_package_index_dir)
         d_artifacts = []
         for filename in PackageIndex.SUPPORTED_ARTIFACTS:
+            if filename == "Release" and is_flat:
+                continue
             path = os.path.join(release_file_package_index_dir, filename)
             if path in file_references:
                 relative_path = os.path.join(release_base_path, path)
