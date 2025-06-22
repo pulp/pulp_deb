@@ -1,0 +1,1 @@
+Started adding plugin-specific support for the Pulp "v4" API - these endpoints should not yet be considered actively supported.
