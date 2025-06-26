@@ -14,6 +14,7 @@ from django.db import models
 from django.db.models import JSONField
 
 from pulpcore.plugin.models import Content
+from pulpcore.plugin.util import get_domain_pk
 
 BOOL_CHOICES = [(True, "yes"), (False, "no")]
 
@@ -68,6 +69,7 @@ class BasePackage(Content):
     sha256 = models.TextField(null=False)
 
     custom_fields = JSONField(null=True)
+    _pulp_domain = models.ForeignKey("core.Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     @property
     def name(self):
@@ -92,7 +94,7 @@ class BasePackage(Content):
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
-        unique_together = (("relative_path", "sha256"),)
+        unique_together = (("relative_path", "sha256", "_pulp_domain"),)
         abstract = True
 
 
@@ -141,10 +143,11 @@ class GenericContent(Content):
 
     relative_path = models.TextField(null=False)
     sha256 = models.CharField(max_length=255, null=False)
+    _pulp_domain = models.ForeignKey("core.Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
-        unique_together = (("relative_path", "sha256"),)
+        unique_together = (("relative_path", "sha256", "_pulp_domain"),)
 
 
 class SourcePackage(Content):

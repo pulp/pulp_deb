@@ -97,12 +97,14 @@ def deb_publication_factory(apt_publication_api, gen_object_with_cleanup):
 def deb_repository_factory(apt_repository_api, gen_object_with_cleanup):
     """Fixture that generates a deb repository with cleanup."""
 
-    def _deb_repository_factory(**kwargs):
+    def _deb_repository_factory(pulp_domain=None, **kwargs):
         """Create a deb repository.
 
         :returns: The created repository.
         """
-        return gen_object_with_cleanup(apt_repository_api, gen_repo(**kwargs))
+        return gen_object_with_cleanup(
+            apt_repository_api, gen_repo(pulp_domain=pulp_domain, **kwargs)
+        )
 
     return _deb_repository_factory
 
@@ -183,6 +185,7 @@ def deb_init_and_sync(
         repository=None,
         remote=None,
         url=None,
+        pulp_domain=None,
         remote_args={},
         repo_args={},
         sync_args={},
@@ -206,9 +209,9 @@ def deb_init_and_sync(
         else:
             url = deb_get_fixture_server_url(url)
         if repository is None:
-            repository = deb_repository_factory(**repo_args)
+            repository = deb_repository_factory(pulp_domain=pulp_domain, **repo_args)
         if remote is None:
-            remote = deb_remote_factory(url=url, **remote_args)
+            remote = deb_remote_factory(url=url, pulp_domain=pulp_domain, **remote_args)
 
         task = deb_sync_repository(remote, repository, **sync_args)
 
