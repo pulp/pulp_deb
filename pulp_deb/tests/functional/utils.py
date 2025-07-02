@@ -84,13 +84,15 @@ def gen_distribution(**kwargs):
     return data
 
 
-def gen_remote(url, **kwargs):
+def gen_remote(url, pulp_domain=None, **kwargs):
     """Return a semi-random dict for use in creating a Remote.
 
     :param url: The URL of an external content source.
     """
     data = {"name": str(uuid4()), "url": url}
     data.update(kwargs)
+    if pulp_domain:
+        data["pulp_domain"] = pulp_domain
     return data
 
 
