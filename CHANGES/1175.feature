@@ -1,0 +1,1 @@
+Support per-component/architecture Release files for cross-validation by related installers (i.e. ubiquity and debian-installer).
