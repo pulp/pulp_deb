@@ -843,6 +843,10 @@ class DebFirstStage(Stage):
             pending_tasks.extend(
                 [self._handle_source_index(release_file, release_component, file_references)]
             )
+
+        pending_tasks.extend(
+            [self._handle_dep11_files(release_file, release_component, file_references)]
+        )
         await asyncio.gather(*pending_tasks)
 
     async def _handle_flat_repo(self, file_references, release_file, distribution):
@@ -870,6 +874,58 @@ class DebFirstStage(Stage):
 
         # Await all tasks
         await asyncio.gather(*pending_tasks)
+
+    async def _handle_dep11_files(self, release_file, release_component, file_references):
+        dep11_dir = os.path.join(release_component.plain_component, "dep11")
+        paths = [path for path in file_references.keys() if path.startswith(dep11_dir)]
+
+        if paths:
+            # CID-Index-amd64.json.gz is missing in file_references (not in Release file)
+            # Inject it manually?
+            dep11s = {}
+            supported_artifacts = [
+                "CID-Index-amd64.json.gz",
+                "Components-amd64.yml.gz",
+                "Components-amd64.yml.xz",
+                "icons-48x48.tar.gz",
+                "icons-48x48@2.tar.gz",
+                "icons-64x64.tar.gz",
+                "icons-64x64@2.tar.gz",
+                "icons-128x128.tar.gz",
+                "icons-128x128@2.tar.gz",
+            ]
+
+            for path in paths:
+                relative_path = os.path.join(os.path.dirname(release_file.relative_path), path)
+                basename = os.path.basename(relative_path)
+
+                if basename not in supported_artifacts:
+                    log.warning(f"DEP11: {basename} is not in supported artifacts, skipping")
+                    continue
+
+                d_artifact = self._to_d_artifact(relative_path, file_references[path])
+                key = relative_path
+
+                if key not in dep11s:
+                    sha256 = d_artifact.artifact.sha256
+                    dep11s[key] = {"sha256": sha256, "d_artifacts": []}
+                    log.warning(f"_handle_dep11_files: adding key={key}, sha256={sha256}")
+
+                dep11s[key]["d_artifacts"].append(d_artifact)
+
+            # handle CID-Index-amd64.json.gz separately
+            # because it is not listed in upstream Release file
+            cid_file_path = os.path.join(
+                os.path.dirname(release_file.relative_path), dep11_dir, "CID-Index-amd64.json.gz"
+            )
+            artifact = self._to_d_artifact(cid_file_path)
+            dep11s[cid_file_path] = {"sha256": artifact.artifact.sha256, "d_artifacts": []}
+            dep11s[cid_file_path]["d_artifacts"].append(artifact)
+            for relative_path, dep11 in dep11s.items():
+                content_unit = GenericContent(sha256=dep11["sha256"], relative_path=relative_path)
+                await self.put(
+                    DeclarativeContent(content=content_unit, d_artifacts=dep11["d_artifacts"])
+                )
 
     async def _handle_package_index(
         self,
