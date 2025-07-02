@@ -813,7 +813,9 @@ Compatible with: `pulpcore>=3.14,<3.16`
 
 ---
 
-## 2.14.0 (2021-07-22) {: #2.14.0 }
+## YANKED 2.14.0 (2021-07-22) {: #2.14.0 }
+
+Yank reason: Python 3.6 and 3.7 support was prematurely dropped, and the orphan cleanup changes fro pulpcore 3.15 compatibility are still missing.
 
 !!! warning
     This version was released in a broken state and has been yanked from pypi.
