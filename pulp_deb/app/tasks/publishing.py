@@ -24,6 +24,7 @@ from pulpcore.plugin.models import (
     RemoteArtifact,
     RepositoryVersion,
 )
+from pulpcore.plugin.util import get_domain
 
 from pulp_deb.app.constants import NULL_VALUE
 from pulp_deb.app.models import (
@@ -591,10 +592,12 @@ def _fetch_file_checksum(file_path, index, checksum):
 
 def _batch_fetch_artifacts(packages):
     sha256_values = [package.sha256 for package in packages if package.sha256]
-    artifacts = Artifact.objects.filter(sha256__in=sha256_values)
+    artifacts = Artifact.objects.filter(sha256__in=sha256_values, pulp_domain=get_domain())
     artifact_dict = {artifact.sha256: artifact for artifact in artifacts}
 
-    remote_artifacts = RemoteArtifact.objects.filter(sha256__in=sha256_values)
+    remote_artifacts = RemoteArtifact.objects.filter(
+        sha256__in=sha256_values, pulp_domain=get_domain()
+    )
     remote_artifact_dict = {artifact.sha256: artifact for artifact in remote_artifacts}
 
     return artifact_dict, remote_artifact_dict

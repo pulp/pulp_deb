@@ -2,6 +2,7 @@ from django.db import transaction
 from django.db.models import Q
 
 from pulpcore.plugin.models import RepositoryVersion
+from pulpcore.plugin.util import get_domain_pk
 
 from pulp_deb.app.models import (
     AptRepository,
@@ -91,6 +92,8 @@ def copy_content(config, structured, dependency_solving):
             content_filter = Q(pk__in=entry.get("content"))
         else:
             content_filter = Q()
+
+        content_filter &= Q(pulp_domain=get_domain_pk())
 
         log.info(_("Copying: {copy} created").format(copy=content_filter))
 
