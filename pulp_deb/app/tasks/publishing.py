@@ -324,13 +324,9 @@ class _ComponentHelper:
                 "binary-{}".format(architecture),
                 "Release",
             )
-            with open(release_path, "w") as file:
-                file.write("Origin: {}\n".format(self.parent._release.origin))
-                file.write("Label: {}\n".format(self.parent._release.label))
-                file.write("Suite: {}\n".format(self.parent._release.suite))
-                file.write("Architecture: {}\n".format(architecture))
-                file.write("Component: {}\n".format(self.plain_component))
-            self.release_file_paths[architecture] = release_path
+
+            self.release_file_paths[architecture] = _write_legacy_release_file(self, architecture)
+
 
         # Source indicies file
         source_index_path = os.path.join(
@@ -626,3 +622,36 @@ def _create_random_directory(path):
     dir_path = path + "/" + dir_name
     os.makedirs(dir_path, exist_ok=True)
     return dir_path
+
+
+def _write_legacy_release_file(component, arch):
+    """
+    Add legacy per-architecture release files
+    https://wiki.debian.org/DebianRepository/Format#Legacy_per-component-and-architecture_Release_files
+    :param component: ComponentHelper instance this belongs to.
+    :param arch: target architecture
+    :return: relative path of the release file
+    """
+
+    rel = deb822.Release()
+
+    parent_release = component.parent.release
+    rel["Archive"] = parent_release.get("Suite", parent_release["Codename"])
+    rel["Origin"] = parent_release.get("Origin", "Pulp 3")
+    rel["Label"] = parent_release.get("Label", "Pulp 3")
+    if settings.APT_BY_HASH:
+        rel["Acquire-By-Hash"] = settings.APT_BY_HASH
+    rel["Component"] = component.plain_component
+    rel["Architecture"] = arch
+
+    rel_path = os.path.join(
+        "dists",
+        component.parent.dists_subfolder,
+        component.plain_component,
+        f"binary-{arch}",
+        "Release",
+    )
+    os.makedirs(os.path.dirname(rel_path), exist_ok=True)
+    with open(rel_path, "wb") as fh:
+        rel.dump(fh)
+    return rel_path
