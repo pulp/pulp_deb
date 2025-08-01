@@ -1,0 +1,1 @@
+CopyContent between repository-versions with same distribution-name but different Release content-units fails. Fixed by not copying Release content-unit for distribution-name that already is present in target-version.
