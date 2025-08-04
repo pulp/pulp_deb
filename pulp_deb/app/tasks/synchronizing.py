@@ -10,6 +10,7 @@ import hashlib
 
 from asgiref.sync import sync_to_async
 from collections import defaultdict
+from functools import wraps
 from tempfile import NamedTemporaryFile
 from debian import deb822
 from urllib.parse import quote, urlparse, urlunparse, urljoin
@@ -346,6 +347,30 @@ class DebUpdateReleaseFileAttributes(Stage):
     It also transfers the sha256 from the artifact to the ReleaseFile content units.
     """
 
+    @staticmethod
+    def _gpg_agent_cleanup(func):
+        """
+        This decorator will call gpgconf after its wrapped method is executed in order to
+        stop any gpg-agent process associated with the gpg home folder.
+        This is a safety measure because cleanup of the temporary gpg-home folder can lead to a
+        race condition with the gpg-agent process. Ideally all gpg-agent processes are gone by
+        the time the temporary gpg home folder is cleaned up.
+        """
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            try:
+                return func(self, *args, **kwargs)
+            finally:
+                if self.gpgkey:
+                    subprocess.run(
+                        ["/usr/bin/gpgconf", "--homedir", self.gpg.gnupghome, "--kill", "gpg-agent"],
+                        check=False,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
+        return wrapper
+
+    @_gpg_agent_cleanup
     def __init__(self, remote, *args, **kwargs):
         """Initialize DebUpdateReleaseFileAttributes stage."""
         super().__init__(*args, **kwargs)
