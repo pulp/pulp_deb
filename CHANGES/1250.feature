@@ -1,1 +1,0 @@
-Enabled the checkpoint feature in pulp_deb.

@@ -1,1 +1,0 @@
-Fix bug where sync failed if a custom field in Package index was blank.
