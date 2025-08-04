@@ -5,11 +5,13 @@ import shutil
 import bz2
 import gzip
 import lzma
+import subprocess
 import gnupg
 import hashlib
 
 from asgiref.sync import sync_to_async
 from collections import defaultdict
+from functools import wraps
 from tempfile import NamedTemporaryFile
 from debian import deb822
 from urllib.parse import quote, urlparse, urlunparse
@@ -347,6 +349,31 @@ class DebUpdateReleaseFileAttributes(Stage):
     It also transfers the sha256 from the artifact to the ReleaseFile content units.
     """
 
+    @staticmethod
+    def _gpg_agent_cleanup(func):
+        """Kill gpg-agent for this intances gnupghome after the wrapped call, even on error."""
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            try:
+                return func(self, *args, **kwargs)
+            finally:
+                gpgkey = getattr(self, "gpgkey", None)
+                gpg = getattr(self, "gpg", None)
+                homedir = getattr(gpg, "gnupghome", None) if gpg is not None else None
+                if gpgkey and homedir:
+                    try:
+                        subprocess.run(
+                            ["/usr/bin/gpgconf", "--homedir", homedir, "--kill", "gpg-agent"],
+                            check=False,
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL,
+                        )
+                    except Exception:
+                        # cleanup must never mask the original error path
+                        pass
+        return wrapper
+
+    @_gpg_agent_cleanup
     def __init__(self, remote, *args, **kwargs):
         """Initialize DebUpdateReleaseFileAttributes stage."""
         super().__init__(*args, **kwargs)
