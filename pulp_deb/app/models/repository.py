@@ -7,7 +7,6 @@ from pulpcore.plugin.models import (
     Repository,
 )
 from pulpcore.plugin.repo_version_utils import (
-    remove_duplicates,
     validate_version_paths,
     validate_duplicate_content,
 )
@@ -115,8 +114,8 @@ class AptRepository(Repository, AutoAddObjPermsMixin):
 
         """
         handle_duplicate_packages(new_version)
+        handle_duplicate_releases(new_version)
         validate_duplicate_content(new_version)
-        remove_duplicates(new_version)
         validate_version_paths(new_version)
 
 
@@ -236,3 +235,41 @@ def handle_duplicate_packages(new_version):
                     log.warning(message.format(pulp_type))
                     new_version.remove_content(package_qs_duplicates)
                     new_version.remove_content(prc_qs_duplicates)
+
+
+def handle_duplicate_releases(new_version):
+    """
+    it may happen that Releases with the same 'distribution' get added.
+    E.g. the uniqueness values of the Release (codename, etc) change over time but the
+    distribution value stays the same. If content is now copied from newer versions to older
+    versions, the new release will be marked for copying but will clash with the value from the
+    base-version.
+    """
+    release_qs_added = new_version.added(base_version=new_version.base_version).filter(
+        pulp_type="deb.release"
+    )
+    if new_version.base_version:
+        release_qs_existing = new_version.base_version.content.filter(pulp_type="deb.release")
+    else:
+        try:
+            release_qs_existing = new_version.previous().content.filter(pulp_type="deb.release")
+        except new_version.DoesNotExist:
+            release_qs_existing = Release.objects.none()
+
+    if not release_qs_added.count():
+        # let's assume the previous version is valid
+        return
+
+    dup_releases = []
+    for new_rel in release_qs_added.iterator():
+        if (
+            Release.objects.filter(pk__in=release_qs_existing.filter(pk__ne=new_rel.pk))
+            .filter(distribution=new_rel.deb_release.distribution)
+            .count()
+        ):
+            # duplicate found: remove it!
+            dup_releases.append(new_rel.pk)
+
+    if dup_releases:
+        log.warning(_("Removing duplicate deb.releases from new repo version."))
+        new_version.remove_content(Release.objects.filter(pk__in=dup_releases))

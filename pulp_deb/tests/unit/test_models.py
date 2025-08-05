@@ -2,7 +2,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
 from pulpcore.plugin.models import Artifact, ContentArtifact
-from pulp_deb.app.models import Package
+from pulp_deb.app.models import Package, AptRepository, Release
+from pulp_deb.app.models.repository import handle_duplicate_releases
 from pulp_deb.app.serializers import Package822Serializer
 
 
@@ -85,3 +86,34 @@ class TestPackage(TestCase):
             .dump(),
             self.PACKAGE_PARAGRAPH,
         )
+
+
+class TestRepositoryFunctions(TestCase):
+    """Test Repository functions."""
+
+    def test_handle_duplicate_releases(self):
+        repo = AptRepository.objects.create(name="dummy")
+        self.addCleanup(repo.delete)
+        rel1 = Release.objects.create(
+            distribution="ginnungagap",
+            codename="ginnungagap",
+            suite="ginnungagap",
+            version="ginnungagap",
+            origin="norse",
+            label="ginnungagap",
+            description="ginnungagap",
+        )
+        rel2 = Release.objects.create(
+            distribution="ginnungagap",
+        )
+
+        with repo.new_version() as base_version:
+            base_version.add_content(Release.objects.filter(pk=rel1.pk))
+
+        with repo.new_version(base_version=repo.latest_version()) as version:
+            version.add_content(Release.objects.filter(pk=rel2.pk))
+            self.assertEqual(2, version.content.count())
+
+            handle_duplicate_releases(version)
+            self.assertEqual(1, version.content.count())
+            self.assertEqual(rel1.pk, version.content[0].pk)
