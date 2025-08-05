@@ -8,6 +8,26 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.6.0 (2025-08-04) {: #3.6.0 }
+
+#### Features {: #3.6.0-feature }
+
+- Enabled the checkpoint feature in pulp_deb.
+  [#1250](https://github.com/pulp/pulp_deb/issues/1250)
+- Added support for Domains.
+  [#1253](https://github.com/pulp/pulp_deb/issues/1253)
+- Syncing flat repositories will now always publish distribution "flat-repo".
+  [#1258](https://github.com/pulp/pulp_deb/issues/1258)
+
+#### Bugfixes {: #3.6.0-bugfix }
+
+- Fix bug where sync failed if a custom field in Package index was blank.
+  [#1225](https://github.com/pulp/pulp_deb/issues/1225)
+- Flat repo syncs no longer consider the Release file for download as part of package index creation, avoiding unnecessary downloads as well as a rare edge case where the sync fails with a duplicate-path error if the Release file references itself with a checksum that already exists as an artifact within Pulp.
+  [#1279](https://github.com/pulp/pulp_deb/issues/1279)
+
+---
+
 ## 3.5.2 (2025-04-23) {: #3.5.2 }
 
 No significant changes.
