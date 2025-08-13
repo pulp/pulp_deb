@@ -34,6 +34,7 @@ from pulpcore.plugin.stages import (
     DeclarativeVersion,
     Stage,
     QueryExistingArtifacts,
+    ACSArtifactHandler,
     ArtifactDownloader,
     ArtifactSaver,
     QueryExistingContents,
@@ -165,7 +166,7 @@ class UnknownNoSupportForArchitectureAllValue(Exception):
     pass
 
 
-def synchronize(remote_pk, repository_pk, mirror, optimize):
+def synchronize(remote_pk, repository_pk, mirror, optimize, url=None):
     """
     Sync content from the remote repository.
 
@@ -218,7 +219,7 @@ def synchronize(remote_pk, repository_pk, mirror, optimize):
                 asyncio.run(pb.aincrement())
             return
 
-    first_stage = DebFirstStage(remote, optimize, mirror, previous_repo_version)
+    first_stage = DebFirstStage(remote, optimize, mirror, previous_repo_version, override_url=url)
     DebDeclarativeVersion(first_stage, repository, mirror=mirror).create()
 
 
@@ -257,6 +258,11 @@ class DebDeclarativeVersion(DeclarativeVersion):
     This class creates the Pipeline.
     """
 
+    def __init__(self, *args, **kwargs):
+        # Always enable ACS for deb sync
+        kwargs["acs"] = True
+        super().__init__(*args, **kwargs)
+
     def pipeline_stages(self, new_version):
         """
         Build the list of pipeline stages feeding into the ContentAssociation stage.
@@ -273,16 +279,22 @@ class DebDeclarativeVersion(DeclarativeVersion):
         pipeline = [
             self.first_stage,
             QueryExistingArtifacts(),
-            ArtifactDownloader(),
-            DebDropFailedArtifacts(),
-            ArtifactSaver(),
-            DebUpdateReleaseFileAttributes(remote=self.first_stage.remote),
-            DebUpdatePackageIndexAttributes(),
-            QueryExistingContents(),
-            ContentSaver(),
-            RemoteArtifactSaver(),
-            ResolveContentFutures(),
         ]
+        if getattr(self, "acs", False):
+            pipeline.append(ACSArtifactHandler())
+        pipeline.extend(
+            [
+                ArtifactDownloader(),
+                DebDropFailedArtifacts(),
+                ArtifactSaver(),
+                DebUpdateReleaseFileAttributes(remote=self.first_stage.remote),
+                DebUpdatePackageIndexAttributes(),
+                QueryExistingContents(),
+                ContentSaver(),
+                RemoteArtifactSaver(),
+                ResolveContentFutures(),
+            ]
+        )
         return pipeline
 
 
@@ -587,7 +599,9 @@ class DebFirstStage(Stage):
     The first stage of a pulp_deb sync pipeline.
     """
 
-    def __init__(self, remote, optimize, mirror, previous_repo_version, *args, **kwargs):
+    def __init__(
+        self, remote, optimize, mirror, previous_repo_version, override_url=None, *args, **kwargs
+    ):
         """
         The first stage of a pulp_deb sync pipeline.
 
@@ -606,7 +620,7 @@ class DebFirstStage(Stage):
             "optimize": optimize,
             "mirror": mirror,
         }
-        self.parsed_url = urlparse(remote.url)
+        self.parsed_url = urlparse(override_url or remote.url)
         if self.optimize:
             previous_sync_info = defaultdict(dict, self.previous_repo_version.info)
             if not previous_sync_info:

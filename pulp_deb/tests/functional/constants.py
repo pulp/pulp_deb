@@ -40,6 +40,8 @@ DEB_FIXTURE_FLAT_REPOSITORY_NAME = "/debian-flat/"
 DEB_FIXTURE_BASE = "/"
 DEB_FIXTURE_COMPLEX_REPOSITORY_NAME = "/debian-complex-dists"
 DEB_FIXTURE_MISSING_ARCHITECTURE_REPOSITORY_NAME = "/debian-missing-architecture/"
+DEB_FIXTURE_DISTS_ONLY = "/debian-dists-only/"
+DEB_FIXTURE_POOLS_ONLY = "/debian-pool-only/"
 
 # Publication Parameters (structured is True by default)
 DEB_PUBLICATION_ARGS_ONLY_SIMPLE = {"simple": True, "structured": False}
