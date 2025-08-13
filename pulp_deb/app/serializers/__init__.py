@@ -32,3 +32,5 @@ from .repository_serializers import (
     AptRepositorySyncURLSerializer,
     CopySerializer,
 )
+
+from .acs_serializer import AptAlternateContentSourceSerializer
