@@ -34,6 +34,7 @@ from pulpcore.plugin.stages import (
     DeclarativeVersion,
     Stage,
     QueryExistingArtifacts,
+    ACSArtifactHandler,
     ArtifactDownloader,
     ArtifactSaver,
     QueryExistingContents,
@@ -257,6 +258,11 @@ class DebDeclarativeVersion(DeclarativeVersion):
     This class creates the Pipeline.
     """
 
+    def __init__(self, *args, **kwargs):
+        # Always enable ACS for deb sync
+        kwargs["acs"] = True
+        super().__init__(*args, **kwargs)
+
     def pipeline_stages(self, new_version):
         """
         Build the list of pipeline stages feeding into the ContentAssociation stage.
@@ -273,16 +279,22 @@ class DebDeclarativeVersion(DeclarativeVersion):
         pipeline = [
             self.first_stage,
             QueryExistingArtifacts(),
-            ArtifactDownloader(),
-            DebDropFailedArtifacts(),
-            ArtifactSaver(),
-            DebUpdateReleaseFileAttributes(remote=self.first_stage.remote),
-            DebUpdatePackageIndexAttributes(),
-            QueryExistingContents(),
-            ContentSaver(),
-            RemoteArtifactSaver(),
-            ResolveContentFutures(),
         ]
+        if getattr(self, "acs", False):
+            pipeline.append(ACSArtifactHandler())
+        pipeline.extend(
+            [
+                ArtifactDownloader(),
+                DebDropFailedArtifacts(),
+                ArtifactSaver(),
+                DebUpdateReleaseFileAttributes(remote=self.first_stage.remote),
+                DebUpdatePackageIndexAttributes(),
+                QueryExistingContents(),
+                ContentSaver(),
+                RemoteArtifactSaver(),
+                ResolveContentFutures(),
+            ]
+        )
         return pipeline
 
 

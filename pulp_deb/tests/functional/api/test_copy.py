@@ -19,7 +19,13 @@ def test_copy(
     """Test whether the copy operation can successfully copy a single package."""
     source_repo, _ = deb_init_and_sync()
     target_repo = deb_repository_factory()
-    package = apt_package_api.list(package="frigg").results[0]
+
+    source_version_href = source_repo.latest_version_href
+    package = apt_package_api.list(
+        package="frigg",
+        repository_version=source_version_href,
+    ).results[0]
+
     deb_copy_content(
         source_repo_version=source_repo.latest_version_href,
         dest_repo=target_repo.pulp_href,
