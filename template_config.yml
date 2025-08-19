@@ -66,7 +66,6 @@ stalebot_limit_to_pulls: true
 supported_release_branches:
 - '3.6'
 - '3.5'
-- '3.3'
 sync_ci: true
 test_azure: true
 test_cli: true
