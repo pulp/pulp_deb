@@ -8,6 +8,15 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.7.0 (2025-08-20) {: #3.7.0 }
+
+#### Bugfixes {: #3.7.0-bugfix }
+
+- CopyContent between repository-versions with same distribution-name but different Release content-units fails. Fixed by not copying Release content-unit for distribution-name that already is present in target-version.
+  [#1309](https://github.com/pulp/pulp_deb/issues/1309)
+
+---
+
 ## 3.6.0 (2025-08-04) {: #3.6.0 }
 
 #### Features {: #3.6.0-feature }
