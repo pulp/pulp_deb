@@ -52,9 +52,33 @@ pulp_settings:
   allowed_import_paths:
   - /tmp
   apt_by_hash: true
-pulp_settings_azure: null
+pulp_settings_azure:
+  AZURE_ACCOUNT_KEY: Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==
+  AZURE_ACCOUNT_NAME: devstoreaccount1
+  AZURE_CONNECTION_STRING: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://ci-azurite:10000/devstoreaccount1;
+  AZURE_CONTAINER: pulp-test
+  AZURE_LOCATION: pulp3
+  AZURE_OVERWRITE_FILES: true
+  AZURE_URL_EXPIRATION_SECS: 120
+  DEFAULT_FILE_STORAGE: storages.backends.azure_storage.AzureStorage
+  MEDIA_ROOT: ''
 pulp_settings_gcp: null
-pulp_settings_s3: null
+pulp_settings_s3:
+  MEDIA_ROOT: ''
+  STORAGES:
+    default:
+      BACKEND: storages.backends.s3boto3.S3Boto3Storage
+      OPTIONS:
+        access_key: AKIAIT2Z5TDYPX3ARJBA
+        addressing_style: path
+        bucket_name: pulp3
+        default_acl: '@none'
+        endpoint_url: http://minio:9000
+        region_name: eu-central-1
+        secret_key: fqRvjWaPU5o0fCqQuUWbj9Fainj2pVZtBCiDiieS
+        signature_version: s3v4
+    staticfiles:
+      BACKEND: django.contrib.staticfiles.storage.StaticFilesStorage
 pydocstyle: true
 release_email: pulp-infra@redhat.com
 release_user: pulpbot
