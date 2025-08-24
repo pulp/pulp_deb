@@ -78,6 +78,5 @@ test_performance:
 - pulp_to_pulp
 test_reroute: true
 test_s3: true
-test_storages_compat_layer: false
 use_issue_template: true
 
