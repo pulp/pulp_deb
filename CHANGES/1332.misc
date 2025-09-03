@@ -1,0 +1,1 @@
+Terminate gpg-agent after private key import to avoid race condition on cleanup.
