@@ -82,6 +82,7 @@ def publish(
     repository_version_pk,
     simple,
     structured,
+    publish_legacy_release_files,
     signing_service_pk=None,
     publish_upstream_release_fields=None,
 ):
@@ -106,12 +107,13 @@ def publish(
 
     log.info(
         _(
-            "Publishing: repository={repo}, version={ver}, simple={simple}, structured={structured}"
+            "Publishing: repository={repo}, version={ver}, simple={simple}, structured={structured}, publish_legacy_release_files={publish_legacy_release_files}"
         ).format(  # noqa
             repo=repo_version.repository.name,
             ver=repo_version.number,
             simple=simple,
             structured=structured,
+            publish_legacy_release_files=publish_legacy_release_files,
         )
     )
     with tempfile.TemporaryDirectory(".") as temp_dir:
@@ -119,6 +121,7 @@ def publish(
             publication.simple = simple
             publication.structured = structured
             publication.signing_service = signing_service
+            publication.publish_legacy_release_files = publish_legacy_release_files
             repository = AptRepository.objects.get(pk=repo_version.repository.pk)
 
             if simple:
@@ -325,7 +328,8 @@ class _ComponentHelper:
                 "Release",
             )
 
-            self.release_file_paths[architecture] = _write_legacy_release_file(self, architecture)
+            if self.parent.publication.publish_legacy_release_files:
+                self.release_file_paths[architecture] = _write_legacy_release_file(self, architecture)
 
 
         # Source indicies file
