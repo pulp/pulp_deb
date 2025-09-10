@@ -1,6 +1,8 @@
 import pytest
 from pathlib import Path
 
+from pulpcore.tests.functional.utils import BindingsNamespace
+
 from pulp_deb.tests.functional.utils import gen_deb_remote, gen_distribution, gen_repo
 from pulp_deb.tests.functional.constants import DEB_FIXTURE_STANDARD_REPOSITORY_NAME
 
@@ -14,6 +16,21 @@ from pulpcore.client.pulp_deb import (
     RepositoriesAptApi,
     RepositoriesAptVersionsApi,
 )
+
+
+@pytest.fixture(scope="session")
+def deb_bindings(_api_client_set, bindings_cfg):
+    """
+    A namespace providing preconfigured pulpcore api clients.
+
+    e.g. `pulpcore_bindings.WorkersApi.list()`.
+    """
+    from pulpcore.client import pulp_deb as bindings_module
+
+    api_client = bindings_module.ApiClient(bindings_cfg)
+    _api_client_set.add(api_client)
+    yield BindingsNamespace(bindings_module, api_client)
+    _api_client_set.remove(api_client)
 
 
 @pytest.fixture(scope="session")
@@ -124,7 +141,7 @@ def deb_remote_factory(apt_remote_api, gen_object_with_cleanup):
     return _deb_remote_factory
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def deb_sync_repository(apt_repository_api, monitor_task):
     """Fixture that synchronizes a given repository with a given remote
     and returns the monitored task.
@@ -148,7 +165,7 @@ def deb_sync_repository(apt_repository_api, monitor_task):
     return _deb_sync_repository
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def deb_fixture_server(gen_fixture_server):
     """A fixture that spins up a local web server to serve test data."""
     p = Path(__file__).parent.absolute()
@@ -156,7 +173,7 @@ def deb_fixture_server(gen_fixture_server):
     yield gen_fixture_server(fixture_path, None)
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def deb_get_fixture_server_url(deb_fixture_server):
     """A fixture that provides the url of the local web server."""
 
@@ -171,7 +188,7 @@ def deb_get_fixture_server_url(deb_fixture_server):
     return _deb_get_fixture_server_url
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def deb_init_and_sync(
     apt_repository_api,
     deb_get_fixture_server_url,
