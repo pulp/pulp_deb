@@ -68,6 +68,30 @@ class AptRepository(Repository, AutoAddObjPermsMixin):
     )
     # Implicit signing_service_release_overrides
 
+    autopublish = models.BooleanField(default=False)
+
+    def on_new_version(self, version):
+        """
+        Called when new repository versions are created.
+
+        Args:
+            version: The new repository version.
+        """
+        super().on_new_version(version)
+
+        # avoid circular import issues
+        from pulp_deb.app import tasks
+
+        if self.autopublish:
+            tasks.publish(
+                repository_version_pk=version.pk,
+                # We currently support only automatically creating a structured
+                # publication
+                simple=False,
+                structured=True,
+                signing_service_pk=getattr(self.signing_service, "pk", None),
+            )
+
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
         permissions = [
