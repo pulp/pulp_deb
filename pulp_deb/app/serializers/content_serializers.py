@@ -1186,7 +1186,7 @@ class SourcePackageSerializer(MultipleArtifactContentSerializer):
         """Validate that DscFile data."""
         data = super().validate(data)
 
-        if "request" not in self.context:
+        if self.context.get("request") is None:
             data = self.deferred_validate(data)
         return data
 
