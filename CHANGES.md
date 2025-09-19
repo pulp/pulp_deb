@@ -37,6 +37,16 @@
 
 ---
 
+## 3.5.3 (2025-09-18) {: #3.5.3 }
+
+#### Bugfixes {: #3.5.3-bugfix }
+
+- Flat repo syncs no longer consider the Release file for download as part of package index creation, avoiding unnecessary downloads as well as a rare edge case where the sync fails with a duplicate-path error if the Release file references itself with a checksum that already exists as an artifact within Pulp.
+  [#1279](https://github.com/pulp/pulp_deb/issues/1279)
+- Fixed a compatibility bug on source package upload with pulpcore 3.86.
+
+---
+
 ## 3.5.2 (2025-04-23) {: #3.5.2 }
 
 No significant changes.
