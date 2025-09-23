@@ -1,0 +1,17 @@
+Codename: nosuite
+Date: Tue, 23 Sep 2025 08:30:13 UTC
+Architectures: ppc64
+Components: asgard
+Description: This is a valid Debian repository.
+MD5Sum:
+ 47fdd37244ff5a9a121fe700c8667169 1846 asgard/binary-ppc64/Packages
+ b7922037112c02e05386d06a16b46131 910 asgard/binary-ppc64/Packages.gz
+ fbe88cf2b501dbd3526e5b4846a51f90 86 asgard/binary-ppc64/Release
+SHA1:
+ 6cec99c98835330902eacb5457ba8a32cf7f63df 1846 asgard/binary-ppc64/Packages
+ 4f6c36cd47818a8eb1246dd682d63e184d30bf09 910 asgard/binary-ppc64/Packages.gz
+ a536e2e2126e95fbb820e421ecac4d9867e5976b 86 asgard/binary-ppc64/Release
+SHA256:
+ d6999826cb3e81fbf10b3d89b457e697ce7d9a784f996449170456c621b7ed51 1846 asgard/binary-ppc64/Packages
+ 6d55e9b4393af931f0ede5a65d292f233578a92685cd92af532768e18dbca91c 910 asgard/binary-ppc64/Packages.gz
+ fc35f45c0ab9a27275b300446de5d6fa390feb6dff017bccda9f998133a7bd5e 86 asgard/binary-ppc64/Release
