@@ -92,6 +92,7 @@ ignore = [
     "CHANGES/**",
     "dev_requirements.txt",
     "doc_requirements.txt",
+    "ci_requirements.txt",
     "docs/**",
     "template_config.yml",
     ".pep8speaks.yml",
