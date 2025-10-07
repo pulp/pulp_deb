@@ -9,14 +9,10 @@ import pytest
 
 from uuid import uuid4
 
-from pulpcore.app import settings
 from pulp_deb.tests.functional.constants import DEB_FIXTURE_SUMMARY
 from pulp_deb.tests.functional.utils import get_counts_from_content_summary
 
 NUM_REPOS = 2
-
-if settings.DOMAIN_ENABLED:
-    pytest.skip("Domains do not support import.", allow_module_level=True)
 
 
 @pytest.fixture
@@ -200,9 +196,13 @@ def test_import(
     deb_get_repository_by_href,
     deb_importer_factory,
     deb_perform_import,
+    has_pulp_plugin,
     is_chunked,
+    pulp_settings,
 ):
     """Test a PulpImport."""
+    if pulp_settings.DOMAIN_ENABLED and not has_pulp_plugin("core", min="3.90.0"):
+        pytest.skip("Pulp Import/Export only supported under domains in core>=3.90")
     import_repos, export_repos = deb_gen_import_export_repos()
     importer = deb_importer_factory(import_repos, export_repos)
     task_group = deb_perform_import(importer, import_repos, export_repos, is_chunked=is_chunked)
@@ -218,9 +218,13 @@ def test_double_import(
     deb_get_repository_by_href,
     deb_importer_factory,
     deb_perform_import,
+    has_pulp_plugin,
     pulpcore_bindings,
+    pulp_settings,
 ):
     """Test two PulpImports for a PulpExport."""
+    if pulp_settings.DOMAIN_ENABLED and not has_pulp_plugin("core", min="3.90.0"):
+        pytest.skip("Pulp Import/Export only supported under domains in core>=3.90")
     import_repos, export_repos = deb_gen_import_export_repos()
     importer = deb_importer_factory(import_repos, export_repos)
     deb_perform_import(importer, import_repos, export_repos)
@@ -234,8 +238,16 @@ def test_double_import(
         assert repo.latest_version_href.endswith("versions/1/")
 
 
-def test_export(deb_create_exporter, deb_create_export, deb_gen_import_export_repos):
+def test_export(
+    deb_create_exporter,
+    deb_create_export,
+    deb_gen_import_export_repos,
+    has_pulp_plugin,
+    pulp_settings,
+):
     """Issue and evaluate a PulpExport."""
+    if pulp_settings.DOMAIN_ENABLED and not has_pulp_plugin("core", min="3.90.0"):
+        pytest.skip("Pulp Import/Export only supported under domains in core>=3.90")
     import_repos, export_repos = deb_gen_import_export_repos()
     exporter = deb_create_exporter(import_repos, export_repos)
     export = deb_create_export(import_repos, export_repos, exporter)
@@ -256,11 +268,15 @@ def test_import_create_repos(
     deb_importer_factory,
     deb_init_and_sync,
     deb_perform_import,
+    has_pulp_plugin,
     pulpcore_bindings,
+    pulp_settings,
     monitor_task,
     delete_orphans_pre,
 ):
     """Test whether PulpImporter can create repositories."""
+    if pulp_settings.DOMAIN_ENABLED and not has_pulp_plugin("core", min="3.90.0"):
+        pytest.skip("Pulp Import/Export only supported under domains in core>=3.90")
     entity_map = {}
     repo, remote = deb_init_and_sync(remote_args={"policy": "immediate"})
     entity_map["repo"] = repo
