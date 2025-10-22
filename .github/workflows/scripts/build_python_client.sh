@@ -21,7 +21,7 @@ rm -rf "pulp_deb-client"
 ./gen-client.sh "../pulp_deb/deb-api.json" "deb" python "pulp_deb"
 
 pushd pulp_deb-client
-python setup.py sdist bdist_wheel --python-tag py3
+python -m build
 
 twine check "dist/pulp_deb_client-"*"-py3-none-any.whl"
 twine check "dist/pulp_deb_client-"*".tar.gz"
