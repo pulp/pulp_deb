@@ -44,6 +44,16 @@ class AptRepositorySerializer(RepositorySerializer):
     A Serializer for AptRepository.
     """
 
+    autopublish = serializers.BooleanField(
+        help_text=_(
+            "Whether to automatically create publications for new repository versions, "
+            "and update any distributions pointing to this repository. Will create a "
+            "standard structured APT publication."
+        ),
+        default=False,
+        required=False,
+    )
+
     publish_upstream_release_fields = serializers.BooleanField(
         help_text=_(
             "Previously, pulp_deb only synced the Release file fields codename and suite, now "
@@ -78,6 +88,7 @@ class AptRepositorySerializer(RepositorySerializer):
 
     class Meta:
         fields = RepositorySerializer.Meta.fields + (
+            "autopublish",
             "publish_upstream_release_fields",
             "signing_service",
             "signing_service_release_overrides",
