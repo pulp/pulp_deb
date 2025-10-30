@@ -1,8 +1,10 @@
 from gettext import gettext as _  # noqa
 
 from django_filters import Filter
-from pulpcore.plugin.models import Repository, RepositoryVersion
+from pulpcore.app.serializers import AsyncOperationResponseSerializer
+from pulpcore.plugin.models import Repository, RepositoryVersion, PulpTemporaryFile
 from pulpcore.plugin.serializers.content import ValidationError
+from pulpcore.plugin.tasking import dispatch
 from pulpcore.plugin.viewsets import (
     NAME_FILTER_OPTIONS,
     ContentFilter,
@@ -10,9 +12,16 @@ from pulpcore.plugin.viewsets import (
     NamedModelViewSet,
     NoArtifactContentViewSet,
     SingleArtifactContentUploadViewSet,
+    OperationPostponedResponse,
+)
+from pulp_deb.app.constants import (
+    PACKAGE_UPLOAD_DEFAULT_DISTRIBUTION,
 )
 
+from drf_spectacular.utils import extend_schema
+
 from pulp_deb.app import models, serializers
+from pulp_deb.app.tasks import signing as deb_sign
 
 
 class GenericContentFilter(ContentFilter):
@@ -256,6 +265,62 @@ class PackageViewSet(SingleArtifactContentUploadViewSet):
         ],
         "queryset_scoping": {"function": "scope_queryset"},
     }
+
+    @extend_schema(
+        description="Trigger an asynchronous task to create an DEB package,"
+        "optionally create new repository version.",
+        responses={202: AsyncOperationResponseSerializer},
+    )
+    def create(self, request):
+        # validation decides if we want to sign and set that in the context space
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        if serializer.context["sign_package"] is False:
+            return super().create(request)
+
+        # signing case
+        validated_data = serializer.validated_data
+        signing_service_pk = validated_data["repository"].package_signing_service.pk
+        distribution = (
+            validated_data.pop("distribution", None)
+            if "distribution" in validated_data
+            else PACKAGE_UPLOAD_DEFAULT_DISTRIBUTION
+        )
+        signing_fingerprint = validated_data["repository"].release_package_signing_fingerprint(
+            distribution
+        )
+        if "file" in validated_data:
+            request.data.pop("file")
+            temp_uploaded_file = validated_data["file"]
+            pulp_temp_file = PulpTemporaryFile(file=temp_uploaded_file.temporary_file_path())
+            pulp_temp_file.save()
+        else:
+            pulp_temp_file = validated_data["upload"]
+
+        # dispatch signing task
+        pulp_temp_file.save()
+        task_args = {
+            "app_label": self.queryset.model._meta.app_label,
+            "serializer_name": serializer.__class__.__name__,
+            "signing_service_pk": signing_service_pk,
+            "signing_fingerprint": signing_fingerprint,
+            "temporary_file_pk": pulp_temp_file.pk,
+        }
+        task_payload = {k: v for k, v in request.data.items()}
+        task_exclusive = [
+            serializer.validated_data.get("upload"),
+            serializer.validated_data.get("repository"),
+        ]
+        task = dispatch(
+            deb_sign.sign_and_create,
+            exclusive_resources=task_exclusive,
+            args=tuple(task_args.values()),
+            kwargs={
+                "data": task_payload,
+                "context": self.get_deferred_context(request),
+            },
+        )
+        return OperationPostponedResponse(task, request)
 
 
 class InstallerPackageFilter(ContentFilter):
