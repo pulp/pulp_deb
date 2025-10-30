@@ -20,7 +20,9 @@ from pulpcore.client.pulp_deb import (
     ContentSourcePackagesApi,
     ContentSourceReleaseComponentsApi,
     Copy,
+    AcsDebApi,
     DebAptPublication,
+    DebAptAlternateContentSource,
     DebCopyApi,
     DebRelease,
     DebReleaseArchitecture,
@@ -36,6 +38,12 @@ from pulp_deb.tests.functional.utils import gen_deb_remote, gen_repo
 @pytest.fixture(scope="session")
 def apt_release_file_api(apt_client):
     return ContentReleaseFilesApi(apt_client)
+
+
+@pytest.fixture(scope="session")
+def apt_acs_api(apt_client):
+    """Fixture for APT alternate content source API."""
+    return AcsDebApi(apt_client)
 
 
 @pytest.fixture(scope="session")
@@ -443,6 +451,15 @@ def deb_put_remote(apt_remote_api, monitor_task):
         return monitor_task(response.task)
 
     return _deb_put_remote
+
+
+@pytest.fixture(scope="class")
+def deb_acs_factory(apt_acs_api, gen_object_with_cleanup):
+    def _deb_acs_factory(**kwargs):
+        body = DebAptAlternateContentSource(**kwargs)
+        return gen_object_with_cleanup(apt_acs_api, body)
+
+    return _deb_acs_factory
 
 
 @pytest.fixture(scope="class")
