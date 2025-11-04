@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.8.0 (2025-11-04) {: #3.8.0 }
+
+#### Features {: #3.8.0-feature }
+
+- Added autopublish functionality.
+  Creates a structured APT publication when used.
+  Cannot be used to create verbatim publications.
+  [#406](https://github.com/pulp/pulp_deb/issues/406)
+- Add support for Alternate Content Sources (ACS)
+  [#1347](https://github.com/pulp/pulp_deb/issues/1347)
+
+#### Bugfixes {: #3.8.0-bugfix }
+
+- Allow pulp-import-export when domains are enabled.
+- Fixed a compatibility bug on source package upload with pulpcore 3.86.
+
+#### Misc {: #3.8.0-misc }
+
+- Terminate gpg-agent after private key import to avoid race condition on cleanup.
+  [#1332](https://github.com/pulp/pulp_deb/issues/1332)
+
+---
+
 ## 3.7.0 (2025-08-20) {: #3.7.0 }
 
 #### Bugfixes {: #3.7.0-bugfix }
