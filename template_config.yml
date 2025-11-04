@@ -24,7 +24,7 @@ extra_files: []
 flake8: true
 flake8_ignore: []
 github_org: pulp
-latest_release_branch: '3.7'
+latest_release_branch: '3.8'
 lint_requirements: true
 os_required_packages: []
 parallel_test_workers: 8
