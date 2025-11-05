@@ -16,6 +16,8 @@ from django.db.models import JSONField
 from pulpcore.plugin.models import Content
 from pulpcore.plugin.util import get_domain_pk
 
+from pulp_deb.fields import DebVersionField
+
 BOOL_CHOICES = [(True, "yes"), (False, "no")]
 
 
@@ -33,7 +35,7 @@ class BasePackage(Content):
 
     package = models.TextField()  # package name
     source = models.TextField(null=True)  # source package name
-    version = models.TextField()
+    version = DebVersionField()
     architecture = models.TextField()  # all, i386, ...
     section = models.TextField(null=True)  # admin, comm, database, ...
     priority = models.TextField(null=True)  # required, standard, optional, extra
