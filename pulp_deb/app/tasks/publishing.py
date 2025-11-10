@@ -110,7 +110,13 @@ def publish(
 
     log.info(
         _(
-            "Publishing: repository={repo}, version={ver}, simple={simple}, structured={structured}, publish_legacy_release_files={publish_legacy_release_files}"
+            (
+                "Publishing: repository={repo}, "
+                "version={ver}, "
+                "simple={simple}, "
+                "structured={structured}, "
+                "publish_legacy_release_files={publish_legacy_release_files}"
+            )
         ).format(  # noqa
             repo=repo_version.repository.name,
             ver=repo_version.number,
@@ -325,13 +331,6 @@ class _ComponentHelper:
                 package_index_path,
             )
 
-            release_path = os.path.join(
-                "dists",
-                self.parent.dists_subfolder,
-                self.plain_component,
-                "binary-{}".format(architecture),
-                "Release",
-            )
             if self.parent.publication.publish_legacy_release_files:
                 self.release_file_paths[architecture] = _write_legacy_release_file(
                     self, architecture
