@@ -446,3 +446,24 @@ echo { \
        } \
      }
 """
+
+DEB_PACKAGE_SIGNING_SCRIPT_STRING = r"""#!/usr/bin/env bash
+export GNUPGHOME="HOMEDIRHERE"
+GPG_NAME="${PULP_SIGNING_KEY_FINGERPRINT}"
+
+# Sign the package without using debsigs so this can run on rpm-based distros
+tmpdir=$(mktemp -d)
+ctrl=$(ar t "$1" | grep -m1 '^control\.tar\.')
+data=$(ar t "$1" | grep -m1 '^data\.tar\.')
+ar p "$1" debian-binary "$ctrl" "$data" | \
+    gpg --openpgp --detach-sign --default-key "$GPG_NAME" > "$tmpdir/_gpgorigin"
+ar r "$1" "$tmpdir/_gpgorigin" >/dev/null
+
+# Check the exit status
+STATUS=$?
+if [[ ${STATUS} -eq 0 ]]; then
+   echo {\"deb_package\": \"$1\"}
+else
+   exit ${STATUS}
+fi
+"""
