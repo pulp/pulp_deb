@@ -701,6 +701,37 @@ class PackageSerializer(BasePackageMixin, SinglePackageUploadSerializer, Content
 
         return data
 
+    def validate(self, data):
+        validated_data = super().validate(data)
+        sign_package = self.context.get("sign_package", None)
+        # choose branch, if not set externally
+        if sign_package is None:
+            sign_package = bool(
+                validated_data.get("repository")
+                and validated_data["repository"].package_signing_service
+            )
+            self.context["sign_package"] = sign_package
+
+        # normal branch
+        if sign_package is False:
+            return validated_data
+
+        # signing branch
+        if not validated_data["repository"].package_signing_fingerprint:
+            raise ValidationError(
+                _(
+                    "To sign a package on upload, the associated Repository must set both"
+                    "'package_signing_service' and 'package_signing_fingerprint'."
+                )
+            )
+
+        if not validated_data.get("file") and not validated_data.get("upload"):
+            raise ValidationError(
+                _("To sign a package on upload, a file or upload must be provided.")
+            )
+
+        return validated_data
+
     class Meta(SinglePackageUploadSerializer.Meta):
         fields = (
             SinglePackageUploadSerializer.Meta.fields
