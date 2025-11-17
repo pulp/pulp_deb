@@ -28,6 +28,7 @@ from pulp_deb.app.models import (
     SourceIndex,
     SourcePackage,
     SourcePackageReleaseComponent,
+    AptPackageSigningService,
 )
 
 import logging
@@ -66,13 +67,24 @@ class AptRepository(Repository, AutoAddObjPermsMixin):
     signing_service = models.ForeignKey(
         AptReleaseSigningService, on_delete=models.PROTECT, null=True
     )
+
+    package_signing_service = models.ForeignKey(
+        AptPackageSigningService, on_delete=models.SET_NULL, null=True
+    )
+
+    package_signing_fingerprint = models.TextField(null=True, max_length=40)
+
     # Implicit signing_service_release_overrides
+    # Implicit package_signing_fingerprint_release_overrides
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
         permissions = [
             ("manage_roles_aptrepository", "Can manage roles on APT repositories"),
-            ("modify_content_aptrepository", "Add content to, or remove content from a repository"),
+            (
+                "modify_content_aptrepository",
+                "Add content to, or remove content from a repository",
+            ),
             ("repair_aptrepository", "Copy an APT repository"),
             ("sync_aptrepository", "Sync an APT repository"),
             ("delete_aptrepository_version", "Delete a repository version"),
@@ -90,6 +102,21 @@ class AptRepository(Repository, AutoAddObjPermsMixin):
             return override.signing_service
         except AptRepositoryReleaseServiceOverride.DoesNotExist:
             return self.signing_service
+
+    def release_package_signing_fingerprint(self, release):
+        """
+        Return the Package Signing Fingerprint specified in the overrides if there is one for this
+        release, else return self.package_signing_fingerprint.
+        """
+        if isinstance(release, Release):
+            release = release.distribution
+        try:
+            override = self.package_signing_fingerprint_release_overrides.get(
+                release_distribution=release
+            )
+            return override.package_signing_fingerprint
+        except AptRepositoryReleasePackageSigningFingerprintOverride.DoesNotExist:
+            return self.package_signing_fingerprint
 
     def initialize_new_version(self, new_version):
         """
@@ -125,9 +152,29 @@ class AptRepositoryReleaseServiceOverride(BaseModel):
     """
 
     repository = models.ForeignKey(
-        AptRepository, on_delete=models.CASCADE, related_name="signing_service_release_overrides"
+        AptRepository,
+        on_delete=models.CASCADE,
+        related_name="signing_service_release_overrides",
     )
     signing_service = models.ForeignKey(AptReleaseSigningService, on_delete=models.PROTECT)
+    release_distribution = models.TextField()
+
+    class Meta:
+        unique_together = (("repository", "release_distribution"),)
+
+
+class AptRepositoryReleasePackageSigningFingerprintOverride(BaseModel):
+    """
+    Override the signing fingerprint that a single Release will use in this AptRepository for
+    signing packages.
+    """
+
+    repository = models.ForeignKey(
+        AptRepository,
+        on_delete=models.CASCADE,
+        related_name="package_signing_fingerprint_release_overrides",
+    )
+    package_signing_fingerprint = models.TextField(max_length=40)
     release_distribution = models.TextField()
 
     class Meta:

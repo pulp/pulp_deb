@@ -427,3 +427,26 @@ echo { \
        } \
      }
 """
+
+DEB_PACKAGE_SIGNING_SCRIPT_STRING = r"""#!/usr/bin/env bash
+FILE_PATH=$1
+export GNUPGHOME="HOMEDIRHERE"
+GPG_NAME="${PULP_SIGNING_KEY_FINGERPRINT}"
+
+
+# check if fingerprint exists
+gpg --fingerprint ${GPG_NAME} 1> /dev/null
+if [[ $? -ne 0 ]]; then
+   echo "GPG key with fingerprint '${GPG_NAME}' not found!" >&2
+   exit 2
+fi
+# Sign the package
+debsigs --sign=origin --default-key=${GPG_NAME} "${FILE_PATH}" 1> /dev/null
+# Check the exit status
+STATUS=$?
+if [[ ${STATUS} -eq 0 ]]; then
+   echo {\"deb_package\": \"${FILE_PATH}\"}
+else
+   exit ${STATUS}
+fi
+"""

@@ -1,8 +1,30 @@
 import os
+from pathlib import Path
+import shutil
+import subprocess
+from typing import Optional
 import gnupg
 import tempfile
 
 from pulpcore.plugin.models import SigningService
+from importlib_resources import files
+
+
+def prepare_gpg(temp_directory_name, public_key, pubkey_fingerprint):
+    # Prepare GPG:
+    # gpg = gnupg.GPG(gnupghome=temp_directory_name)
+    gpg = gnupg.GPG(keyring=str(Path(temp_directory_name) / ".keyring"))
+    gpg.import_keys(public_key)
+    imported_keys = gpg.list_keys()
+
+    if len(imported_keys) != 1:
+        message = "We have imported more than one key! Aborting validation!"
+        raise RuntimeError(message)
+
+    if imported_keys[0]["fingerprint"] != pubkey_fingerprint:
+        message = "The signing service fingerprint does not appear to match its public key!"
+        raise RuntimeError(message)
+    return gpg
 
 
 class AptReleaseSigningService(SigningService):
@@ -70,19 +92,7 @@ class AptReleaseSigningService(SigningService):
                         raise RuntimeError(message.format(signature_file, signature_type))
 
                 # Prepare GPG:
-                gpg = gnupg.GPG(gnupghome=temp_directory_name)
-                gpg.import_keys(self.public_key)
-                imported_keys = gpg.list_keys()
-
-                if len(imported_keys) != 1:
-                    message = "We have imported more than one key! Aborting validation!"
-                    raise RuntimeError(message)
-
-                if imported_keys[0]["fingerprint"] != self.pubkey_fingerprint:
-                    message = (
-                        "The signing service fingerprint does not appear to match its public key!"
-                    )
-                    raise RuntimeError(message)
+                gpg = prepare_gpg(temp_directory_name, self.public_key, self.pubkey_fingerprint)
 
                 # Verify InRelease file
                 inline_path = signatures.get("inline")
@@ -138,3 +148,105 @@ class AptReleaseSigningService(SigningService):
                         if verified.pubkey_fingerprint != self.pubkey_fingerprint:
                             message = "'{}' appears to have been signed using the wrong key!"
                             raise RuntimeError(message.format(detached_path))
+
+
+class AptPackageSigningService(SigningService):
+    """
+    A model used for signing Apt packages.
+
+    The pubkey_fingerprint should be passed explicitly in the sign method.
+    """
+
+    def _env_variables(self, env_vars=None):
+        # Prevent the signing service pubkey to be used for signing a package.
+        # The pubkey should be provided explicitly.
+        _env_vars = {"PULP_SIGNING_KEY_FINGERPRINT": None}
+        if env_vars:
+            _env_vars.update(env_vars)
+        return super()._env_variables(_env_vars)
+
+    def sign(
+        self,
+        filename: str,
+        env_vars: Optional[dict] = None,
+        pubkey_fingerprint: Optional[str] = None,
+    ):
+        """
+        Sign a package @filename using @pubkey_fingerprint.
+
+        Args:
+            filename: The absolute path to the package to be signed.
+            env_vars: (optional) Dict of env_vars to be passed to the signing script.
+            pubkey_fingerprint: The V4 fingerprint that correlates with the private key to use.
+        """
+        if not pubkey_fingerprint:
+            raise ValueError("A pubkey_fingerprint must be provided.")
+        _env_vars = env_vars or {}
+        _env_vars["PULP_SIGNING_KEY_FINGERPRINT"] = pubkey_fingerprint
+        return super().sign(filename, _env_vars)
+
+    def validate(self):
+        """
+        Validate a signing service for an Apt package signature.
+
+        Specifically, it validates that self.signing_script can sign an apt package with
+        the sample key self.pubkey and that the self.sign() method returns:
+
+        ```json
+        {"apt_package": "<path/to/package.deb>"}
+        ```
+
+        Recreates the check that "debsig-verify" would be doing because debsig-verify is
+        complicated to set up correctly, and doing so would add a dependency that is not available
+        on rpm-based systems.
+        """
+        with tempfile.TemporaryDirectory() as temp_directory_name:
+            # copy test deb package
+            sample_deb = shutil.copy(
+                files("pulp_deb").joinpath("tests/functional/data/packages/frigg_1.0_ppc64.deb"),
+                temp_directory_name,
+            )
+            return_value = self.sign(sample_deb, pubkey_fingerprint=self.pubkey_fingerprint)
+            try:
+                signed_deb = return_value["deb_package"]
+            except KeyError:
+                raise Exception(f"Malformed output from signing script: {return_value}")
+
+            # Prepare GPG:
+            gpg = prepare_gpg(temp_directory_name, self.public_key, self.pubkey_fingerprint)
+
+            self._validate_deb_package(signed_deb, self.pubkey_fingerprint, temp_directory_name, gpg)
+
+            
+    @staticmethod
+    def _validate_deb_package(deb_package_path: str, pubkey_fingerprint: str, temp_directory_name: str, gpg: gnupg.GPG):
+        """
+        Validate that the deb package at @deb_package_path is correctly signed.
+
+        This is a placeholder for future validation logic if needed.
+        """
+        # unpack the archive
+        cmd = ["ar", "x", deb_package_path]
+        res = subprocess.run(cmd, cwd=temp_directory_name, capture_output=True)
+        if res.returncode != 0:
+            raise Exception(f"Failed to read package {deb_package_path}. Please check the package.")
+
+        # cat the unpacked archive bits together
+        temp_dir = Path(temp_directory_name)
+        with (temp_dir / "combined").open("wb") as combined:
+            for filename in ("debian-binary", "control.*", "data.*"):
+                # There will only be one control.tar.gz (or whatever) file, but we have to glob
+                # and iterate because the compression type can vary.
+                for x in temp_dir.glob(filename):
+                    with x.open("rb") as f:
+                        shutil.copyfileobj(f, combined)
+
+        # verify combined data with _gpgorigin detached signature
+        with (temp_dir / "_gpgorigin").open("rb") as gpgorigin:
+            verified = gpg.verify_file(gpgorigin, str(temp_dir / "combined"))
+            if not verified.valid:
+                raise Exception(f"GPG Verification of the signed package {deb_package_path} failed!")
+            if verified.pubkey_fingerprint != pubkey_fingerprint:
+                raise Exception(
+                    f"'{deb_package_path}' appears to have been signed using the wrong key!"
+                )
