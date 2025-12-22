@@ -14,6 +14,7 @@ from pulpcore.plugin.models import (
     RepositoryVersion,
 )
 
+from pulp_deb.app.constants import LAYOUT_CHOICES, LAYOUT_TYPES
 from pulp_deb.app.models.signing_service import AptReleaseSigningService
 
 
@@ -71,6 +72,7 @@ class AptPublication(Publication, AutoAddObjPermsMixin):
 
     simple = models.BooleanField(default=False)
     structured = models.BooleanField(default=True)
+    layout = models.TextField(choices=LAYOUT_CHOICES, default=LAYOUT_TYPES.NESTED_ALPHABETICALLY)
     signing_service = models.ForeignKey(
         AptReleaseSigningService, on_delete=models.PROTECT, null=True
     )
