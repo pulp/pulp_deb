@@ -17,6 +17,7 @@ from django.db import transaction
 from django.db.utils import IntegrityError
 from django.forms.models import model_to_dict
 
+from pulp_deb.app.constants import NULL_VALUE
 from pulpcore.plugin.models import (
     Artifact,
     PublishedArtifact,
@@ -26,7 +27,6 @@ from pulpcore.plugin.models import (
 )
 from pulpcore.plugin.util import get_domain
 
-from pulp_deb.app.constants import NULL_VALUE
 from pulp_deb.app.models import (
     AptPublication,
     AptRepository,
@@ -49,6 +49,7 @@ from pulp_deb.app.serializers import (
 from pulp_deb.app.constants import (
     NO_MD5_WARNING_MESSAGE,
     CHECKSUM_TYPE_MAP,
+    LAYOUT_TYPES,
 )
 
 import logging
@@ -86,6 +87,7 @@ def publish(
     checkpoint=False,
     signing_service_pk=None,
     publish_upstream_release_fields=None,
+    layout=LAYOUT_TYPES.NESTED_ALPHABETICALLY,
 ):
     """
     Use provided publisher to create a Publication based on a RepositoryVersion.
@@ -96,6 +98,7 @@ def publish(
         structured (bool): Create a structured publication with releases and components.
         checkpoint (bool): Whether to create a checkpoint publication.
         signing_service_pk (str): Use this SigningService to sign the Release files.
+        layout (str): The layout determines the form the package urls take.
 
     """
 
@@ -124,6 +127,7 @@ def publish(
             publication.simple = simple
             publication.structured = structured
             publication.signing_service = signing_service
+            publication.layout = layout
             repository = AptRepository.objects.get(pk=repo_version.repository.pk)
 
             if simple:
@@ -341,19 +345,29 @@ class _ComponentHelper:
         content_artifacts = {
             package.pk: list(package.contentartifact_set.all()) for package in packages
         }
+        layout = self.parent.publication.layout
 
         for package in packages:
             with suppress(IntegrityError):
                 content_artifact = content_artifacts.get(package.pk, [None])[0]
-                relative_path = package.filename(self.component)
-
                 published_artifact = PublishedArtifact(
-                    relative_path=relative_path,
+                    relative_path=package.filename(self.component, layout=layout),
                     publication=self.parent.publication,
                     content_artifact=content_artifact,
                 )
                 published_artifacts.append(published_artifact)
                 package_data.append((package, package.architecture))
+                # In the NESTED_BY_BOTH layout, we want to _also_ publish the package under the
+                # alphabetical path but _not_ reference it in the repo metadata.
+                if layout == LAYOUT_TYPES.NESTED_BY_BOTH:
+                    alt_published_artifact = PublishedArtifact(
+                        relative_path=package.filename(
+                            self.component, layout=LAYOUT_TYPES.NESTED_ALPHABETICALLY
+                        ),
+                        publication=self.parent.publication,
+                        content_artifact=content_artifact,
+                    )
+                    published_artifacts.append(alt_published_artifact)
 
         with transaction.atomic():
             if published_artifacts:
@@ -362,9 +376,9 @@ class _ComponentHelper:
         for package, architecture in package_data:
             package_serializer = Package822Serializer(package, context={"request": None})
             try:
-                package_serializer.to822(self.component, artifact_dict, remote_artifact_dict).dump(
-                    self.package_index_files[architecture][0]
-                )
+                package_serializer.to822(
+                    self.component, artifact_dict, remote_artifact_dict, layout=layout
+                ).dump(self.package_index_files[architecture][0])
             except KeyError:
                 log.warn(
                     f"Published package '{package.relative_path}' with architecture "
@@ -385,12 +399,27 @@ class _ComponentHelper:
                 for content_artifact in artifact_set:
                     published_artifact = PublishedArtifact(
                         relative_path=source_package.derived_path(
-                            os.path.basename(content_artifact.relative_path), self.component
+                            os.path.basename(content_artifact.relative_path),
+                            self.component,
+                            layout=self.parent.publication.layout,
                         ),
                         publication=self.parent.publication,
                         content_artifact=content_artifact,
                     )
                     published_artifacts.append(published_artifact)
+                    # In the NESTED_BY_BOTH layout, we want to _also_ publish the source package
+                    # under the alphabetical path but _not_ reference it in the repo metadata.
+                    if self.parent.publication.layout == LAYOUT_TYPES.NESTED_BY_BOTH:
+                        alt_published_artifact = PublishedArtifact(
+                            relative_path=source_package.derived_path(
+                                os.path.basename(content_artifact.relative_path),
+                                self.component,
+                                layout=LAYOUT_TYPES.NESTED_ALPHABETICALLY,
+                            ),
+                            publication=self.parent.publication,
+                            content_artifact=content_artifact,
+                        )
+                        published_artifacts.append(alt_published_artifact)
                 source_package_data.append(source_package)
 
         with transaction.atomic():
@@ -401,9 +430,9 @@ class _ComponentHelper:
             dsc_file_822_serializer = DscFile822Serializer(
                 source_package, context={"request": None}
             )
-            dsc_file_822_serializer.to822(self.component, paragraph=True).dump(
-                self.source_index_file_info[0]
-            )
+            dsc_file_822_serializer.to822(
+                self.component, paragraph=True, layout=self.parent.publication.layout
+            ).dump(self.source_index_file_info[0])
             self.source_index_file_info[0].write(b"\n")
 
     def finish(self):

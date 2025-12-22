@@ -216,6 +216,7 @@ class AptPublicationViewSet(PublicationViewSet, RolesMixin):
         publish_upstream_release_fields = serializer.validated_data.get(
             "publish_upstream_release_fields"
         )
+        layout = serializer.validated_data.get("layout")
 
         kwargs = {
             "repository_version_pk": repository_version.pk,
@@ -223,6 +224,7 @@ class AptPublicationViewSet(PublicationViewSet, RolesMixin):
             "structured": structured,
             "signing_service_pk": getattr(signing_service, "pk", None),
             "publish_upstream_release_fields": publish_upstream_release_fields,
+            "layout": layout,
         }
         if checkpoint:
             kwargs["checkpoint"] = True

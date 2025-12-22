@@ -2,6 +2,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
 from pulpcore.plugin.models import Artifact, ContentArtifact
+from pulp_deb.app.constants import LAYOUT_TYPES
 from pulp_deb.app.models import Package, AptRepository, Release
 from pulp_deb.app.models.repository import handle_duplicate_releases
 from pulp_deb.app.serializers import Package822Serializer
@@ -19,7 +20,7 @@ class TestPackage(TestCase):
         "Description: A sea jötunn associated with the ocean.\n"
         "MD5sum: aabb\n"
         "SHA1: ccdd\n"
-        "SHA256: eeff\n"
+        "SHA256: eeff11\n"
         "Size: 42\n"
         "Filename: pool/a/aegir/aegir_0.1-edda0_sea.deb\n"
     )
@@ -39,7 +40,9 @@ class TestPackage(TestCase):
             size=42,
             md5="aabb",
             sha1="ccdd",
-            sha256="eeff",
+            sha224="ddcc",
+            sha256="eeff11",
+            sha384="ffee",
             sha512="kkll",
             file=SimpleUploadedFile("test_filename", b"test content"),
         )
@@ -55,11 +58,26 @@ class TestPackage(TestCase):
         """Test that the pool filename of a package is correct."""
         self.assertEqual(self.package1.filename(), "pool/a/aegir/aegir_0.1-edda0_sea.deb")
 
+    def test_filename_by_digest(self):
+        """Test that the pool filename of a package is correct."""
+        for layout in [LAYOUT_TYPES.NESTED_BY_DIGEST, LAYOUT_TYPES.NESTED_BY_BOTH]:
+            self.assertEqual(
+                self.package1.filename(layout=layout), "pool/ee/ff11/aegir_0.1-edda0_sea.deb"
+            )
+
     def test_filename_with_component(self):
         """Test that the pool filename of a package with component is correct."""
         self.assertEqual(
             self.package1.filename("joetunn"), "pool/joetunn/a/aegir/aegir_0.1-edda0_sea.deb"
         )
+
+    def test_filename_with_component_and_by_digest(self):
+        """Test that the pool filename of a package with component is correct."""
+        for layout in [LAYOUT_TYPES.NESTED_BY_DIGEST, LAYOUT_TYPES.NESTED_BY_BOTH]:
+            self.assertEqual(
+                self.package1.filename("joetunn", layout=layout),
+                "pool/joetunn/ee/ff11/aegir_0.1-edda0_sea.deb",
+            )
 
     def test_to822(self):
         """Test if package transforms correctly into 822dict."""

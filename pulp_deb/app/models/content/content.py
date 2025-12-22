@@ -16,6 +16,8 @@ from django.db.models import JSONField
 from pulpcore.plugin.models import Content
 from pulpcore.plugin.util import get_domain_pk
 
+from pulp_deb.app.constants import LAYOUT_TYPES
+
 BOOL_CHOICES = [(True, "yes"), (False, "no")]
 
 
@@ -76,21 +78,30 @@ class BasePackage(Content):
         """Print a nice name for Packages."""
         return "{}_{}_{}".format(self.package, self.version, self.architecture)
 
-    def filename(self, component=""):
+    def filename(self, component="", layout=LAYOUT_TYPES.NESTED_ALPHABETICALLY):
         """Assemble filename in pool directory."""
-        sourcename = self.source or self.package
-        sourcename = sourcename.split("(", 1)[0].rstrip()
-        if sourcename.startswith("lib"):
-            prefix = sourcename[0:4]
-        else:
-            prefix = sourcename[0]
-        return os.path.join(
-            "pool",
-            component,
-            prefix,
-            sourcename,
-            "{}.{}".format(self.name, self.SUFFIX),
-        )
+        if layout == LAYOUT_TYPES.NESTED_ALPHABETICALLY:
+            sourcename = self.source or self.package
+            sourcename = sourcename.split("(", 1)[0].rstrip()
+            if sourcename.startswith("lib"):
+                prefix = sourcename[0:4]
+            else:
+                prefix = sourcename[0]
+            return os.path.join(
+                "pool",
+                component,
+                prefix,
+                sourcename,
+                "{}.{}".format(self.name, self.SUFFIX),
+            )
+        else:  # NESTED_BY_DIGEST or NESTED_BY_BOTH. The primary URL in BOTH is by digest.
+            return os.path.join(
+                "pool",
+                component,
+                self.sha256[0:2],
+                self.sha256[2:6],
+                "{}.{}".format(self.name, self.SUFFIX),
+            )
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
@@ -209,20 +220,18 @@ class SourcePackage(Content):
         """Print a nice name for the Dsc file."""
         return "{}_{}.{}".format(self.source, self.version, self.SUFFIX)
 
-    def derived_dir(self, component=""):
+    def derived_dir(self, component="", layout=LAYOUT_TYPES.NESTED_ALPHABETICALLY):
         """Assemble full dir in pool directory."""
         sourcename = self.source
-        prefix = sourcename[0]
-        return os.path.join(
-            "pool",
-            component,
-            prefix,
-            sourcename,
-        )
+        if layout == LAYOUT_TYPES.NESTED_ALPHABETICALLY:
+            return os.path.join("pool", component, sourcename[0], sourcename)
+        else:  # NESTED_BY_DIGEST or NESTED_BY_BOTH
+            sha256 = self.sha256
+            return os.path.join("pool", component, sha256[0:2], sha256[2:6], sourcename)
 
-    def derived_path(self, name, component=""):
+    def derived_path(self, name, component="", layout=LAYOUT_TYPES.NESTED_ALPHABETICALLY):
         """Assemble filename in pool directory."""
-        return os.path.join(self.derived_dir(component), name)
+        return os.path.join(self.derived_dir(component, layout=layout), name)
 
     @property
     def checksums_sha1(self):
