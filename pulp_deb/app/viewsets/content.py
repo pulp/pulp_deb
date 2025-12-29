@@ -21,7 +21,7 @@ from pulp_deb.app.constants import (
 from drf_spectacular.utils import extend_schema
 
 from pulp_deb.app import models, serializers
-from pulp_deb.app.tasks import signing as deb_sign
+from pulp_deb.app.tasks import sign_and_create
 
 
 class GenericContentFilter(ContentFilter):
@@ -312,7 +312,7 @@ class PackageViewSet(SingleArtifactContentUploadViewSet):
             serializer.validated_data.get("repository"),
         ]
         task = dispatch(
-            deb_sign.sign_and_create,
+            sign_and_create,
             exclusive_resources=task_exclusive,
             args=tuple(task_args.values()),
             kwargs={
