@@ -8,6 +8,7 @@ from rest_framework.serializers import ValidationError as DRFValidationError
 from pulp_deb.app.models.content.content import Package
 from pulp_deb.app.models.content.structure_content import PackageReleaseComponent
 from pulp_deb.app.serializers import AptRepositorySyncURLSerializer
+from pulp_deb.app.tasks import signed_add_and_remove
 
 from pulpcore.plugin.util import extract_pk, get_url
 from pulpcore.plugin.actions import ModifyRepositoryActionMixin
@@ -15,7 +16,7 @@ from pulpcore.plugin.serializers import (
     AsyncOperationResponseSerializer,
     RepositoryAddRemoveContentSerializer,
 )
-from pulpcore.plugin.models import RepositoryVersion
+from pulpcore.plugin.models import ContentArtifact, RepositoryVersion
 from pulpcore.plugin.tasking import dispatch
 from pulpcore.plugin.viewsets import (
     OperationPostponedResponse,
@@ -29,6 +30,8 @@ from pulp_deb.app import models, serializers, tasks
 
 
 class AptModifyRepositoryActionMixin(ModifyRepositoryActionMixin):
+    modify_task = signed_add_and_remove
+
     @extend_schema(
         description="Trigger an asynchronous task to create a new repository version.",
         summary="Modify Repository Content",
@@ -37,12 +40,24 @@ class AptModifyRepositoryActionMixin(ModifyRepositoryActionMixin):
     @action(detail=True, methods=["post"], serializer_class=RepositoryAddRemoveContentSerializer)
     def modify(self, request, pk):
         remove_content_units = request.data.get("remove_content_units", [])
-        package_hrefs = [href for href in remove_content_units if "/packages/" in href]
+        remove_package_hrefs = [href for href in remove_content_units if "/packages/" in href]
 
-        if package_hrefs:
-            prc_hrefs = self._get_matching_prc_hrefs(package_hrefs)
+        if remove_package_hrefs:
+            prc_hrefs = self._get_matching_prc_hrefs(remove_package_hrefs)
             remove_content_units.extend(prc_hrefs)
             request.data["remove_content_units"] = remove_content_units
+
+        add_content_units = request.data.get("add_content_units", [])
+        package_ids = [extract_pk(href) for href in add_content_units if "/packages/" in href]
+        repository = self.get_object()
+        if add_content_units and repository.package_signing_service:
+            ondemand_ca = ContentArtifact.objects.filter(
+                content_id__in=package_ids, artifact__isnull=True
+            )
+            if ondemand_ca.count() > 0:
+                raise DRFValidationError(
+                    _("Cannot add on-demand content to repo with set package signing service.")
+                )
 
         return super().modify(request, pk)
 
@@ -345,9 +360,9 @@ class CopyViewSet(viewsets.ViewSet):
                         number=entry["dest_base_version"]
                     ).pk
                 except RepositoryVersion.DoesNotExist:
-                    message = _(
-                        "Version {version} does not exist for repository " "'{repo}'."
-                    ).format(version=entry["dest_base_version"], repo=dest_repo.name)
+                    message = _("Version {version} does not exist for repository '{repo}'.").format(
+                        version=entry["dest_base_version"], repo=dest_repo.name
+                    )
                     raise DRFValidationError(detail=message)
 
             if entry.get("content") is not None:

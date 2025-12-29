@@ -7,7 +7,20 @@ from pathlib import Path
 from typing import Optional
 
 import gnupg
-from pulpcore.plugin.models import SigningService
+from django.db import models
+from pulpcore.plugin.models import BaseModel, Content, SigningService
+
+
+class UnsignedPackage(Exception):
+    """Raised when a deb package is unsigned and has no _gpgorigin signature."""
+
+
+class InvalidSignature(Exception):
+    """When GPG verification fails due to the signature (NO_PUBKEY, EXPSIG, etc)."""
+
+
+class FingerprintMismatch(Exception):
+    """Raised when a deb package is signed with a different key fingerprint."""
 
 
 def prepare_gpg(temp_directory_name, public_key, pubkey_fingerprint):
@@ -212,22 +225,22 @@ class AptPackageSigningService(SigningService):
             except KeyError:
                 raise Exception(f"Malformed output from signing script: {return_value}")
 
-            # Prepare GPG:
+            self.validate_signature(signed_deb)
+
+    def validate_signature(self, deb_package_path: str):
+        """Validate that the deb package is signed with our pubkey."""
+        with tempfile.TemporaryDirectory() as temp_directory_name:
             gpg = prepare_gpg(temp_directory_name, self.public_key, self.pubkey_fingerprint)
 
-            self._validate_deb_package(
-                signed_deb, self.pubkey_fingerprint, temp_directory_name, gpg
+            self._check_deb_signature(
+                deb_package_path, self.pubkey_fingerprint, temp_directory_name, gpg
             )
 
     @staticmethod
-    def _validate_deb_package(
-        deb_package_path: str, pubkey_fingerprint: str, temp_directory_name: str, gpg: gnupg.GPG
+    def _check_deb_signature(
+        deb_package_path: str, fingerprint: str, temp_directory_name: str, gpg: gnupg.GPG
     ):
-        """
-        Validate that the deb package at @deb_package_path is correctly signed.
-
-        This is a placeholder for future validation logic if needed.
-        """
+        """Check the deb package signature matches the provided fingerprint."""
         # unpack the archive
         cmd = ["ar", "x", deb_package_path]
         res = subprocess.run(cmd, cwd=temp_directory_name, capture_output=True)
@@ -247,16 +260,29 @@ class AptPackageSigningService(SigningService):
         # verify combined data with _gpgorigin detached signature
         gpgorigin_path = temp_dir / "_gpgorigin"
         if not gpgorigin_path.exists():
-            raise Exception(
+            raise UnsignedPackage(
                 f"_gpgorigin file not found for {deb_package_path}. Package is unsigned."
             )
         with gpgorigin_path.open("rb") as gpgorigin:
             verified = gpg.verify_file(gpgorigin, str(temp_dir / "combined"))
             if not verified.valid:
-                raise Exception(
+                raise InvalidSignature(
                     f"GPG Verification of the signed package {deb_package_path} failed!"
                 )
-            if verified.pubkey_fingerprint != pubkey_fingerprint:
-                raise Exception(
+            if verified.pubkey_fingerprint != fingerprint:
+                raise FingerprintMismatch(
                     f"'{deb_package_path}' appears to have been signed using the wrong key!"
                 )
+
+
+class DebPackageSigningResult(BaseModel):
+    """
+    A model used for storing the result of signing a deb package.
+    """
+
+    sha256 = models.TextField(max_length=64)
+    package_signing_fingerprint = models.TextField(max_length=40)
+    result = models.ForeignKey(Content, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ("sha256", "package_signing_fingerprint")

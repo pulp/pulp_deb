@@ -1,8 +1,8 @@
 # Sign Debian Packages
 
-Sign a Debian package using a registered APT package signing service.
+Sign a Debian package using a registered package signing service.
 
-Currently, only on-upload signing is supported.
+Currently, only signing on upload and when modifying a repo's content are supported.
 
 ## On Upload
 
