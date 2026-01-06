@@ -1,9 +1,9 @@
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
-
 from pulpcore.plugin.models import Artifact, ContentArtifact
+
 from pulp_deb.app.constants import LAYOUT_TYPES
-from pulp_deb.app.models import Package, AptRepository, Release
+from pulp_deb.app.models import AptRepository, Package, Release
 from pulp_deb.app.models.repository import handle_duplicate_releases
 from pulp_deb.app.serializers import Package822Serializer
 
@@ -34,15 +34,14 @@ class TestPackage(TestCase):
             essential=True,
             maintainer="Utgardloki",
             description="A sea jötunn associated with the ocean.",
+            sha256="eeff11",
         )
         self.package1.save()
         self.artifact1 = Artifact(
             size=42,
             md5="aabb",
             sha1="ccdd",
-            sha224="ddcc",
             sha256="eeff11",
-            sha384="ffee",
             sha512="kkll",
             file=SimpleUploadedFile("test_filename", b"test content"),
         )

@@ -47,6 +47,21 @@ DEB_PUBLICATION_ARGS_ONLY_SIMPLE = {"simple": True, "structured": False}
 DEB_PUBLICATION_ARGS_ONLY_STRUCTURED = {"simple": False, "structured": True}
 DEB_PUBLICATION_ARGS_SIMPLE_AND_STRUCTURED = {"simple": True, "structured": True}
 DEB_PUBLICATION_ARGS_ALL = {"simple": True, "structured": True, "signing_service": ""}
+DEB_PUBLICATION_ARGS_NESTED_ALPHABETICALLY = {
+    "simple": False,
+    "structured": True,
+    "layout": "nested_alphabetically",
+}
+DEB_PUBLICATION_ARGS_NESTED_BY_DIGEST = {
+    "simple": False,
+    "structured": True,
+    "layout": "nested_by_digest",
+}
+DEB_PUBLICATION_ARGS_NESTED_BY_BOTH = {
+    "simple": False,
+    "structured": True,
+    "layout": "nested_by_both",
+}
 
 DEB_P2P_REMOTE_ARGS_SIMPLE = {"distributions": "default", "policy": "immediate"}
 DEB_P2P_REMOTE_ARGS_STRUCTURED = {"distributions": "ragnarok nosuite", "policy": "immediate"}
