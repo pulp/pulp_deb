@@ -8,6 +8,20 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.8.1 (2026-01-08) {: #3.8.1 }
+
+#### Features {: #3.8.1-feature }
+
+- Bump pulpcore upperbound to <3.115.
+
+#### Bugfixes {: #3.8.1-bugfix }
+
+- Teach modelresource.render it might get a `value` of None.
+
+  This prepares us to handle a django-import-export/4 codepath.
+
+---
+
 ## 3.8.0 (2025-11-04) {: #3.8.0 }
 
 #### Features {: #3.8.0-feature }
