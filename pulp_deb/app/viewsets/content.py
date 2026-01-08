@@ -205,7 +205,7 @@ class PackageFilter(ContentFilter):
         fields = {
             "package": NAME_FILTER_OPTIONS,
             "source": ["exact"],
-            "version": ["exact"],
+            "version": ["exact", "ne", "lt", "lte", "gt", "gte"],
             "architecture": ["exact"],
             "section": ["exact"],
             "priority": ["exact"],
