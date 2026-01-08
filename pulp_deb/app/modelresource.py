@@ -163,6 +163,8 @@ class PackageReleaseComponentResource(DebContentResource):
 
         def render(self, value, obj=None, **kwargs):
             """Render formatted string to use as unique-identifier."""
+            if not value:
+                return ""
             rc_dist = value.distribution
             rc_comp = value.component
             return f"{rc_dist}|{rc_comp}"
@@ -177,6 +179,8 @@ class PackageReleaseComponentResource(DebContentResource):
 
         def render(self, value, obj=None, **kwargs):
             """Render formatted string to use as unique-identifier."""
+            if not value:
+                return ""
             pkg_relative_path = value.relative_path
             pkg_sha256 = value.sha256
             return f"{pkg_relative_path}|{pkg_sha256}"
