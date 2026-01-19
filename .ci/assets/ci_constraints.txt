@@ -8,3 +8,11 @@ tablib!=3.6.0
 
 multidict!=6.3.0
 # This release failed the lower bounds test for some case sensitivity in CIMultiDict.
+
+
+azure-storage-blob!=12.28.*
+# Apparently does not work with current azurite.
+
+
+pycares<5
+# older aiodns versions don't pin pycares UB, and are broken by pycares>=5
