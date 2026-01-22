@@ -242,7 +242,7 @@ def test_publish_layout(
     if "layout" not in publication_args or publication_args["layout"] == "nested_alphabetically":
         expected = r"pool/asgard/[a-z]/"
     else:  # nested_by_digest or nested_by_both
-        expected = r"pool/asgard/[0-9a-f]{2}/[0-9a-f]{4}/"
+        expected = r"pool/asgard/by-digest/[0-9a-f]{2}/[0-9a-f]{4}/"
 
     # Verify than an expected Package index exists, and that the expected URL is
     # generated and that the package is actually available.

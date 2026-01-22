@@ -98,6 +98,7 @@ class BasePackage(Content):
             return os.path.join(
                 "pool",
                 component,
+                "by-digest",
                 self.sha256[0:2],
                 self.sha256[2:6],
                 "{}.{}".format(self.name, self.SUFFIX),
@@ -227,7 +228,9 @@ class SourcePackage(Content):
             return os.path.join("pool", component, sourcename[0], sourcename)
         else:  # NESTED_BY_DIGEST or NESTED_BY_BOTH
             sha256 = self.sha256
-            return os.path.join("pool", component, sha256[0:2], sha256[2:6], sourcename)
+            return os.path.join(
+                "pool", component, "by-digest", sha256[0:2], sha256[2:6], sourcename
+            )
 
     def derived_path(self, name, component="", layout=LAYOUT_TYPES.NESTED_ALPHABETICALLY):
         """Assemble filename in pool directory."""
