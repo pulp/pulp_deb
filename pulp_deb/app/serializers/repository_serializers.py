@@ -42,7 +42,7 @@ class ServiceOverrideField(serializers.DictField):
 
 
 class PackageFingerprintOverrideField(serializers.DictField):
-    child = serializers.CharField(max_length=40)
+    child = serializers.CharField(max_length=40, allow_blank=True)
 
     def to_representation(self, overrides):
         return {x.release_distribution: x.package_signing_fingerprint for x in overrides.all()}
