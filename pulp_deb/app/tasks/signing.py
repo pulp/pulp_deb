@@ -1,6 +1,8 @@
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
+from django.db.models import Q
+
 from pulpcore.plugin.models import (
     Upload,
     UploadChunk,
@@ -21,6 +23,11 @@ from pulp_deb.app.models.signing_service import (
 )
 from pulp_deb.app.models import AptRepository, Package, PackageReleaseComponent
 
+import logging
+from gettext import gettext as _
+
+log = logging.getLogger(__name__)
+
 
 def _save_file(fileobj, final_package):
     with fileobj.file.open() as fd:
@@ -37,6 +44,9 @@ def _save_upload(uploadobj, final_package):
 
 
 def _sign_file(package_file, signing_service, signing_fingerprint):
+    logging.info(
+        _("Signing package %s with fingerprint %s"), package_file.name, signing_fingerprint
+    )
     result = signing_service.sign(package_file.name, pubkey_fingerprint=signing_fingerprint)
     signed_package_path = Path(result["deb_package"])
     if not signed_package_path.exists():
@@ -120,11 +130,22 @@ def signed_add_and_remove(
     repo = AptRepository.objects.get(pk=repository_pk)
 
     if repo.package_signing_service:
+        # map packages to releases
+        prcs = PackageReleaseComponent.objects.filter(
+            Q(pk__in=add_content_units) | Q(pk__in=repo.content.all())
+        ).select_related("package", "release_component")
+        package_release_map = {prc.package_id: prc.release_component.distribution for prc in prcs}
+
         # sign each package and replace it in the add_content_units list
         for package in Package.objects.filter(pk__in=add_content_units):
             content_artifact = package.contentartifact_set.first()
             artifact_obj = content_artifact.artifact
             package_id = package.pk
+
+            # match the package's release to a fingerprint override if one exists
+            fingerprint = repo.release_package_signing_fingerprint(
+                package_release_map.get(package_id)
+            )
 
             with NamedTemporaryFile(mode="wb", dir=".", delete=False) as final_package:
                 artifact_file = artifact_obj.file
@@ -137,15 +158,13 @@ def signed_add_and_remove(
                 # check if the package has been signed in the past with our fingerprint
                 if existing_result := DebPackageSigningResult.objects.filter(
                     sha256=content_artifact.artifact.sha256,
-                    package_signing_fingerprint=repo.package_signing_fingerprint,
+                    package_signing_fingerprint=fingerprint,
                 ).first():
                     _update_content_units(add_content_units, package_id, existing_result.result.pk)
                     continue
 
                 # create a new signed version of the package
-                artifact = _sign_file(
-                    final_package, repo.package_signing_service, repo.package_signing_fingerprint
-                )
+                artifact = _sign_file(final_package, repo.package_signing_service, fingerprint)
                 signed_package = package
                 signed_package.pk = None
                 signed_package.pulp_id = None
@@ -158,7 +177,7 @@ def signed_add_and_remove(
                 )
                 DebPackageSigningResult.objects.create(
                     sha256=artifact_obj.sha256,
-                    package_signing_fingerprint=repo.package_signing_fingerprint,
+                    package_signing_fingerprint=fingerprint,
                     result=signed_package,
                 )
 
