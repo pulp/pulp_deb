@@ -1,6 +1,6 @@
 # Feature Overview
 
-This chapter aims to give a high level overview of what features the plugin supports, including known limitations, so as to set realistic expectations on how the plugin can be used.
+This chapter aims to give a high level overview of what features the plugin supports, including known limitations, so as to set realistic expectations on how the plugin can be used. bla bla
 
 For detailed usage examples, see `How-to Guides` instead.
 See the [REST API documentation](https://staging-docs.pulpproject.org/pulp_deb/restapi/) for an exhaustive feature reference.
