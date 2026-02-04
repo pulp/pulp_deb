@@ -79,6 +79,8 @@ def publish_verbatim(repository_version_pk):
     log.info(_("Publication (verbatim): {publication} created").format(publication=publication.pk))
 
 
+
+
 def publish(
     repository_version_pk,
     simple,
