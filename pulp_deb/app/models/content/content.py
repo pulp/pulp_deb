@@ -78,7 +78,9 @@ class BasePackage(Content):
         """Print a nice name for Packages."""
         return "{}_{}_{}".format(self.package, self.version, self.architecture)
 
-    def filename(self, component="", layout=LAYOUT_TYPES.NESTED_ALPHABETICALLY):
+    def filename(
+        self, component="", layout=LAYOUT_TYPES.NESTED_ALPHABETICALLY, basename_override=None
+    ):
         """Assemble filename in pool directory."""
         sourcename = self.source or self.package
         sourcename = sourcename.split("(", 1)[0].rstrip()
@@ -87,13 +89,15 @@ class BasePackage(Content):
         else:
             prefix = sourcename[0]
         path = os.path.join("pool", component, prefix, sourcename)
+
+        basename = basename_override or "{}.{}".format(self.name, self.SUFFIX)
         if layout == LAYOUT_TYPES.NESTED_ALPHABETICALLY:
-            return os.path.join(path, "{}.{}".format(self.name, self.SUFFIX))
+            return os.path.join(path, basename)
         else:  # NESTED_BY_DIGEST or NESTED_BY_BOTH. The primary URL in BOTH is by digest.
             return os.path.join(
                 path,
                 "by-digest",
-                "{}-{}.{}".format(self.sha256[0:6], self.name, self.SUFFIX),
+                "{}-{}".format(self.sha256[0:6], basename),
             )
 
     class Meta:
