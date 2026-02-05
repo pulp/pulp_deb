@@ -80,13 +80,13 @@ class BasePackage(Content):
 
     def filename(self, component="", layout=LAYOUT_TYPES.NESTED_ALPHABETICALLY):
         """Assemble filename in pool directory."""
+        sourcename = self.source or self.package
+        sourcename = sourcename.split("(", 1)[0].rstrip()
+        if sourcename.startswith("lib"):
+            prefix = sourcename[0:4]
+        else:
+            prefix = sourcename[0]
         if layout == LAYOUT_TYPES.NESTED_ALPHABETICALLY:
-            sourcename = self.source or self.package
-            sourcename = sourcename.split("(", 1)[0].rstrip()
-            if sourcename.startswith("lib"):
-                prefix = sourcename[0:4]
-            else:
-                prefix = sourcename[0]
             return os.path.join(
                 "pool",
                 component,
@@ -99,9 +99,8 @@ class BasePackage(Content):
                 "pool",
                 component,
                 "by-digest",
-                self.sha256[0:2],
-                self.sha256[2:6],
-                "{}.{}".format(self.name, self.SUFFIX),
+                prefix,
+                "{}-{}.{}".format(self.sha256[0:6], self.name, self.SUFFIX),
             )
 
     class Meta:
@@ -229,7 +228,7 @@ class SourcePackage(Content):
         else:  # NESTED_BY_DIGEST or NESTED_BY_BOTH
             sha256 = self.sha256
             return os.path.join(
-                "pool", component, "by-digest", sha256[0:2], sha256[2:6], sourcename
+                "pool", component, "by-digest", sourcename[0], f"{sha256[0:6]}-{sourcename}"
             )
 
     def derived_path(self, name, component="", layout=LAYOUT_TYPES.NESTED_ALPHABETICALLY):

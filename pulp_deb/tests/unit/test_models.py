@@ -62,7 +62,7 @@ class TestPackage(TestCase):
         for layout in [LAYOUT_TYPES.NESTED_BY_DIGEST, LAYOUT_TYPES.NESTED_BY_BOTH]:
             self.assertEqual(
                 self.package1.filename(layout=layout),
-                "pool/by-digest/ee/ff11/aegir_0.1-edda0_sea.deb",
+                "pool/by-digest/a/eeff11-aegir_0.1-edda0_sea.deb",
             )
 
     def test_filename_with_component(self):
@@ -76,7 +76,7 @@ class TestPackage(TestCase):
         for layout in [LAYOUT_TYPES.NESTED_BY_DIGEST, LAYOUT_TYPES.NESTED_BY_BOTH]:
             self.assertEqual(
                 self.package1.filename("joetunn", layout=layout),
-                "pool/joetunn/by-digest/ee/ff11/aegir_0.1-edda0_sea.deb",
+                "pool/joetunn/by-digest/a/eeff11-aegir_0.1-edda0_sea.deb",
             )
 
     def test_to822(self):
