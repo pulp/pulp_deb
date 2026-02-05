@@ -40,6 +40,8 @@ class ReleaseArchitecture(Content):
 
     distribution = models.TextField()
     architecture = models.TextField()
+    base_architecture = models.TextField(null=True)
+    variant_architecture = models.TextField(null=True)
     _pulp_domain = models.ForeignKey("core.Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     class Meta:
@@ -94,11 +96,12 @@ class PackageReleaseComponent(Content):
 
     package = models.ForeignKey(Package, on_delete=models.CASCADE)
     release_component = models.ForeignKey(ReleaseComponent, on_delete=models.CASCADE)
+    index_architecture = models.TextField(null=True)
     _pulp_domain = models.ForeignKey("core.Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
-        unique_together = (("package", "release_component", "_pulp_domain"),)
+        unique_together = (("package", "release_component", "index_architecture", "_pulp_domain"),)
 
 
 class SourcePackageReleaseComponent(Content):
