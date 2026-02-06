@@ -399,27 +399,12 @@ class _ComponentHelper:
                 for content_artifact in artifact_set:
                     published_artifact = PublishedArtifact(
                         relative_path=source_package.derived_path(
-                            os.path.basename(content_artifact.relative_path),
-                            self.component,
-                            layout=self.parent.publication.layout,
+                            os.path.basename(content_artifact.relative_path), self.component
                         ),
                         publication=self.parent.publication,
                         content_artifact=content_artifact,
                     )
                     published_artifacts.append(published_artifact)
-                    # In the NESTED_BY_BOTH layout, we want to _also_ publish the source package
-                    # under the alphabetical path but _not_ reference it in the repo metadata.
-                    if self.parent.publication.layout == LAYOUT_TYPES.NESTED_BY_BOTH:
-                        alt_published_artifact = PublishedArtifact(
-                            relative_path=source_package.derived_path(
-                                os.path.basename(content_artifact.relative_path),
-                                self.component,
-                                layout=LAYOUT_TYPES.NESTED_ALPHABETICALLY,
-                            ),
-                            publication=self.parent.publication,
-                            content_artifact=content_artifact,
-                        )
-                        published_artifacts.append(alt_published_artifact)
                 source_package_data.append(source_package)
 
         with transaction.atomic():
@@ -430,9 +415,9 @@ class _ComponentHelper:
             dsc_file_822_serializer = DscFile822Serializer(
                 source_package, context={"request": None}
             )
-            dsc_file_822_serializer.to822(
-                self.component, paragraph=True, layout=self.parent.publication.layout
-            ).dump(self.source_index_file_info[0])
+            dsc_file_822_serializer.to822(self.component, paragraph=True).dump(
+                self.source_index_file_info[0]
+            )
             self.source_index_file_info[0].write(b"\n")
 
     def finish(self):

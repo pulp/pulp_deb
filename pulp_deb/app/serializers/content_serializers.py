@@ -1073,7 +1073,7 @@ class DscFile822Serializer(NoArtifactContentSerializer):
             data={k: data[v] for k, v in cls.TRANSLATION_DICT.items() if v in data}, **kwargs
         )
 
-    def to822(self, component="", paragraph=False, layout=LAYOUT_TYPES.NESTED_ALPHABETICALLY):
+    def to822(self, component="", paragraph=False):
         """
         Create deb822.Dsc object from model. If the 'paragraph' argument is True then the returned
         object will be adjusted to be a valid paragraph in a source index file.
@@ -1110,7 +1110,8 @@ class DscFile822Serializer(NoArtifactContentSerializer):
             and include 'Directory'. Currently we skip the optional 'Priority' and 'Section'.
             """
             ret["Package"] = ret.pop("Source")
-            ret["Directory"] = self.instance.derived_dir(component, layout=layout)
+            ret["Directory"] = self.instance.derived_dir(component)
+
         return ret
 
     class Meta:

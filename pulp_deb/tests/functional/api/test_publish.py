@@ -240,9 +240,9 @@ def test_publish_layout(
 
     # Expected filename format
     if "layout" not in publication_args or publication_args["layout"] == "nested_alphabetically":
-        expected = r"pool/asgard/[a-z]/"
+        expected = r"pool/asgard/[a-z]/[a-zA-Z0-9]*/[a-zA-Z0-9]"
     else:  # nested_by_digest or nested_by_both
-        expected = r"pool/asgard/by-digest/[0-9a-f]{2}/[0-9a-f]{4}/"
+        expected = r"pool/asgard/[a-z]/[a-zA-Z0-9]*/by-digest/[0-9a-f]{6}-[a-zA-Z0-9]"
 
     # Verify than an expected Package index exists, and that the expected URL is
     # generated and that the package is actually available.

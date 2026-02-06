@@ -86,20 +86,13 @@ class BasePackage(Content):
             prefix = sourcename[0:4]
         else:
             prefix = sourcename[0]
+        path = os.path.join("pool", component, prefix, sourcename)
         if layout == LAYOUT_TYPES.NESTED_ALPHABETICALLY:
-            return os.path.join(
-                "pool",
-                component,
-                prefix,
-                sourcename,
-                "{}.{}".format(self.name, self.SUFFIX),
-            )
+            return os.path.join(path, "{}.{}".format(self.name, self.SUFFIX))
         else:  # NESTED_BY_DIGEST or NESTED_BY_BOTH. The primary URL in BOTH is by digest.
             return os.path.join(
-                "pool",
-                component,
+                path,
                 "by-digest",
-                prefix,
                 "{}-{}.{}".format(self.sha256[0:6], self.name, self.SUFFIX),
             )
 
@@ -220,20 +213,20 @@ class SourcePackage(Content):
         """Print a nice name for the Dsc file."""
         return "{}_{}.{}".format(self.source, self.version, self.SUFFIX)
 
-    def derived_dir(self, component="", layout=LAYOUT_TYPES.NESTED_ALPHABETICALLY):
+    def derived_dir(self, component=""):
         """Assemble full dir in pool directory."""
         sourcename = self.source
-        if layout == LAYOUT_TYPES.NESTED_ALPHABETICALLY:
-            return os.path.join("pool", component, sourcename[0], sourcename)
-        else:  # NESTED_BY_DIGEST or NESTED_BY_BOTH
-            sha256 = self.sha256
-            return os.path.join(
-                "pool", component, "by-digest", sourcename[0], f"{sha256[0:6]}-{sourcename}"
-            )
+        prefix = sourcename[0]
+        return os.path.join(
+            "pool",
+            component,
+            prefix,
+            sourcename,
+        )
 
-    def derived_path(self, name, component="", layout=LAYOUT_TYPES.NESTED_ALPHABETICALLY):
+    def derived_path(self, name, component=""):
         """Assemble filename in pool directory."""
-        return os.path.join(self.derived_dir(component, layout=layout), name)
+        return os.path.join(self.derived_dir(component), name)
 
     @property
     def checksums_sha1(self):
