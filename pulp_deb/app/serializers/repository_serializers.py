@@ -1,19 +1,27 @@
 from gettext import gettext as _
 from django.conf import settings
 from django.db import transaction
-from pulpcore.plugin.models import SigningService
+from pulpcore.plugin.models import (
+    SigningService,
+    RepositoryVersion,
+)
 from pulpcore.plugin.serializers import (
     RelatedField,
     RepositorySerializer,
     RepositorySyncURLSerializer,
     ValidateFieldsMixin,
+    RepositoryAddRemoveContentSerializer,
 )
 from pulpcore.plugin.util import get_url, get_domain
+from pulpcore.app.util import extract_pk, raise_for_unknown_content_units
 
 from pulp_deb.app.models import (
     AptRepositoryReleaseServiceOverride,
     AptReleaseSigningService,
     AptRepository,
+    ReleaseComponent,
+    ReleaseArchitecture,
+    PackageReleaseComponent,
 )
 
 from jsonschema import Draft7Validator
@@ -233,3 +241,96 @@ class CopySerializer(ValidateFieldsMixin, serializers.Serializer):
                 check_cross_domain_config(data["config"])
 
         return data
+
+
+class AptRepositoryAddRemoveContentSerializer(RepositoryAddRemoveContentSerializer):
+    """
+    Extends RepositoryAddRemoveContentSerializer to support adding/removing
+    - ReleaseComponents
+    - ReleaseArchitectures
+    - PackageReleaseComponents
+    """
+
+    add_release_components = serializers.ListField(
+        help_text=_("A list of ReleaseComponents to associate with a repository."),
+        child=serializers.CharField(error_messages={"invalid": "Not a valid URI of a resource."}),
+        required=False,
+    )
+
+    remove_release_components = serializers.ListField(
+        help_text=_("A list of ReleaseComponents to disassociate with a repository."),
+        child=serializers.CharField(error_messages={"invalid": "Not a valid URI of a resource."}),
+        required=False,
+    )
+
+    add_release_architectures = serializers.ListField(
+        help_text=_("A list of ReleaseArchitectures to associate with a repository."),
+        child=serializers.CharField(error_messages={"invalid": "Not a valid URI of a resource."}),
+        required=False,
+    )
+
+    remove_release_architectures = serializers.ListField(
+        help_text=_("A list of ReleaseArchitectures to disassociate with a repository."),
+        child=serializers.CharField(error_messages={"invalid": "Not a valid URI of a resource."}),
+        required=False,
+    )
+
+    add_package_release_components = serializers.ListField(
+        help_text=_("A list of PackageReleaseComponents to associate with a repository."),
+        child=serializers.CharField(error_messages={"invalid": "Not a valid URI of a resource."}),
+        required=False,
+    )
+
+    remove_package_release_components = serializers.ListField(
+        help_text=_("A list of PackageReleaseComponents to disassociate with a repository."),
+        child=serializers.CharField(error_messages={"invalid": "Not a valid URI of a resource."}),
+        required=False,
+    )
+
+    def validate_add_release_components(self, value):
+        return self._validate_content_hrefs(value, ReleaseComponent)
+
+    def validate_remove_release_components(self, value):
+        return self._validate_content_hrefs(value, ReleaseComponent)
+
+    def validate_add_release_architectures(self, value):
+        return self._validate_content_hrefs(value, ReleaseArchitecture)
+
+    def validate_remove_release_architectures(self, value):
+        return self._validate_content_hrefs(value, ReleaseArchitecture)
+
+    def validate_add_package_release_components(self, value):
+        return self._validate_content_hrefs(value, PackageReleaseComponent)
+
+    def validate_remove_package_release_components(self, value):
+        return self._validate_content_hrefs(value, PackageReleaseComponent)
+
+    def _validate_content_hrefs(self, value, model_class):
+        """
+        Validates that the requested Content exists.
+        Similar to the validation done in "pulpcore/app/serializers/repository.py"
+        for adding/removing content units
+        """
+        content_units = {}
+
+        for url in value:
+            content_units[extract_pk(url)] = url
+
+        content_units_pks = set(content_units.keys())
+        existing_content_units = model_class.objects.filter(pk__in=content_units_pks)
+        existing_content_units.touch()
+
+        raise_for_unknown_content_units(existing_content_units, content_units)
+
+        return list(content_units.keys())
+
+    class Meta:
+        model = RepositoryVersion
+        fields = RepositoryAddRemoveContentSerializer.Meta.fields + [
+            "add_release_components",
+            "remove_release_components",
+            "add_release_architectures",
+            "remove_release_architectures",
+            "add_package_release_components",
+            "remove_package_release_components",
+        ]

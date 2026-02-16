@@ -1,0 +1,1 @@
+Allow adding/removing package_release_components, release_components and release_architectures via the repository content modify API endpoint
