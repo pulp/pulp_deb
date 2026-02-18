@@ -2,6 +2,7 @@ from random import choice
 from debian import deb822
 import os
 import pytest
+import re
 
 from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_ALT_SINGLE_DIST,
@@ -18,6 +19,9 @@ from pulp_deb.tests.functional.constants import (
     DEB_PUBLICATION_ARGS_ONLY_SIMPLE,
     DEB_PUBLICATION_ARGS_ONLY_STRUCTURED,
     DEB_PUBLICATION_ARGS_SIMPLE_AND_STRUCTURED,
+    DEB_PUBLICATION_ARGS_NESTED_ALPHABETICALLY,
+    DEB_PUBLICATION_ARGS_NESTED_BY_DIGEST,
+    DEB_PUBLICATION_ARGS_NESTED_BY_BOTH,
     DEB_PUBLISH_COMPLEX_DEBIAN_SECURITY,
     DEB_PUBLISH_COMPLEX_UBUNTU_BACKPORTS,
     DEB_PUBLISH_EMPTY_REPOSITORY,
@@ -194,6 +198,66 @@ def test_publish_any_repo_version(
     if "signing_service" in publication_args.keys():
         deb_delete_publication(first_publication)
         deb_delete_publication(second_publication)
+
+
+@pytest.mark.parallel
+@pytest.mark.parametrize(
+    "publication_args",
+    [
+        DEB_PUBLICATION_ARGS_ONLY_STRUCTURED,
+        DEB_PUBLICATION_ARGS_NESTED_ALPHABETICALLY,
+        DEB_PUBLICATION_ARGS_NESTED_BY_DIGEST,
+        DEB_PUBLICATION_ARGS_NESTED_BY_BOTH,
+    ],
+)
+def test_publish_layout(
+    apt_distribution_api,
+    create_publication_and_verify_repo_version,
+    deb_distribution_factory,
+    download_content_unit,
+    publication_args,
+):
+    """Test whether a the layout parameter is generating expected package URLs
+    and the packages are available.
+
+    The following cases are tested:
+
+    * `Publish a repo where layout is not specified (alphabetical by default).`_
+    * `Publish a repo explicit alphabetical layout.`_
+    * `Publish a repo explicit digest layout.`_
+    * `Publish a repo explicit "both" layout.`_
+    """
+    remote_args = {"distributions": DEB_FIXTURE_SINGLE_DIST}
+
+    # Create a repository and publication.
+    publication, _, _, _ = create_publication_and_verify_repo_version(
+        remote_args, publication_args, is_modified=True
+    )
+
+    # Create a distribution
+    distribution = deb_distribution_factory(publication)
+    distribution = apt_distribution_api.read(distribution.pulp_href)
+
+    # Expected filename format
+    if "layout" not in publication_args or publication_args["layout"] == "nested_alphabetically":
+        expected = r"pool/asgard/[a-z]/[a-zA-Z0-9]*/[a-zA-Z0-9]"
+    else:  # nested_by_digest or nested_by_both
+        expected = r"pool/asgard/[a-z]/[a-zA-Z0-9]*/by-digest/[0-9a-f]{6}-[a-zA-Z0-9]"
+
+    # Verify than an expected Package index exists, and that the expected URL is
+    # generated and that the package is actually available.
+    package_index = download_content_unit(
+        distribution.to_dict()["base_path"], "dists/ragnarok/asguard/binary-ppc64/Packages"
+    )
+    for line in str(package_index):
+        if not line.startswith("Filename:"):
+            continue
+
+        _, _, filename = line.partition(": ")
+        assert re.match(expected, filename)
+
+        package = download_content_unit(distribution.to_dict()["base_path"], filename)
+        assert "404" not in str(package)
 
 
 @pytest.mark.parallel

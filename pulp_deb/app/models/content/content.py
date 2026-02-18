@@ -16,6 +16,8 @@ from django.db.models import JSONField
 from pulpcore.plugin.models import Content
 from pulpcore.plugin.util import get_domain_pk
 
+from pulp_deb.app.constants import LAYOUT_TYPES
+
 BOOL_CHOICES = [(True, "yes"), (False, "no")]
 
 
@@ -76,7 +78,7 @@ class BasePackage(Content):
         """Print a nice name for Packages."""
         return "{}_{}_{}".format(self.package, self.version, self.architecture)
 
-    def filename(self, component=""):
+    def filename(self, component="", layout=LAYOUT_TYPES.NESTED_ALPHABETICALLY):
         """Assemble filename in pool directory."""
         sourcename = self.source or self.package
         sourcename = sourcename.split("(", 1)[0].rstrip()
@@ -84,13 +86,15 @@ class BasePackage(Content):
             prefix = sourcename[0:4]
         else:
             prefix = sourcename[0]
-        return os.path.join(
-            "pool",
-            component,
-            prefix,
-            sourcename,
-            "{}.{}".format(self.name, self.SUFFIX),
-        )
+        path = os.path.join("pool", component, prefix, sourcename)
+        if layout == LAYOUT_TYPES.NESTED_ALPHABETICALLY:
+            return os.path.join(path, "{}.{}".format(self.name, self.SUFFIX))
+        else:  # NESTED_BY_DIGEST or NESTED_BY_BOTH. The primary URL in BOTH is by digest.
+            return os.path.join(
+                path,
+                "by-digest",
+                "{}-{}.{}".format(self.sha256[0:6], self.name, self.SUFFIX),
+            )
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"

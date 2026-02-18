@@ -27,6 +27,7 @@ from pulpcore.plugin.util import get_domain_pk
 from pulp_deb.app.constants import (
     PACKAGE_UPLOAD_DEFAULT_COMPONENT,
     PACKAGE_UPLOAD_DEFAULT_DISTRIBUTION,
+    LAYOUT_TYPES,
 )
 
 from pulp_deb.app.constants import NULL_VALUE
@@ -478,7 +479,13 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
         package_fields["custom_fields"] = custom_fields
         return cls(data=package_fields, **kwargs)
 
-    def to822(self, component="", artifact_dict=None, remote_artifact_dict=None):
+    def to822(
+        self,
+        component="",
+        artifact_dict=None,
+        remote_artifact_dict=None,
+        layout=LAYOUT_TYPES.NESTED_ALPHABETICALLY,
+    ):
         """Create deb822.Package object from model."""
         ret = deb822.Packages()
 
@@ -502,7 +509,7 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
             ret.update({"SHA1": artifact.sha1} if artifact.sha1 else {})
             ret.update({"SHA256": artifact.sha256})
             ret.update({"Size": str(artifact.size)})
-        ret.update({"Filename": self.instance.filename(component)})
+        ret.update({"Filename": self.instance.filename(component, layout=layout)})
 
         return ret
 

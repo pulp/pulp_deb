@@ -8,6 +8,7 @@ from pulpcore.plugin.serializers import (
     DetailRelatedField,
 )
 
+from pulp_deb.app.constants import LAYOUT_CHOICES, LAYOUT_TYPES
 from pulp_deb.app.models import (
     AptDistribution,
     AptPublication,
@@ -38,6 +39,13 @@ class AptPublicationSerializer(PublicationSerializer):
     structured = BooleanField(help_text="Activate structured publishing mode.", default=True)
     publish_upstream_release_fields = BooleanField(help_text="", required=False)
     checkpoint = serializers.BooleanField(required=False)
+    layout = serializers.ChoiceField(
+        help_text="How to layout the packages within the published repository.",
+        choices=LAYOUT_CHOICES,
+        required=False,
+        allow_null=False,
+        default=LAYOUT_TYPES.NESTED_ALPHABETICALLY,
+    )
     signing_service = RelatedField(
         help_text="Sign Release files with this signing key",
         many=False,
@@ -62,6 +70,7 @@ class AptPublicationSerializer(PublicationSerializer):
             "checkpoint",
             "signing_service",
             "publish_upstream_release_fields",
+            "layout",
         )
         model = AptPublication
 
