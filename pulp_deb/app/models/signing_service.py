@@ -198,6 +198,26 @@ class AptPackageSigningService(SigningService):
         _env_vars["PULP_SIGNING_KEY_FINGERPRINT"] = pubkey_fingerprint
         return super().sign(filename, _env_vars)
 
+    async def asign(
+        self,
+        filename: str,
+        env_vars: Optional[dict] = None,
+        pubkey_fingerprint: Optional[str] = None,
+    ):
+        """
+        Asynchronously sign a package @filename using @pubkey_fingerprint.
+
+        Args:
+            filename: The absolute path to the package to be signed.
+            env_vars: (optional) Dict of env_vars to be passed to the signing script.
+            pubkey_fingerprint: The V4 fingerprint that correlates with the private key to use.
+        """
+        if not pubkey_fingerprint:
+            raise ValueError("A pubkey_fingerprint must be provided.")
+        _env_vars = env_vars or {}
+        _env_vars["PULP_SIGNING_KEY_FINGERPRINT"] = pubkey_fingerprint
+        return await super().asign(filename, _env_vars)
+
     def validate(self):
         """
         Validate a signing service for an Apt package signature.
