@@ -3,6 +3,8 @@ from import_export.widgets import ForeignKeyWidget
 
 from pulpcore.plugin.importexport import BaseContentResource
 from pulpcore.plugin.modelresources import RepositoryResource
+from pulpcore.plugin.util import get_domain
+
 from pulp_deb.app.models import (
     AptRepository,
     GenericContent,
@@ -52,6 +54,9 @@ class DebContentResource(BaseContentResource):
         )
 
         return content
+
+    def dehydrate__pulp_domain(self, content):
+        return str(content._pulp_domain_id)
 
 
 class InstallerFileIndexResource(DebContentResource):
@@ -156,10 +161,12 @@ class PackageReleaseComponentResource(DebContentResource):
         str(<release_component.distribution>|<release_component.component>)
         """
 
-        def render(self, value, obj):
+        def render(self, value, obj=None, **kwargs):
             """Render formatted string to use as unique-identifier."""
-            rc_dist = obj.release_component.distribution
-            rc_comp = obj.release_component.component
+            if not value:
+                return ""
+            rc_dist = value.distribution
+            rc_comp = value.component
             return f"{rc_dist}|{rc_comp}"
 
     class PackageForeignKeyWidget(ForeignKeyWidget):
@@ -170,10 +177,12 @@ class PackageReleaseComponentResource(DebContentResource):
         str(<package.relative_path>|<package.sha256>)
         """
 
-        def render(self, value, obj):
+        def render(self, value, obj=None, **kwargs):
             """Render formatted string to use as unique-identifier."""
-            pkg_relative_path = obj.package.relative_path
-            pkg_sha256 = obj.package.sha256
+            if not value:
+                return ""
+            pkg_relative_path = value.relative_path
+            pkg_sha256 = value.sha256
             return f"{pkg_relative_path}|{pkg_sha256}"
 
     release_component = fields.Field(
@@ -200,8 +209,12 @@ class PackageReleaseComponentResource(DebContentResource):
 
         (rc_dist, rc_comp) = row["release_component"].split("|")
         (pkg_relative_path, pkg_sha256) = row["package"].split("|")
-        rc = ReleaseComponent.objects.filter(distribution=rc_dist, component=rc_comp).first()
-        pkg = Package.objects.filter(relative_path=pkg_relative_path, sha256=pkg_sha256).first()
+        rc = ReleaseComponent.objects.filter(
+            distribution=rc_dist, component=rc_comp, pulp_domain=get_domain()
+        ).first()
+        pkg = Package.objects.filter(
+            relative_path=pkg_relative_path, sha256=pkg_sha256, pulp_domain=get_domain()
+        ).first()
         row["release_component"] = str(rc.pulp_id)
         row["package"] = str(pkg.pulp_id)
 
