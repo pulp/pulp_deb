@@ -7,13 +7,14 @@ from rest_framework.serializers import ValidationError as DRFValidationError
 
 from pulp_deb.app.models.content.content import Package
 from pulp_deb.app.models.content.structure_content import PackageReleaseComponent
-from pulp_deb.app.serializers import AptRepositorySyncURLSerializer
-
+from pulp_deb.app.serializers import (
+    AptRepositorySyncURLSerializer,
+    AptRepositoryAddRemoveContentSerializer,
+)
 from pulpcore.plugin.util import extract_pk, get_url
 from pulpcore.plugin.actions import ModifyRepositoryActionMixin
 from pulpcore.plugin.serializers import (
     AsyncOperationResponseSerializer,
-    RepositoryAddRemoveContentSerializer,
 )
 from pulpcore.plugin.models import RepositoryVersion
 from pulpcore.plugin.tasking import dispatch
@@ -34,15 +35,30 @@ class AptModifyRepositoryActionMixin(ModifyRepositoryActionMixin):
         summary="Modify Repository Content",
         responses={202: AsyncOperationResponseSerializer},
     )
-    @action(detail=True, methods=["post"], serializer_class=RepositoryAddRemoveContentSerializer)
+    @action(detail=True, methods=["post"], serializer_class=AptRepositoryAddRemoveContentSerializer)
     def modify(self, request, pk):
-        remove_content_units = request.data.get("remove_content_units", [])
+        data = request.data
+        remove_content_units = data.get("remove_content_units", [])
         package_hrefs = [href for href in remove_content_units if "/packages/" in href]
 
         if package_hrefs:
             prc_hrefs = self._get_matching_prc_hrefs(package_hrefs)
             remove_content_units.extend(prc_hrefs)
-            request.data["remove_content_units"] = remove_content_units
+
+        # Merge also add/remove RC, RA and PRCs into add/remove content units
+        data["add_content_units"] = (
+            data.get("add_content_units", [])
+            + data.get("add_release_components", [])
+            + data.get("add_release_architectures", [])
+            + data.get("add_package_release_components", [])
+        )
+
+        data["remove_content_units"] = (
+            remove_content_units
+            + data.get("remove_release_components", [])
+            + data.get("remove_release_architectures", [])
+            + data.get("remove_package_release_components", [])
+        )
 
         return super().modify(request, pk)
 
