@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.functional import cached_property
 
 from pulpcore.plugin.models import (
     AutoAddObjPermsMixin,
@@ -28,6 +29,7 @@ from pulp_deb.app.models import (
     SourceIndex,
     SourcePackage,
     SourcePackageReleaseComponent,
+    AptPackageSigningService,
 )
 
 import logging
@@ -66,7 +68,15 @@ class AptRepository(Repository, AutoAddObjPermsMixin):
     signing_service = models.ForeignKey(
         AptReleaseSigningService, on_delete=models.PROTECT, null=True
     )
+
+    package_signing_service = models.ForeignKey(
+        AptPackageSigningService, on_delete=models.SET_NULL, null=True
+    )
+
+    package_signing_fingerprint = models.TextField(null=True, max_length=40)
+
     # Implicit signing_service_release_overrides
+    # Implicit package_signing_fingerprint_release_overrides
 
     autopublish = models.BooleanField(default=False)
 
@@ -115,6 +125,29 @@ class AptRepository(Repository, AutoAddObjPermsMixin):
         except AptRepositoryReleaseServiceOverride.DoesNotExist:
             return self.signing_service
 
+    def release_package_signing_fingerprint(self, release):
+        """
+        Return the Package Signing Fingerprint specified in the overrides if there is one for this
+        release, else return self.package_signing_fingerprint.
+        """
+        if isinstance(release, Release):
+            release = release.distribution
+        if not release:
+            return self.package_signing_fingerprint
+        return self.package_signing_fingerprint_release_overrides_map.get(
+            release, self.package_signing_fingerprint
+        )
+
+    @cached_property
+    def package_signing_fingerprint_release_overrides_map(self):
+        """
+        Cached mapping of release distributions to package signing fingerprints.
+        """
+        return {
+            override.release_distribution: override.package_signing_fingerprint
+            for override in self.package_signing_fingerprint_release_overrides.all()
+        }
+
     def initialize_new_version(self, new_version):
         """
         Remove old metadata from the repo before performing anything else for the new version. This
@@ -149,9 +182,29 @@ class AptRepositoryReleaseServiceOverride(BaseModel):
     """
 
     repository = models.ForeignKey(
-        AptRepository, on_delete=models.CASCADE, related_name="signing_service_release_overrides"
+        AptRepository,
+        on_delete=models.CASCADE,
+        related_name="signing_service_release_overrides",
     )
     signing_service = models.ForeignKey(AptReleaseSigningService, on_delete=models.PROTECT)
+    release_distribution = models.TextField()
+
+    class Meta:
+        unique_together = (("repository", "release_distribution"),)
+
+
+class AptRepositoryReleasePackageSigningFingerprintOverride(BaseModel):
+    """
+    Override the signing fingerprint that a single Release will use in this AptRepository for
+    signing packages.
+    """
+
+    repository = models.ForeignKey(
+        AptRepository,
+        on_delete=models.CASCADE,
+        related_name="package_signing_fingerprint_release_overrides",
+    )
+    package_signing_fingerprint = models.TextField(max_length=40)
     release_distribution = models.TextField()
 
     class Meta:

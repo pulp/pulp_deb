@@ -1,3 +1,4 @@
+import json
 from urllib.parse import urlsplit
 from uuid import uuid4
 import pytest
@@ -7,7 +8,10 @@ import stat
 import subprocess
 import uuid
 
-from pulp_deb.tests.functional.constants import DEB_SIGNING_SCRIPT_STRING
+from pulp_deb.tests.functional.constants import (
+    DEB_SIGNING_SCRIPT_STRING,
+    DEB_PACKAGE_SIGNING_SCRIPT_STRING,
+)
 from pulpcore.client.pulp_deb import (
     ContentGenericContentsApi,
     ContentPackagesApi,
@@ -24,6 +28,7 @@ from pulpcore.client.pulp_deb import (
     DebAptPublication,
     DebAptAlternateContentSource,
     DebCopyApi,
+    DebPackageReleaseComponent,
     DebRelease,
     DebReleaseArchitecture,
     DebReleaseComponent,
@@ -207,6 +212,27 @@ def deb_release_component_factory(apt_release_component_api, gen_object_with_cle
         return gen_object_with_cleanup(apt_release_component_api, release_component_object)
 
     return _deb_release_component_factory
+
+
+@pytest.fixture(scope="class")
+def deb_package_release_component_factory(
+    apt_package_release_components_api, gen_object_with_cleanup
+):
+    """Fixture that generates source release comopnent with cleanup."""
+
+    def _deb_package_release_component_factory(package, release_component, **kwargs):
+        """Create an APT PackageReleaseComponent.
+
+        :returns: The created SourceReleaseComponent.
+        """
+        package_release_component_object = DebPackageReleaseComponent(
+            package=package, release_component=release_component, **kwargs
+        )
+        return gen_object_with_cleanup(
+            apt_package_release_components_api, package_release_component_object
+        )
+
+    return _deb_package_release_component_factory
 
 
 @pytest.fixture(scope="class")
@@ -686,3 +712,107 @@ def deb_domain_factory(pulpcore_bindings, gen_object_with_cleanup):
         return gen_object_with_cleanup(pulpcore_bindings.DomainsApi, body)
 
     return _deb_domain_factory
+
+
+@pytest.fixture(scope="session")
+def package_signing_script_path(signing_script_temp_dir, signing_gpg_homedir_path):
+    signing_script_file = signing_script_temp_dir / "sign-deb-package.sh"
+    signing_script_file.write_text(
+        DEB_PACKAGE_SIGNING_SCRIPT_STRING.replace("HOMEDIRHERE", str(signing_gpg_homedir_path))
+    )
+
+    signing_script_file.chmod(0o755)
+
+    return signing_script_file
+
+
+@pytest.fixture(scope="session")
+def signing_script_temp_dir(tmp_path_factory):
+    return tmp_path_factory.mktemp("sigining_script_dir")
+
+
+@pytest.fixture(scope="session")
+def signing_gpg_homedir_path(tmp_path_factory):
+    return tmp_path_factory.mktemp("gpghome")
+
+
+@pytest.fixture
+def sign_with_deb_package_signing_service(package_signing_script_path, signing_gpg_metadata):
+    """
+    Runs the test signing script manually, locally, and returns the signature file produced.
+    """
+
+    def _sign_with_deb_package_signing_service(filename):
+        env = {"PULP_SIGNING_KEY_FINGERPRINT": signing_gpg_metadata[1]}
+        cmd = (package_signing_script_path, filename)
+        completed_process = subprocess.run(
+            cmd,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        if completed_process.returncode != 0:
+            raise RuntimeError(str(completed_process.stderr))
+
+        try:
+            return_value = json.loads(completed_process.stdout)
+        except json.JSONDecodeError:
+            raise RuntimeError("The signing script did not return valid JSON!")
+
+        return return_value
+
+    return _sign_with_deb_package_signing_service
+
+
+@pytest.fixture(scope="session")
+def _deb_package_signing_service_name(
+    bindings_cfg,
+    package_signing_script_path,
+    signing_gpg_metadata,
+    signing_gpg_homedir_path,
+    pytestconfig,
+):
+    service_name = str(uuid.uuid4())
+    gpg, fingerprint, keyid = signing_gpg_metadata
+
+    cmd = (
+        "pulpcore-manager",
+        "add-signing-service",
+        service_name,
+        str(package_signing_script_path),
+        fingerprint,
+        "--class",
+        "deb:AptPackageSigningService",
+        "--gnupghome",
+        str(signing_gpg_homedir_path),
+    )
+    completed_process = subprocess.run(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    assert completed_process.returncode == 0
+
+    yield service_name
+
+    cmd = (
+        "pulpcore-manager",
+        "remove-signing-service",
+        service_name,
+        "--class",
+        "deb:AptPackageSigningService",
+    )
+    subprocess.run(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+
+@pytest.fixture
+def deb_package_signing_service(_deb_package_signing_service_name, pulpcore_bindings):
+    return pulpcore_bindings.SigningServicesApi.list(
+        name=_deb_package_signing_service_name
+    ).results[0]

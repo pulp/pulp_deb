@@ -9,7 +9,7 @@ from .content.content import (
     SourcePackage,
 )
 
-from .signing_service import AptReleaseSigningService
+from .signing_service import AptReleaseSigningService, AptPackageSigningService
 
 from .content.metadata import (
     Release,
@@ -28,6 +28,10 @@ from .publication import AptDistribution, AptPublication, VerbatimPublication
 
 from .remote import AptRemote
 
-from .repository import AptRepository, AptRepositoryReleaseServiceOverride
+from .repository import (
+    AptRepository,
+    AptRepositoryReleaseServiceOverride,
+    AptRepositoryReleasePackageSigningFingerprintOverride,
+)
 
 from .acs import AptAlternateContentSource
