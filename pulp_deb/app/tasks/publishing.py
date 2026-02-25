@@ -17,7 +17,6 @@ from django.db import transaction
 from django.db.utils import IntegrityError
 from django.forms.models import model_to_dict
 
-from pulp_deb.app.constants import NULL_VALUE
 from pulpcore.plugin.models import (
     Artifact,
     PublishedArtifact,
@@ -27,6 +26,7 @@ from pulpcore.plugin.models import (
 )
 from pulpcore.plugin.util import get_domain
 
+from pulp_deb.app.constants import NULL_VALUE
 from pulp_deb.app.models import (
     AptPublication,
     AptRepository,
@@ -88,6 +88,7 @@ def publish(
     signing_service_pk=None,
     publish_upstream_release_fields=None,
     layout=LAYOUT_TYPES.NESTED_ALPHABETICALLY,
+    publish_legacy_release_files=False,
 ):
     """
     Use provided publisher to create a Publication based on a RepositoryVersion.
@@ -99,6 +100,7 @@ def publish(
         checkpoint (bool): Whether to create a checkpoint publication.
         signing_service_pk (str): Use this SigningService to sign the Release files.
         layout (str): The layout determines the form the package urls take.
+        publish_legacy_release_files (bool): publish legacy per architecture release files
 
     """
 
@@ -118,6 +120,7 @@ def publish(
             ver=repo_version.number,
             simple=simple,
             structured=structured,
+            publish_legacy_release_files=publish_legacy_release_files,
         )
     )
     with tempfile.TemporaryDirectory(".") as temp_dir:
@@ -127,6 +130,7 @@ def publish(
             publication.simple = simple
             publication.structured = structured
             publication.signing_service = signing_service
+            publication.publish_legacy_release_files = publish_legacy_release_files
             publication.layout = layout
             repository = AptRepository.objects.get(pk=repo_version.repository.pk)
 
@@ -310,6 +314,7 @@ class _ComponentHelper:
         self.plain_component = os.path.basename(component)
         self.package_index_files = {}
         self.source_index_file_info = None
+        self.release_file_paths = {}
 
         for architecture in self.parent.architectures:
             package_index_path = os.path.join(
@@ -324,6 +329,12 @@ class _ComponentHelper:
                 open(package_index_path, "wb"),
                 package_index_path,
             )
+
+            if self.parent.publication.publish_legacy_release_files:
+                self.release_file_paths[architecture] = _write_legacy_release_file(
+                    self, architecture
+                )
+
         # Source indicies file
         source_index_path = os.path.join(
             "dists",
@@ -465,6 +476,13 @@ class _ComponentHelper:
             self.parent.add_metadata(source_index)
             self.parent.add_metadata(gz_source_index)
 
+        # Publish per-component/architecture Release files
+        for release_path in self.release_file_paths.values():
+            release = PublishedMetadata.create_from_file(
+                publication=self.parent.publication, file=File(open(release_path, "rb"))
+            )
+            self.parent.add_metadata(release)
+
     def generate_by_hash(self, index_path, index, gz_index_path, gz_index):
         for path, index in (
             (index_path, index),
@@ -491,6 +509,7 @@ class _ReleaseHelper:
         temp_dir,
         signing_service=None,
     ):
+        self._release = release
         self.publication = publication
         self.temp_env = {"PULP_TEMP_WORKING_DIR": _create_random_directory(temp_dir)}
         self.distribution = distribution = release.distribution
@@ -622,3 +641,36 @@ def _create_random_directory(path):
     dir_path = path + "/" + dir_name
     os.makedirs(dir_path, exist_ok=True)
     return dir_path
+
+
+def _write_legacy_release_file(component, arch):
+    """
+    Add legacy per-architecture release files
+    https://wiki.debian.org/DebianRepository/Format#Legacy_per-component-and-architecture_Release_files
+    :param component: ComponentHelper instance this belongs to.
+    :param arch: target architecture
+    :return: relative path of the release file
+    """
+
+    rel = deb822.Release()
+
+    parent_release = component.parent.release
+    rel["Archive"] = parent_release.get("Suite", parent_release["Codename"])
+    rel["Origin"] = parent_release.get("Origin", "Pulp 3")
+    rel["Label"] = parent_release.get("Label", "Pulp 3")
+    if settings.APT_BY_HASH:
+        rel["Acquire-By-Hash"] = settings.APT_BY_HASH
+    rel["Component"] = component.plain_component
+    rel["Architecture"] = arch
+
+    rel_path = os.path.join(
+        "dists",
+        component.parent.dists_subfolder,
+        component.plain_component,
+        f"binary-{arch}",
+        "Release",
+    )
+    os.makedirs(os.path.dirname(rel_path), exist_ok=True)
+    with open(rel_path, "wb") as fh:
+        rel.dump(fh)
+    return rel_path
