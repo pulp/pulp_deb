@@ -1,9 +1,13 @@
-from rest_framework.serializers import BooleanField, CharField, ChoiceField
+import re
+from rest_framework.serializers import BooleanField, CharField, ChoiceField, ValidationError
 
 from pulpcore.plugin.models import Remote
 from pulpcore.plugin.serializers import RemoteSerializer
 
 from pulp_deb.app.models import AptRemote
+
+ARCH_RE = re.compile(r"^[A-Za-z0-9_+-]+$")
+ARCH_VARIANT_RE = re.compile(r"^[A-Za-z0-9_+-]+:[A-Za-z0-9_+-]+$")
 
 
 class AptRemoteSerializer(RemoteSerializer):
@@ -83,3 +87,30 @@ class AptRemoteSerializer(RemoteSerializer):
             "ignore_missing_package_indices",
         )
         model = AptRemote
+
+    def validate_architectures(self, value):
+        if value in (None, ""):
+            return value
+
+        tokens = value.split()
+        seen_tokens = set()
+        for token in tokens:
+            if token in seen_tokens:
+                raise ValidationError(f"Duplicate architecture token '{token}'.")
+            seen_tokens.add(token)
+
+            if not (ARCH_RE.match(token) or ARCH_VARIANT_RE.match(token)):
+                raise ValidationError(
+                    f"Invalid architecture token '{token}'. Use 'amd64' or 'amd64:v3' style."
+                )
+            base, var = _parse_arch_token(token)
+            if not base:
+                raise ValidationError(f"Invalid architecture token '{token}'.")
+        return value
+
+
+def _parse_arch_token(token):
+    if ":" not in token:
+        return token, None
+    base, var = token.split(":", 1)
+    return base, var
