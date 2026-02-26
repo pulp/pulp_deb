@@ -8,6 +8,17 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.5.4 (2026-02-26) {: #3.5.4 }
+
+#### Bugfixes {: #3.5.4-bugfix }
+
+- Allow pulp-import-export when domains are enabled.
+- Teach modelresource.render it might get a `value` of None.
+
+  This prepares us to handle a django-import-export/4 codepath.
+
+---
+
 ## 3.5.3 (2025-09-18) {: #3.5.3 }
 
 #### Bugfixes {: #3.5.3-bugfix }
