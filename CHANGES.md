@@ -8,6 +8,18 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.7.1 (2026-02-26) {: #3.7.1 }
+
+#### Bugfixes {: #3.7.1-bugfix }
+
+- Allow pulp-import-export when domains are enabled.
+- Fixed a compatibility bug on source package upload with pulpcore 3.86.
+- Teach modelresource.render it might get a `value` of None.
+
+  This prepares us to handle a django-import-export/4 codepath.
+
+---
+
 ## 3.7.0 (2025-08-20) {: #3.7.0 }
 
 #### Bugfixes {: #3.7.0-bugfix }
