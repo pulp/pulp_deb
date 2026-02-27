@@ -45,6 +45,18 @@
 
 ---
 
+## 3.7.1 (2026-02-26) {: #3.7.1 }
+
+#### Bugfixes {: #3.7.1-bugfix }
+
+- Allow pulp-import-export when domains are enabled.
+- Fixed a compatibility bug on source package upload with pulpcore 3.86.
+- Teach modelresource.render it might get a `value` of None.
+
+  This prepares us to handle a django-import-export/4 codepath.
+
+---
+
 ## 3.7.0 (2025-08-20) {: #3.7.0 }
 
 #### Bugfixes {: #3.7.0-bugfix }
@@ -71,6 +83,17 @@
   [#1225](https://github.com/pulp/pulp_deb/issues/1225)
 - Flat repo syncs no longer consider the Release file for download as part of package index creation, avoiding unnecessary downloads as well as a rare edge case where the sync fails with a duplicate-path error if the Release file references itself with a checksum that already exists as an artifact within Pulp.
   [#1279](https://github.com/pulp/pulp_deb/issues/1279)
+
+---
+
+## 3.5.4 (2026-02-26) {: #3.5.4 }
+
+#### Bugfixes {: #3.5.4-bugfix }
+
+- Allow pulp-import-export when domains are enabled.
+- Teach modelresource.render it might get a `value` of None.
+
+  This prepares us to handle a django-import-export/4 codepath.
 
 ---
 
