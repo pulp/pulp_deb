@@ -18,7 +18,7 @@ from urllib.parse import quote, urlparse, urlunparse
 from django.conf import settings
 from django.db.utils import IntegrityError
 
-from pulpcore.plugin.exceptions import DigestValidationError
+from pulpcore.plugin.exceptions import DigestValidationError, PulpException
 from rest_framework.exceptions import ValidationError
 
 
@@ -80,10 +80,31 @@ from gettext import gettext as _
 log = logging.getLogger(__name__)
 
 
-class NoReleaseFile(Exception):
+class DebException(PulpException):
+    """
+    Base class for expected sync failures.
+    """
+
+    error_code = "DEB0000"
+
+    def __init__(self, message, details=None):
+        try:
+            super().__init__()
+        except TypeError:
+            super().__init__(self.error_code)
+        self.message = message
+        self.details = details
+
+    def __str__(self):
+        return f"[{self.error_code}] {self.message}"
+
+
+class NoReleaseFile(DebException):
     """
     Exception to signal, that no file representing a release is present.
     """
+
+    error_code = "DEB0001"
 
     def __init__(self, url, *args, **kwargs):
         """
@@ -92,15 +113,15 @@ class NoReleaseFile(Exception):
         super().__init__(
             "Could not find a Release file at '{}', try checking the 'url' and "
             "'distributions' option on your remote".format(url),
-            *args,
-            **kwargs,
         )
 
 
-class NoValidSignatureForKey(Exception):
+class NoValidSignatureForKey(DebException):
     """
     Exception to signal, that verification of release file with provided GPG key fails.
     """
+
+    error_code = "DEB0002"
 
     def __init__(self, url, *args, **kwargs):
         """
@@ -108,15 +129,15 @@ class NoValidSignatureForKey(Exception):
         """
         super().__init__(
             "Unable to verify any Release files from '{}' using the GPG key provided.".format(url),
-            *args,
-            **kwargs,
         )
 
 
-class NoPackageIndexFile(Exception):
+class NoPackageIndexFile(DebException):
     """
     Exception to signal, that no file representing a package index is present.
     """
+
+    error_code = "DEB0003"
 
     def __init__(self, relative_dir, *args, **kwargs):
         """
@@ -129,30 +150,32 @@ class NoPackageIndexFile(Exception):
             "(ignore_missing_package_indices='True') or system wide "
             "(FORCE_IGNORE_MISSING_PACKAGE_INDICES setting)."
         )
-        super().__init__(_(message).format(relative_dir), *args, **kwargs)
-
-    pass
+        super().__init__(_(message).format(relative_dir))
 
 
-class MissingReleaseFileField(Exception):
+class MissingReleaseFileField(DebException):
     """
     Exception signifying that the upstream release file is missing a required field.
     """
+
+    error_code = "DEB0004"
 
     def __init__(self, distribution, field, *args, **kwargs):
         """
         The upstream release file is missing a required field.
         """
         message = "The release file for distribution '{}' is missing the required field '{}'."
-        super().__init__(_(message).format(distribution, field), *args, **kwargs)
+        super().__init__(_(message).format(distribution, field))
 
 
-class UnknownNoSupportForArchitectureAllValue(Exception):
+class UnknownNoSupportForArchitectureAllValue(DebException):
     """
     Exception Signifying that the Release file contains the 'No-Support-for-Architecture-all' field,
     but with a value other than 'Packages'. We interpret this as an error since this would likely
     signify some unknown repo format, that pulp_deb is more likely to get wrong than right!
     """
+
+    error_code = "DEB0005"
 
     def __init__(self, release_file_path, unknown_value, *args, **kwargs):
         message = (
@@ -161,9 +184,7 @@ class UnknownNoSupportForArchitectureAllValue(Exception):
             "this field, please open an issue at https://github.com/pulp/pulp_deb/issues "
             "specifying the remote you are attempting to sync, so that we can improve pulp_deb!"
         )
-        super().__init__(_(message).format(unknown_value), *args, **kwargs)
-
-    pass
+        super().__init__(_(message).format(release_file_path, unknown_value))
 
 
 def synchronize(remote_pk, repository_pk, mirror, optimize):
