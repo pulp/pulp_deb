@@ -83,7 +83,7 @@ jobs:
             echo "PERFORMANCE_TEST=${{ matrix.env.PERFORMANCE_TEST }}" >> $GITHUB_ENV
           fi
 
-      - name: "Before Install"
+      - name: "Prepare Scenario Definition"
         run: |
           .github/workflows/scripts/before_install.sh
         shell: "bash"
@@ -103,7 +103,7 @@ jobs:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           GITHUB_CONTEXT: "${{ github.event.pull_request.commits_url }}"
 
-      - name: "Before Script"
+      - name: "Dump CI Metadata"
         run: |
           .github/workflows/scripts/before_script.sh
         shell: "bash"
@@ -112,7 +112,6 @@ jobs:
           ANSIBLE_FORCE_COLOR: "1"
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           GITHUB_CONTEXT: "${{ github.event.pull_request.commits_url }}"
-          REDIS_DISABLED: "${{ contains('', matrix.env.TEST) }}"
 
       - name: "Script"
         run: |
