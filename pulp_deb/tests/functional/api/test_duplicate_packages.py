@@ -18,6 +18,7 @@ from pulp_deb.tests.functional.constants import DEB_PACKAGE_RELPATH
 from pulp_deb.tests.functional.utils import (
     get_counts_from_content_summary,
     get_local_package_absolute_path,
+    get_task_error_message,
 )
 
 DUPLICATE_PACKAGE_DIR = "data/packages/duplicates/"  # below pulp_deb/tests/functional/
@@ -132,6 +133,5 @@ def test_add_duplicates_to_repo(
         deb_modify_repository(repository, {"add_content_units": [href1, href2]})
 
     # Assert the error message.
-    assert "Cannot create repository version since there are newly added packages with" in str(
-        exception.value.task.error["description"]
-    )
+    msg = get_task_error_message(exception.value.task.error)
+    assert "Cannot create repository version since there are newly added packages with" in msg

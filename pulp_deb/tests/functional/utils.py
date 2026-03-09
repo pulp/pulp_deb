@@ -109,3 +109,9 @@ def get_counts_from_content_summary(content_summary):
     for key in content:
         content[key] = content[key]["count"]
     return content
+
+
+def get_task_error_message(error):
+    if not error:
+        return ""
+    return str(error.get("description") or error.get("detail") or error.get("message") or error)
