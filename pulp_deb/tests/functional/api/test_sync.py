@@ -14,8 +14,12 @@ from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_STANDARD_REPOSITORY_NAME,
     DEB_FIXTURE_SUMMARY,
     DEB_FIXTURE_UPDATE_REPOSITORY_NAME,
+    DEB_FIXTURE_VARIANT_REPOSITORY_NAME,
     DEB_INSTALLER_FIXTURE_SUMMARY,
     DEB_INSTALLER_SOURCE_FIXTURE_SUMMARY,
+    DEB_PACKAGE_NAME,
+    DEB_PACKAGE_RELEASE_COMPONENT_NAME,
+    DEB_RELEASE_ARCHITECTURE_NAME,
     DEB_REPORT_CODE_SKIP_PACKAGE,
     DEB_REPORT_CODE_SKIP_RELEASE,
     DEB_REPORT_CODE_SKIP_COMPLETE,
@@ -389,3 +393,48 @@ def is_sync_skipped(task, code):
         if report.code == code:
             return True
     return False
+
+
+@pytest.mark.parallel
+def test_sync_architecture_variant_fields(
+    deb_init_and_sync,
+    deb_get_content_types,
+):
+    remote_args = {
+        "distributions": "muspelheim",
+        "components": "nidavellir",
+        "architectures": "amd64:v3",
+    }
+
+    repo, _, task = deb_init_and_sync(
+        url=DEB_FIXTURE_VARIANT_REPOSITORY_NAME, remote_args=remote_args, return_task=True
+    )
+
+    assert repo.latest_version_href.endswith("/1/")
+    assert not is_sync_skipped(task, DEB_REPORT_CODE_SKIP_RELEASE)
+
+    release_architectures = deb_get_content_types(
+        "apt_release_architecture_api",
+        DEB_RELEASE_ARCHITECTURE_NAME,
+        repo,
+        repo.latest_version_href,
+    )
+    assert len(release_architectures) == 1
+    assert release_architectures[0].architecture == "amd64v3"
+
+    package_release_components = deb_get_content_types(
+        "apt_package_release_components_api",
+        DEB_PACKAGE_RELEASE_COMPONENT_NAME,
+        repo,
+        repo.latest_version_href,
+    )
+    assert package_release_components
+
+    packages = deb_get_content_types(
+        "apt_package_api",
+        DEB_PACKAGE_NAME,
+        repo,
+        repo.latest_version_href,
+    )
+    assert packages
+    assert {pkg.architecture for pkg in packages} == {"amd64"}

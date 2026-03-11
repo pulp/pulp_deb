@@ -15,6 +15,7 @@ from pulp_deb.tests.functional.constants import (
     DEB_PACKAGE_INDEX_NAME,
     DEB_PACKAGE_NAME,
     DEB_PACKAGE_RELEASE_COMPONENT_NAME,
+    DEB_FIXTURE_VARIANT_REPOSITORY_NAME,
     DEB_PUBLICATION_ARGS_ALL,
     DEB_PUBLICATION_ARGS_ONLY_SIMPLE,
     DEB_PUBLICATION_ARGS_ONLY_STRUCTURED,
@@ -32,6 +33,7 @@ from pulp_deb.tests.functional.constants import (
     DEB_PUBLISH_FLAT_STRUCTURED,
     DEB_PUBLISH_FLAT_VERBATIM,
     DEB_PUBLISH_MISSING_ARCHITECTURE,
+    DEB_PUBLISH_VARIANT,
     DEB_RELEASE_COMPONENT_NAME,
     DEB_RELEASE_FILE_NAME,
     DEB_RELEASE_NAME,
@@ -683,3 +685,41 @@ def parse_package_index(pkg_idx):
             package
         )
     return packages
+
+
+@pytest.mark.parallel
+def test_publish_architecture_variant_package_indices(
+    create_publication_and_verify_repo_version,
+    deb_distribution_factory,
+    download_content_unit,
+    verify_distribution,
+):
+    """Test whether a repository with architecture variants can be published."""
+    remote_args = {
+        "distributions": "muspelheim",
+        "components": "nidavellir",
+        "architectures": "amd64:v3",
+    }
+
+    publication, _, _, _ = create_publication_and_verify_repo_version(
+        remote_args=remote_args,
+        publication_args=DEB_PUBLICATION_ARGS_ONLY_STRUCTURED,
+        remote_name=DEB_FIXTURE_VARIANT_REPOSITORY_NAME,
+    )
+
+    distribution = deb_distribution_factory(publication)
+    verify_distribution(distribution, DEB_PUBLISH_VARIANT)
+
+    base_path = distribution.to_dict()["base_path"]
+    release_file = download_content_unit(base_path, "dists/muspelheim/Release")
+    release = deb822.Deb822(release_file.decode("utf-8"))
+    assert "amd64v3" in release["Architectures"].split()
+
+    package_index = download_content_unit(
+        base_path,
+        "dists/muspelheim/nidavellir/binary-amd64v3/Packages",
+    )
+    packages = list(deb822.Packages.iter_paragraphs(package_index, use_apt_pkg=False))
+    assert packages
+    assert {package["Architecture"] for package in packages} == {"amd64"}
+    assert {package["Architecture-Variant"] for package in packages} == {"amd64v3"}

@@ -37,6 +37,7 @@ DEB_FIXTURE_STANDARD_REPOSITORY_NAME = "/debian/"
 DEB_FIXTURE_UPDATE_REPOSITORY_NAME = "/debian-update/"
 DEB_FIXTURE_INVALID_REPOSITORY_NAME = "/debian-invalid/"
 DEB_FIXTURE_FLAT_REPOSITORY_NAME = "/debian-flat/"
+DEB_FIXTURE_VARIANT_REPOSITORY_NAME = "/debian-variant/"
 DEB_FIXTURE_BASE = "/"
 DEB_FIXTURE_COMPLEX_REPOSITORY_NAME = "/debian-complex-dists"
 DEB_FIXTURE_MISSING_ARCHITECTURE_REPOSITORY_NAME = "/debian-missing-architecture/"
@@ -395,6 +396,13 @@ DEB_PUBLISH_EMPTY_REPOSITORY = {
         "dists/ginnungagap/asgard/binary-armeb/Packages",
         "dists/ginnungagap/jotunheimr/binary-ppc64/Packages",
         "dists/default/all/binary-all/Packages",
+    ],
+}
+
+DEB_PUBLISH_VARIANT = {
+    "release_file_folder_dist": "dists/muspelheim",
+    "package_index_paths_dist": [
+        "dists/muspelheim/nidavellir/binary-amd64v3/Packages",
     ],
 }
 

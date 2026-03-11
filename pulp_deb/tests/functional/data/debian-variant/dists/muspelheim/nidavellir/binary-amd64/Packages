@@ -1,0 +1,49 @@
+Package: brokkr
+Version: 1.0
+Architecture: amd64
+Maintainer: Equivs Dummy Package Generator <root@2dbd3597ca61>
+Installed-Size: 9
+Multi-Arch: foreign
+Priority: optional
+Section: misc
+Filename: pool/nidavellir/b/brokkr/brokkr_1.0_amd64.deb
+Size: 2124
+SHA256: c0027676e5354b5c993a66428be3ac958b247b177ac884f4ef8c8e33f56723b6
+SHA1: 528915ce52d57704fdb6df93416befeed393501a
+MD5sum: e81c124d2c0d8cb14e94255e2efbd23e
+Description: Brokkr
+ Brokkr is a dwarf smith
+
+Package: fafner
+Version: 1.0
+Architecture: amd64
+Maintainer: Equivs Dummy Package Generator <root@2dbd3597ca61>
+Installed-Size: 9
+Multi-Arch: foreign
+Priority: optional
+Section: misc
+Filename: pool/nidavellir/f/fafner/fafner_1.0_amd64.deb
+Size: 2196
+SHA256: 6247fe70a2647f2d0059a6005bdab71556e647a58a640b482b62bbc43abaeec4
+SHA1: 4bdff69c0167f154cac7af6f541edc3848cd05e8
+MD5sum: 36b33c7536ee983de6aa9a41da5c6216
+Description: Fafner
+ Fafner son of Hreidmar was a dwarf with a powerful arm and a fearless soul until
+ he was cursed and became a lindwurm.
+
+Package: hreidmar
+Version: 1.0
+Architecture: amd64
+Maintainer: Equivs Dummy Package Generator <root@2dbd3597ca61>
+Installed-Size: 9
+Multi-Arch: foreign
+Priority: optional
+Section: misc
+Filename: pool/nidavellir/h/hreidmar/hreidmar_1.0_amd64.deb
+Size: 2156
+SHA256: 25568926685190c9e225ab856fa3bb1057a5d341bf13cd388895d119c7275f5c
+SHA1: 808c5e0aa30cc4c78764e04062e06fbe20da664c
+MD5sum: c255e6fa777b8ba67aa6581d6852dd28
+Description: Hreidmar
+ Hreidmar is a dwarf sorcerer and the king of Nidavellir.
+
