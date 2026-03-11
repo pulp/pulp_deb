@@ -1,0 +1,17 @@
+Package: regin
+Version: 1.0
+Architecture: amd64
+Maintainer: Equivs Dummy Package Generator <root@2dbd3597ca61>
+Installed-Size: 9
+Multi-Arch: foreign
+Priority: optional
+Section: misc
+Filename: pool/nidavellir/r/regin/regin_1.0_amd64v3.deb
+Size: 2152
+SHA256: a250e621486d395cf8381283e89f7e72757d9a56bc6aa744a296ae38d04b0c79
+SHA1: 9df7d6d7ef5d138ecb6940c4ffdc000c69dca8e1
+MD5sum: d7b4a9649c9deb98c58e9f9fed3990c7
+Architecture-Variant: amd64v3
+Description: Regin
+ Regin the son of Hreidmar is the most skillful, and a dwarf of size.
+
