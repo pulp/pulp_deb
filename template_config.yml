@@ -105,7 +105,6 @@ test_performance:
   - "sync"
   - "publish"
   - "pulp_to_pulp"
-test_reroute: true
 test_s3: true
 use_issue_template: true
 ...
