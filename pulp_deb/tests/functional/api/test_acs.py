@@ -7,7 +7,6 @@ from pulpcore.client.pulp_deb.exceptions import ApiException, ServiceException
 from pulp_deb.tests.functional.constants import DEB_FIXTURE_ACS, DEB_FIXTURE_ACS_SUMMARY
 from pulp_deb.tests.functional.utils import get_counts_from_content_summary
 
-
 FRIGG_RELPATH = "pool/asgard/f/frigg/frigg_1.0_ppc64.deb"
 
 

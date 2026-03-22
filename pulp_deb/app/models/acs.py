@@ -3,7 +3,6 @@ from logging import getLogger
 from pulpcore.plugin.models import AlternateContentSource, AutoAddObjPermsMixin
 from pulp_deb.app.models import AptRemote
 
-
 log = getLogger(__name__)
 
 
