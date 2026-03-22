@@ -16,7 +16,6 @@ from pulpcore.plugin.models import (
 
 from pulp_deb.app.models.signing_service import AptReleaseSigningService
 
-
 BOOL_CHOICES = [(True, "yes"), (False, "no")]
 PUBLICATION_CACHE_DURATION = timedelta(days=3)
 
