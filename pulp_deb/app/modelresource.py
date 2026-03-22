@@ -207,8 +207,8 @@ class PackageReleaseComponentResource(DebContentResource):
         """
         super().before_import_row(row, **kwargs)
 
-        (rc_dist, rc_comp) = row["release_component"].split("|")
-        (pkg_relative_path, pkg_sha256) = row["package"].split("|")
+        rc_dist, rc_comp = row["release_component"].split("|")
+        pkg_relative_path, pkg_sha256 = row["package"].split("|")
         rc = ReleaseComponent.objects.filter(
             distribution=rc_dist, component=rc_comp, pulp_domain=get_domain()
         ).first()
