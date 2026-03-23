@@ -19,7 +19,6 @@ from pulpcore.plugin.models import Content
 
 from pulp_deb.app.models import Package, SourcePackage
 
-
 BOOL_CHOICES = [(True, "yes"), (False, "no")]
 
 

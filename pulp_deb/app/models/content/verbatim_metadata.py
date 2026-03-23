@@ -9,7 +9,6 @@ from django.db import models
 
 from pulpcore.plugin.models import Content
 
-
 BOOL_CHOICES = [(True, "yes"), (False, "no")]
 
 

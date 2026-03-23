@@ -110,7 +110,7 @@ class NullableCharField(CharField):
         This is needed when user input is not set, it defaults to None and the to_internal_value
         method never gets called.
         """
-        (is_empty_value, data) = super().validate_empty_values(data)
+        is_empty_value, data = super().validate_empty_values(data)
         if is_empty_value and data is None:
             return is_empty_value, NULL_VALUE
         return is_empty_value, data
