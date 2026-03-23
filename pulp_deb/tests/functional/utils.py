@@ -1,5 +1,6 @@
 # coding=utf-8
 """Utilities for tests for the deb plugin."""
+
 from random import choice
 from pathlib import Path
 from uuid import uuid4

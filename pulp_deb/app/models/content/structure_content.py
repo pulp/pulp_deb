@@ -20,7 +20,6 @@ from pulpcore.plugin.util import get_domain_pk
 
 from pulp_deb.app.models import Package, SourcePackage
 
-
 BOOL_CHOICES = [(True, "yes"), (False, "no")]
 
 
