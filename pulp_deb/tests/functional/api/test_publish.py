@@ -4,6 +4,8 @@ import os
 import pytest
 import re
 
+from django.conf import settings
+
 from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_ALT_SINGLE_DIST,
     DEB_FIXTURE_BASE,
@@ -655,6 +657,88 @@ def test_remove_all_content_from_repository(
     )
 
     assert len(prcs) == 0
+
+
+@pytest.mark.parallel
+def test_publish_truly_empty_repository_structured(
+    apt_distribution_api,
+    deb_distribution_factory,
+    deb_publication_factory,
+    deb_repository_factory,
+    download_content_unit,
+):
+    """Test that a truly empty repository can be published in structured mode.
+
+    The publication should synthesize a default distribution/component and publish
+    empty package metadata that apt can consume.
+    """
+    repo = deb_repository_factory()
+
+    publication = deb_publication_factory(
+        repo,
+        simple=False,
+        structured=True,
+    )
+
+    distribution = deb_distribution_factory(publication)
+    distribution = apt_distribution_api.read(distribution.pulp_href)
+
+    base_path = distribution.to_dict()["base_path"]
+
+    dist_path = "dists/" + settings.STRUCTURED_EMPTY_REPO_DISTRIBUTION + "/"
+    comp_path = dist_path + settings.STRUCTURED_EMPTY_REPO_COMPONENT + "/"
+
+    release_path = dist_path + "Release"
+    packages_path = comp_path + "binary-all/Packages"
+    packages_gz_path = comp_path + "binary-all/Packages.gz"
+
+    release = download_content_unit(base_path, release_path).decode("utf-8")
+    packages = download_content_unit(base_path, packages_path)
+    packages_gz = download_content_unit(base_path, packages_gz_path)
+
+    assert "404: Not Found" not in release
+    assert packages is not None
+    assert packages_gz is not None
+
+    assert "Codename: " + settings.STRUCTURED_EMPTY_REPO_DISTRIBUTION in release
+    assert "Suite: " + settings.STRUCTURED_EMPTY_REPO_DISTRIBUTION in release
+    assert "Components: " + settings.STRUCTURED_EMPTY_REPO_COMPONENT in release
+    assert "Architectures: all" in release
+    assert settings.STRUCTURED_EMPTY_REPO_COMPONENT + "/binary-all/Packages" in release
+    assert settings.STRUCTURED_EMPTY_REPO_COMPONENT + "/binary-all/Packages.gz" in release
+
+    assert packages.decode("utf-8") == ""
+
+
+@pytest.mark.parallel
+def test_publish_truly_empty_repository_simple_only(
+    apt_distribution_api,
+    deb_distribution_factory,
+    deb_publication_factory,
+    deb_repository_factory,
+    download_content_unit,
+):
+    """Test that simple mode keeps its existing empty-repo behavior."""
+    repo = deb_repository_factory()
+
+    publication = deb_publication_factory(
+        repo,
+        simple=True,
+        structured=False,
+    )
+
+    distribution = deb_distribution_factory(publication)
+    distribution = apt_distribution_api.read(distribution.pulp_href)
+
+    base_path = distribution.to_dict()["base_path"]
+
+    release = download_content_unit(base_path, "dists/default/Release").decode("utf-8")
+    packages = download_content_unit(base_path, "dists/default/all/binary-all/Packages")
+
+    assert "Codename: default" in release
+    assert "Components: all" in release
+    assert "Architectures: all" in release
+    assert packages.decode("utf-8") == ""
 
 
 def assert_equal_package_index(orig, new):

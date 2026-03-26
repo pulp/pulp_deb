@@ -188,6 +188,7 @@ def publish(
                         "distribution", flat=True
                     )
                 )
+                has_structured_distribution = bool(distributions)
 
                 if simple and "default" in distributions:
                     message = (
@@ -198,55 +199,23 @@ def publish(
                     distributions.remove("default")
 
                 release_helpers = []
-                for distribution in distributions:
-                    architectures = list(
-                        ReleaseArchitecture.objects.filter(
-                            pk__in=repo_version.content.order_by("-pulp_created"),
-                            distribution=distribution,
-                        )
-                        .distinct("architecture")
-                        .values_list("architecture", flat=True)
-                    )
+
+                if not has_structured_distribution and not simple:
+                    distribution = settings.STRUCTURED_EMPTY_REPO_DISTRIBUTION
+                    components = [settings.STRUCTURED_EMPTY_REPO_COMPONENT]
+                    architectures = list(settings.STRUCTURED_EMPTY_REPO_ARCHITECTURES)
                     if "all" not in architectures:
                         architectures.append("all")
 
-                    release = Release.objects.filter(
-                        pk__in=repo_version.content.order_by("-pulp_created"),
+                    codename = distribution.strip("/").split("/")[0]
+                    release = Release(
                         distribution=distribution,
-                    ).first()
-                    publish_upstream = (
-                        publish_upstream_release_fields
-                        if publish_upstream_release_fields is not None
-                        else repository.publish_upstream_release_fields
+                        codename=codename,
+                        suite=codename,
+                        origin="Pulp 3",
                     )
-                    if not release:
-                        codename = distribution.strip("/").split("/")[0]
-                        release = Release(
-                            distribution=distribution,
-                            codename=codename,
-                            suite=codename,
-                            origin="Pulp 3",
-                        )
-                        if repository.description:
-                            release.description = repository.description
-                    elif not publish_upstream:
-                        release = Release(
-                            distribution=release.distribution,
-                            codename=release.codename,
-                            suite=release.suite,
-                            origin="Pulp 3",
-                        )
-                        if repository.description:
-                            release.description = repository.description
-
-                    release_components_filtered = release_components.filter(
-                        distribution=distribution
-                    )
-                    components = list(
-                        release_components_filtered.distinct("component").values_list(
-                            "component", flat=True
-                        )
-                    )
+                    if repository.description:
+                        release.description = repository.description
 
                     signing_service = repository.release_signing_service(release)
 
@@ -258,43 +227,108 @@ def publish(
                         temp_dir=temp_dir,
                         signing_service=signing_service,
                     )
-
-                    package_release_components = PackageReleaseComponent.objects.filter(
-                        pk__in=repo_version.content.order_by("-pulp_created"),
-                        release_component__in=release_components_filtered,
-                    ).select_related("release_component", "package")
-
-                    source_package_release_components = (
-                        SourcePackageReleaseComponent.objects.filter(
-                            pk__in=repo_version.content.order_by("-pulp_created"),
-                            release_component__in=release_components_filtered,
-                        ).select_related("release_component", "source_package")
-                    )
-
-                    for component in components:
-                        packages = Package.objects.filter(
-                            pk__in=[
-                                prc.package.pk
-                                for prc in package_release_components
-                                if prc.release_component.component == component
-                            ]
-                        ).prefetch_related("contentartifact_set", "_artifacts")
-                        artifact_dict, remote_artifact_dict = _batch_fetch_artifacts(packages)
-                        release_helper.components[component].add_packages(
-                            packages,
-                            artifact_dict,
-                            remote_artifact_dict,
-                        )
-
-                        source_packages = [
-                            drc.source_package
-                            for drc in source_package_release_components
-                            if drc.release_component.component == component
-                        ]
-                        release_helper.components[component].add_source_packages(source_packages)
-
                     release_helper.save_unsigned_metadata()
                     release_helpers.append(release_helper)
+                else:
+                    for distribution in distributions:
+                        architectures = list(
+                            ReleaseArchitecture.objects.filter(
+                                pk__in=repo_version.content.order_by("-pulp_created"),
+                                distribution=distribution,
+                            )
+                            .distinct("architecture")
+                            .values_list("architecture", flat=True)
+                        )
+                        if "all" not in architectures:
+                            architectures.append("all")
+
+                        release = Release.objects.filter(
+                            pk__in=repo_version.content.order_by("-pulp_created"),
+                            distribution=distribution,
+                        ).first()
+                        publish_upstream = (
+                            publish_upstream_release_fields
+                            if publish_upstream_release_fields is not None
+                            else repository.publish_upstream_release_fields
+                        )
+                        if not release:
+                            codename = distribution.strip("/").split("/")[0]
+                            release = Release(
+                                distribution=distribution,
+                                codename=codename,
+                                suite=codename,
+                                origin="Pulp 3",
+                            )
+                            if repository.description:
+                                release.description = repository.description
+                        elif not publish_upstream:
+                            release = Release(
+                                distribution=release.distribution,
+                                codename=release.codename,
+                                suite=release.suite,
+                                origin="Pulp 3",
+                            )
+                            if repository.description:
+                                release.description = repository.description
+
+                        release_components_filtered = release_components.filter(
+                            distribution=distribution
+                        )
+                        components = list(
+                            release_components_filtered.distinct("component").values_list(
+                                "component", flat=True
+                            )
+                        )
+
+                        signing_service = repository.release_signing_service(release)
+
+                        release_helper = _ReleaseHelper(
+                            publication=publication,
+                            components=components,
+                            architectures=architectures,
+                            release=release,
+                            temp_dir=temp_dir,
+                            signing_service=signing_service,
+                        )
+
+                        package_release_components = PackageReleaseComponent.objects.filter(
+                            pk__in=repo_version.content.order_by("-pulp_created"),
+                            release_component__in=release_components_filtered,
+                        ).select_related("release_component", "package")
+
+                        source_package_release_components = (
+                            SourcePackageReleaseComponent.objects.filter(
+                                pk__in=repo_version.content.order_by("-pulp_created"),
+                                release_component__in=release_components_filtered,
+                            ).select_related("release_component", "source_package")
+                        )
+
+                        for component in components:
+                            packages = Package.objects.filter(
+                                pk__in=[
+                                    prc.package.pk
+                                    for prc in package_release_components
+                                    if prc.release_component.component == component
+                                ]
+                            ).prefetch_related("contentartifact_set", "_artifacts")
+                            artifact_dict, remote_artifact_dict = _batch_fetch_artifacts(packages)
+                            release_helper.components[component].add_packages(
+                                packages,
+                                artifact_dict,
+                                remote_artifact_dict,
+                            )
+
+                            source_packages = [
+                                drc.source_package
+                                for drc in source_package_release_components
+                                if drc.release_component.component == component
+                            ]
+                            release_helper.components[component].add_source_packages(
+                                source_packages
+                            )
+
+                        release_helper.save_unsigned_metadata()
+                        release_helpers.append(release_helper)
 
                 asyncio.run(_concurrently_sign_metadata(release_helpers))
                 for release_helper in release_helpers:
