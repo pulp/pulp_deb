@@ -15,7 +15,7 @@ REPO_ROOT="$PWD"
 
 source .github/workflows/scripts/utils.sh
 
-PIP_REQUIREMENTS=("pulp-cli-deb")
+PIP_REQUIREMENTS=("pulp-cli-deb" "yq")
 
 # This must be the **only** call to "pip install" on the test runner.
 pip install ${PIP_REQUIREMENTS[*]}
@@ -23,7 +23,7 @@ pip install ${PIP_REQUIREMENTS[*]}
 if [[ "$TEST" = "s3" ]]; then
 for i in {1..3}
 do
-  ansible-galaxy collection install "amazon.aws:8.1.0" && s=0 && break || s=$? && sleep 3
+  ansible-galaxy collection install "amazon.aws:11.1.0" && s=0 && break || s=$? && sleep 3
 done
 if [[ $s -gt 0 ]]
 then
@@ -36,18 +36,15 @@ fi
 PULP_CLI_VERSION="$(pip freeze | sed -n -e 's/pulp-cli-deb==//p')"
 git clone --depth 1 --branch "$PULP_CLI_VERSION" https://github.com/pulp/pulp-cli-deb.git ../pulp-cli-deb
 
-cd .ci/ansible/
+PULP_API_ROOT="$(yq -r '.pulp_scenario_settings.api_root // .pulp_settings.api_root // "/pulp/"' < .ci/ansible/vars/main.yaml)"
 
 pulp config create --base-url https://pulp --api-root "${PULP_API_ROOT}" --username "admin" --password "password"
-cp ~/.config/pulp/cli.toml "${REPO_ROOT}/../pulp-cli-deb/tests/cli.toml"
+cp ~/.config/pulp/cli.toml "../pulp-cli-deb/tests/cli.toml"
+
+cd .ci/ansible/
 
 ansible-playbook build_container.yaml
 ansible-playbook start_container.yaml
-
-# Plugins often write to ~/.config/pulp/cli.toml from the host
-chmod 777 ~/.config/pulp
-chmod 666 ~/.config/pulp/cli.toml
-sudo chown -R 700:700 ~/.config
 echo ::group::SSL
 # Copy pulp CA
 sudo docker cp pulp:/etc/pulp/certs/pulp_webserver.crt /usr/local/share/ca-certificates/pulp_webserver.crt
@@ -72,7 +69,3 @@ fi
 # Needed for some functional tests
 cmd_prefix bash -c "echo '%wheel        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/nopasswd"
 cmd_prefix bash -c "usermod -a -G wheel pulp"
-
-# Lots of plugins try to use this path, and throw warnings if they cannot access it.
-cmd_prefix mkdir /.pytest_cache
-cmd_prefix chown pulp:pulp /.pytest_cache
