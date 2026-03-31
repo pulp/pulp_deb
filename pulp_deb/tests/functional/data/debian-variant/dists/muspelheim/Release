@@ -1,0 +1,43 @@
+Codename: muspelheim
+Date: Thu, 12 Mar 2026 08:58:23 UTC
+Architectures: amd64 amd64v3
+Components: nidavellir
+ f04a245b4043d14d53a3c6729dc390ca             6105 Release
+ 109c3886adab87e7ba4feb1a444e0e48             1507 nidavellir/binary-amd64/Packages
+ 93cddbe467fc54f073b01eb7aef4027d              691 nidavellir/binary-amd64/Packages.gz
+ df32706d8894eec7f999d7ef70d33551              748 nidavellir/binary-amd64/Packages.xz
+ 03fb6ce439e8bb40c89f64de864859ff               42 nidavellir/binary-amd64/Release
+ 514729c4007519b960a25c3fb8bd95a0              530 nidavellir/binary-amd64v3/Packages
+ 6aba60dced38276bec7ddf88ae6a5df5              404 nidavellir/binary-amd64v3/Packages.gz
+ f1c73d611f01f729c797888b2938936c              472 nidavellir/binary-amd64v3/Packages.xz
+ 6ad8e797797df798ba6c8018b103305b             1592 nidavellir/binary-amd64v3/Release
+SHA1:
+ 230154e9ee3802eed30fe21802c6b047215fddce             6105 Release
+ 383300de2506f07b985f4339a58e0e4e1307b05c             1507 nidavellir/binary-amd64/Packages
+ 0c3ab4f49cb4d07015967ecc08185265e9820d4b              691 nidavellir/binary-amd64/Packages.gz
+ 6c81327ae597a035e7b47f58b259dd99507c6df7              748 nidavellir/binary-amd64/Packages.xz
+ 28fcd2c20429de5fb95f8e8155bd5efee9175016               42 nidavellir/binary-amd64/Release
+ e907742ada2fa81d941fdbb67c32bcba642e8ea9              530 nidavellir/binary-amd64v3/Packages
+ 12de93d615edf4f2fdf3eab518a1199b501da7d7              404 nidavellir/binary-amd64v3/Packages.gz
+ 6564c04a2e4ae557fc1961dd2279b004ab5a66c2              472 nidavellir/binary-amd64v3/Packages.xz
+ 9f859a6c12be19eba41cfdb8fe988f6810d97a87             1592 nidavellir/binary-amd64v3/Release
+SHA256:
+ fa6f28209708b6df2c388e31f89932019ac923d84fc2fd1a017b0a5081b7caf0             6105 Release
+ a8e0942bd94ac0d1f55ec7c875351e8dd06e08d730f430e63eb763b5b7233e18             1507 nidavellir/binary-amd64/Packages
+ 1aadec25c144df055c528bd6ede0ff1d7383abfcd57bf7dc77f51f1f8bac21b6              691 nidavellir/binary-amd64/Packages.gz
+ 29e3d8ae925d27242e213249e2cc760dbe6ddc01d32787dcaadfd09368051fb3              748 nidavellir/binary-amd64/Packages.xz
+ c76c901cf3b8c44cf7a89735b111aa24956dc9b9f4db3905371b07642167b960               42 nidavellir/binary-amd64/Release
+ d6a376160232a5d52cefb166e7eedeba93d3f59e6d0deac6a011732e0b103c66              530 nidavellir/binary-amd64v3/Packages
+ 9f1ed20bb7463b43836aae1ccb7fe7dc097223c49b0d1781e76e955c6294ecbe              404 nidavellir/binary-amd64v3/Packages.gz
+ dfe827f6d7e00f976ddd5e6e8e74b1266eb00604123d5160c65072e39ec622a9              472 nidavellir/binary-amd64v3/Packages.xz
+ 5f7c58982d6444a90d9723141407eb00fce2667410a532f9880610160504d046             1592 nidavellir/binary-amd64v3/Release
+SHA512:
+ 4610a9a18c71612aa2b4028d9e76f4123b75a2ffb545559971488de277f931d924d3781196f4ccb07f0849f67c7c67111ce9de1b9a6c920cea78b60d76efeaa4             6105 Release
+ bd19cc63c724f8b408bfcb97742ef664dd67150812c1be2ab758d18027eef552ec66fb78f58d8438be6624274c369a9217e5ea579ec9230065fef89a38b45859             1507 nidavellir/binary-amd64/Packages
+ d0de8c662aeab2b8d3c1207f971246cab7e9e6f0a5bc95567fb58a71b02778d738fc55673d25c47fb86f623e3d71b0ba0a72efa7a0d26a33b702e2135844b2b2              691 nidavellir/binary-amd64/Packages.gz
+ 3f4b789ec2e2d33eb91bb1f31379513db8c0e3482b77b793a23a9ac203c58d02c74e9771964bd2b45c2fff36067493ad22ac104360815e00533ccba0d6f671fc              748 nidavellir/binary-amd64/Packages.xz
+ ed9ff46616e68ec32ab381dc93ddfd46bed777855288c54b4b821be0112f02cc0a6870fc8d44e1c685d6460a8f7f2fdbe65fde91c9bea0caee101f5a713b7219               42 nidavellir/binary-amd64/Release
+ 7d0ccd30f3c864a7afb692836294b9ca7c2f8d99a34168b4329203e4aca5486f8d3ff895930580194d5bdebc89c00105eecf7b5c1ee3981b718cfbde369ca464              530 nidavellir/binary-amd64v3/Packages
+ 6e8f8d8ea0bf80b548c0b43d78ce7a27cb7f9447ba1d6da3399d8c6895758af932dbf936e5d3506c419b70cd9169f5b8251cd15bd2d53e24e73735532c591da9              404 nidavellir/binary-amd64v3/Packages.gz
+ 566126748b73ecefddabddd73f69726363dfafe9cf5c8d7777015de0d65b14f8330e88fe21d7a9606bfea51a2ec085fbc2cead88f4ef8252e923e7225e4b3bd5              472 nidavellir/binary-amd64v3/Packages.xz
+ 70fde92e52ad71f098c0c01f13e78fda136ebcace2c04f89413b7f41100f5e9ddb13d09fa9048a3036e7058f8a9daa47b4ab38165ffad58a81ee602569f9db51             1592 nidavellir/binary-amd64v3/Release
