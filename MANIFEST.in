@@ -2,6 +2,7 @@ include CHANGES.md
 include COMMITMENT
 exclude CONTRIBUTING.md
 include COPYRIGHT
+include ci_requirements.txt
 include functest_requirements.txt
 include LICENSE
 include pulp_deb/app/schema/*
