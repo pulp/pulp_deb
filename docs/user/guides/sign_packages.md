@@ -44,12 +44,3 @@ pulp deb content upload \
   --repository ${REPOSITORY} \
   --file ${DEB_FILE}
 ```
-
-### Known Limitations
-
-**Traffic overhead**: The signing of a package should happen inside of a Pulp worker.
-  [By design](site:pulpcore/docs/dev/learn/plugin-concepts/#tasks),
-  Pulp needs to temporarily commit the file to the default backend storage in order to make the Uploaded File available to the tasking system.
-  This implies in some extra traffic, compared to a scenario where a task could process the file directly.
-
-**No sign tracking**: We do not track signing information of a package.

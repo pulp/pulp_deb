@@ -96,6 +96,9 @@ Package signing is available as a tech preview beginning with pulp_deb 3.9.0. Un
 signing, package signing modifies the `.deb` file directly, so it uses the
 `deb:AptPackageSigningService` class.
 
+!!! note
+    Currently only `_gpgorigin` signatures (as produced by `debsigs --sign=origin`) are supported.
+
 ### Prerequisites
 
 - Install `debsigs` and ensure it can access the private key you want to use.
