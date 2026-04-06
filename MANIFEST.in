@@ -13,3 +13,5 @@ include TESTING.md
 recursive-include pulp_deb/tests/functional/data *
 recursive-include pulp_deb/tests/functional/fixtures *
 exclude releasing.md
+
+exclude .gitleaks.toml
