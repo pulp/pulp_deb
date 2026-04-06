@@ -319,6 +319,7 @@ def test_signed_repo_modify(
     )
 
     created_package = deb_package_factory(file=file_to_upload)
+    assert created_package.signing_keys is None
     release_component, prc = add_package_to_repo(repository, created_package.pulp_href)
 
     # Verify that the final served package is signed
@@ -333,9 +334,12 @@ def test_signed_repo_modify(
     )
 
     repository = apt_repository_api.read(repository.pulp_href)
-    signed_package_href = (
-        apt_package_api.list(repository_version=repository.latest_version_href).results[0].pulp_href
-    )
+    signed_package = apt_package_api.list(
+        repository_version=repository.latest_version_href
+    ).results[0]
+    signed_package_href = signed_package.pulp_href
+    prefixed = fingerprint if ":" in fingerprint else f"v4:{fingerprint}"
+    assert signed_package.signing_keys == [prefixed]
 
     # attempt to add the package to the repo a second time (should produce same package href)
     add_package_to_repo(repository, created_package.pulp_href, release_component, prc)

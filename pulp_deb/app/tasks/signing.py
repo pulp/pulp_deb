@@ -98,6 +98,7 @@ def sign_and_create(
     # The Package serializer validation method have two branches: the signing and non-signing.
     # Here, the package is already signed, so we need to update the context for a proper validation.
     context["sign_package"] = False
+    context["signing_key"] = signing_fingerprint
     # The request data is immutable when there's an upload, so we can't delete the upload out of the
     # request data like we do for a file.  Instead, we'll delete it here.
     if "upload" in data:
@@ -148,6 +149,8 @@ def _sign_package(package, signing_service, signing_fingerprint, package_release
         signed_package.pk = None
         signed_package.pulp_id = None
         signed_package.sha256 = artifact.sha256
+        # Only _gpgorigin signatures are supported currently, so packages have one signing key.
+        signed_package.signing_keys = [signing_fingerprint]
         signed_package.save()
         ContentArtifact.objects.create(
             artifact=artifact,
