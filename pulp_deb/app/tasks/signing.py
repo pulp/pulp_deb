@@ -56,10 +56,16 @@ def _create_signed_artifact(signed_package_path, result):
 
 
 def _sign_file(package_file, signing_service, signing_fingerprint):
+    """Sign a package and return the signed artifact."""
+    prefix, raw_fingerprint = signing_fingerprint.split(":", 1)
     logging.info(
         _("Signing package %s with fingerprint %s"), package_file.name, signing_fingerprint
     )
-    result = signing_service.sign(package_file.name, pubkey_fingerprint=signing_fingerprint)
+    result = signing_service.sign(
+        package_file.name,
+        env_vars={"PULP_SIGNING_FINGERPRINT_TYPE": prefix},
+        pubkey_fingerprint=raw_fingerprint,
+    )
     signed_package_path = Path(result["deb_package"])
     return _create_signed_artifact(signed_package_path, result)
 

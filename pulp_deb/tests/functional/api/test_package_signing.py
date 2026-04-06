@@ -425,3 +425,59 @@ def test_signed_repo_rejects_on_demand_content(
         )
 
     assert "Cannot add on-demand content" in exc.value.body
+
+
+@pytest.mark.parallel
+def test_set_and_unset_signing_service_release_overrides(
+    signing_gpg_extra,
+    deb_package_signing_service,
+    deb_signing_service_factory,
+    deb_repository_factory,
+    apt_repository_api,
+):
+    """Ensure signing service release overrides can be set and removed via partial_update."""
+    _, gpg_metadata_a, gpg_metadata_b = signing_gpg_extra
+
+    def _prefixed(fp):
+        return fp if ":" in fp else f"v4:{fp}"
+
+    repository = deb_repository_factory(
+        package_signing_service=deb_package_signing_service.pulp_href,
+        package_signing_fingerprint=gpg_metadata_a.fingerprint,
+    )
+    repo = apt_repository_api.read(repository.pulp_href)
+    assert repo.package_signing_fingerprint_release_overrides == {}
+    assert repo.signing_service_release_overrides == {}
+
+    # Set a fingerprint override, then remove it with an empty string
+    apt_repository_api.partial_update(
+        repository.pulp_href,
+        {"package_signing_fingerprint_release_overrides": {"bionic": gpg_metadata_b.fingerprint}},
+    )
+    repo = apt_repository_api.read(repository.pulp_href)
+    assert repo.package_signing_fingerprint_release_overrides == {
+        "bionic": _prefixed(gpg_metadata_b.fingerprint),
+    }
+
+    apt_repository_api.partial_update(
+        repository.pulp_href,
+        {"package_signing_fingerprint_release_overrides": {"bionic": ""}},
+    )
+    repo = apt_repository_api.read(repository.pulp_href)
+    assert repo.package_signing_fingerprint_release_overrides == {}
+
+    # Set a signing service override, then remove it with null
+    signing_service = deb_signing_service_factory
+    apt_repository_api.partial_update(
+        repository.pulp_href,
+        {"signing_service_release_overrides": {"jammy": signing_service.pulp_href}},
+    )
+    repo = apt_repository_api.read(repository.pulp_href)
+    assert repo.signing_service_release_overrides == {"jammy": signing_service.pulp_href}
+
+    apt_repository_api.partial_update(
+        repository.pulp_href,
+        {"signing_service_release_overrides": {"jammy": None}},
+    )
+    repo = apt_repository_api.read(repository.pulp_href)
+    assert repo.signing_service_release_overrides == {}

@@ -190,7 +190,7 @@ class AptPackageSigningService(SigningService):
         Args:
             filename: The absolute path to the package to be signed.
             env_vars: (optional) Dict of env_vars to be passed to the signing script.
-            pubkey_fingerprint: The V4 fingerprint that correlates with the private key to use.
+            pubkey_fingerprint: The fingerprint that correlates with the private key to use.
         """
         if not pubkey_fingerprint:
             raise ValueError("A pubkey_fingerprint must be provided.")
@@ -281,7 +281,7 @@ class DebPackageSigningResult(BaseModel):
     """
 
     sha256 = models.TextField(max_length=64)
-    package_signing_fingerprint = models.TextField(max_length=40)
+    package_signing_fingerprint = models.TextField()
     result = models.ForeignKey(Content, on_delete=models.CASCADE)
 
     class Meta:
