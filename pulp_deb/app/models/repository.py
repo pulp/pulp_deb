@@ -72,7 +72,7 @@ class AptRepository(Repository, AutoAddObjPermsMixin):
         AptPackageSigningService, on_delete=models.SET_NULL, null=True
     )
 
-    package_signing_fingerprint = models.TextField(null=True, max_length=40)
+    package_signing_fingerprint = models.TextField(null=True)
 
     # Implicit signing_service_release_overrides
     # Implicit package_signing_fingerprint_release_overrides
@@ -203,7 +203,7 @@ class AptRepositoryReleasePackageSigningFingerprintOverride(BaseModel):
         on_delete=models.CASCADE,
         related_name="package_signing_fingerprint_release_overrides",
     )
-    package_signing_fingerprint = models.TextField(max_length=40)
+    package_signing_fingerprint = models.TextField()
     release_distribution = models.TextField()
 
     class Meta:

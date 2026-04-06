@@ -5,6 +5,7 @@ from django.db import transaction
 from jsonschema import Draft7Validator
 from pulpcore.plugin.models import SigningService
 from pulpcore.plugin.serializers import (
+    PgpKeyFingerprintField,
     RelatedField,
     RepositorySerializer,
     RepositorySyncURLSerializer,
@@ -42,7 +43,8 @@ class ServiceOverrideField(serializers.DictField):
 
 
 class PackageFingerprintOverrideField(serializers.DictField):
-    child = serializers.CharField(max_length=40, allow_blank=True)
+    # allow_blank=True so empty strings can be used to delete overrides
+    child = PgpKeyFingerprintField(allow_blank=True)
 
     def to_representation(self, overrides):
         return {x.release_distribution: x.package_signing_fingerprint for x in overrides.all()}
@@ -100,9 +102,9 @@ class AptRepositorySerializer(RepositorySerializer):
         required=False,
         help_text=_(
             "A dictionary of Release distributions and the "
-            "Package Signing Fingerprints they should use."
+            "Package Signing Fingerprints they should use. "
             "Example: "
-            '{"bionic": "7FC42CD5F3D8EEC3"}'
+            '{"bionic": "v4:7FC42CD5F3D8EEC37FC42CD5F3D8EEC3DEADBEEF"}'
         ),
     )
 
@@ -114,15 +116,16 @@ class AptRepositorySerializer(RepositorySerializer):
         required=False,
         allow_null=True,
     )
-    package_signing_fingerprint = serializers.CharField(
+    package_signing_fingerprint = PgpKeyFingerprintField(
         help_text=_(
-            "The pubkey V4 fingerprint (160 bits) to be passed to the package signing service."
+            "The pubkey fingerprint to be passed to the package signing service. "
+            "Format: 'v<N>:<hex-fingerprint>' or 'keyid:<16-hex-char>'. "
+            "Example: 'v4:ABCDEF1234567890ABCDEF1234567890ABCDEF12'. "
             "The signing service will use that on signing operations related to this repository."
         ),
-        max_length=40,
         required=False,
-        allow_blank=True,
-        default="",
+        allow_null=True,
+        default=None,
     )
 
     class Meta:
@@ -213,12 +216,6 @@ class AptRepositorySerializer(RepositorySerializer):
                         package_signing_fingerprint=fingerprint,
                         release_distribution=distro,
                     ).save()
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        if "package_signing_fingerprint" in data and data["package_signing_fingerprint"] is None:
-            data["package_signing_fingerprint"] = ""
-        return data
 
 
 class AptRepositorySyncURLSerializer(RepositorySyncURLSerializer):
