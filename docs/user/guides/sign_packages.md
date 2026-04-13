@@ -1,0 +1,46 @@
+# Sign Debian Packages
+
+Sign a Debian package using a registered package signing service.
+
+Currently, only signing on upload and when modifying a repo's content are supported.
+
+## On Upload
+
+!!! tip "New in 3.9.0 (Tech Preview)"
+
+Sign a Debian package when uploading it to a repository.
+
+### Prerequisites
+
+- Have an `AptPackageSigningService` registered
+  (see the [signing service guide](site:pulp_deb/docs/user/guides/signing_service/)).
+- Have the fingerprint of the key you want to use, in prefixed format (e.g. `v4:<hex-fingerprint>`
+  or `keyid:<16-hex-char>`). The key must be accessible by the signing service you are using.
+  The raw fingerprint is forwarded to the signing script via the `PULP_SIGNING_KEY_FINGERPRINT`
+  environment variable, and the prefix is forwarded via `PULP_SIGNING_FINGERPRINT_TYPE`.
+
+### Instructions
+
+1. Configure a repository to enable signing.
+    - Both `package_signing_service` and `package_signing_fingerprint` must be set on the
+      repository (or provided via the REST API fields with the same names).
+    - With those fields set, every package upload to the repository will be signed by the service.
+    - Optionally, set `package_signing_fingerprint_release_overrides` if you need different keys per
+      dist.
+2. Upload a package to this repository.
+
+### Example
+
+```bash
+# Create or update a repository with signing enabled
+# The fingerprint must use the prefixed format, e.g. "v4:7FC42CD5F3D8EEC37FC42CD5F3D8EEC3DEADBEEF"
+http POST $API_ROOT/repositories/deb/apt \
+  name="MyDebRepo" \
+  package_signing_service=$SIGNING_SERVICE_HREF \
+  package_signing_fingerprint="v4:$SIGNING_FINGERPRINT"
+
+# Upload a package
+pulp deb content upload \
+  --repository ${REPOSITORY} \
+  --file ${DEB_FILE}
+```

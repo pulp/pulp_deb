@@ -9,6 +9,7 @@ files or APT repository package indices.
 
 import os
 
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 from django.db.models import JSONField
@@ -69,6 +70,8 @@ class BasePackage(Content):
     relative_path = models.TextField(null=False)
     # this digest is transferred to the content as a natural_key
     sha256 = models.TextField(null=False)
+
+    signing_keys = ArrayField(models.TextField(), default=None, null=True)
 
     custom_fields = JSONField(null=True)
     _pulp_domain = models.ForeignKey("core.Domain", default=get_domain_pk, on_delete=models.PROTECT)
