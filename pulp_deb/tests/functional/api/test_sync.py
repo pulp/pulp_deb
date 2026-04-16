@@ -21,7 +21,7 @@ from pulp_deb.tests.functional.constants import (
     DEB_REPORT_CODE_SKIP_COMPLETE,
     DEB_SIGNING_KEY,
 )
-from pulp_deb.tests.functional.utils import get_counts_from_content_summary
+from pulp_deb.tests.functional.utils import get_counts_from_content_summary, get_task_error_message
 
 
 @pytest.mark.parallel
@@ -121,7 +121,7 @@ def test_sync_missing_package_indices(
 @pytest.mark.parametrize(
     "repo_name, remote_args, expected",
     [
-        ("http://i-am-an-invalid-url.com/invalid/", {}, ["Cannot connect"]),
+        ("http://i-am-an-invalid-url.com/invalid/", {}, ["cannot connect"]),
         (
             DEB_FIXTURE_STANDARD_REPOSITORY_NAME,
             {"distributions": "no_dist"},
@@ -162,8 +162,9 @@ def test_sync_invalid_cases(
     # Verify a PulpTaskError is raised and the error message is as expected
     with pytest.raises(PulpTaskError) as exc:
         deb_sync_repository(remote, repo)
+    msg = get_task_error_message(exc.value.task.error).lower()
     for exp in expected:
-        assert exp in str(exc.value.task.error["description"])
+        assert exp.lower() in msg
 
 
 @pytest.mark.parallel
