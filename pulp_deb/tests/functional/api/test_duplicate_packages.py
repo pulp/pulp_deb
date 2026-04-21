@@ -132,6 +132,7 @@ def test_add_duplicates_to_repo(
         deb_modify_repository(repository, {"add_content_units": [href1, href2]})
 
     # Assert the error message.
+    assert "[DEB0011]" in str(exception.value.task.error["description"])
     assert "Cannot create repository version since there are newly added packages with" in str(
         exception.value.task.error["description"]
     )
