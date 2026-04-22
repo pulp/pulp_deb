@@ -88,7 +88,7 @@ class AptAlternateContentsourceViewSet(AlternateContentSourceViewSet, RolesMixin
                 "principal": "authenticated",
                 "effect": "allow",
                 "condition": (
-                    "has_model_or_domain_or_obj_perms:" "deb.manage_roles_aptalternatecontentsource"
+                    "has_model_or_domain_or_obj_perms:deb.manage_roles_aptalternatecontentsource"
                 ),
             },
         ],

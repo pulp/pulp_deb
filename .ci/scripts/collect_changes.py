@@ -25,6 +25,7 @@ from pathlib import Path
 from git import GitCommandError, Repo
 from packaging.version import parse as parse_version
 
+
 PYPI_PROJECT = "pulp_deb"
 
 # Read Towncrier settings

@@ -63,7 +63,6 @@ def _format_checkpoint_timestamp(timestamp):
 
 
 class TestCheckpointDistribution:
-
     def test_base_path_lists_checkpoints(self, setup, http_get, distribution_base_url):
         pubs, distribution = setup
 

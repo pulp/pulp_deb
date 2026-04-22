@@ -106,12 +106,7 @@ def test_parse_release_file_attributes_normal(mock_d_content, mock_main_artifact
     else:
         mock_d_content.content.distribution = "buster"
 
-    data = (
-        "Codename: buster\n"
-        "Suite: stable\n"
-        "Components: main contrib\n"
-        "Architectures: amd64 i386\n"
-    )
+    data = "Codename: buster\nSuite: stable\nComponents: main contrib\nArchitectures: amd64 i386\n"
     mock_main_artifact._fake_file_path.write_text(data)
 
     _parse_release_file_attributes(mock_d_content, mock_main_artifact)
@@ -133,9 +128,9 @@ def test_parse_release_file_attributes_missing_fields_nonflat(
     mock_d_content.content.distribution = "buster"
 
     if field_name == "Components":
-        data = "Codename: buster\n" "Suite: stable\n" "Architectures: amd64 i386\n"
+        data = "Codename: buster\nSuite: stable\nArchitectures: amd64 i386\n"
     else:
-        data = "Codename: buster\n" "Suite: stable\n" "Components: main contrib\n"
+        data = "Codename: buster\nSuite: stable\nComponents: main contrib\n"
 
     mock_main_artifact._fake_file_path.write_text(data)
 
@@ -151,7 +146,7 @@ def test_parse_release_file_attributes_missing_fields_flat_repo(mock_d_content, 
     """
     mock_d_content.content.distribution = "flat-repo"
 
-    data = "Codename: buster\n" "Suite: stable\n"
+    data = "Codename: buster\nSuite: stable\n"
     mock_main_artifact._fake_file_path.write_text(data)
 
     with patch("pulp_deb.app.tasks.synchronizing.log.warning") as mock_log_warn:
@@ -173,7 +168,7 @@ def test_parse_release_file_attributes_permissive_component(mock_d_content, mock
     """
     mock_d_content.content.distribution = "buster"
 
-    data = "Codename: buster\n" "Suite: stable\n" "Component: main\n" "Architectures: amd64\n"
+    data = "Codename: buster\nSuite: stable\nComponent: main\nArchitectures: amd64\n"
     mock_main_artifact._fake_file_path.write_text(data)
 
     _parse_release_file_attributes(mock_d_content, mock_main_artifact)
@@ -188,7 +183,7 @@ def test_parse_release_file_attributes_permissive_architecture(mock_d_content, m
     Test if PERMISSIVE_SYNC=True allows for the "Architecture" field in a Release file to be parsed.
     """
     mock_d_content.content.distribution = "buster"
-    data = "Codename: buster\n" "Suite: stable\n" "Components: main\n" "Architecture: amd64 i386\n"
+    data = "Codename: buster\nSuite: stable\nComponents: main\nArchitecture: amd64 i386\n"
     mock_main_artifact._fake_file_path.write_text(data)
 
     _parse_release_file_attributes(mock_d_content, mock_main_artifact)
@@ -209,9 +204,9 @@ def test_parse_release_file_attributes_permissive_disabled_compoent(
     mock_d_content.content.distribution = "buster"
 
     if field_name == "Components":
-        data = "Codename: buster\n" "Suite: stable\n" "Component: main\n" "Architectures: amd64\n"
+        data = "Codename: buster\nSuite: stable\nComponent: main\nArchitectures: amd64\n"
     else:
-        data = "Codename: buster\n" "Suite: stable\n" "Components: main\n" "Architecture: amd64\n"
+        data = "Codename: buster\nSuite: stable\nComponents: main\nArchitecture: amd64\n"
 
     mock_main_artifact._fake_file_path.write_text(data)
 
