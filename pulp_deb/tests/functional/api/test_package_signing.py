@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import hashlib
 import shutil
+import subprocess
 import uuid
 
 import pytest
@@ -485,3 +486,63 @@ def test_set_and_unset_signing_service_release_overrides(
     )
     repo = apt_repository_api.read(repository.pulp_href)
     assert repo.signing_service_release_overrides == {}
+
+
+def test_presigned_package_not_resigned(
+    tmp_path,
+    add_package_to_repo,
+    signing_gpg_extra,
+    package_signing_script_path,
+    deb_package_signing_service,
+    deb_repository_factory,
+    deb_package_factory,
+    apt_repository_api,
+    apt_package_api,
+):
+    """
+    Ensure a package already signed with the repo's signing fingerprint is not re-signed,
+    even when the signing service uses a different key.
+    """
+    gpg, gpg_metadata_a, gpg_metadata_b = signing_gpg_extra
+
+    # Sign a package locally with key B (different from signing service's key A)
+    file_to_upload = shutil.copy(
+        get_local_package_absolute_path("frigg_1.0_ppc64.deb"),
+        tmp_path,
+    )
+
+    # Sign the package with key B using the signing script
+    env = {"PULP_SIGNING_KEY_FINGERPRINT": gpg_metadata_b.fingerprint}
+    result = subprocess.run(
+        [str(package_signing_script_path), str(file_to_upload)],
+        env=env,
+        capture_output=True,
+    )
+    assert result.returncode == 0, f"Signing failed: {result.stderr}"
+
+    # Verify the package is signed with key B
+    AptPackageSigningService._check_deb_signature(
+        str(file_to_upload), gpg_metadata_b.fingerprint, str(tmp_path), gpg
+    )
+
+    # Upload the pre-signed package without a signing repository
+    created_package = deb_package_factory(file=str(file_to_upload))
+    original_href = created_package.pulp_href
+
+    # Create a repo with signing service (key A) but package_signing_fingerprint = key B
+    repository = deb_repository_factory(
+        package_signing_service=deb_package_signing_service.pulp_href,
+        package_signing_fingerprint=gpg_metadata_b.fingerprint,
+    )
+
+    # Add the pre-signed package to the repo
+    add_package_to_repo(repository, original_href)
+
+    # Verify the package was NOT re-signed
+    repository = apt_repository_api.read(repository.pulp_href)
+    packages = apt_package_api.list(repository_version=repository.latest_version_href).results
+
+    assert len(packages) == 1
+    assert packages[0].pulp_href == original_href, (
+        "Package was re-signed despite already having the correct signature."
+    )

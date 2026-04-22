@@ -1,4 +1,6 @@
 import asyncio
+import re
+import subprocess
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
@@ -19,9 +21,6 @@ from pulpcore.plugin.util import get_url
 from pulp_deb.app.models.signing_service import (
     AptPackageSigningService,
     DebPackageSigningResult,
-    FingerprintMismatch,
-    InvalidSignature,
-    UnsignedPackage,
 )
 from pulp_deb.app.models import AptRepository, Package, PackageReleaseComponent
 
@@ -55,12 +54,50 @@ def _create_signed_artifact(signed_package_path, result):
     return artifact
 
 
+def _verify_package_fingerprint(path, signing_fingerprint):
+    """Verify if the deb package at path is signed with signing_fingerprint.
+
+    Extracts the key ID from the _gpgorigin member of the .deb archive
+    and compares it against the provided signing_fingerprint.
+    """
+    ar_proc = subprocess.run(
+        ["ar", "p", path, "_gpgorigin"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if ar_proc.returncode != 0 or not ar_proc.stdout:
+        log.info(f"No _gpgorigin found in {path} (unsigned package).")
+        return False
+
+    gpg_proc = subprocess.run(
+        ["gpg", "--list-packets", "--verbose"],
+        input=ar_proc.stdout,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if gpg_proc.returncode != 0:
+        log.info(f"gpg --list-packets failed for {path}: {gpg_proc.stderr}")
+        return False
+
+    output = gpg_proc.stdout.decode("utf-8", errors="replace")
+    raw_fingerprint = signing_fingerprint.split(":", 1)[1]
+
+    # Look for key ID lines in gpg --list-packets output
+    key_ids = re.findall(r"keyid ([0-9A-Fa-f]+)", output, re.IGNORECASE)
+    for candidate in key_ids:
+        if raw_fingerprint.upper().endswith(candidate.upper()):
+            return True
+
+    log.debug(
+        f"Fingerprint mismatch for {path}: expected {raw_fingerprint}, found key IDs {key_ids}."
+    )
+    return False
+
+
 def _sign_file(package_file, signing_service, signing_fingerprint):
     """Sign a package and return the signed artifact."""
     prefix, raw_fingerprint = signing_fingerprint.split(":", 1)
-    logging.info(
-        _("Signing package %s with fingerprint %s"), package_file.name, signing_fingerprint
-    )
+    log.info(_("Signing package %s with fingerprint %s"), package_file.name, signing_fingerprint)
     result = signing_service.sign(
         package_file.name,
         env_vars={"PULP_SIGNING_FINGERPRINT_TYPE": prefix},
@@ -121,12 +158,10 @@ def _sign_package(package, signing_service, signing_fingerprint, package_release
         artifact_file = artifact_obj.file
         _save_file(artifact_file, final_package)
 
-        # check if the package is already signed with our fingerprint
-        try:
-            signing_service.validate_signature(final_package.name)
+        # check if the package is already signed with the repo's fingerprint
+        if _verify_package_fingerprint(final_package.name, signing_fingerprint):
+            log.info(f"Package {package.name} is already signed with {signing_fingerprint}.")
             return None
-        except (UnsignedPackage, InvalidSignature, FingerprintMismatch):
-            pass
 
         # Collect PackageReleaseComponents that need to be updated
         prcs_to_update = list(
@@ -140,6 +175,7 @@ def _sign_package(package, signing_service, signing_fingerprint, package_release
             sha256=content_artifact.artifact.sha256,
             package_signing_fingerprint=signing_fingerprint,
         ).first():
+            log.info(f"Reusing previously signed package for {package.name}.")
             return (package_id, str(existing_result.result.pk), prcs_to_update)
 
         # create a new signed version of the package
@@ -176,6 +212,9 @@ def signed_add_and_remove(
     repo = AptRepository.objects.get(pk=repository_pk)
 
     if repo.package_signing_service:
+        log.info(
+            f"Signing packages for repository {repo.name} with {repo.package_signing_service}."
+        )
         # map packages to releases
         prcs = PackageReleaseComponent.objects.filter(
             Q(pk__in=add_content_units) | Q(pk__in=repo.content.all())
