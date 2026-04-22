@@ -1,5 +1,4 @@
 import pytest
-
 from pulpcore.client.pulp_deb import (
     AptRepositorySyncURL,
 )

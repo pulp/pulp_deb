@@ -1,6 +1,5 @@
 from django.db import models
-
-from pulpcore.plugin.models import Remote, AutoAddObjPermsMixin
+from pulpcore.plugin.models import AutoAddObjPermsMixin, Remote
 
 
 class AptRemote(Remote, AutoAddObjPermsMixin):

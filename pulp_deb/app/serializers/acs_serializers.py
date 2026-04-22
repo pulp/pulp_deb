@@ -1,6 +1,6 @@
+from pulpcore.plugin.serializers import AlternateContentSourceSerializer
 from rest_framework import serializers
 
-from pulpcore.plugin.serializers import AlternateContentSourceSerializer
 from pulp_deb.app.models import AptAlternateContentSource
 
 

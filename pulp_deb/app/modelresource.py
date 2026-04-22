@@ -1,6 +1,5 @@
 from import_export import fields
 from import_export.widgets import ForeignKeyWidget
-
 from pulpcore.plugin.importexport import BaseContentResource
 from pulpcore.plugin.modelresources import RepositoryResource
 from pulpcore.plugin.util import get_domain
@@ -9,9 +8,9 @@ from pulp_deb.app.models import (
     AptRepository,
     GenericContent,
     InstallerFileIndex,
+    InstallerPackage,
     Package,
     PackageIndex,
-    InstallerPackage,
     PackageReleaseComponent,
     Release,
     ReleaseArchitecture,

@@ -10,9 +10,9 @@
 # make sure this script runs at the repo root
 cd "$(dirname "$(realpath -e "$0")")"/../..
 
-set -uv
+set -u
 
-MATCHES=$(grep -n -r --include \*.py "_(f")
+MATCHES="$(grep -n -r --include \*.py "_(f" pulp_deb )"
 
 if [ $? -ne 1 ]; then
   printf "\nERROR: Detected mix of f-strings and gettext:\n"
