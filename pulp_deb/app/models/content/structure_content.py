@@ -14,7 +14,6 @@ not inadvertantly copy anything that is not structure relevant.
 import os
 
 from django.db import models
-
 from pulpcore.plugin.models import Content
 
 from pulp_deb.app.models import Package, SourcePackage

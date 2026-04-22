@@ -2,13 +2,13 @@
 
 import pytest
 
-from pulp_deb.tests.performance.utils import write_csv_to_tmp
 from pulp_deb.tests.functional.constants import (
     DEB_PERF_BOOKWORN,
     DEB_PERF_DEBIAN_URL,
     DEB_PERF_JAMMY,
     DEB_PERF_UBUNTU_URL,
 )
+from pulp_deb.tests.performance.utils import write_csv_to_tmp
 
 perf_sync_test_params = [
     pytest.param(

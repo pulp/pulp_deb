@@ -1,17 +1,17 @@
-from rest_framework.serializers import BooleanField, ValidationError
 from pulpcore.plugin.models import Publication
 from pulpcore.plugin.serializers import (
-    RelatedField,
+    DetailRelatedField,
     DistributionSerializer,
     PublicationSerializer,
-    DetailRelatedField,
+    RelatedField,
 )
+from rest_framework.serializers import BooleanField, ValidationError
 
 from pulp_deb.app.models import (
     AptDistribution,
     AptPublication,
-    VerbatimPublication,
     AptReleaseSigningService,
+    VerbatimPublication,
 )
 
 

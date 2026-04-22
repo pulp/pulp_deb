@@ -6,7 +6,6 @@ to encode APT repository structure. In particular this includes any fields withi
 """
 
 from django.db import models
-
 from pulpcore.plugin.models import Content
 
 from pulp_deb.app.constants import NULL_VALUE

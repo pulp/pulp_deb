@@ -1,77 +1,69 @@
 import asyncio
-import aiohttp
-import os
-import shutil
 import bz2
 import gzip
-import lzma
-import gnupg
 import hashlib
-
-from asgiref.sync import sync_to_async
+import logging
+import lzma
+import os
+import shutil
 from collections import defaultdict
+from gettext import gettext as _
 from tempfile import NamedTemporaryFile
+from urllib.parse import quote, urljoin, urlparse, urlunparse
+
+import aiohttp
+import gnupg
+from asgiref.sync import sync_to_async
 from debian import deb822
-from urllib.parse import quote, urlparse, urlunparse, urljoin
 from django.conf import settings
 from django.db.utils import IntegrityError
-
 from pulpcore.plugin.exceptions import DigestValidationError
-from rest_framework.exceptions import ValidationError
-
-
 from pulpcore.plugin.models import (
     Artifact,
     ProgressReport,
     Remote,
 )
-
 from pulpcore.plugin.stages import (
+    ArtifactDownloader,
+    ArtifactSaver,
+    ContentSaver,
     DeclarativeArtifact,
     DeclarativeContent,
     DeclarativeVersion,
-    Stage,
     QueryExistingArtifacts,
-    ArtifactDownloader,
-    ArtifactSaver,
     QueryExistingContents,
-    ContentSaver,
     RemoteArtifactSaver,
     ResolveContentFutures,
+    Stage,
 )
+from rest_framework.exceptions import ValidationError
 
+from pulp_deb.app.constants import (
+    CHECKSUM_TYPE_MAP,
+    NO_MD5_WARNING_MESSAGE,
+)
 from pulp_deb.app.models import (
+    AptRemote,
+    AptRepository,
     GenericContent,
+    InstallerFileIndex,
+    InstallerPackage,
+    Package,
+    PackageIndex,
+    PackageReleaseComponent,
     Release,
     ReleaseArchitecture,
     ReleaseComponent,
     ReleaseFile,
-    PackageIndex,
-    InstallerFileIndex,
-    Package,
-    PackageReleaseComponent,
-    InstallerPackage,
-    AptRemote,
-    AptRepository,
     SourceIndex,
     SourcePackage,
     SourcePackageReleaseComponent,
 )
-
 from pulp_deb.app.serializers import (
+    DscFile822Serializer,
     InstallerPackage822Serializer,
     Package822Serializer,
-    DscFile822Serializer,
 )
-
-from pulp_deb.app.constants import (
-    NO_MD5_WARNING_MESSAGE,
-    CHECKSUM_TYPE_MAP,
-)
-
-
-import logging
-from gettext import gettext as _
 
 log = logging.getLogger(__name__)
 

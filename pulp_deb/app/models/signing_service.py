@@ -1,7 +1,7 @@
 import os
-import gnupg
 import tempfile
 
+import gnupg
 from pulpcore.plugin.models import SigningService
 
 

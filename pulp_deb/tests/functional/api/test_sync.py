@@ -1,8 +1,8 @@
 """Tests that sync deb repositories in optimized mode."""
 
 import pytest
-
 from pulpcore.tests.functional.utils import PulpTaskError
+
 from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_ARCH,
     DEB_FIXTURE_ARCH_UPDATE,
@@ -15,9 +15,9 @@ from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_UPDATE_REPOSITORY_NAME,
     DEB_INSTALLER_FIXTURE_SUMMARY,
     DEB_INSTALLER_SOURCE_FIXTURE_SUMMARY,
+    DEB_REPORT_CODE_SKIP_COMPLETE,
     DEB_REPORT_CODE_SKIP_PACKAGE,
     DEB_REPORT_CODE_SKIP_RELEASE,
-    DEB_REPORT_CODE_SKIP_COMPLETE,
     DEB_SIGNING_KEY,
 )
 from pulp_deb.tests.functional.utils import get_counts_from_content_summary
