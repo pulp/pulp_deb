@@ -1,6 +1,8 @@
+import logging
+from gettext import gettext as _
+
 from django.db import transaction
 from django.db.models import Q
-
 from pulpcore.plugin.models import RepositoryVersion
 from pulpcore.plugin.util import get_domain_pk
 
@@ -11,9 +13,6 @@ from pulp_deb.app.models import (
     Release,
     ReleaseArchitecture,
 )
-
-import logging
-from gettext import gettext as _
 
 log = logging.getLogger(__name__)
 

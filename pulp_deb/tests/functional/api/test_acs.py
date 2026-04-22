@@ -1,8 +1,8 @@
-import pytest
 from uuid import uuid4
 
-from pulpcore.tests.functional.utils import PulpTaskError
+import pytest
 from pulpcore.client.pulp_deb.exceptions import ApiException, ServiceException
+from pulpcore.tests.functional.utils import PulpTaskError
 
 from pulp_deb.tests.functional.constants import DEB_FIXTURE_ACS, DEB_FIXTURE_ACS_SUMMARY
 from pulp_deb.tests.functional.utils import get_counts_from_content_summary

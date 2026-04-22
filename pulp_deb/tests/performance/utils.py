@@ -2,7 +2,6 @@
 """Utilities for testing deb performance"""
 
 import csv
-
 from datetime import datetime
 
 

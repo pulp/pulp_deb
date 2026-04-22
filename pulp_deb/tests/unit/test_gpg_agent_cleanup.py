@@ -1,7 +1,8 @@
-import types
 import subprocess
-import pytest
+import types
 from unittest.mock import MagicMock
+
+import pytest
 
 from pulp_deb.app.tasks.synchronizing import DebUpdateReleaseFileAttributes
 

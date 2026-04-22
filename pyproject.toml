@@ -167,3 +167,12 @@ replace = "version = \"{new_version}\""
 filename = "./pyproject.toml"
 search = "version = \"{current_version}\""
 replace = "version = \"{new_version}\""
+
+
+[tool.ruff]
+# This section is managed by the plugin template. Do not edit manually.
+line-length = 100
+extend-exclude = [
+  "docs/**",
+  "**/migrations/*.py",
+]
