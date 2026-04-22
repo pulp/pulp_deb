@@ -2,12 +2,12 @@
 
 from random import choice
 from uuid import uuid4
-import pytest
 
+import pytest
 from pulpcore.client.pulp_deb.exceptions import ApiException
 
-from pulp_deb.tests.functional.utils import gen_deb_remote_verbose
 from pulp_deb.tests.functional.constants import DOWNLOAD_POLICIES
+from pulp_deb.tests.functional.utils import gen_deb_remote_verbose
 
 
 @pytest.fixture

@@ -1,36 +1,36 @@
+import logging
+import os
 from gettext import gettext as _
 
-import os
-from django.conf import settings
-
 from debian import deb822, debfile
-
-from rest_framework.serializers import (
-    CharField,
-    DictField,
-    ListField,
-    Field,
-    ValidationError,
-    Serializer,
-)
+from django.conf import settings
 from pulpcore.plugin.models import Artifact, Content, CreatedResource
 from pulpcore.plugin.serializers import (
     ContentChecksumSerializer,
+    DetailRelatedField,
     MultipleArtifactContentSerializer,
     NoArtifactContentSerializer,
     SingleArtifactContentSerializer,
     SingleArtifactContentUploadSerializer,
-    DetailRelatedField,
     SingleContentArtifactField,
 )
 from pulpcore.plugin.util import get_domain_pk
+from rest_framework.serializers import (
+    CharField,
+    DictField,
+    Field,
+    ListField,
+    Serializer,
+    ValidationError,
+)
+
 from pulp_deb.app.constants import (
+    NULL_VALUE,
     PACKAGE_UPLOAD_DEFAULT_COMPONENT,
     PACKAGE_UPLOAD_DEFAULT_DISTRIBUTION,
 )
-
-from pulp_deb.app.constants import NULL_VALUE
 from pulp_deb.app.models import (
+    BOOL_CHOICES,
     BasePackage,
     GenericContent,
     InstallerFileIndex,
@@ -46,10 +46,6 @@ from pulp_deb.app.models import (
     SourcePackage,
     SourcePackageReleaseComponent,
 )
-
-from pulp_deb.app.models import BOOL_CHOICES
-
-import logging
 
 log = logging.getLogger(__name__)
 

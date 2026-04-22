@@ -2,7 +2,6 @@
 
 import pytest
 
-from pulp_deb.tests.performance.utils import write_csv_to_tmp
 from pulp_deb.tests.functional.constants import (
     DEB_PACKAGE_NAME,
     DEB_PERF_BOOKWORN,
@@ -10,6 +9,7 @@ from pulp_deb.tests.functional.constants import (
     DEB_PERF_JAMMY,
     DEB_PERF_UBUNTU_URL,
 )
+from pulp_deb.tests.performance.utils import write_csv_to_tmp
 
 perf_publish_test_params = [
     pytest.param(

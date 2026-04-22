@@ -9,9 +9,9 @@ To ensure this is the case we use the handle_duplicate_packages function. As suc
 primarily intended to test this function.
 """
 
-import pytest
 from uuid import uuid4
 
+import pytest
 from pulpcore.tests.functional.utils import PulpTaskError
 
 from pulp_deb.tests.functional.constants import DEB_PACKAGE_RELPATH

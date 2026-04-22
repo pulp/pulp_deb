@@ -1,7 +1,0 @@
-coverage
-flake8
-flake8-black
-flake8-docstrings
-flake8-tuple
-flake8-quotes
-check-manifest

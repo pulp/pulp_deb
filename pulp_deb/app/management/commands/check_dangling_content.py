@@ -1,4 +1,5 @@
 from gettext import gettext as _
+
 from django.core.management import BaseCommand
 from pulpcore.plugin.models import RepositoryVersion
 
