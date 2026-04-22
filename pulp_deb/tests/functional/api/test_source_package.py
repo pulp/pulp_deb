@@ -1,15 +1,16 @@
 """Tests related to source packages."""
 
 import json
-import pytest
 import re
 from uuid import uuid4
+
+import pytest
+from pulpcore.client.pulpcore.exceptions import ApiException
 
 from pulp_deb.tests.functional.utils import (
     get_counts_from_content_summary,
     get_local_package_absolute_path,
 )
-from pulpcore.client.pulpcore.exceptions import ApiException
 
 SOURCE_PACKAGE_RELPATH = "mimir_1.0.dsc"
 SOURCE_PACKAGE_SOURCE = "mimir_1.0.tar.xz"

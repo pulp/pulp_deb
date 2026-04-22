@@ -1,12 +1,14 @@
 """Tests for checkpoint distribution and publications."""
 
-from datetime import datetime, timedelta
 import re
+import uuid
+from datetime import datetime, timedelta
 from time import sleep
 from urllib.parse import urlparse
-import uuid
-from aiohttp import ClientResponseError
+
 import pytest
+from aiohttp import ClientResponseError
+
 from pulp_deb.tests.functional.constants import DEB_PACKAGE_RELPATH
 from pulp_deb.tests.functional.utils import get_local_package_absolute_path
 
@@ -63,7 +65,6 @@ def _format_checkpoint_timestamp(timestamp):
 
 
 class TestCheckpointDistribution:
-
     def test_base_path_lists_checkpoints(self, setup, http_get, distribution_base_url):
         pubs, distribution = setup
 
