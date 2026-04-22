@@ -1,10 +1,10 @@
 import unittest
+
 from django.test import TestCase
-
-from pulp_deb.app.serializers import GenericContentSerializer
-from pulp_deb.app.models import GenericContent
-
 from pulpcore.plugin.models import Artifact
+
+from pulp_deb.app.models import GenericContent
+from pulp_deb.app.serializers import GenericContentSerializer
 
 
 # Fill data with sufficient information to create DebContent

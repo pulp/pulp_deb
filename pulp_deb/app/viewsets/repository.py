@@ -345,9 +345,9 @@ class CopyViewSet(viewsets.ViewSet):
                         number=entry["dest_base_version"]
                     ).pk
                 except RepositoryVersion.DoesNotExist:
-                    message = _(
-                        "Version {version} does not exist for repository " "'{repo}'."
-                    ).format(version=entry["dest_base_version"], repo=dest_repo.name)
+                    message = _("Version {version} does not exist for repository '{repo}'.").format(
+                        version=entry["dest_base_version"], repo=dest_repo.name
+                    )
                     raise DRFValidationError(detail=message)
 
             if entry.get("content") is not None:

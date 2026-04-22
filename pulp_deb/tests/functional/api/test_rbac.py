@@ -1,11 +1,10 @@
 """Tests role-based access control."""
 
 import pytest
+from pulpcore.client.pulp_deb.exceptions import ApiException
 
 from pulp_deb.tests.functional.constants import DEB_PACKAGE_RELPATH
 from pulp_deb.tests.functional.utils import get_local_package_absolute_path
-
-from pulpcore.client.pulp_deb.exceptions import ApiException
 
 
 @pytest.mark.parallel

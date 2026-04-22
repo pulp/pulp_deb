@@ -1,6 +1,7 @@
 """Tests that perform actions over packages."""
 
 from uuid import uuid4
+
 import pytest
 
 from pulp_deb.tests.functional.constants import DEB_PACKAGE_RELPATH

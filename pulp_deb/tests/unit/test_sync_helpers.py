@@ -1,5 +1,6 @@
-from django.test import TestCase
 from unittest import mock
+
+from django.test import TestCase
 
 from pulp_deb.app.tasks.synchronizing import (
     _filter_split_architectures,
