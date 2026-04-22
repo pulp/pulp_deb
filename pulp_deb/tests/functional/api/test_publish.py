@@ -1,7 +1,9 @@
-from random import choice
-from debian import deb822
 import os
+from random import choice
+
 import pytest
+from debian import deb822
+from pulpcore.client.pulp_deb.exceptions import ApiException
 
 from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_ALT_SINGLE_DIST,
@@ -31,8 +33,6 @@ from pulp_deb.tests.functional.constants import (
     DEB_RELEASE_FILE_NAME,
     DEB_RELEASE_NAME,
 )
-
-from pulpcore.client.pulp_deb.exceptions import ApiException
 
 
 @pytest.fixture

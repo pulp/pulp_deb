@@ -1,5 +1,7 @@
-from django.db import models
+import logging
+from gettext import gettext as _
 
+from django.db import models
 from pulpcore.plugin.models import (
     AutoAddObjPermsMixin,
     BaseModel,
@@ -8,8 +10,8 @@ from pulpcore.plugin.models import (
 )
 from pulpcore.plugin.repo_version_utils import (
     remove_duplicates,
-    validate_version_paths,
     validate_duplicate_content,
+    validate_version_paths,
 )
 from pulpcore.plugin.util import batch_qs
 
@@ -30,9 +32,6 @@ from pulp_deb.app.models import (
     SourcePackage,
     SourcePackageReleaseComponent,
 )
-
-import logging
-from gettext import gettext as _
 
 log = logging.getLogger(__name__)
 

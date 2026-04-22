@@ -5,9 +5,9 @@ NOTE: assumes ALLOWED_EXPORT_PATHS and ALLOWED_IMPORT_PATHS settings contain "/t
 all tests will fail if that is not the case.
 """
 
-import pytest
-
 from uuid import uuid4
+
+import pytest
 
 from pulp_deb.tests.functional.constants import DEB_FIXTURE_SUMMARY
 from pulp_deb.tests.functional.utils import get_counts_from_content_summary
