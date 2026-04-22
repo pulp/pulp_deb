@@ -1,9 +1,8 @@
-import pytest
 import json
 import uuid
 
+import pytest
 from django.conf import settings
-
 from pulpcore.client.pulp_deb.exceptions import ApiException
 
 from pulp_deb.tests.functional.constants import DEB_PACKAGE_RELPATH, DEB_PUBLISH_STANDARD

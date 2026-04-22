@@ -1,10 +1,11 @@
-from random import choice
-from debian import deb822
 import os
-import pytest
 import re
+from random import choice
 
+import pytest
+from debian import deb822
 from django.conf import settings
+from pulpcore.client.pulp_deb.exceptions import ApiException
 
 from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_ALT_SINGLE_DIST,
@@ -18,12 +19,12 @@ from pulp_deb.tests.functional.constants import (
     DEB_PACKAGE_NAME,
     DEB_PACKAGE_RELEASE_COMPONENT_NAME,
     DEB_PUBLICATION_ARGS_ALL,
+    DEB_PUBLICATION_ARGS_NESTED_ALPHABETICALLY,
+    DEB_PUBLICATION_ARGS_NESTED_BY_BOTH,
+    DEB_PUBLICATION_ARGS_NESTED_BY_DIGEST,
     DEB_PUBLICATION_ARGS_ONLY_SIMPLE,
     DEB_PUBLICATION_ARGS_ONLY_STRUCTURED,
     DEB_PUBLICATION_ARGS_SIMPLE_AND_STRUCTURED,
-    DEB_PUBLICATION_ARGS_NESTED_ALPHABETICALLY,
-    DEB_PUBLICATION_ARGS_NESTED_BY_DIGEST,
-    DEB_PUBLICATION_ARGS_NESTED_BY_BOTH,
     DEB_PUBLISH_COMPLEX_DEBIAN_SECURITY,
     DEB_PUBLISH_COMPLEX_UBUNTU_BACKPORTS,
     DEB_PUBLISH_EMPTY_REPOSITORY,
@@ -38,8 +39,6 @@ from pulp_deb.tests.functional.constants import (
     DEB_RELEASE_FILE_NAME,
     DEB_RELEASE_NAME,
 )
-
-from pulpcore.client.pulp_deb.exceptions import ApiException
 
 
 @pytest.fixture

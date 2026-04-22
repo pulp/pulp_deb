@@ -1,15 +1,16 @@
 """Tests that verify download of content served by Pulp."""
 
-import os
-import pytest
 import hashlib
+import os
 import re
 from random import choice
 from urllib.parse import urljoin
 
+import pytest
+
 from pulp_deb.tests.functional.constants import (
-    DEB_FIXTURE_STANDARD_REPOSITORY_NAME,
     DEB_FIXTURE_SINGLE_DIST,
+    DEB_FIXTURE_STANDARD_REPOSITORY_NAME,
     DEB_GENERIC_CONTENT_NAME,
     DEB_PACKAGE_NAME,
     DEB_PACKAGE_RELEASE_COMPONENT_NAME,

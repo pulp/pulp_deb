@@ -10,9 +10,7 @@ files or APT repository package indices.
 import os
 
 from django.db import models
-
 from django.db.models import JSONField
-
 from pulpcore.plugin.models import Content
 from pulpcore.plugin.util import get_domain_pk
 

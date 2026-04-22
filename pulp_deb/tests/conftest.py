@@ -1,9 +1,6 @@
-import pytest
 from pathlib import Path
 
-from pulp_deb.tests.functional.utils import gen_deb_remote, gen_distribution, gen_repo
-from pulp_deb.tests.functional.constants import DEB_FIXTURE_STANDARD_REPOSITORY_NAME
-
+import pytest
 from pulpcore.client.pulp_deb import (
     ApiClient,
     AptRepositorySyncURL,
@@ -14,6 +11,9 @@ from pulpcore.client.pulp_deb import (
     RepositoriesAptApi,
     RepositoriesAptVersionsApi,
 )
+
+from pulp_deb.tests.functional.constants import DEB_FIXTURE_STANDARD_REPOSITORY_NAME
+from pulp_deb.tests.functional.utils import gen_deb_remote, gen_distribution, gen_repo
 
 
 @pytest.fixture(scope="session")

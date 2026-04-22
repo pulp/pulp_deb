@@ -1,28 +1,27 @@
-from urllib.parse import urlsplit
-from uuid import uuid4
-import pytest
 import os
 import re
 import stat
 import subprocess
 import uuid
+from urllib.parse import urlsplit
+from uuid import uuid4
 
-from pulp_deb.tests.functional.constants import DEB_SIGNING_SCRIPT_STRING
+import pytest
 from pulpcore.client.pulp_deb import (
+    AcsDebApi,
     ContentGenericContentsApi,
-    ContentPackagesApi,
     ContentPackageIndicesApi,
     ContentPackageReleaseComponentsApi,
-    ContentReleasesApi,
+    ContentPackagesApi,
     ContentReleaseArchitecturesApi,
     ContentReleaseComponentsApi,
     ContentReleaseFilesApi,
+    ContentReleasesApi,
     ContentSourcePackagesApi,
     ContentSourceReleaseComponentsApi,
     Copy,
-    AcsDebApi,
-    DebAptPublication,
     DebAptAlternateContentSource,
+    DebAptPublication,
     DebCopyApi,
     DebRelease,
     DebReleaseArchitecture,
@@ -32,6 +31,7 @@ from pulpcore.client.pulp_deb import (
     PublicationsVerbatimApi,
 )
 
+from pulp_deb.tests.functional.constants import DEB_SIGNING_SCRIPT_STRING
 from pulp_deb.tests.functional.utils import gen_deb_remote, gen_repo
 
 
