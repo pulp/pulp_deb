@@ -10,6 +10,7 @@ from pulpcore.plugin.serializers import (
     DetailRelatedField,
     MultipleArtifactContentSerializer,
     NoArtifactContentSerializer,
+    PgpKeyFingerprintField,
     SingleArtifactContentSerializer,
     SingleArtifactContentUploadSerializer,
     SingleContentArtifactField,
@@ -598,6 +599,13 @@ class BasePackageMixin(Serializer):
     provides = CharField(read_only=True)
     replaces = CharField(read_only=True)
     custom_fields = DictField(child=CharField(), allow_empty=True, required=False)
+    signing_keys = ListField(
+        child=PgpKeyFingerprintField(),
+        help_text=_("List of signing key fingerprints used to sign this package."),
+        allow_null=True,
+        required=False,
+        read_only=True,
+    )
 
     def __init__(self, *args, **kwargs):
         """Initializer for BasePackageSerializer."""
@@ -680,6 +688,7 @@ class BasePackageMixin(Serializer):
             "pre_depends",
             "provides",
             "replaces",
+            "signing_keys",
         )
 
 
@@ -695,7 +704,42 @@ class PackageSerializer(BasePackageMixin, SinglePackageUploadSerializer, Content
         if data.get("section") == "debian-installer":
             raise ValidationError(_("Not a valid Deb Package"))
 
+        if signing_key := self.context.get("signing_key"):
+            # Only _gpgorigin signatures are supported currently, so packages have one signing key.
+            data["signing_keys"] = [signing_key]
+
         return data
+
+    def validate(self, data):
+        validated_data = super().validate(data)
+        sign_package = self.context.get("sign_package", None)
+        # choose branch, if not set externally
+        if sign_package is None:
+            sign_package = bool(
+                validated_data.get("repository")
+                and validated_data["repository"].package_signing_service
+            )
+            self.context["sign_package"] = sign_package
+
+        # normal branch
+        if sign_package is False:
+            return validated_data
+
+        # signing branch
+        if not validated_data["repository"].package_signing_fingerprint:
+            raise ValidationError(
+                _(
+                    "To sign a package on upload, the associated Repository must set both"
+                    "'package_signing_service' and 'package_signing_fingerprint'."
+                )
+            )
+
+        if not validated_data.get("file") and not validated_data.get("upload"):
+            raise ValidationError(
+                _("To sign a package on upload, a file or upload must be provided.")
+            )
+
+        return validated_data
 
     class Meta(SinglePackageUploadSerializer.Meta):
         fields = (

@@ -5,6 +5,7 @@ from django.db import transaction
 from jsonschema import Draft7Validator
 from pulpcore.plugin.models import SigningService
 from pulpcore.plugin.serializers import (
+    PgpKeyFingerprintField,
     RelatedField,
     RepositorySerializer,
     RepositorySyncURLSerializer,
@@ -15,8 +16,10 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError as DRFValidationError
 
 from pulp_deb.app.models import (
+    AptPackageSigningService,
     AptReleaseSigningService,
     AptRepository,
+    AptRepositoryReleasePackageSigningFingerprintOverride,
     AptRepositoryReleaseServiceOverride,
 )
 from pulp_deb.app.schema import COPY_CONFIG_SCHEMA
@@ -37,6 +40,14 @@ class ServiceOverrideField(serializers.DictField):
             x.release_distribution: get_url(SigningService(x.signing_service.pk))
             for x in overrides.all()
         }
+
+
+class PackageFingerprintOverrideField(serializers.DictField):
+    # allow_blank=True so empty strings can be used to delete overrides
+    child = PgpKeyFingerprintField(allow_blank=True)
+
+    def to_representation(self, overrides):
+        return {x.release_distribution: x.package_signing_fingerprint for x in overrides.all()}
 
 
 class AptRepositorySerializer(RepositorySerializer):
@@ -86,23 +97,61 @@ class AptRepositorySerializer(RepositorySerializer):
         ),
     )
 
+    package_signing_fingerprint_release_overrides = PackageFingerprintOverrideField(
+        default=dict,
+        required=False,
+        help_text=_(
+            "A dictionary of Release distributions and the "
+            "Package Signing Fingerprints they should use. "
+            "Example: "
+            '{"bionic": "v4:7FC42CD5F3D8EEC37FC42CD5F3D8EEC3DEADBEEF"}'
+        ),
+    )
+
+    package_signing_service = RelatedField(
+        help_text="A reference to an associated package signing service.",
+        view_name="signing-services-detail",
+        queryset=AptPackageSigningService.objects.all(),
+        many=False,
+        required=False,
+        allow_null=True,
+    )
+    package_signing_fingerprint = PgpKeyFingerprintField(
+        help_text=_(
+            "The pubkey fingerprint to be passed to the package signing service. "
+            "Format: 'v<N>:<hex-fingerprint>' or 'keyid:<16-hex-char>'. "
+            "Example: 'v4:ABCDEF1234567890ABCDEF1234567890ABCDEF12'. "
+            "The signing service will use that on signing operations related to this repository."
+        ),
+        required=False,
+        allow_null=True,
+        default=None,
+    )
+
     class Meta:
         fields = RepositorySerializer.Meta.fields + (
             "autopublish",
             "publish_upstream_release_fields",
             "signing_service",
             "signing_service_release_overrides",
+            "package_signing_fingerprint_release_overrides",
+            "package_signing_service",
+            "package_signing_fingerprint",
         )
         model = AptRepository
 
     @transaction.atomic
     def create(self, validated_data):
         """Create an AptRepository, special handling for signing_service_release_overrides."""
-        overrides = validated_data.pop("signing_service_release_overrides", -1)
+        service_overrides = validated_data.pop("signing_service_release_overrides", -1)
+        fingerprint_overrides = validated_data.pop(
+            "package_signing_fingerprint_release_overrides", -1
+        )
         repo = super().create(validated_data)
 
         try:
-            self._update_overrides(repo, overrides)
+            self._update_signing_service_overrides(repo, service_overrides)
+            self._update_package_signing_fingerprint_overrides(repo, fingerprint_overrides)
         except DRFValidationError as exc:
             repo.delete()
             raise exc
@@ -110,13 +159,17 @@ class AptRepositorySerializer(RepositorySerializer):
 
     def update(self, instance, validated_data):
         """Update an AptRepository, special handling for signing_service_release_overrides."""
-        overrides = validated_data.pop("signing_service_release_overrides", -1)
+        service_overrides = validated_data.pop("signing_service_release_overrides", -1)
+        fingerprint_overrides = validated_data.pop(
+            "package_signing_fingerprint_release_overrides", -1
+        )
         with transaction.atomic():
-            self._update_overrides(instance, overrides)
+            self._update_signing_service_overrides(instance, service_overrides)
+            self._update_package_signing_fingerprint_overrides(instance, fingerprint_overrides)
             instance = super().update(instance, validated_data)
         return instance
 
-    def _update_overrides(self, repo, overrides):
+    def _update_signing_service_overrides(self, repo, overrides):
         """Update signing_service_release_overrides."""
         if overrides == -1:
             # Sentinel value, no updates
@@ -130,12 +183,37 @@ class AptRepositorySerializer(RepositorySerializer):
             elif service:
                 signing_service = AptReleaseSigningService.objects.get(pk=service)
                 if distro in current:  # update
-                    current[distro] = signing_service
+                    current[distro].signing_service = signing_service
                     current[distro].save()
                 else:  # create
                     AptRepositoryReleaseServiceOverride(
                         repository=repo,
                         signing_service=signing_service,
+                        release_distribution=distro,
+                    ).save()
+
+    def _update_package_signing_fingerprint_overrides(self, repo, overrides):
+        """Update package_signing_fingerprint_release_overrides."""
+        if overrides == -1:
+            # Sentinel value, no updates
+            return
+
+        current = {
+            x.release_distribution: x
+            for x in repo.package_signing_fingerprint_release_overrides.all()
+        }
+        # Intentionally only updates items the user specified.
+        for distro, fingerprint in overrides.items():
+            if not fingerprint and distro in current:  # the user wants to delete this override
+                current[distro].delete()
+            elif fingerprint:
+                if distro in current:  # update
+                    current[distro].package_signing_fingerprint = fingerprint
+                    current[distro].save()
+                else:  # create
+                    AptRepositoryReleasePackageSigningFingerprintOverride(
+                        repository=repo,
+                        package_signing_fingerprint=fingerprint,
                         release_distribution=distro,
                     ).save()
 

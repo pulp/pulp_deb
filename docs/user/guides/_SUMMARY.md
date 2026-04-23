@@ -6,5 +6,6 @@
 * [Package Uploads](upload.md)
 * [Publish Repositories](publish.md)
 * [Signing Service Creation](signing_service.md)
+* [Sign Packages](sign_packages.md)
 * [Advanced Copy](advanced_copy.md)
 * [Configuring Checksums](checksums.md)
