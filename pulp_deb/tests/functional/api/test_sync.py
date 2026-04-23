@@ -79,14 +79,14 @@ def test_sync(
                 "architectures": "ppc64",
                 "ignore_missing_package_indices": False,
             },
-            ["No suitable package index files", "ppc64"],
+            ["[DEB0003]", "No suitable package index files", "ppc64"],
         ),
         (
             {
                 "architectures": "armeb",
                 "ignore_missing_package_indices": False,
             },
-            ["No suitable package index files", "armeb"],
+            ["[DEB0003]", "No suitable package index files", "armeb"],
         ),
     ],
 )
@@ -125,7 +125,7 @@ def test_sync_missing_package_indices(
         (
             DEB_FIXTURE_STANDARD_REPOSITORY_NAME,
             {"distributions": "no_dist"},
-            ["Could not find a Release file at"],
+            ["[DEB0001]", "Could not find a Release file at"],
         ),
         (
             DEB_FIXTURE_INVALID_REPOSITORY_NAME,
@@ -133,7 +133,7 @@ def test_sync_missing_package_indices(
                 "distributions": "nosuite",
                 "gpgkey": DEB_SIGNING_KEY,
             },
-            ["Unable to verify any Release files from", "using the GPG key provided."],
+            ["[DEB0002]", "Unable to verify any Release files from", "using the GPG key provided."],
         ),
     ],
 )

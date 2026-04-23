@@ -3,8 +3,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from django.test import override_settings
 
+from pulp_deb.app.exceptions import MissingReleaseFileField
 from pulp_deb.app.tasks.synchronizing import (
-    MissingReleaseFileField,
     _collect_release_artifacts,
     _parse_release_file_attributes,
 )
@@ -138,6 +138,7 @@ def test_parse_release_file_attributes_missing_fields_nonflat(
     with pytest.raises(MissingReleaseFileField) as exc:
         _parse_release_file_attributes(mock_d_content, mock_main_artifact)
 
+    assert "[DEB0004]" in str(exc.value)
     assert field_name in str(exc.value)
 
 
@@ -213,4 +214,5 @@ def test_parse_release_file_attributes_permissive_disabled_compoent(
 
     with pytest.raises(MissingReleaseFileField) as exc:
         _parse_release_file_attributes(mock_d_content, mock_main_artifact)
+    assert "[DEB0004]" in str(exc.value)
     assert f"missing the required field '{field_name}'" in str(exc.value)

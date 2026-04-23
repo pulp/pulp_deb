@@ -6,6 +6,7 @@ from django.db.models import Q
 from pulpcore.plugin.models import RepositoryVersion
 from pulpcore.plugin.util import get_domain_pk
 
+from pulp_deb.app.exceptions import DependencySolvingNotSupported
 from pulp_deb.app.models import (
     AptRepository,
     Package,
@@ -104,7 +105,7 @@ def copy_content(config, structured, dependency_solving):
         )
 
     if dependency_solving:
-        raise NotImplementedError("Advanced copy with dependency solving is not yet implemented.")
+        raise DependencySolvingNotSupported()
 
     for entry in config:
         (

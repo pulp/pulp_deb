@@ -14,6 +14,8 @@ from pulpcore.plugin.repo_version_utils import (
 )
 from pulpcore.plugin.util import batch_qs, get_domain_pk
 
+from pulp_deb.app.exceptions import DuplicatePackageChecksumError
+
 from pulp_deb.app.models import (
     AptReleaseSigningService,
     AptRemote,
@@ -224,14 +226,7 @@ def handle_duplicate_packages(new_version):
                     )
                     log.debug(message.format(package_fields, distribution_components))
 
-            message = _(
-                "Cannot create repository version since there are newly added packages with the "
-                "same name, version, and architecture, but a different checksum. If the log level "
-                "is DEBUG, you can find a list of affected packages in the Pulp log. You can often "
-                "work around this issue by restricting syncs to only those distirbution component "
-                "combinations, that do not contain colliding duplicates!"
-            )
-            raise ValueError(message)
+            raise DuplicatePackageChecksumError()
 
         # Now remove existing packages that are duplicates of any packages added to new_version
         if package_qs_added.count() and content_qs_existing.count():

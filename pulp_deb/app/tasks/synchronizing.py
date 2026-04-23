@@ -20,6 +20,19 @@ from debian import deb822
 from django.conf import settings
 from django.db.utils import IntegrityError
 from pulpcore.plugin.exceptions import DigestValidationError
+
+from pulp_deb.app.exceptions import (
+    DuplicatePackageIndex,
+    DuplicateReleaseFile,
+    MissingReleaseFileField,
+    NoPackageIndexFile,
+    NoReleaseFile,
+    NoValidSignatureForKey,
+    RemoteURLRequiredError,
+    SourceSyncNotSupported,
+    UnknownNoSupportForArchitectureAllValue,
+)
+
 from pulpcore.plugin.models import (
     Artifact,
     ProgressReport,
@@ -72,92 +85,6 @@ from pulp_deb.app.serializers import (
 log = logging.getLogger(__name__)
 
 
-class NoReleaseFile(Exception):
-    """
-    Exception to signal, that no file representing a release is present.
-    """
-
-    def __init__(self, url, *args, **kwargs):
-        """
-        Exception to signal, that no file representing a release is present.
-        """
-        super().__init__(
-            "Could not find a Release file at '{}', try checking the 'url' and "
-            "'distributions' option on your remote".format(url),
-            *args,
-            **kwargs,
-        )
-
-
-class NoValidSignatureForKey(Exception):
-    """
-    Exception to signal, that verification of release file with provided GPG key fails.
-    """
-
-    def __init__(self, url, *args, **kwargs):
-        """
-        Exception to signal, that verification of release file with provided GPG key fails.
-        """
-        super().__init__(
-            "Unable to verify any Release files from '{}' using the GPG key provided.".format(url),
-            *args,
-            **kwargs,
-        )
-
-
-class NoPackageIndexFile(Exception):
-    """
-    Exception to signal, that no file representing a package index is present.
-    """
-
-    def __init__(self, relative_dir, *args, **kwargs):
-        """
-        Exception to signal, that no file representing a package index is present.
-        """
-        self.relative_dir = relative_dir
-        message = (
-            "No suitable package index files found in '{}'. If you are syncing from a partial "
-            "mirror, you can ignore this error for individual remotes "
-            "(ignore_missing_package_indices='True') or system wide "
-            "(FORCE_IGNORE_MISSING_PACKAGE_INDICES setting)."
-        )
-        super().__init__(_(message).format(relative_dir), *args, **kwargs)
-
-    pass
-
-
-class MissingReleaseFileField(Exception):
-    """
-    Exception signifying that the upstream release file is missing a required field.
-    """
-
-    def __init__(self, distribution, field, *args, **kwargs):
-        """
-        The upstream release file is missing a required field.
-        """
-        message = "The release file for distribution '{}' is missing the required field '{}'."
-        super().__init__(_(message).format(distribution, field), *args, **kwargs)
-
-
-class UnknownNoSupportForArchitectureAllValue(Exception):
-    """
-    Exception Signifying that the Release file contains the 'No-Support-for-Architecture-all' field,
-    but with a value other than 'Packages'. We interpret this as an error since this would likely
-    signify some unknown repo format, that pulp_deb is more likely to get wrong than right!
-    """
-
-    def __init__(self, release_file_path, unknown_value, *args, **kwargs):
-        message = (
-            "The Release file at '{}' contains the 'No-Support-for-Architecture-all' field, with "
-            "unknown value '{}'! pulp_deb currently only understands the value 'Packages' for "
-            "this field, please open an issue at https://github.com/pulp/pulp_deb/issues "
-            "specifying the remote you are attempting to sync, so that we can improve pulp_deb!"
-        )
-        super().__init__(_(message).format(unknown_value), *args, **kwargs)
-
-    pass
-
-
 def synchronize(remote_pk, repository_pk, mirror, optimize):
     """
     Sync content from the remote repository.
@@ -179,7 +106,7 @@ def synchronize(remote_pk, repository_pk, mirror, optimize):
     previous_repo_version = repository.latest_version()
 
     if not remote.url:
-        raise ValueError(_("A remote must have a url specified to synchronize."))
+        raise RemoteURLRequiredError()
 
     if optimize and mirror:
         skip_dist = []
@@ -901,7 +828,7 @@ class DebFirstStage(Stage):
 
         # Handle source package index
         if self.remote.sync_sources:
-            raise NotImplementedError("Syncing source repositories is not yet implemented.")
+            raise SourceSyncNotSupported()
 
         # Await all tasks
         await asyncio.gather(*pending_tasks)
@@ -1314,8 +1241,7 @@ def get_previous_release_file(previous_version, distribution):
         ReleaseFile.objects.filter(distribution=distribution)
     )
     if previous_release_file_qs.count() > 1:
-        message = "Previous ReleaseFile count: {}. There should only be one."
-        raise Exception(message.format(previous_release_file_qs.count()))
+        raise DuplicateReleaseFile(count=previous_release_file_qs.count())
     return previous_release_file_qs.first()
 
 
@@ -1328,8 +1254,7 @@ def _get_previous_package_index(previous_version, relative_path):
         PackageIndex.objects.filter(relative_path=relative_path)
     )
     if previous_package_index_qs.count() > 1:
-        message = "Previous PackageIndex count: {}. There should only be one."
-        raise Exception(message.format(previous_package_index_qs.count()))
+        raise DuplicatePackageIndex(count=previous_package_index_qs.count())
     return previous_package_index_qs.first()
 
 
