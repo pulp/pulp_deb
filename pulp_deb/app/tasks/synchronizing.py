@@ -17,6 +17,8 @@ from asgiref.sync import sync_to_async
 from debian import deb822
 from django.conf import settings
 from django.db.utils import IntegrityError
+from rest_framework.exceptions import ValidationError
+
 from pulpcore.plugin.exceptions import DigestValidationError
 from pulpcore.plugin.models import (
     Artifact,
@@ -36,7 +38,6 @@ from pulpcore.plugin.stages import (
     ResolveContentFutures,
     Stage,
 )
-from rest_framework.exceptions import ValidationError
 
 from pulp_deb.app.constants import (
     CHECKSUM_TYPE_MAP,

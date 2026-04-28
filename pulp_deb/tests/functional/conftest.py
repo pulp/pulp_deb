@@ -6,6 +6,7 @@ from urllib.parse import urlsplit
 from uuid import uuid4
 
 import pytest
+
 from pulpcore.client.pulp_deb import (
     ContentGenericContentsApi,
     ContentPackageIndicesApi,
