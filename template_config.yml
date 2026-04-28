@@ -7,7 +7,6 @@
 
 ---
 check_commit_message: true
-check_gettext: true
 check_manifest: true
 check_stray_pulpcore_imports: true
 ci_base_image: "ghcr.io/pulp/pulp-ci-centos9"

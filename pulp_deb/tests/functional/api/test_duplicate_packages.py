@@ -12,6 +12,7 @@ primarily intended to test this function.
 from uuid import uuid4
 
 import pytest
+
 from pulpcore.tests.functional.utils import PulpTaskError
 
 from pulp_deb.tests.functional.constants import DEB_PACKAGE_RELPATH

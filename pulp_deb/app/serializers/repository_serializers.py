@@ -3,6 +3,9 @@ from gettext import gettext as _
 from django.conf import settings
 from django.db import transaction
 from jsonschema import Draft7Validator
+from rest_framework import serializers
+from rest_framework.exceptions import ValidationError as DRFValidationError
+
 from pulpcore.plugin.models import SigningService
 from pulpcore.plugin.serializers import (
     RelatedField,
@@ -11,8 +14,6 @@ from pulpcore.plugin.serializers import (
     ValidateFieldsMixin,
 )
 from pulpcore.plugin.util import get_domain, get_url
-from rest_framework import serializers
-from rest_framework.exceptions import ValidationError as DRFValidationError
 
 from pulp_deb.app.models import (
     AptReleaseSigningService,
