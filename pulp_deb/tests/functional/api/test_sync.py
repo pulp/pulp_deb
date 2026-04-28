@@ -1,6 +1,7 @@
 """Tests that sync deb repositories in optimized mode."""
 
 import pytest
+
 from pulpcore.app import settings
 from pulpcore.tests.functional.utils import PulpTaskError
 

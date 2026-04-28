@@ -3,6 +3,7 @@ from random import choice
 
 import pytest
 from debian import deb822
+
 from pulpcore.client.pulp_deb.exceptions import ApiException
 
 from pulp_deb.tests.functional.constants import (

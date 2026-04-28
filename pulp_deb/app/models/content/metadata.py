@@ -6,6 +6,7 @@ to encode APT repository structure. In particular this includes any fields withi
 """
 
 from django.db import models
+
 from pulpcore.plugin.models import Content
 from pulpcore.plugin.util import get_domain_pk
 
