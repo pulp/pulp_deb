@@ -1,5 +1,6 @@
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
+
 from pulpcore.plugin.models import Artifact, ContentArtifact
 
 from pulp_deb.app.models import AptRepository, Package, Release

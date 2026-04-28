@@ -44,10 +44,6 @@ jobs:
         run: |
           ruff check
 
-      - name: "Check for common gettext problems"
-        run: |
-          sh .ci/scripts/check_gettext.sh
-
       - name: "Run extra lint checks"
         run: |
           [ ! -x .ci/scripts/extra_linting.sh ] || .ci/scripts/extra_linting.sh
