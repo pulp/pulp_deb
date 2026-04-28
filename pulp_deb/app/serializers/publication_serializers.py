@@ -1,3 +1,5 @@
+from rest_framework.serializers import BooleanField, ValidationError
+
 from pulpcore.plugin.models import Publication
 from pulpcore.plugin.serializers import (
     DetailRelatedField,
@@ -5,7 +7,6 @@ from pulpcore.plugin.serializers import (
     PublicationSerializer,
     RelatedField,
 )
-from rest_framework.serializers import BooleanField, ValidationError
 
 from pulp_deb.app.models import (
     AptDistribution,

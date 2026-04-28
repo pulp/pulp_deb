@@ -1,6 +1,7 @@
 import unittest
 
 from django.test import TestCase
+
 from pulpcore.plugin.models import Artifact
 
 from pulp_deb.app.models import GenericContent

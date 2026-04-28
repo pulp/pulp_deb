@@ -1,6 +1,7 @@
+from rest_framework.serializers import BooleanField, CharField, ChoiceField
+
 from pulpcore.plugin.models import Remote
 from pulpcore.plugin.serializers import RemoteSerializer
-from rest_framework.serializers import BooleanField, CharField, ChoiceField
 
 from pulp_deb.app.models import AptRemote
 

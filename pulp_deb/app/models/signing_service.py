@@ -2,6 +2,7 @@ import os
 import tempfile
 
 import gnupg
+
 from pulpcore.plugin.models import SigningService
 
 
