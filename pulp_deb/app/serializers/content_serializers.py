@@ -4,6 +4,15 @@ from gettext import gettext as _
 
 from debian import deb822, debfile
 from django.conf import settings
+from rest_framework.serializers import (
+    CharField,
+    DictField,
+    Field,
+    ListField,
+    Serializer,
+    ValidationError,
+)
+
 from pulpcore.plugin.models import Artifact, Content, CreatedResource
 from pulpcore.plugin.serializers import (
     ContentChecksumSerializer,
@@ -15,14 +24,6 @@ from pulpcore.plugin.serializers import (
     SingleContentArtifactField,
 )
 from pulpcore.plugin.util import get_domain_pk
-from rest_framework.serializers import (
-    CharField,
-    DictField,
-    Field,
-    ListField,
-    Serializer,
-    ValidationError,
-)
 
 from pulp_deb.app.constants import (
     NULL_VALUE,

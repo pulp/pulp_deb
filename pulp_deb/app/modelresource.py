@@ -1,5 +1,6 @@
 from import_export import fields
 from import_export.widgets import ForeignKeyWidget
+
 from pulpcore.plugin.importexport import BaseContentResource
 from pulpcore.plugin.modelresources import RepositoryResource
 from pulpcore.plugin.util import get_domain
