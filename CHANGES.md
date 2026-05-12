@@ -8,6 +8,14 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.8.2 (2026-05-12) {: #3.8.2 }
+
+#### Features {: #3.8.2-feature }
+
+- Provide minimal metadata files for empty repository versions during structured publish.
+
+---
+
 ## 3.8.1 (2026-01-08) {: #3.8.1 }
 
 #### Features {: #3.8.1-feature }
