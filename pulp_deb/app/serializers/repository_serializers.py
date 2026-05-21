@@ -179,8 +179,9 @@ class CopySerializer(ValidateFieldsMixin, serializers.Serializer):
 
     dependency_solving = serializers.BooleanField(
         help_text=_(
-            "Also copy dependencies of any packages being copied. NOT YET"
-            'IMPLEMENTED! You must keep this at "False"!'
+            "Also copy the transitive Depends/Pre-Depends closure of every package being copied. "
+            "Already-satisfied relations (present in dest_base_version) are skipped. "
+            "Raises an error if any relation cannot be satisfied from the source repository."
         ),
         default=False,
     )

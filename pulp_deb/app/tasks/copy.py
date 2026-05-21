@@ -14,6 +14,7 @@ from pulp_deb.app.models import (
     Release,
     ReleaseArchitecture,
 )
+from pulp_deb.app.tasks.dependency_solving import solve_dependencies
 
 log = logging.getLogger(__name__)
 
@@ -104,9 +105,6 @@ def copy_content(config, structured, dependency_solving):
             content_filter,
         )
 
-    if dependency_solving:
-        raise NotImplementedError("Advanced copy with dependency solving is not yet implemented.")
-
     for entry in config:
         (
             source_repo_version,
@@ -116,6 +114,16 @@ def copy_content(config, structured, dependency_solving):
         ) = process_entry(entry)
 
         content_to_copy = source_repo_version.content.filter(content_filter)
+
+        if dependency_solving:
+            initial_packages = Package.objects.filter(
+                pk__in=content_to_copy.filter(pulp_type=Package.get_pulp_type()).only("pk")
+            )
+            extra_pks = solve_dependencies(initial_packages, source_repo_version, dest_base_version)
+            content_to_copy = source_repo_version.content.filter(
+                Q(pk__in=content_to_copy.values("pk")) | Q(pk__in=extra_pks)
+            )
+
         if structured:
             content_to_copy = find_structured_publish_content(content_to_copy, source_repo_version)
 
