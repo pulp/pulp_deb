@@ -1,3 +1,0 @@
-Teach modelresource.render it might get a `value` of None.
-
-This prepares us to handle a django-import-export/4 codepath.

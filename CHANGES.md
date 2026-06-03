@@ -8,6 +8,25 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.9.0 (2026-06-03) {: #3.9.0 }
+
+#### Features {: #3.9.0-feature }
+
+- Support per-component/architecture Release files for cross-validation by related installers (i.e. ubiquity and debian-installer).
+  [#1175](https://github.com/pulp/pulp_deb/issues/1175)
+- Implement `layout` option on AptPublication that allows user to choose different cache-friendly style of deb URL.
+  [#1371](https://github.com/pulp/pulp_deb/issues/1371)
+- Bump pulpcore upperbound to <3.115.
+- Provide minimal metadata files for empty repository versions during structured publish.
+
+#### Bugfixes {: #3.9.0-bugfix }
+
+- Teach modelresource.render it might get a `value` of None.
+
+  This prepares us to handle a django-import-export/4 codepath.
+
+---
+
 ## 3.8.2 (2026-05-12) {: #3.8.2 }
 
 #### Features {: #3.8.2-feature }
