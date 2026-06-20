@@ -623,6 +623,22 @@ class DebFirstStage(Stage):
         stored_distribution = "flat-repo" if is_flat else distribution
 
         log.info(_('Downloading Release file for distribution: "{}"').format(distribution))
+
+
+        # Retrieve and interpret any 'No-Support-for-Architecture-all' value:
+        # We will refer to the presence of 'No-Support-for-Architecture-all: Packages' in a Release
+        # file as indicating "hybrid format". For more info, see:
+        # https://wiki.debian.org/DebianRepository/Format#No-Support-for-Architecture-all
+        no_support_for_arch_all = release_file_dict.get("No-Support-for-Architecture-all", "")
+        if no_support_for_arch_all.strip() == "Packages":
+            hybrid_format = True
+        elif not no_support_for_arch_all:
+            hybrid_format = False
+        else:
+            raise UnknownNoSupportForArchitectureAllValue(
+                release_file.relative_path, no_support_for_arch_all
+            )
+
         # Create release_file
         if is_flat:
             upstream_file_dir = distribution.strip("/")
@@ -689,6 +705,14 @@ class DebFirstStage(Stage):
             architectures = filter_arch_tokens(
                 release_file.architectures, self.remote.architectures, distribution
             )
+            # For hybrid-format repos, remove "all" from the component processing list
+            # (it will be handled separately in _handle_component)
+            if hybrid_format:
+                architectures = [
+                    (base_arch, pub_arch, variant)
+                    for (base_arch, pub_arch, variant) in architectures
+                    if base_arch != "all"
+                ]
 
         for base_arch, published_arch, variant in architectures:
             release_architecture_dc = DeclarativeContent(
@@ -700,20 +724,6 @@ class DebFirstStage(Stage):
                 )
             )
             await self.put(release_architecture_dc)
-
-        # Retrieve and interpret any 'No-Support-for-Architecture-all' value:
-        # We will refer to the presence of 'No-Support-for-Architecture-all: Packages' in a Release
-        # file as indicating "hybrid format". For more info, see:
-        # https://wiki.debian.org/DebianRepository/Format#No-Support-for-Architecture-all
-        no_support_for_arch_all = release_file_dict.get("No-Support-for-Architecture-all", "")
-        if no_support_for_arch_all.strip() == "Packages":
-            hybrid_format = True
-        elif not no_support_for_arch_all:
-            hybrid_format = False
-        else:
-            raise UnknownNoSupportForArchitectureAllValue(
-                release_file.relative_path, no_support_for_arch_all
-            )
 
         # collect file references in new dict
         file_references = defaultdict(deb822.Deb822Dict)
@@ -791,18 +801,6 @@ class DebFirstStage(Stage):
                 release_file.architectures = " ".join(
                     [x for x in release_file.architectures.split() if x != "all"]
                 )
-
-        # Putting this here because it fixes an issue where debian packages with the parameter
-        # architectures='all' are missing after sync/publish. It is not really clear why and
-        # needs investigation once there are tests for this issue. Best guess it hasis something do
-        # with the asynchronous handling of the tasks and removing something from a dict without
-        # a copy.
-        if hybrid_format:
-            architectures = [
-                (base_arch, pub_arch, variant)
-                for (base_arch, pub_arch, variant) in architectures
-                if base_arch != "all"
-            ]
 
         pending_tasks = []
         # Handle package indices
