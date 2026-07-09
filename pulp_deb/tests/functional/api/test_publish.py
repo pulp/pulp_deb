@@ -10,10 +10,13 @@ from pulpcore.client.pulp_deb.exceptions import ApiException
 
 from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_ALT_SINGLE_DIST,
+    DEB_FIXTURE_ARCH,
     DEB_FIXTURE_BASE,
     DEB_FIXTURE_COMPLEX_REPOSITORY_NAME,
+    DEB_FIXTURE_COMPONENT,
     DEB_FIXTURE_DISTRIBUTIONS,
     DEB_FIXTURE_FLAT_REPOSITORY_NAME,
+    DEB_FIXTURE_METADATA_UPDATE_REPOSITORY_NAME,
     DEB_FIXTURE_MISSING_ARCHITECTURE_REPOSITORY_NAME,
     DEB_FIXTURE_SINGLE_DIST,
     DEB_FIXTURE_VARIANT_REPOSITORY_NAME,
@@ -144,6 +147,55 @@ def verify_distribution(download_content_unit):
             assert "404: Not Found" not in str(unit)
 
     return _verify_distribution
+
+
+@pytest.mark.parallel
+def test_publish_excludes_package_metadata_fields(
+    apt_distribution_api,
+    deb_init_and_sync,
+    deb_publication_factory,
+    deb_distribution_factory,
+    download_content_unit,
+):
+    """Test that structured publish can omit selected custom package metadata fields."""
+    remote_args = {
+        "distributions": DEB_FIXTURE_SINGLE_DIST,
+        "components": DEB_FIXTURE_COMPONENT,
+        "architectures": DEB_FIXTURE_ARCH,
+    }
+    repo, _ = deb_init_and_sync(
+        url=DEB_FIXTURE_METADATA_UPDATE_REPOSITORY_NAME,
+        remote_args=remote_args,
+    )
+
+    default_publication = deb_publication_factory(repo, simple=False, structured=True)
+    default_distribution = apt_distribution_api.read(
+        deb_distribution_factory(default_publication).pulp_href
+    )
+    default_packages_index = download_content_unit(
+        default_distribution.to_dict()["base_path"],
+        "dists/ragnarok/asgard/binary-ppc64/Packages",
+    ).decode("utf-8")
+
+    assert "Package: frigg" in default_packages_index
+    assert "Phased-Update-Percentage: 50" in default_packages_index
+
+    filtered_publication = deb_publication_factory(
+        repo,
+        simple=False,
+        structured=True,
+        excluded_package_metadata_fields=["Phased-Update-Percentage"],
+    )
+    filtered_distribution = apt_distribution_api.read(
+        deb_distribution_factory(filtered_publication).pulp_href
+    )
+    filtered_packages_index = download_content_unit(
+        filtered_distribution.to_dict()["base_path"],
+        "dists/ragnarok/asgard/binary-ppc64/Packages",
+    ).decode("utf-8")
+
+    assert "Package: frigg" in filtered_packages_index
+    assert "Phased-Update-Percentage" not in filtered_packages_index
 
 
 @pytest.mark.parallel

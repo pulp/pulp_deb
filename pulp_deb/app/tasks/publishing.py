@@ -33,6 +33,9 @@ from pulp_deb.app.constants import (
     NO_MD5_WARNING_MESSAGE,
     NULL_VALUE,
 )
+from pulp_deb.app.metadata import (
+    excluded_package_metadata_fields as normalize_package_metadata_fields,
+)
 from pulp_deb.app.models import (
     AptPublication,
     AptReleaseSigningService,
@@ -85,6 +88,7 @@ def publish(
     publish_upstream_release_fields=None,
     layout=LAYOUT_TYPES.NESTED_ALPHABETICALLY,
     publish_legacy_release_files=False,
+    excluded_package_metadata_fields=None,
 ):
     """
     Use provided publisher to create a Publication based on a RepositoryVersion.
@@ -97,6 +101,8 @@ def publish(
         signing_service_pk (str): Use this SigningService to sign the Release files.
         layout (str): The layout determines the form the package urls take.
         publish_legacy_release_files (bool): publish legacy per architecture release files
+        excluded_package_metadata_fields (list): Custom package metadata fields to omit from
+            generated package indices.
 
     """
 
@@ -129,6 +135,11 @@ def publish(
             publication.publish_legacy_release_files = publish_legacy_release_files
             publication.layout = layout
             repository = AptRepository.objects.get(pk=repo_version.repository.pk)
+            publication.excluded_package_metadata_fields = (
+                excluded_package_metadata_fields
+                if excluded_package_metadata_fields is not None
+                else repository.excluded_package_metadata_fields
+            )
 
             if simple:
                 release = Release(
@@ -413,6 +424,9 @@ class _ComponentHelper:
             package.pk: list(package.contentartifact_set.all()) for package in packages
         }
         layout = self.parent.publication.layout
+        excluded_fields = normalize_package_metadata_fields(
+            self.parent.publication.excluded_package_metadata_fields
+        )
         seen_published_artifacts = set()
         seen_package_index_entries = set()
 
@@ -468,6 +482,7 @@ class _ComponentHelper:
                     remote_artifact_dict,
                     layout=layout,
                     basename_override=upstream_basename,
+                    excluded_package_metadata_fields=excluded_fields,
                 ).dump(self.package_index_files[metadata_arch][0])
             except KeyError:
                 log.warning(

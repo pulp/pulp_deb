@@ -1,6 +1,12 @@
 import re
 
-from rest_framework.serializers import BooleanField, CharField, ChoiceField, ValidationError
+from rest_framework.serializers import (
+    BooleanField,
+    CharField,
+    ChoiceField,
+    ListField,
+    ValidationError,
+)
 
 from pulpcore.plugin.models import Remote
 from pulpcore.plugin.serializers import RemoteSerializer
@@ -68,6 +74,17 @@ class AptRemoteSerializer(RemoteSerializer):
         required=False,
     )
 
+    excluded_package_metadata_fields = ListField(
+        child=CharField(),
+        help_text=(
+            "Package metadata field names to drop while syncing package indices. "
+            "Only custom package metadata fields are affected. Core fields such as Package, "
+            "Version, Architecture, Filename, checksums, and Size are never filtered. "
+            "Matching is case-insensitive. Example: ['Phased-Update-Percentage']."
+        ),
+        required=False,
+    )
+
     policy = ChoiceField(
         help_text="The policy to use when downloading content. The possible values include: "
         "'immediate', 'on_demand', and 'streamed'. 'immediate' is the default.",
@@ -85,6 +102,7 @@ class AptRemoteSerializer(RemoteSerializer):
             "sync_installer",
             "gpgkey",
             "ignore_missing_package_indices",
+            "excluded_package_metadata_fields",
         )
         model = AptRemote
 

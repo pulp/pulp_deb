@@ -218,6 +218,9 @@ class AptPublicationViewSet(PublicationViewSet, RolesMixin):
         )
         publish_legacy_release_files = serializer.validated_data.get("publish_legacy_release_files")
         layout = serializer.validated_data.get("layout")
+        excluded_package_metadata_fields = serializer.validated_data.get(
+            "excluded_package_metadata_fields"
+        )
 
         kwargs = {
             "repository_version_pk": repository_version.pk,
@@ -227,6 +230,7 @@ class AptPublicationViewSet(PublicationViewSet, RolesMixin):
             "publish_upstream_release_fields": publish_upstream_release_fields,
             "publish_legacy_release_files": publish_legacy_release_files,
             "layout": layout,
+            "excluded_package_metadata_fields": excluded_package_metadata_fields,
         }
         if checkpoint:
             kwargs["checkpoint"] = True

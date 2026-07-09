@@ -32,6 +32,9 @@ from pulp_deb.app.constants import (
     PACKAGE_UPLOAD_DEFAULT_COMPONENT,
     PACKAGE_UPLOAD_DEFAULT_DISTRIBUTION,
 )
+from pulp_deb.app.metadata import (
+    excluded_package_metadata_fields as get_excluded_package_metadata_fields,
+)
 from pulp_deb.app.models import (
     BOOL_CHOICES,
     BasePackage,
@@ -393,13 +396,16 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
         Translate deb822.Package to a dictionary for class instatiation.
         """
         skip = ["Filename", "MD5sum", "Size", "SHA1", "SHA256", "SHA512"]
+        excluded_fields = get_excluded_package_metadata_fields(
+            kwargs.pop("excluded_package_metadata_fields", None)
+        )
         package_fields = {}
         custom_fields = {}
         for k, v in data.items():
             if k in cls.TRANSLATION_DICT_INV:
                 key = cls.TRANSLATION_DICT_INV[k]
                 package_fields[key] = v
-            elif k not in skip:
+            elif k not in skip and k.lower() not in excluded_fields:
                 # also save the fields not in TRANSLATION_DICT
                 custom_fields[k] = v
 
@@ -487,6 +493,7 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
         remote_artifact_dict=None,
         layout=LAYOUT_TYPES.NESTED_ALPHABETICALLY,
         basename_override=None,
+        excluded_package_metadata_fields=None,
     ):
         """Create deb822.Package object from model."""
         ret = deb822.Packages()
@@ -498,7 +505,14 @@ class BasePackage822Serializer(SingleArtifactContentSerializer):
 
         custom_fields = self.data.get("custom_fields")
         if custom_fields:
-            ret.update(custom_fields)
+            excluded_fields = get_excluded_package_metadata_fields(excluded_package_metadata_fields)
+            ret.update(
+                {
+                    field_name: value
+                    for field_name, value in custom_fields.items()
+                    if field_name.lower() not in excluded_fields
+                }
+            )
 
         artifact = None
         if artifact_dict and self.instance.sha256 in artifact_dict:

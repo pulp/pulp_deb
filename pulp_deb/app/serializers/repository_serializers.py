@@ -117,6 +117,19 @@ class AptRepositorySerializer(RepositorySerializer):
         required=False,
         allow_null=True,
     )
+
+    excluded_package_metadata_fields = serializers.ListField(
+        child=serializers.CharField(),
+        help_text=_(
+            "Default package metadata field names to omit from generated Packages indices. "
+            "This repository level setting is used when a publication does not specify its own "
+            "excluded_package_metadata_fields. Only custom package metadata fields are affected. "
+            "Core fields are never filtered. Matching is case-insensitive. "
+            "Example: ['Phased-Update-Percentage']."
+        ),
+        required=False,
+    )
+
     package_signing_fingerprint = PgpKeyFingerprintField(
         help_text=_(
             "The pubkey fingerprint to be passed to the package signing service. "
@@ -138,6 +151,7 @@ class AptRepositorySerializer(RepositorySerializer):
             "package_signing_fingerprint_release_overrides",
             "package_signing_service",
             "package_signing_fingerprint",
+            "excluded_package_metadata_fields",
         )
         model = AptRepository
 

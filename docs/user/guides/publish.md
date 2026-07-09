@@ -63,6 +63,34 @@ It is also possible to use the `signing_service_release_overrides` parameter to 
 This parameter expects a dict of key-value pairs of the form `{"<distribution>": "<signing_service_href>"}`.
 At the time of this writing, this cannot be done via Pulp CLI.
 
+## Filtering Package Metadata
+
+You can omit selected custom package metadata fields from generated `Packages` indices for a single publication or as a repository default.
+
+For example, to avoid publishing Ubuntu phased update metadata:
+
+```bash
+pulp deb publication create \
+  --repository=${NAME} \
+  --excluded-package-metadata-field=Phased-Update-Percentage
+```
+
+To configure the same exclusion as a repository default:
+
+```bash
+pulp deb repository update \
+  --name=${NAME} \
+  --excluded-package-metadata-field=Phased-Update-Percentage
+```
+
+The option may be specified multiple times.
+This publish filter is useful even when existing package content already contains the custom fields.
+The filter applies only to structured publications. Verbatim publications continue to serve upstream metadata unchanged.
+Core package fields are never filtered, and matching is case-insensitive.
+
+Administrators can define additional global exclusions with the `EXCLUDED_PACKAGE_METADATA_FIELDS` setting.
+Global, repository, and publication exclusions are additive.
+
 ## Verbatim Publications
 
 !!! attention

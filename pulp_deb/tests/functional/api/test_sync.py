@@ -395,6 +395,42 @@ def test_sync_replaces_package_when_only_metadata_changes(
 
 
 @pytest.mark.parallel
+def test_sync_excludes_package_metadata_fields(
+    apt_distribution_api,
+    deb_init_and_sync,
+    deb_publication_factory,
+    deb_distribution_factory,
+    download_content_unit,
+):
+    """Exclude selected custom package metadata fields while syncing."""
+    remote_args = {
+        "distributions": DEB_FIXTURE_SINGLE_DIST,
+        "components": DEB_FIXTURE_COMPONENT,
+        "architectures": DEB_FIXTURE_ARCH,
+        "excluded_package_metadata_fields": ["Phased-Update-Percentage"],
+    }
+    repo, _ = deb_init_and_sync(
+        url=DEB_FIXTURE_METADATA_UPDATE_REPOSITORY_NAME,
+        remote_args=remote_args,
+    )
+
+    publication = deb_publication_factory(
+        repo,
+        simple=False,
+        structured=True,
+        excluded_package_metadata_fields=[],
+    )
+    distribution = apt_distribution_api.read(deb_distribution_factory(publication).pulp_href)
+    packages_index = download_content_unit(
+        distribution.to_dict()["base_path"],
+        "dists/ragnarok/asgard/binary-ppc64/Packages",
+    ).decode("utf-8")
+
+    assert "Package: frigg" in packages_index
+    assert "Phased-Update-Percentage" not in packages_index
+
+
+@pytest.mark.parallel
 def test_sync_optimize_switch_to_no_mirror(deb_init_and_sync):
     """
     Test that when syncing a repo with mirror=True, and then re-syncing that repo with
