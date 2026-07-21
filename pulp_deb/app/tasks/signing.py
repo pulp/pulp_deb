@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import re
 import subprocess
 from gettext import gettext as _
 from pathlib import Path
@@ -8,6 +7,7 @@ from tempfile import NamedTemporaryFile
 
 from django.conf import settings
 from django.db.models import Q
+from pysequoia.packet import PacketPile, Tag
 
 from pulpcore.plugin.models import (
     Artifact,
@@ -68,28 +68,20 @@ def _verify_package_fingerprint(path, signing_fingerprint):
         log.info(f"No _gpgorigin found in {path} (unsigned package).")
         return False
 
-    gpg_proc = subprocess.run(
-        ["gpg", "--list-packets", "--verbose"],
-        input=ar_proc.stdout,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    if gpg_proc.returncode != 0:
-        log.info(f"gpg --list-packets failed for {path}: {gpg_proc.stderr}")
-        return False
+    raw_fingerprint = signing_fingerprint.split(":", 1)[1].upper()
 
-    output = gpg_proc.stdout.decode("utf-8", errors="replace")
-    raw_fingerprint = signing_fingerprint.split(":", 1)[1]
+    for packet in PacketPile.from_bytes(ar_proc.stdout):
+        if packet.tag != Tag.Signature:
+            continue
+        # Prefer the full issuer fingerprint (v6 keys may omit the short key ID)
+        if packet.issuer_fingerprint is not None:
+            if raw_fingerprint.upper() == packet.issuer_fingerprint.upper():
+                return True
+        if packet.issuer_key_id is not None:
+            if raw_fingerprint.endswith(packet.issuer_key_id.upper()):
+                return True
 
-    # Look for key ID lines in gpg --list-packets output
-    key_ids = re.findall(r"keyid ([0-9A-Fa-f]+)", output, re.IGNORECASE)
-    for candidate in key_ids:
-        if raw_fingerprint.upper().endswith(candidate.upper()):
-            return True
-
-    log.debug(
-        f"Fingerprint mismatch for {path}: expected {raw_fingerprint}, found key IDs {key_ids}."
-    )
+    log.debug(f"Fingerprint mismatch for {path}: expected {raw_fingerprint}.")
     return False
 
 
