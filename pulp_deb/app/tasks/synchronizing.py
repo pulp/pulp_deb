@@ -72,6 +72,7 @@ from pulp_deb.app.models import (
     SourcePackage,
     SourcePackageReleaseComponent,
 )
+from pulp_deb.app.package_metadata import calculate_package_metadata_sha256
 from pulp_deb.app.serializers import (
     DscFile822Serializer,
     InstallerPackage822Serializer,
@@ -977,10 +978,12 @@ class DebFirstStage(Stage):
                 log.debug(_("Downloading package {}").format(package_paragraph["Package"]))
                 serializer = serializer_class.from822(data=package_paragraph)
                 serializer.is_valid(raise_exception=True)
+                package_metadata = serializer.validated_data
                 package_content_unit = package_class(
                     relative_path=package_relpath,
                     sha256=package_sha256,
-                    **serializer.validated_data,
+                    metadata_sha256=calculate_package_metadata_sha256(package_metadata),
+                    **package_metadata,
                 )
                 package_path = quote(os.path.join(self.parsed_url.path, package_relpath), safe=":/")
                 package_da = DeclarativeArtifact(

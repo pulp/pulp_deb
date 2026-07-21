@@ -306,12 +306,19 @@ def handle_duplicate_packages(new_version):
 
         # Now remove existing packages that are duplicates of any packages added to new_version
         if package_qs_added.count() and content_qs_existing.count():
-            for batch in batch_qs(package_qs_added.values(*repo_key_fields, "sha256")):
+            for batch in batch_qs(
+                package_qs_added.values(*repo_key_fields, "sha256", "metadata_sha256")
+            ):
                 find_dup_qs = models.Q()
 
                 for content_dict in batch:
                     sha256 = content_dict.pop("sha256")
-                    item_query = models.Q(**content_dict) & ~models.Q(sha256=sha256)
+                    metadata_sha256 = content_dict.pop("metadata_sha256")
+                    content_identity = models.Q(
+                        sha256=sha256,
+                        metadata_sha256=metadata_sha256,
+                    )
+                    item_query = models.Q(**content_dict) & ~content_identity
                     find_dup_qs |= item_query
 
                 package_qs_duplicates = (

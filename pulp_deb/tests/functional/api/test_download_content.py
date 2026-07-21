@@ -244,6 +244,5 @@ def test_apt_by_hash(
     # Verify that all by-hash files are available
     for path, sha256 in sha256_dict.items():
         content_url = f"dists/{DEB_FIXTURE_SINGLE_DIST}/{path}/by-hash/SHA256/{sha256}"
-        assert "404" not in download_content_unit(distribution.base_path, content_url).decode(
-            "utf-8"
-        )
+        content = download_content_unit(distribution.base_path, content_url)
+        assert hashlib.sha256(content).hexdigest() == sha256

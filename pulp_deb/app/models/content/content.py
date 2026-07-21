@@ -70,6 +70,8 @@ class BasePackage(Content):
     relative_path = models.TextField(null=False)
     # this digest is transferred to the content as a natural_key
     sha256 = models.TextField(null=False)
+    # digest of normalized metadata emitted in the Packages paragraph
+    metadata_sha256 = models.CharField(max_length=64, null=False, editable=False)
 
     signing_keys = ArrayField(models.TextField(), default=None, null=True)
 
@@ -105,7 +107,7 @@ class BasePackage(Content):
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
-        unique_together = (("relative_path", "sha256", "_pulp_domain"),)
+        unique_together = (("relative_path", "sha256", "metadata_sha256", "_pulp_domain"),)
         abstract = True
 
 
