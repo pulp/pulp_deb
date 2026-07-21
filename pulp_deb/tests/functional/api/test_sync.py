@@ -1,8 +1,8 @@
 """Tests that sync deb repositories in optimized mode."""
 
 import pytest
+from django.conf import settings
 
-from pulpcore.app import settings  # noqa: TID251
 from pulpcore.tests.functional.utils import PulpTaskError
 
 from pulp_deb.tests.functional.constants import (
