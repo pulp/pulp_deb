@@ -4,13 +4,17 @@
 from django.conf import settings
 from django.urls import path
 
+from pulpcore.plugin.find_url import find_api_root
+
 from .viewsets import CopyViewSet
 
-if settings.DOMAIN_ENABLED:
-    V3_API_ROOT = settings.V3_DOMAIN_API_ROOT_NO_FRONT_SLASH
+if getattr(settings, "ENABLE_V4_API", None):
+    VERSION = "<str:version>"
 else:
-    V3_API_ROOT = settings.V3_API_ROOT_NO_FRONT_SLASH
+    VERSION = "v3"
+
+_, API_ROOT = find_api_root(lstrip=True, version=VERSION)
 
 urlpatterns = [
-    path(f"{V3_API_ROOT}deb/copy/", CopyViewSet.as_view({"post": "create"})),
+    path(f"{API_ROOT}deb/copy/", CopyViewSet.as_view({"post": "create"})),
 ]
