@@ -184,11 +184,18 @@ def _sign_package(package, signing_service, signing_fingerprint, package_release
             content=signed_package,
             relative_path=content_artifact.relative_path,
         )
-        DebPackageSigningResult.objects.create(
+        # get_or_create guards against concurrent signing of the same package, which
+        # would otherwise violate the unique constraint and fail the task.
+        signing_result, created = DebPackageSigningResult.objects.get_or_create(
             sha256=artifact_obj.sha256,
             package_signing_fingerprint=signing_fingerprint,
-            result=signed_package,
+            defaults={"result": signed_package},
         )
+        if not created:
+            # Another worker won the race; reuse its result and let orphan cleanup
+            # reap the redundant package we just created.
+            log.info(f"Package {package.name} was signed concurrently; reusing existing result.")
+            return (package_id, str(signing_result.result.pk), prcs_to_update)
 
         resource = CreatedResource(content_object=signed_package)
         resource.save()
