@@ -479,7 +479,7 @@ tmpdir=$(mktemp -d)
 ctrl=$(ar t "$1" | grep -m1 '^control\.tar\.')
 data=$(ar t "$1" | grep -m1 '^data\.tar\.')
 ar p "$1" debian-binary "$ctrl" "$data" | \
-    gpg --openpgp --detach-sign --default-key "$GPG_NAME" > "$tmpdir/_gpgorigin"
+    gpg --openpgp --digest-algo SHA256 --detach-sign --default-key "$GPG_NAME" > "$tmpdir/_gpgorigin"
 ar r "$1" "$tmpdir/_gpgorigin" >/dev/null
 
 # Check the exit status

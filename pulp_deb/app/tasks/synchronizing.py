@@ -6,22 +6,19 @@ import logging
 import lzma
 import os
 import shutil
-import subprocess
 from collections import defaultdict
-from functools import wraps
 from gettext import gettext as _
 from tempfile import NamedTemporaryFile
 from urllib.parse import quote, urlparse, urlunparse
 
 import aiohttp
-import gnupg
 from asgiref.sync import sync_to_async
 from debian import deb822
 from django.conf import settings
 from django.db.utils import IntegrityError
 from rest_framework.exceptions import ValidationError
 
-from pulpcore.plugin.exceptions import DigestValidationError, SyncError
+from pulpcore.plugin.exceptions import DigestValidationError, InvalidSignatureError, SyncError
 from pulpcore.plugin.models import (
     Artifact,
     ProgressReport,
@@ -41,7 +38,7 @@ from pulpcore.plugin.stages import (
     ResolveContentFutures,
     Stage,
 )
-from pulpcore.plugin.util import get_domain
+from pulpcore.plugin.util import get_domain, gpg_verify
 
 from pulp_deb.app.constants import (
     CHECKSUM_TYPE_MAP,
@@ -314,46 +311,11 @@ class DebUpdateReleaseFileAttributes(Stage):
     It also transfers the sha256 from the artifact to the ReleaseFile content units.
     """
 
-    @staticmethod
-    def _gpg_agent_cleanup(func):
-        """Kill gpg-agent for this intances gnupghome after the wrapped call, even on error."""
-
-        @wraps(func)
-        def wrapper(self, *args, **kwargs):
-            try:
-                return func(self, *args, **kwargs)
-            finally:
-                gpgkey = getattr(self, "gpgkey", None)
-                gpg = getattr(self, "gpg", None)
-                homedir = getattr(gpg, "gnupghome", None) if gpg is not None else None
-                if gpgkey and homedir:
-                    try:
-                        subprocess.run(
-                            ["/usr/bin/gpgconf", "--homedir", homedir, "--kill", "gpg-agent"],
-                            check=False,
-                            stdout=subprocess.DEVNULL,
-                            stderr=subprocess.DEVNULL,
-                        )
-                    except Exception:
-                        # cleanup must never mask the original error path
-                        pass
-
-        return wrapper
-
-    @_gpg_agent_cleanup
     def __init__(self, remote, *args, **kwargs):
         """Initialize DebUpdateReleaseFileAttributes stage."""
         super().__init__(*args, **kwargs)
         self.remote = remote
         self.gpgkey = remote.gpgkey
-        self.gpg = None
-        if self.gpgkey:
-            gnupghome = os.path.join(os.getcwd(), "gpg-home")
-            os.makedirs(gnupghome, exist_ok=True)
-            self.gpg = gnupg.GPG(gpgbinary="/usr/bin/gpg", gnupghome=gnupghome)
-            import_res = self.gpg.import_keys(self.gpgkey)
-            if import_res.count == 0:
-                log.warning(_("Key import failed."))
 
     async def run(self):
         """
@@ -376,7 +338,7 @@ class DebUpdateReleaseFileAttributes(Stage):
         release_da, release_gpg_da, inrelease_da = _collect_release_artifacts(d_content)
 
         release_artifact = None
-        if self.gpg:
+        if self.gpgkey:
             release_artifact = self.verify_gpg_artifacts(
                 d_content, release_da, release_gpg_da, inrelease_da
             )
@@ -408,23 +370,29 @@ class DebUpdateReleaseFileAttributes(Stage):
 
     def verify_gpg_artifacts(self, d_content, release_da, release_gpg_da, inrelease_da):
         """
-        Handle GPG verification. Returns the main artifact or raises and exception.
+        Handle GPG verification. Returns the main artifact or raises an exception.
         """
         if inrelease_da:
-            if self.verify_single_file(inrelease_da.artifact):
+            try:
+                gpg_verify(self.gpgkey, inrelease_da.artifact)
                 log.info(_("Verification of InRelease successful."))
                 d_content.content.relative_path = inrelease_da.relative_path
                 return inrelease_da.artifact
-            else:
+            except InvalidSignatureError:
                 log.warning(_("Verification of InRelease failed. Removing it."))
                 d_content.d_artifacts.remove(inrelease_da)
 
         if release_da and release_gpg_da:
-            if self.verify_detached_signature(release_da.artifact, release_gpg_da.artifact):
+            try:
+                with NamedTemporaryFile() as tmp_file:
+                    with release_da.artifact.file.open("rb") as rel_fh:
+                        tmp_file.write(rel_fh.read())
+                    tmp_file.flush()
+                    gpg_verify(self.gpgkey, release_gpg_da.artifact, tmp_file.name)
                 log.info(_("Verification of Release successful."))
                 d_content.content.relative_path = release_da.relative_path
                 return release_da.artifact
-            else:
+            except InvalidSignatureError:
                 log.warning(_("Verification of Release + Release.gpg failed. Removing it."))
                 d_content.d_artifacts.remove(release_da)
                 d_content.d_artifacts.remove(release_gpg_da)
@@ -433,29 +401,6 @@ class DebUpdateReleaseFileAttributes(Stage):
             d_content.d_artifacts.remove(release_da)
 
         raise NoValidSignatureForKey(url=os.path.join(self.remote.url, "Release"))
-
-    def verify_single_file(self, artifact):
-        """
-        Attempt to verify an inline-signed file (InRelease).
-        Returns True if valid, False otherwise.
-        """
-        with artifact.file.open("rb") as inrelease_fh:
-            verified = self.gpg.verify_file(inrelease_fh)
-        return bool(verified.valid)
-
-    def verify_detached_signature(self, release_artifact, release_gpg_artifact):
-        """
-        Attempt to verify a detached signature with "Release" and "Release.gpg".
-        Return True if valid, False otherwise.
-        """
-        with NamedTemporaryFile() as tmp_file:
-            with release_artifact.file.open("rb") as rel_fh:
-                tmp_file.write(rel_fh.read())
-            tmp_file.flush()
-
-            with release_gpg_artifact.file.open("rb") as detached_fh:
-                verified = self.gpg.verify_file(detached_fh, tmp_file.name)
-        return bool(verified.valid)
 
 
 class DebUpdatePackageIndexAttributes(Stage):  # TODO: Needs a new name

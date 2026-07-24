@@ -6,10 +6,11 @@ from importlib.resources import files
 from pathlib import Path
 from typing import Optional
 
-import gnupg
 from django.db import models
 
+from pulpcore.plugin.exceptions import InvalidSignatureError
 from pulpcore.plugin.models import BaseModel, Content, SigningService
+from pulpcore.plugin.util import gpg_verify
 
 
 class UnsignedPackage(Exception):
@@ -22,23 +23,6 @@ class InvalidSignature(Exception):
 
 class FingerprintMismatch(Exception):
     """Raised when a deb package is signed with a different key fingerprint."""
-
-
-def prepare_gpg(temp_directory_name, public_key, pubkey_fingerprint):
-    # Prepare GPG:
-    # gpg = gnupg.GPG(gnupghome=temp_directory_name)
-    gpg = gnupg.GPG(keyring=str(Path(temp_directory_name) / ".keyring"))
-    gpg.import_keys(public_key)
-    imported_keys = gpg.list_keys()
-
-    if len(imported_keys) != 1:
-        message = "We have imported more than one key! Aborting validation!"
-        raise RuntimeError(message)
-
-    if imported_keys[0]["fingerprint"] != pubkey_fingerprint:
-        message = "The signing service fingerprint does not appear to match its public key!"
-        raise RuntimeError(message)
-    return gpg
 
 
 class AptReleaseSigningService(SigningService):
@@ -105,9 +89,6 @@ class AptReleaseSigningService(SigningService):
                         )
                         raise RuntimeError(message.format(signature_file, signature_type))
 
-                # Prepare GPG:
-                gpg = prepare_gpg(temp_directory_name, self.public_key, self.pubkey_fingerprint)
-
                 # Verify InRelease file
                 inline_path = signatures.get("inline")
                 if inline_path:
@@ -117,15 +98,15 @@ class AptReleaseSigningService(SigningService):
                             "service script, must end with the 'InRelease' file name!"
                         )
                         raise RuntimeError(message)
-                    with open(inline_path, "rb") as inline:
-                        verified = gpg.verify_file(inline)
-                        if not verified.valid:
-                            message = "GPG Verification of the inline file '{}' failed!"
-                            raise RuntimeError(message.format(inline_path))
+                    try:
+                        result = gpg_verify(self.public_key, inline_path)
+                    except InvalidSignatureError:
+                        message = "GPG Verification of the inline file '{}' failed!"
+                        raise RuntimeError(message.format(inline_path))
 
-                        if verified.pubkey_fingerprint != self.pubkey_fingerprint:
-                            message = "'{}' appears to have been signed using the wrong key!"
-                            raise RuntimeError(message.format(inline_path))
+                    if result.pubkey_fingerprint != self.pubkey_fingerprint:
+                        message = "'{}' appears to have been signed using the wrong key!"
+                        raise RuntimeError(message.format(inline_path))
 
                     # Also check that the non-signature part of the InRelease file is the same as
                     # the original Release file!
@@ -153,15 +134,15 @@ class AptReleaseSigningService(SigningService):
                             "service script, must end with the 'Release.gpg' file name!"
                         )
                         raise RuntimeError(message)
-                    with open(signatures.get("detached"), "rb") as detached:
-                        verified = gpg.verify_file(detached, test_release_path)
-                        if not verified.valid:
-                            message = "GPG Verification of the detached file '{}' failed!"
-                            raise RuntimeError(message.format(detached_path))
+                    try:
+                        result = gpg_verify(self.public_key, detached_path, test_release_path)
+                    except InvalidSignatureError:
+                        message = "GPG Verification of the detached file '{}' failed!"
+                        raise RuntimeError(message.format(detached_path))
 
-                        if verified.pubkey_fingerprint != self.pubkey_fingerprint:
-                            message = "'{}' appears to have been signed using the wrong key!"
-                            raise RuntimeError(message.format(detached_path))
+                    if result.pubkey_fingerprint != self.pubkey_fingerprint:
+                        message = "'{}' appears to have been signed using the wrong key!"
+                        raise RuntimeError(message.format(detached_path))
 
 
 class AptPackageSigningService(SigningService):
@@ -231,15 +212,16 @@ class AptPackageSigningService(SigningService):
     def validate_signature(self, deb_package_path: str):
         """Validate that the deb package is signed with our pubkey."""
         with tempfile.TemporaryDirectory() as temp_directory_name:
-            gpg = prepare_gpg(temp_directory_name, self.public_key, self.pubkey_fingerprint)
-
             self._check_deb_signature(
-                deb_package_path, self.pubkey_fingerprint, temp_directory_name, gpg
+                deb_package_path,
+                self.pubkey_fingerprint,
+                temp_directory_name,
+                self.public_key,
             )
 
     @staticmethod
     def _check_deb_signature(
-        deb_package_path: str, fingerprint: str, temp_directory_name: str, gpg: gnupg.GPG
+        deb_package_path: str, fingerprint: str, temp_directory_name: str, public_key: str
     ):
         """Check the deb package signature matches the provided fingerprint."""
         # unpack the archive
@@ -250,6 +232,7 @@ class AptPackageSigningService(SigningService):
 
         # cat the unpacked archive bits together
         temp_dir = Path(temp_directory_name)
+        combined_path = str(temp_dir / "combined")
         with (temp_dir / "combined").open("wb") as combined:
             for filename in ("debian-binary", "control.*", "data.*"):
                 # There will only be one control.tar.gz (or whatever) file, but we have to glob
@@ -264,16 +247,16 @@ class AptPackageSigningService(SigningService):
             raise UnsignedPackage(
                 f"_gpgorigin file not found for {deb_package_path}. Package is unsigned."
             )
-        with gpgorigin_path.open("rb") as gpgorigin:
-            verified = gpg.verify_file(gpgorigin, str(temp_dir / "combined"))
-            if not verified.valid:
-                raise InvalidSignature(
-                    f"GPG Verification of the signed package {deb_package_path} failed!"
-                )
-            if verified.pubkey_fingerprint != fingerprint:
-                raise FingerprintMismatch(
-                    f"'{deb_package_path}' appears to have been signed using the wrong key!"
-                )
+        try:
+            result = gpg_verify(public_key, str(gpgorigin_path), combined_path)
+        except InvalidSignatureError:
+            raise InvalidSignature(
+                f"GPG Verification of the signed package {deb_package_path} failed!"
+            )
+        if result.pubkey_fingerprint != fingerprint:
+            raise FingerprintMismatch(
+                f"'{deb_package_path}' appears to have been signed using the wrong key!"
+            )
 
 
 class DebPackageSigningResult(BaseModel):

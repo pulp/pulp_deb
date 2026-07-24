@@ -1,13 +1,11 @@
 import json
-import os
-import re
-import stat
 import subprocess
 import uuid
+from dataclasses import dataclass
 from urllib.parse import urlsplit
-from uuid import uuid4
 
 import pytest
+import requests
 
 from pulpcore.client.pulp_deb import (
     AcsDebApi,
@@ -541,23 +539,81 @@ def deb_copy_content_domain(apt_copy_api, monitor_task):
     return _deb_copy_content_domain
 
 
+def import_signing_key(key_url, gpg_home):
+    """Import a PGP key into a GPG home directory and trust it.
+
+    Returns ``(gpg, fingerprint, keyid)``.
+    """
+    try:
+        import gnupg
+    except ImportError:
+        pytest.skip("python-gnupg not installed")
+
+    gpg = gnupg.GPG(gnupghome=gpg_home)
+
+    response = requests.get(key_url)
+    response.raise_for_status()
+    result = gpg.import_keys(response.content)
+    assert result.count >= 1, f"Failed to import key from {key_url}"
+
+    key_info = gpg.list_keys()[0]
+    fingerprint = key_info["fingerprint"]
+    keyid = key_info["keyid"]
+    gpg.trust_keys(fingerprint, "TRUST_ULTIMATE")
+
+    return gpg, fingerprint, keyid
+
+
+def create_signing_service(
+    gpg_home, fingerprint, script_path, *, service_class="core:AsciiArmoredDetachedSigningService"
+):
+    """Register a signing service via pulpcore-manager.
+
+    Returns the service name.
+    """
+    service_name = str(uuid.uuid4())
+    cmd = (
+        "pulpcore-manager",
+        "add-signing-service",
+        service_name,
+        str(script_path),
+        fingerprint,
+        "--class",
+        service_class,
+        "--gnupghome",
+        str(gpg_home),
+    )
+    completed = subprocess.run(cmd, capture_output=True, text=True)
+    assert completed.returncode == 0, completed.stderr
+
+    return service_name
+
+
+def remove_signing_service(service_name, service_class="core:AsciiArmoredDetachedSigningService"):
+    """Remove a signing service created by ``create_signing_service``."""
+    subprocess.run(
+        (
+            "pulpcore-manager",
+            "remove-signing-service",
+            service_name,
+            "--class",
+            service_class,
+        ),
+        capture_output=True,
+    )
+
+
 @pytest.fixture(scope="session")
 def deb_signing_script_path(
-    signing_script_temp_dir, signing_gpg_homedir_path, signing_gpg_metadata
+    signing_script_temp_dir, signing_gpg_homedir_path, deb_signing_key_primary
 ):
-    _, _, keyid = signing_gpg_metadata
     """A fixture that provides a signing script path for signing debian packages."""
     signing_script_filename = signing_script_temp_dir / "sign_deb_release.sh"
-    rep = {"HOMEDIRHERE": str(signing_gpg_homedir_path), "GPGKEYIDHERE": str(keyid)}
-    rep = dict((re.escape(k), v) for k, v in rep.items())
-    pattern = re.compile("|".join(rep.keys()))
-    with open(signing_script_filename, "w", 0o770) as sign_metadata_file:
-        sign_metadata_file.write(
-            pattern.sub(lambda m: rep[re.escape(m.group(0))], DEB_SIGNING_SCRIPT_STRING)
-        )
-
-    st = os.stat(signing_script_filename)
-    os.chmod(signing_script_filename, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    script_content = DEB_SIGNING_SCRIPT_STRING.replace(
+        "HOMEDIRHERE", str(signing_gpg_homedir_path)
+    ).replace("GPGKEYIDHERE", deb_signing_key_primary.keyid)
+    signing_script_filename.write_text(script_content)
+    signing_script_filename.chmod(0o755)
 
     return signing_script_filename
 
@@ -565,48 +621,26 @@ def deb_signing_script_path(
 @pytest.fixture(scope="session")
 def deb_signing_service_factory(
     deb_signing_script_path,
-    signing_gpg_metadata,
+    deb_signing_key_primary,
     signing_gpg_homedir_path,
     pulpcore_bindings,
 ):
-    """A fixture for the debian signing service."""
-    gpg, fingerprint, keyid = signing_gpg_metadata
-    service_name = str(uuid4())
-    cmd = (
-        "pulpcore-manager",
-        "add-signing-service",
-        service_name,
-        str(deb_signing_script_path),
-        fingerprint,
-        "--class",
-        "deb:AptReleaseSigningService",
-        "--gnupghome",
-        str(gpg.gnupghome),
+    """A fixture for the debian release signing service."""
+    service_name = create_signing_service(
+        signing_gpg_homedir_path,
+        deb_signing_key_primary.fingerprint,
+        deb_signing_script_path,
+        service_class="deb:AptReleaseSigningService",
     )
-    process = subprocess.run(cmd, capture_output=True)
-
-    assert process.returncode == 0
 
     signing_service = pulpcore_bindings.SigningServicesApi.list(name=service_name).results[0]
 
-    assert signing_service.pubkey_fingerprint == fingerprint
-    assert signing_service.public_key == gpg.export_keys(keyid)
+    assert signing_service.pubkey_fingerprint == deb_signing_key_primary.fingerprint
+    assert signing_service.public_key == deb_signing_key_primary.public_key
 
     yield signing_service
 
-    cmd = (
-        "pulpcore-manager",
-        "remove-signing-service",
-        service_name,
-        "--class",
-        "deb:AptReleaseSigningService",
-    )
-    process = subprocess.run(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    assert process.returncode == 0
+    remove_signing_service(service_name, service_class="deb:AptReleaseSigningService")
 
 
 @pytest.fixture
@@ -737,14 +771,56 @@ def signing_gpg_homedir_path(tmp_path_factory):
     return tmp_path_factory.mktemp("gpghome")
 
 
+@dataclass
+class GPGKeyInfo:
+    public_key: str
+    fingerprint: str
+    keyid: str
+
+
+PRIVATE_KEY_FIXTURE_SIGNING_URL = (
+    "https://raw.githubusercontent.com/pulp/pulp-fixtures/master/common/"
+    "GPG-PRIVATE-KEY-fixture-signing"
+)
+PRIVATE_KEY_PULP_QE_URL = (
+    "https://raw.githubusercontent.com/pulp/pulp-fixtures/master/common/GPG-PRIVATE-KEY-pulp-qe"
+)
+
+
+@pytest.fixture(scope="session")
+def deb_signing_key_primary(signing_gpg_homedir_path):
+    """Primary test signing key (fixture-signing)."""
+    gpg, fingerprint, keyid = import_signing_key(
+        PRIVATE_KEY_FIXTURE_SIGNING_URL, signing_gpg_homedir_path
+    )
+    public_key = gpg.export_keys(fingerprint)
+    return GPGKeyInfo(public_key=public_key, fingerprint=fingerprint, keyid=keyid)
+
+
+@pytest.fixture(scope="session")
+def deb_signing_key_secondary(signing_gpg_homedir_path, deb_signing_key_primary):
+    """Secondary test signing key (pulp-qe)."""
+    import gnupg
+
+    gpg = gnupg.GPG(gnupghome=signing_gpg_homedir_path)
+    response = requests.get(PRIVATE_KEY_PULP_QE_URL)
+    response.raise_for_status()
+    result = gpg.import_keys(response.content)
+    fingerprint = result.fingerprints[0]
+    gpg.trust_keys(fingerprint, "TRUST_ULTIMATE")
+    public_key = gpg.export_keys(fingerprint)
+    keyid = fingerprint[-16:]
+    return GPGKeyInfo(public_key=public_key, fingerprint=fingerprint, keyid=keyid)
+
+
 @pytest.fixture
-def sign_with_deb_package_signing_service(package_signing_script_path, signing_gpg_metadata):
+def sign_with_deb_package_signing_service(package_signing_script_path, deb_signing_key_primary):
     """
     Runs the test signing script manually, locally, and returns the signature file produced.
     """
 
     def _sign_with_deb_package_signing_service(filename):
-        env = {"PULP_SIGNING_KEY_FINGERPRINT": signing_gpg_metadata[1]}
+        env = {"PULP_SIGNING_KEY_FINGERPRINT": deb_signing_key_primary.fingerprint}
         cmd = (package_signing_script_path, filename)
         completed_process = subprocess.run(
             cmd,
@@ -768,48 +844,20 @@ def sign_with_deb_package_signing_service(package_signing_script_path, signing_g
 
 @pytest.fixture(scope="session")
 def _deb_package_signing_service_name(
-    bindings_cfg,
     package_signing_script_path,
-    signing_gpg_metadata,
+    deb_signing_key_primary,
     signing_gpg_homedir_path,
-    pytestconfig,
 ):
-    service_name = str(uuid.uuid4())
-    gpg, fingerprint, keyid = signing_gpg_metadata
-
-    cmd = (
-        "pulpcore-manager",
-        "add-signing-service",
-        service_name,
-        str(package_signing_script_path),
-        fingerprint,
-        "--class",
-        "deb:AptPackageSigningService",
-        "--gnupghome",
-        str(signing_gpg_homedir_path),
+    service_name = create_signing_service(
+        signing_gpg_homedir_path,
+        deb_signing_key_primary.fingerprint,
+        package_signing_script_path,
+        service_class="deb:AptPackageSigningService",
     )
-    completed_process = subprocess.run(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-
-    assert completed_process.returncode == 0
 
     yield service_name
 
-    cmd = (
-        "pulpcore-manager",
-        "remove-signing-service",
-        service_name,
-        "--class",
-        "deb:AptPackageSigningService",
-    )
-    subprocess.run(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
+    remove_signing_service(service_name, service_class="deb:AptPackageSigningService")
 
 
 @pytest.fixture
