@@ -271,7 +271,7 @@ class PackageViewSet(SingleArtifactContentUploadViewSet):
         "optionally create new repository version.",
         responses={202: AsyncOperationResponseSerializer},
     )
-    def create(self, request):
+    def create(self, request, **kwargs):
         # validation decides if we want to sign and set that in the context space
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)

@@ -38,7 +38,7 @@ class AptModifyRepositoryActionMixin(ModifyRepositoryActionMixin):
         responses={202: AsyncOperationResponseSerializer},
     )
     @action(detail=True, methods=["post"], serializer_class=RepositoryAddRemoveContentSerializer)
-    def modify(self, request, pk):
+    def modify(self, request, pk, **kwargs):
         remove_content_units = request.data.get("remove_content_units", [])
         remove_package_hrefs = [href for href in remove_content_units if "/packages/" in href]
 
@@ -224,7 +224,7 @@ class AptRepositoryViewSet(AptModifyRepositoryActionMixin, RepositoryViewSet, Ro
         responses={202: AsyncOperationResponseSerializer},
     )
     @action(detail=True, methods=["post"], serializer_class=AptRepositorySyncURLSerializer)
-    def sync(self, request, pk):
+    def sync(self, request, pk, **kwargs):
         """
         Dispatches a sync task.
         """
@@ -310,7 +310,7 @@ class CopyViewSet(viewsets.ViewSet):
         request=serializers.CopySerializer,
         responses={202: AsyncOperationResponseSerializer},
     )
-    def create(self, request):
+    def create(self, request, **kwargs):
         """Copy content."""
         serializer = serializers.CopySerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)

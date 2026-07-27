@@ -97,7 +97,7 @@ class VerbatimPublicationViewSet(PublicationViewSet, RolesMixin):
         description="Trigger an asynchronous task to publish content",
         responses={202: AsyncOperationResponseSerializer},
     )
-    def create(self, request):
+    def create(self, request, **kwargs):
         """
         Publishes a repository.
 
@@ -199,7 +199,7 @@ class AptPublicationViewSet(PublicationViewSet, RolesMixin):
         description="Trigger an asynchronous task to publish content",
         responses={202: AsyncOperationResponseSerializer},
     )
-    def create(self, request):
+    def create(self, request, **kwargs):
         """
         Publishes a repository.
 
