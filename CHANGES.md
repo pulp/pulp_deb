@@ -8,6 +8,30 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.10.0 (2026-07-29) {: #3.10.0 }
+
+#### Features {: #3.10.0-feature }
+
+- Added (tech preview) support for signing Debian packages when uploading to a Repository.
+  [#1300](https://github.com/pulp/pulp_deb/issues/1300)
+- Add support for Architecture-Variant metadata
+  [#1419](https://github.com/pulp/pulp_deb/issues/1419)
+- Added support for the new `overwrite` parameter on the APT repository modify
+  endpoint. Packages already produced by Pulp's signing workflow (tracked via
+  `DebPackageSigningResult`) and present in the repository version are exempted
+  from the overwrite check so the operation remains a NOOP.
+- Convert existing Exceptions to Pulp Exceptions with error codes.
+  Bump pulpcore lowerbounds to 3.113.
+
+#### Bugfixes {: #3.10.0-bugfix }
+
+- Fixed an `IntegrityError` that could abort `signed_add_and_remove` when the same
+  package was signed concurrently by making the `DebPackageSigningResult` creation
+  race-safe and reusing the existing result.
+  [#1482](https://github.com/pulp/pulp_deb/issues/1482)
+
+---
+
 ## 3.9.0 (2026-06-03) {: #3.9.0 }
 
 #### Features {: #3.9.0-feature }
