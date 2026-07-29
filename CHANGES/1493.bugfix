@@ -1,0 +1,1 @@
+Fixed a bug where signing a package shared by multiple repositories could add package release-component associations from other repositories to the repository being modified.

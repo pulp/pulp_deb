@@ -411,6 +411,38 @@ def test_signed_repo_modify_overwrite_false_noop(
     assert [signed_package.pulp_href] == [pkg.pulp_href for pkg in results]
 
 
+def test_signing_does_not_add_package_components_from_other_repositories(
+    tmp_path,
+    add_package_to_repo,
+    deb_signing_key_primary,
+    deb_package_signing_service,
+    deb_repository_factory,
+    deb_package_factory,
+    apt_repository_api,
+    apt_package_release_components_api,
+):
+    """Ensure signing only replaces package components belonging to the target repository."""
+    package_file = shutil.copy(
+        get_local_package_absolute_path("frigg_1.0_ppc64.deb"),
+        tmp_path,
+    )
+    package = deb_package_factory(file=package_file)
+    other_repository = deb_repository_factory()
+    add_package_to_repo(other_repository, package.pulp_href)
+
+    repository = deb_repository_factory(
+        package_signing_service=deb_package_signing_service.pulp_href,
+        package_signing_fingerprint=deb_signing_key_primary.fingerprint,
+    )
+    release_component, _ = add_package_to_repo(repository, package.pulp_href)
+
+    repository = apt_repository_api.read(repository.pulp_href)
+    package_components = apt_package_release_components_api.list(
+        repository_version=repository.latest_version_href
+    ).results
+    assert [component.release_component for component in package_components] == [release_component]
+
+
 def test_already_signed_package(
     tmp_path,
     add_package_to_repo,
