@@ -335,6 +335,82 @@ def test_signed_repo_modify(
     assert [signed_package_href] == [pkg.pulp_href for pkg in results]
 
 
+def test_signed_repo_modify_overwrite_false_noop(
+    tmp_path,
+    monitor_task,
+    signing_gpg_metadata,
+    deb_package_signing_service,
+    deb_repository_factory,
+    deb_package_factory,
+    deb_release_component_factory,
+    deb_package_release_component_factory,
+    apt_repository_api,
+    apt_package_api,
+):
+    """
+    Re-adding an unsigned package with overwrite=False should NOOP, not raise.
+
+    The first add transparently signs the package and caches the result. A second
+    add of the same unsigned package would normally produce the same signed
+    package (already in the version) and trigger the pulpcore overwrite check.
+    The deb-specific override should exempt this signing-NOOP case.
+    """
+    _, fingerprint, _ = signing_gpg_metadata
+
+    repository = deb_repository_factory(
+        package_signing_service=deb_package_signing_service.pulp_href,
+        package_signing_fingerprint=fingerprint,
+    )
+
+    file_to_upload = shutil.copy(
+        get_local_package_absolute_path("frigg_1.0_ppc64.deb"),
+        tmp_path,
+    )
+    created_package = deb_package_factory(file=file_to_upload)
+    package_href = created_package.pulp_href
+
+    release_component = deb_release_component_factory(
+        distribution=str(uuid.uuid4()), component="main"
+    ).pulp_href
+    prc = deb_package_release_component_factory(
+        package=package_href,
+        release_component=release_component,
+    ).pulp_href
+
+    # First add: package gets signed and the result gets stored.
+    monitor_task(
+        apt_repository_api.modify(
+            repository.pulp_href,
+            {
+                "add_content_units": [package_href, release_component, prc],
+                "overwrite": False,
+            },
+        ).task
+    )
+    repository = apt_repository_api.read(repository.pulp_href)
+    signed_package = apt_package_api.list(
+        repository_version=repository.latest_version_href
+    ).results[0]
+    first_version_href = repository.latest_version_href
+
+    # Second add of the same unsigned package: should NOOP rather than raise
+    # ContentOverwriteError, because the already signed package is already present.
+    task_result = monitor_task(
+        apt_repository_api.modify(
+            repository.pulp_href,
+            {
+                "add_content_units": [package_href, release_component, prc],
+                "overwrite": False,
+            },
+        ).task
+    )
+    repository = apt_repository_api.read(repository.pulp_href)
+    assert repository.latest_version_href == first_version_href
+    assert task_result.created_resources == []
+    results = apt_package_api.list(repository_version=repository.latest_version_href).results
+    assert [signed_package.pulp_href] == [pkg.pulp_href for pkg in results]
+
+
 def test_already_signed_package(
     tmp_path,
     add_package_to_repo,

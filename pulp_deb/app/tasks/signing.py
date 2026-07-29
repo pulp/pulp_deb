@@ -205,7 +205,7 @@ def _sign_package(package, signing_service, signing_fingerprint, package_release
 
 
 def signed_add_and_remove(
-    repository_pk, add_content_units, remove_content_units, base_version_pk=None
+    repository_pk, add_content_units, remove_content_units, base_version_pk=None, overwrite=True
 ):
     repo = AptRepository.objects.get(pk=repository_pk)
 
@@ -269,4 +269,10 @@ def signed_add_and_remove(
                 if str(new_prc.pk) not in add_content_units:
                     add_content_units.append(str(new_prc.pk))
 
-    return add_and_remove(repository_pk, add_content_units, remove_content_units, base_version_pk)
+    return add_and_remove(
+        repository_pk,
+        add_content_units,
+        remove_content_units,
+        base_version_pk,
+        overwrite=overwrite,
+    )
