@@ -8,6 +8,14 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.9.1 (2026-07-29) {: #3.9.1 }
+
+#### Features {: #3.9.1-feature }
+
+- Raise the pulpcore upperbound to <3.130
+
+---
+
 ## 3.9.0 (2026-06-03) {: #3.9.0 }
 
 #### Features {: #3.9.0-feature }
