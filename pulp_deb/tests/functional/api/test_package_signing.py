@@ -7,7 +7,6 @@ import pytest
 
 from pulpcore.client.pulp_deb.exceptions import ApiException
 
-from pulp_deb.app.models import AptPackageSigningService
 from pulp_deb.tests.functional.utils import get_local_package_absolute_path
 
 
@@ -62,6 +61,7 @@ def add_package_to_repo(
 def test_sign_package_on_upload(
     tmp_path,
     download_content_unit,
+    deb_check_signature,
     deb_signing_key_primary,
     deb_signing_key_secondary,
     deb_package_signing_service,
@@ -86,7 +86,7 @@ def test_sign_package_on_upload(
         tmp_path,
     )
     with pytest.raises(Exception, match=".*Package is unsigned.*"):
-        AptPackageSigningService._check_deb_signature(
+        deb_check_signature(
             file_to_upload,
             deb_signing_key_primary.fingerprint,
             str(tmp_path),
@@ -113,7 +113,7 @@ def test_sign_package_on_upload(
         downloaded_package.write_bytes(
             download_content_unit(distribution.base_path, "pool/upload/f/frigg/frigg_1.0_ppc64.deb")
         )
-        AptPackageSigningService._check_deb_signature(
+        deb_check_signature(
             str(downloaded_package), fingerprint, str(tmp_path), combined_public_key
         )
 
@@ -142,7 +142,7 @@ def test_sign_package_on_upload(
     downloaded_package.write_bytes(
         download_content_unit(distribution.base_path, "pool/upload/f/frigg/frigg_1.0_ppc64.deb")
     )
-    AptPackageSigningService._check_deb_signature(
+    deb_check_signature(
         str(downloaded_package),
         deb_signing_key_secondary.fingerprint,
         str(tmp_path),
@@ -211,6 +211,7 @@ def pulpcore_upload_chunks(
 def test_sign_chunked_package_on_upload(
     tmp_path,
     download_content_unit,
+    deb_check_signature,
     deb_signing_key_primary,
     deb_signing_key_secondary,
     deb_package_signing_service,
@@ -235,7 +236,7 @@ def test_sign_chunked_package_on_upload(
         tmp_path,
     )
     with pytest.raises(Exception, match=".*Package is unsigned.*"):
-        AptPackageSigningService._check_deb_signature(
+        deb_check_signature(
             file_to_upload,
             deb_signing_key_primary.fingerprint,
             str(tmp_path),
@@ -267,7 +268,7 @@ def test_sign_chunked_package_on_upload(
         downloaded_package.write_bytes(
             download_content_unit(distribution.base_path, "pool/upload/f/frigg/frigg_1.0_ppc64.deb")
         )
-        AptPackageSigningService._check_deb_signature(
+        deb_check_signature(
             str(downloaded_package), fingerprint, str(tmp_path), combined_public_key
         )
 
@@ -276,6 +277,7 @@ def test_signed_repo_modify(
     tmp_path,
     add_package_to_repo,
     download_content_unit,
+    deb_check_signature,
     deb_signing_key_primary,
     deb_package_signing_service,
     deb_repository_factory,
@@ -294,9 +296,7 @@ def test_signed_repo_modify(
         tmp_path,
     )
     with pytest.raises(Exception, match=".*Package is unsigned.*"):
-        AptPackageSigningService._check_deb_signature(
-            file_to_upload, fingerprint, str(tmp_path), public_key
-        )
+        deb_check_signature(file_to_upload, fingerprint, str(tmp_path), public_key)
 
     repository = deb_repository_factory(
         package_signing_service=deb_package_signing_service.pulp_href,
@@ -314,9 +314,7 @@ def test_signed_repo_modify(
     downloaded_package.write_bytes(
         download_content_unit(distribution.base_path, "pool/main/f/frigg/frigg_1.0_ppc64.deb")
     )
-    AptPackageSigningService._check_deb_signature(
-        str(downloaded_package), fingerprint, str(tmp_path), public_key
-    )
+    deb_check_signature(str(downloaded_package), fingerprint, str(tmp_path), public_key)
 
     repository = apt_repository_api.read(repository.pulp_href)
     signed_package = apt_package_api.list(
@@ -555,6 +553,7 @@ def test_set_and_unset_signing_service_release_overrides(
 def test_presigned_package_not_resigned(
     tmp_path,
     add_package_to_repo,
+    deb_check_signature,
     deb_signing_key_secondary,
     package_signing_script_path,
     deb_package_signing_service,
@@ -583,7 +582,7 @@ def test_presigned_package_not_resigned(
     assert result.returncode == 0, f"Signing failed: {result.stderr}"
 
     # Verify the package is signed with key B
-    AptPackageSigningService._check_deb_signature(
+    deb_check_signature(
         str(file_to_upload),
         deb_signing_key_secondary.fingerprint,
         str(tmp_path),
