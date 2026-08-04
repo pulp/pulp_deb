@@ -865,3 +865,16 @@ def deb_package_signing_service(_deb_package_signing_service_name, pulpcore_bind
     return pulpcore_bindings.SigningServicesApi.list(
         name=_deb_package_signing_service_name
     ).results[0]
+
+
+@pytest.fixture(scope="session")
+def deb_check_signature():
+    """Return the server side deb signature check helper."""
+    import django
+
+    # Importing models requires a populated app registry. setup() is idempotent.
+    django.setup()
+
+    from pulp_deb.app.models import AptPackageSigningService
+
+    return AptPackageSigningService._check_deb_signature
