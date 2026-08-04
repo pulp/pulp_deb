@@ -134,7 +134,7 @@ def sign_and_create(
     general_create(app_label, serializer_name, data=data, context=context, *args, **kwargs)
 
 
-def _sign_package(package, signing_service, signing_fingerprint, package_release_map):
+def _sign_package(package, signing_service, signing_fingerprint, prcs):
     """
     Sign a package or reuse an existing signed result.
 
@@ -155,11 +155,7 @@ def _sign_package(package, signing_service, signing_fingerprint, package_release
             return None
 
         # Collect PackageReleaseComponents that need to be updated
-        prcs_to_update = list(
-            PackageReleaseComponent.objects.filter(
-                package_id=package_id, _pulp_domain=package._pulp_domain
-            )
-        )
+        prcs_to_update = list(prcs.filter(package_id=package_id))
 
         # check if the package has been signed in the past with our fingerprint
         if existing_result := DebPackageSigningResult.objects.filter(
@@ -239,7 +235,7 @@ def signed_add_and_remove(
                         pkg,
                         repo.package_signing_service,
                         fingerprint,
-                        package_release_map,
+                        prcs,
                     )
 
             return await asyncio.gather(*(_bounded_sign(pkg_tuple) for pkg_tuple in packages))
