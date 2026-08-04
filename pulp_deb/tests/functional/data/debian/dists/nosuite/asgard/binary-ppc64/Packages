@@ -1,17 +1,18 @@
 Package: frigg
 Version: 1.0
 Architecture: ppc64
-Maintainer: Equivs Dummy Package Generator <root@>
+Maintainer: Equivs Dummy Package Generator <root@262391bc2bbb>
 Installed-Size: 9
 Multi-Arch: foreign
 Task: Æsir
 Priority: optional
 Section: misc
 Filename: pool/asgard/f/frigg/frigg_1.0_ppc64.deb
-Size: 2120
-SHA256: 1ffa6a25c16e1095613011e5b26257d44334596fdcfec7e4ed7687fe2e3ecd74
-SHA1: dc8ac2986f436d07e4bebf141521d294c59140f0
-MD5sum: fae837134a4db51bf696b6cc054a698d
+Size: 2140
+Phased-Update-Percentage: 20
+SHA256: 8c6056333f9da857ebd920169bb84350b15ed842bbbd136fa9b019c1698f40ba
+SHA1: 5860efb494630ba7200fceee5d1ffd8f2d048ab2
+MD5sum: fa2b8341fb14b8fe263c4c8674d1d932
 Description: Frigg
  Frigg is described as the wife of the god Odin.
 
@@ -19,7 +20,7 @@ Package: odin
 Version: 1.0
 Architecture: ppc64
 Essential: yes
-Maintainer: Equivs Dummy Package Generator <root@>
+Maintainer: Equivs Dummy Package Generator <root@262391bc2bbb>
 Installed-Size: 9
 Multi-Arch: foreign
 Description-md5: 654ca349ba8dade6580ba77c71d67eff
@@ -27,10 +28,10 @@ Task: Æsir
 Priority: optional
 Section: misc
 Filename: pool/asgard/o/odin/odin_1.0_ppc64.deb
-Size: 2220
-SHA256: 76a6e889ac282740da2490f889734dee3a0f6779bb7642291394cc60ecb44d42
-SHA1: 6578f0a4eb86661e09a6e99812acf24640aa534c
-MD5sum: c07c8e1ca952f65091c0141695c59cee
+Size: 2240
+SHA256: 27e5f94ccd64afc3ea39ac244b059016e2ccc2afc8c71a180e338605ada280d5
+SHA1: 932160844245ac17cab117be04600a4c9bd9890c
+MD5sum: a759b7bfcd3932d469c0c519280c128f
 Description: Odin
  Odin is associated with wisdom, healing, death, royalty, the gallows,
  knowledge, battle, sorcery, poetry, frenzy, and the runic alphabet, and is
@@ -39,7 +40,7 @@ Description: Odin
 Package: thor
 Version: 1.0
 Architecture: ppc64
-Maintainer: Equivs Dummy Package Generator <root@>
+Maintainer: Equivs Dummy Package Generator <root@262391bc2bbb>
 Installed-Size: 9
 Multi-Arch: foreign
 Description-md5: f5d3997e79acfeeb7a6ff4aa71ab65ac
@@ -48,10 +49,10 @@ Task: Æsir
 Priority: optional
 Section: misc
 Filename: pool/asgard/t/thor/thor_1.0_ppc64.deb
-Size: 2200
-SHA256: 2d593055891a68cda6b885324184cc13c770ff097c2cab2dde0206a6c4a6b68a
-SHA1: 17b77112ff48d2a0dc55394a4a000ea93e67608a
-MD5sum: 4e1688979c25dddc7b3fe01219b0c277
+Size: 2220
+SHA256: 89dea9dd679c6d83c693041ea854ac80729cfdac29eb4dac2786fb22e23c304a
+SHA1: 1fe3c4f9a9ac5f84dafe83270d5f199cf1d159f4
+MD5sum: 86c45f55716c8710cd87f7a4514e3d40
 Description: Thor
  Thor is a hammer-wielding god associated with thunder, lightning, storms, oak
  trees, strength, the protection of mankind, and also hallowing and fertility.
