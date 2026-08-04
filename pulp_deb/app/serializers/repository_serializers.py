@@ -10,20 +10,51 @@ from pulpcore.plugin.models import SigningService
 from pulpcore.plugin.serializers import (
     PgpKeyFingerprintField,
     RelatedField,
+    RepositoryAddRemoveContentSerializer,
     RepositorySerializer,
     RepositorySyncURLSerializer,
     ValidateFieldsMixin,
 )
 from pulpcore.plugin.util import get_domain, get_url
 
+from pulp_deb.app.constants import PACKAGE_UPLOAD_DEFAULT_DISTRIBUTION
 from pulp_deb.app.models import (
     AptPackageSigningService,
     AptReleaseSigningService,
     AptRepository,
     AptRepositoryReleasePackageSigningFingerprintOverride,
     AptRepositoryReleaseServiceOverride,
+    Release,
 )
 from pulp_deb.app.schema import COPY_CONFIG_SCHEMA
+
+
+class AptRepositoryAddRemoveContentSerializer(RepositoryAddRemoveContentSerializer):
+    distribution = serializers.CharField(help_text=_("Name of the distribution."), required=False)
+    component = serializers.CharField(help_text=_("Name of the component."), required=False)
+
+    def validate(self, data):
+        data = super().validate(data)
+        if not (data.get("distribution") or data.get("component")):
+            return data
+
+        # A request that only names a component is scoped to the default distribution.
+        distribution = data.get("distribution") or PACKAGE_UPLOAD_DEFAULT_DISTRIBUTION
+        releases = Release.objects.filter(distribution=distribution)
+        repository = self.context.get("repository")
+        repository_version = data.get("base_version") or (
+            repository.latest_version() if repository else None
+        )
+        added = releases.filter(pk__in=data.get("add_content_units", [])).exists()
+        present = repository_version and releases.filter(pk__in=repository_version.content).exists()
+        if not (added or present):
+            raise DRFValidationError(
+                {"distribution": _("This distribution has no Release in the repository.")}
+            )
+        return data
+
+    class Meta(RepositoryAddRemoveContentSerializer.Meta):
+        fields = RepositoryAddRemoveContentSerializer.Meta.fields + ["distribution", "component"]
 
 
 class ServiceOverrideField(serializers.DictField):

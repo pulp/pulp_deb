@@ -5,16 +5,13 @@ from rest_framework.decorators import action
 from rest_framework import viewsets
 from rest_framework.serializers import ValidationError as DRFValidationError
 
-from pulp_deb.app.models.content.content import Package
-from pulp_deb.app.models.content.structure_content import PackageReleaseComponent
 from pulp_deb.app.serializers import AptRepositorySyncURLSerializer
 from pulp_deb.app.tasks import signed_add_and_remove
 
-from pulpcore.plugin.util import extract_pk, get_url
+from pulpcore.plugin.util import extract_pk
 from pulpcore.plugin.actions import ModifyRepositoryActionMixin
 from pulpcore.plugin.serializers import (
     AsyncOperationResponseSerializer,
-    RepositoryAddRemoveContentSerializer,
 )
 from pulpcore.plugin.models import ContentArtifact, RepositoryVersion
 from pulpcore.plugin.tasking import dispatch
@@ -37,16 +34,12 @@ class AptModifyRepositoryActionMixin(ModifyRepositoryActionMixin):
         summary="Modify Repository Content",
         responses={202: AsyncOperationResponseSerializer},
     )
-    @action(detail=True, methods=["post"], serializer_class=RepositoryAddRemoveContentSerializer)
+    @action(
+        detail=True,
+        methods=["post"],
+        serializer_class=serializers.AptRepositoryAddRemoveContentSerializer,
+    )
     def modify(self, request, pk, **kwargs):
-        remove_content_units = request.data.get("remove_content_units", [])
-        remove_package_hrefs = [href for href in remove_content_units if "/packages/" in href]
-
-        if remove_package_hrefs:
-            prc_hrefs = self._get_matching_prc_hrefs(remove_package_hrefs)
-            remove_content_units.extend(prc_hrefs)
-            request.data["remove_content_units"] = remove_content_units
-
         add_content_units = request.data.get("add_content_units", [])
         package_ids = [extract_pk(href) for href in add_content_units if "/packages/" in href]
         repository = self.get_object()
@@ -59,14 +52,26 @@ class AptModifyRepositoryActionMixin(ModifyRepositoryActionMixin):
                     _("Cannot add on-demand content to repo with set package signing service.")
                 )
 
-        return super().modify(request, pk)
-
-    def _get_matching_prc_hrefs(self, package_hrefs):
-        package_ids = [extract_pk(href) for href in package_hrefs]
-        matching_packages = Package.objects.filter(pulp_id__in=package_ids)
-        matching_prcs = PackageReleaseComponent.objects.filter(package__in=matching_packages)
-        prc_hrefs = [get_url(component) for component in matching_prcs]
-        return prc_hrefs
+        serializer = self.get_serializer(
+            data=request.data,
+            context={**self.get_serializer_context(), "repository": repository},
+        )
+        serializer.is_valid(raise_exception=True)
+        base_version = serializer.validated_data.get("base_version")
+        task = dispatch(
+            self.modify_task,
+            exclusive_resources=[repository],
+            kwargs={
+                "repository_pk": pk,
+                "base_version_pk": base_version.pk if base_version else None,
+                "add_content_units": serializer.validated_data.get("add_content_units", []),
+                "remove_content_units": serializer.validated_data.get("remove_content_units", []),
+                "overwrite": serializer.validated_data.get("overwrite", True),
+                "distribution": serializer.validated_data.get("distribution"),
+                "component": serializer.validated_data.get("component"),
+            },
+        )
+        return OperationPostponedResponse(task, request)
 
 
 class AptRepositoryViewSet(AptModifyRepositoryActionMixin, RepositoryViewSet, RolesMixin):

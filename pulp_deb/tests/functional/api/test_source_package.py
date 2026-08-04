@@ -151,3 +151,50 @@ def test_upload_same_source_package(
     # Verify the package count is one
     package_list = apt_source_package_api.list(relative_path=SOURCE_PACKAGE_RELPATH)
     assert package_list.count == 1
+
+
+def test_modify_source_package_creates_structure(
+    artifact_factory,
+    apt_release_component_api,
+    apt_source_release_components_api,
+    deb_get_repository_by_href,
+    deb_modify_repository,
+    deb_release_factory,
+    deb_repository_factory,
+    deb_source_package_factory,
+):
+    repository = deb_repository_factory()
+    distribution = str(uuid4())
+    component = str(uuid4())
+    artifact_factory(SOURCE_PACKAGE_SOURCE)
+    artifact = artifact_factory(SOURCE_PACKAGE_RELPATH)
+    source_package = deb_source_package_factory(
+        artifact=artifact.pulp_href,
+        relative_path=SOURCE_PACKAGE_RELPATH,
+    )
+    deb_release_factory(
+        codename=distribution,
+        suite=distribution,
+        distribution=distribution,
+        repository=repository.pulp_href,
+    )
+
+    deb_modify_repository(
+        repository,
+        {
+            "add_content_units": [source_package.pulp_href],
+            "distribution": distribution,
+            "component": component,
+        },
+    )
+    repository = deb_get_repository_by_href(repository.pulp_href)
+    filters = {"repository_version": repository.latest_version_href}
+    release_component = apt_release_component_api.list(**filters).results[0]
+    source_component = apt_source_release_components_api.list(**filters).results[0]
+
+    assert (release_component.distribution, release_component.component) == (
+        distribution,
+        component,
+    )
+    assert source_component.source_package == source_package.pulp_href
+    assert source_component.release_component == release_component.pulp_href

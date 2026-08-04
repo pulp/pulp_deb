@@ -20,13 +20,119 @@ from pulpcore.plugin.models import (
 from pulpcore.plugin.tasking import add_and_remove, general_create
 from pulpcore.plugin.util import get_url
 
-from pulp_deb.app.models import AptRepository, Package, PackageReleaseComponent
+from pulp_deb.app.constants import (
+    PACKAGE_UPLOAD_DEFAULT_COMPONENT,
+    PACKAGE_UPLOAD_DEFAULT_DISTRIBUTION,
+)
+from pulp_deb.app.models import (
+    AptRepository,
+    Package,
+    PackageReleaseComponent,
+    ReleaseArchitecture,
+    ReleaseComponent,
+    SourcePackage,
+    SourcePackageReleaseComponent,
+)
 from pulp_deb.app.models.signing_service import (
     AptPackageSigningService,
     DebPackageSigningResult,
 )
 
 log = logging.getLogger(__name__)
+
+
+def _prepare_package_removals(repo, remove_content_units, base_version_pk, distribution, component):
+    """Expand the removal list to include the release component relationships of each package.
+
+    Removing a (source) package also requires removing its PackageReleaseComponent /
+    SourcePackageReleaseComponent links. When a distribution/component is given, the removal is
+    scoped to that component: a package is only removed from the repository if the scope held its
+    last relationship, so packages linked elsewhere or not linked at all are kept.
+    """
+    # "*" removes all content, so there is nothing to resolve here.
+    if "*" in remove_content_units:
+        return
+
+    repository_version = (
+        repo.versions.get(pk=base_version_pk) if base_version_pk else repo.latest_version()
+    )
+    # A distribution/component narrows the removal to a single release component.
+    scoped = distribution is not None or component is not None
+    if scoped:
+        distribution = distribution or PACKAGE_UPLOAD_DEFAULT_DISTRIBUTION
+        component = component or PACKAGE_UPLOAD_DEFAULT_COMPONENT
+
+    for model, relationship_model, relationship_field in (
+        (Package, PackageReleaseComponent, "package"),
+        (SourcePackage, SourcePackageReleaseComponent, "source_package"),
+    ):
+        units = model.objects.filter(pk__in=remove_content_units)
+        relationships = relationship_model.objects.filter(
+            **{
+                f"{relationship_field}__in": units,
+                "pk__in": repository_version.content,
+            }
+        )
+        if scoped:
+            scoped_relationships = relationships.filter(
+                release_component__distribution=distribution,
+                release_component__component=component,
+            )
+            # Relationships named in the request are removed alongside the scoped ones.
+            removed_relationship_ids = set(
+                relationship_model.objects.filter(pk__in=remove_content_units).values_list(
+                    "pk", flat=True
+                )
+            )
+            removed_relationship_ids.update(scoped_relationships.values_list("pk", flat=True))
+            still_linked = relationships.exclude(pk__in=removed_relationship_ids)
+            orphaned_unit_ids = {
+                str(pk)
+                for pk in scoped_relationships.values_list(f"{relationship_field}_id", flat=True)
+            } - {str(pk) for pk in still_linked.values_list(f"{relationship_field}_id", flat=True)}
+            kept_unit_ids = {
+                str(pk) for pk in units.values_list("pk", flat=True)
+            } - orphaned_unit_ids
+            remove_content_units[:] = [
+                content_id for content_id in remove_content_units if content_id not in kept_unit_ids
+            ]
+            relationships = scoped_relationships
+        remove_content_units.extend(str(pk) for pk in relationships.values_list("pk", flat=True))
+
+
+def _prepare_package_additions(add_content_units, distribution, component):
+    """Expand the addition list with the metadata needed to publish the packages in a component.
+
+    For each (source) package being added under a distribution/component, ensure the matching
+    ReleaseComponent, ReleaseArchitecture and *ReleaseComponent relationships exist and add them
+    to the content being added.
+    """
+    packages = list(Package.objects.filter(pk__in=add_content_units))
+    source_packages = list(SourcePackage.objects.filter(pk__in=add_content_units))
+    if not (packages or source_packages) or (distribution is None and component is None):
+        return
+
+    distribution = distribution or PACKAGE_UPLOAD_DEFAULT_DISTRIBUTION
+    component = component or PACKAGE_UPLOAD_DEFAULT_COMPONENT
+    release_component, _ = ReleaseComponent.objects.get_or_create(
+        distribution=distribution, component=component
+    )
+    add_content_units.append(str(release_component.pk))
+    # Each binary package needs its architecture and a link to the release component.
+    for package in packages:
+        architecture, _ = ReleaseArchitecture.objects.get_or_create(
+            distribution=distribution, architecture=package.architecture
+        )
+        package_component, _ = PackageReleaseComponent.objects.get_or_create(
+            release_component=release_component, package=package
+        )
+        add_content_units.extend([str(architecture.pk), str(package_component.pk)])
+    # Source packages only need a link to the release component.
+    for source_package in source_packages:
+        source_package_component, _ = SourcePackageReleaseComponent.objects.get_or_create(
+            release_component=release_component, source_package=source_package
+        )
+        add_content_units.append(str(source_package_component.pk))
 
 
 def _save_file(fileobj, final_package):
@@ -205,9 +311,18 @@ def _sign_package(package, signing_service, signing_fingerprint, package_release
 
 
 def signed_add_and_remove(
-    repository_pk, add_content_units, remove_content_units, base_version_pk=None, overwrite=True
+    repository_pk,
+    add_content_units,
+    remove_content_units,
+    base_version_pk=None,
+    overwrite=True,
+    distribution=None,
+    component=None,
 ):
     repo = AptRepository.objects.get(pk=repository_pk)
+
+    _prepare_package_removals(repo, remove_content_units, base_version_pk, distribution, component)
+    _prepare_package_additions(add_content_units, distribution, component)
 
     if repo.package_signing_service:
         log.info(
