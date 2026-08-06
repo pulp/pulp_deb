@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from rest_framework.serializers import BooleanField, ValidationError
+from rest_framework.serializers import BooleanField, CharField, ListField, ValidationError
 
 from pulpcore.plugin.models import Publication
 from pulpcore.plugin.serializers import (
@@ -54,6 +54,16 @@ class AptPublicationSerializer(PublicationSerializer):
         view_name="signing-services-detail",
         required=False,
     )
+    excluded_package_metadata_fields = ListField(
+        child=CharField(),
+        help_text=(
+            "Package metadata field names to omit from generated Packages indices. "
+            "This only affects custom package metadata fields during structured publication. "
+            "Core package metadata fields are never filtered. Matching is case-insensitive. "
+            "Example: ['Phased-Update-Percentage']."
+        ),
+        required=False,
+    )
     publish_legacy_release_files = BooleanField(
         help_text="Whether or not to publish Legacy per-component-and-architecture Release files.",
         default=False,
@@ -76,6 +86,7 @@ class AptPublicationSerializer(PublicationSerializer):
             "signing_service",
             "publish_upstream_release_fields",
             "publish_legacy_release_files",
+            "excluded_package_metadata_fields",
             "layout",
         )
         model = AptPublication

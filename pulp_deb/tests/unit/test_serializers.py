@@ -5,7 +5,7 @@ from django.test import TestCase
 
 from pulpcore.plugin.models import Artifact
 
-from pulp_deb.app.models import GenericContent
+from pulp_deb.app.models import GenericContent, Package
 from pulp_deb.app.serializers import GenericContentSerializer
 from pulp_deb.app.serializers.content_serializers import Package822Serializer
 
@@ -83,3 +83,45 @@ def test_package_822_serializer_metadata_digest_changes_with_custom_metadata():
     assert calculate_package_metadata_sha256(
         old_serializer.validated_data
     ) != calculate_package_metadata_sha256(new_serializer.validated_data)
+
+
+def test_package_822_serializer_excludes_custom_metadata_on_sync():
+    """Filtered custom package metadata fields are not stored during sync."""
+    paragraph = deb822.Packages()
+    paragraph["Package"] = "foo"
+    paragraph["Version"] = "1.0"
+    paragraph["Architecture"] = "amd64"
+    paragraph["Maintainer"] = "Example Maintainer <example@example.com>"
+    paragraph["Description"] = "Example pacakge"
+    paragraph["Phased-Update-Percentage"] = "10"
+    paragraph["X-Keep-Me"] = "kept"
+
+    serializer = Package822Serializer.from822(
+        paragraph, excluded_package_metadata_fields=["phased-update-percentage"]
+    )
+
+    assert serializer.is_valid(), serializer.errors
+    assert serializer.validated_data["custom_fields"] == {"X-Keep-Me": "kept"}
+
+
+def test_package_822_serializer_excludes_custom_metadata_on_publish():
+    """Filtered custom package metadata fields are not emitted during structured publish."""
+    package = Package(
+        package="foo",
+        version="1.0",
+        architecture="amd64",
+        maintainer="Example Maintainer <example@example.com>",
+        description="Example package",
+        relative_path="pool/main/f/foo/foo_1.0_amd64.deb",
+        sha256="0123456789abcdef",
+        custom_fields={
+            "Phased-Update-Percentage": "10",
+            "X-Keep-Me": "kept",
+        },
+    )
+    serializer = Package822Serializer(package, context={"request": None})
+
+    paragraph = serializer.to822(excluded_package_metadata_fields=["PHASED-UPDATE-PERCENTAGE"])
+
+    assert "Phased-Update-Percentage" not in paragraph
+    assert paragraph["X-Keep-Me"] == "kept"

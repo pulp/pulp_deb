@@ -1,6 +1,7 @@
 import logging
 from gettext import gettext as _
 
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils.functional import cached_property
 
@@ -66,6 +67,7 @@ class AptRepository(Repository, AutoAddObjPermsMixin):
     ]
 
     publish_upstream_release_fields = models.BooleanField(default=True)
+    excluded_package_metadata_fields = ArrayField(models.TextField(), default=list)
 
     signing_service = models.ForeignKey(
         AptReleaseSigningService, on_delete=models.PROTECT, null=True
@@ -102,6 +104,7 @@ class AptRepository(Repository, AutoAddObjPermsMixin):
                 simple=False,
                 structured=True,
                 signing_service_pk=getattr(self.signing_service, "pk", None),
+                excluded_package_metadata_fields=self.excluded_package_metadata_fields,
             )
 
     class Meta:

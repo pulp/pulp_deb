@@ -976,7 +976,10 @@ class DebFirstStage(Stage):
                     package_class = InstallerPackage
                     serializer_class = InstallerPackage822Serializer
                 log.debug(_("Downloading package {}").format(package_paragraph["Package"]))
-                serializer = serializer_class.from822(data=package_paragraph)
+                serializer = serializer_class.from822(
+                    data=package_paragraph,
+                    excluded_package_metadata_fields=(self.remote.excluded_package_metadata_fields),
+                )
                 serializer.is_valid(raise_exception=True)
                 package_metadata = serializer.validated_data
                 package_content_unit = package_class(

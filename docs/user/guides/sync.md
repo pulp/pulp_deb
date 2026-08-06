@@ -136,6 +136,27 @@ We recommend sticking to the following best practice recommendations:
 - Use a naming scheme for your remotes, that reflects the above.
   For example `nginx-bookworm-amd64` is a good name using the structure `<repo_name>-<distribution>-<architecture>`.
 
+## Filtering Package Metadata During Sync
+
+APT package indices may contain custom fields that are useful upstream but undesirable in a synced repository.
+For example, Ubuntu repositories may include `Phased-Update-Percentage`, which describes upstream rollout policy rather than package identity.
+
+Use `--excluded-package-metadata-field` on an APT remote to avoid storing selected custom package metadata fields while syncing:
+
+```bash
+pulp deb remote update \
+  --name=${NAME} \
+  --excluded-package-metadata-field=Phased-Update-Percentage
+```
+
+The option may be specified multiple times.
+Only custom package metadata fields are filtered.
+Core fields such as `Package`, `Version`, `Architecture`, `Filename`, checksums, and `Size` are never filtered.
+Field matching is case-insensitive.
+
+Administrators can define additional global exclusions with the `EXCLUDED_PACKAGE_METADATA_FIELDS` setting.
+Global and remote exclusions are additive.
+
 ## Flat Repository Format Example
 
 `pulp_deb` supports synchronization from repositories using the deprecated [flat repository format](https://wiki.debian.org/DebianRepository/Format#Flat_Repository_Format).

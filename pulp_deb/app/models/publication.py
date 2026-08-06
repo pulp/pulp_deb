@@ -1,6 +1,7 @@
 from contextlib import suppress
 from datetime import timedelta
 
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils import timezone
 from django_lifecycle import AFTER_CREATE, AFTER_UPDATE, hook
@@ -72,6 +73,7 @@ class AptPublication(Publication, AutoAddObjPermsMixin):
     simple = models.BooleanField(default=False)
     structured = models.BooleanField(default=True)
     layout = models.TextField(choices=LAYOUT_CHOICES, default=LAYOUT_TYPES.NESTED_ALPHABETICALLY)
+    excluded_package_metadata_fields = ArrayField(models.TextField(), default=list)
     signing_service = models.ForeignKey(
         AptReleaseSigningService, on_delete=models.PROTECT, null=True
     )

@@ -1,3 +1,4 @@
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 from pulpcore.plugin.models import AutoAddObjPermsMixin, Remote
@@ -18,6 +19,7 @@ class AptRemote(Remote, AutoAddObjPermsMixin):
     sync_installer = models.BooleanField(default=False)
     gpgkey = models.TextField(null=True)
     ignore_missing_package_indices = models.BooleanField(default=False)
+    excluded_package_metadata_fields = ArrayField(models.TextField(), default=list)
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
