@@ -114,6 +114,7 @@ def verify_publication_data(deb_get_content_types):
         )
         release_file_path = os.path.join(expected[release_file_folder], release_type)
 
+        assert any(pi.relative_path.endswith("asgard/binary-all/Packages") for pi in package_indices)
         assert release_file_path == release_file.relative_path
         assert release_file.distribution == release.distribution == expected["distribution"]
         assert release_file.codename == release.codename == expected["codename"]
