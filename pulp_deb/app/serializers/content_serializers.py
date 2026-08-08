@@ -49,6 +49,7 @@ from pulp_deb.app.models import (
     SourcePackage,
     SourcePackageReleaseComponent,
 )
+from pulp_deb.app.package_metadata import calculate_package_metadata_sha256
 
 log = logging.getLogger(__name__)
 
@@ -612,6 +613,7 @@ class BasePackageMixin(Serializer):
     provides = CharField(read_only=True)
     replaces = CharField(read_only=True)
     custom_fields = DictField(child=CharField(), allow_empty=True, required=False)
+    metadata_sha256 = CharField(read_only=True)
     signing_keys = ListField(
         child=PgpKeyFingerprintField(),
         help_text=_("List of signing key fingerprints used to sign this package."),
@@ -650,6 +652,7 @@ class BasePackageMixin(Serializer):
         package_data = from822_serializer.validated_data
         data.update(package_data)
         data["sha256"] = data["artifact"].sha256
+        data["metadata_sha256"] = calculate_package_metadata_sha256(package_data)
 
         if "relative_path" not in data:
             data["relative_path"] = self.Meta.model(**package_data).filename()
@@ -665,6 +668,7 @@ class BasePackageMixin(Serializer):
         content = self.Meta.model.objects.filter(
             sha256=validated_data["sha256"],
             relative_path=validated_data["relative_path"],
+            metadata_sha256=validated_data["metadata_sha256"],
             pulp_domain=get_domain_pk(),
         )
 
@@ -702,6 +706,7 @@ class BasePackageMixin(Serializer):
             "provides",
             "replaces",
             "signing_keys",
+            "metadata_sha256",
         )
 
 

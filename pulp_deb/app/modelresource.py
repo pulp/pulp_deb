@@ -174,7 +174,7 @@ class PackageReleaseComponentResource(DebContentResource):
         Class that lets us specify a multi-key link to Package.
 
         Format to be used at import-row time is:
-        str(<package.relative_path>|<package.sha256>)
+        str(<package.relative_path>|<package.sha256>|<package.metadata_sha256>)
         """
 
         def render(self, value, obj=None, **kwargs):
@@ -183,7 +183,8 @@ class PackageReleaseComponentResource(DebContentResource):
                 return ""
             pkg_relative_path = value.relative_path
             pkg_sha256 = value.sha256
-            return f"{pkg_relative_path}|{pkg_sha256}"
+            pkg_metadata_sha256 = value.metadata_sha256
+            return f"{pkg_relative_path}|{pkg_sha256}|{pkg_metadata_sha256}"
 
     release_component = fields.Field(
         column_name="release_component",
@@ -208,13 +209,20 @@ class PackageReleaseComponentResource(DebContentResource):
         super().before_import_row(row, **kwargs)
 
         rc_dist, rc_comp = row["release_component"].split("|")
-        pkg_relative_path, pkg_sha256 = row["package"].split("|")
+        package_key = row["package"].split("|")
+        pkg_relative_path, pkg_sha256 = package_key[:2]
+        pkg_metadata_sha256 = package_key[2] if len(package_key) == 3 else None
         rc = ReleaseComponent.objects.filter(
             distribution=rc_dist, component=rc_comp, pulp_domain=get_domain()
         ).first()
-        pkg = Package.objects.filter(
-            relative_path=pkg_relative_path, sha256=pkg_sha256, pulp_domain=get_domain()
-        ).first()
+        package_filter = {
+            "relative_path": pkg_relative_path,
+            "sha256": pkg_sha256,
+            "pulp_domain": get_domain(),
+        }
+        if pkg_metadata_sha256 is not None:
+            package_filter["metadata_sha256"] = pkg_metadata_sha256
+        pkg = Package.objects.filter(**package_filter).first()
         row["release_component"] = str(rc.pulp_id)
         row["package"] = str(pkg.pulp_id)
 

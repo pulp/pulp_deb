@@ -20,8 +20,9 @@ def test_create_package(apt_package_api, deb_package_factory):
     assert package.relative_path == DEB_PACKAGE_RELPATH
 
     # Verify that only one package with this relative path exists
-    package_list = apt_package_api.list(relative_path=package.relative_path)
-    assert package_list.count == 1
+    created_package = apt_package_api.read(package.pulp_href)
+    assert created_package.relative_path == DEB_PACKAGE_RELPATH
+    assert created_package.sha256 == package.sha256
 
     # Verify that reading the package works and has the same attributes
     package = apt_package_api.read(package.pulp_href)

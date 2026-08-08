@@ -35,6 +35,7 @@ from pulp_deb.app.models import (
     SourcePackage,
     SourcePackageReleaseComponent,
 )
+from pulp_deb.app.models.signing_service import DebPackageSigningResult
 
 log = logging.getLogger(__name__)
 
@@ -148,6 +149,28 @@ class AptRepository(Repository, AutoAddObjPermsMixin):
             override.release_distribution: override.package_signing_fingerprint
             for override in self.package_signing_fingerprint_release_overrides.all()
         }
+
+    def check_content_overwrite(self, version, add_content_pks, remove_content_pks=None):
+        """
+        Exempt signing-NOOP packages from the overwrite check.
+
+        A previously-signed package returned from the signing-result cache may already
+        be in the version, making the add a NOOP. Skip those so genuine overwrites are
+        still rejected.
+        """
+        # If package signing is enabled, filter previously signed packages from the add list.
+        if self.package_signing_service_id is not None:
+            existing_pks = set(version.content.values_list("pk", flat=True))
+            signing_noop_pks = set(
+                DebPackageSigningResult.objects.filter(
+                    result__in=[pk for pk in add_content_pks if pk in existing_pks],
+                ).values_list("result", flat=True)
+            )
+            add_content_pks = [pk for pk in add_content_pks if pk not in signing_noop_pks]
+
+        super().check_content_overwrite(
+            version, add_content_pks, remove_content_pks=remove_content_pks
+        )
 
     def initialize_new_version(self, new_version):
         """
@@ -283,12 +306,19 @@ def handle_duplicate_packages(new_version):
 
         # Now remove existing packages that are duplicates of any packages added to new_version
         if package_qs_added.count() and content_qs_existing.count():
-            for batch in batch_qs(package_qs_added.values(*repo_key_fields, "sha256")):
+            for batch in batch_qs(
+                package_qs_added.values(*repo_key_fields, "sha256", "metadata_sha256")
+            ):
                 find_dup_qs = models.Q()
 
                 for content_dict in batch:
                     sha256 = content_dict.pop("sha256")
-                    item_query = models.Q(**content_dict) & ~models.Q(sha256=sha256)
+                    metadata_sha256 = content_dict.pop("metadata_sha256")
+                    content_identity = models.Q(
+                        sha256=sha256,
+                        metadata_sha256=metadata_sha256,
+                    )
+                    item_query = models.Q(**content_dict) & ~content_identity
                     find_dup_qs |= item_query
 
                 package_qs_duplicates = (

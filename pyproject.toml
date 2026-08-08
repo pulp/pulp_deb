@@ -7,7 +7,7 @@ build-backend = 'setuptools.build_meta'
 
 [project]
 name = "pulp-deb"
-version = "3.10.0.dev"
+version = "3.11.0.dev"
 description = "pulp-deb plugin for the Pulp Project"
 readme = "README.md"
 authors = [
@@ -28,9 +28,8 @@ requires-python = ">=3.11"
 dependencies = [
   # All things django and asyncio are deliberately left to pulpcore
   # Example transitive requirements: asgiref, asyncio, aiohttp
-  "pulpcore>=3.113.0,<3.115",
+  "pulpcore>=3.113.0,<3.130",
   "python-debian>=0.1.44,<0.2.0",
-  "python-gnupg>=0.5,<0.6",
   "jsonschema>=4.6,<5.0",
 ]
 
@@ -122,7 +121,7 @@ exclude = '''
 [tool.bumpversion]
 # This section is managed by the plugin template. Do not edit manually.
 
-current_version = "3.10.0.dev"
+current_version = "3.11.0.dev"
 commit = false
 tag = false
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<alpha>0a)?(?P<patch>\\d+)(\\.(?P<release>[a-z]+))?"
@@ -168,7 +167,6 @@ filename = "./pyproject.toml"
 search = "version = \"{current_version}\""
 replace = "version = \"{new_version}\""
 
-
 [tool.ruff]
 # This section is managed by the plugin template. Do not edit manually.
 line-length = 100
@@ -179,6 +177,7 @@ extend-exclude = [
 
 [tool.ruff.lint]
 # This section is managed by the plugin template. Do not edit manually.
+select = ["E4", "E7", "E9", "F"]
 extend-select = [
   "I",
   "INT",
@@ -189,6 +188,7 @@ extend-select = [
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 # This section is managed by the plugin template. Do not edit manually.
 "distutils".msg = "The 'distutils' module has been deprecated since Python 3.9."
+"pulpcore.app.settings".msg = "Always import 'settings' from 'django.conf' instead."
 "pulpcore.app".msg = "The 'pulpcore' apis must only be consumed via 'pulpcore.plugin'."
 
 [tool.ruff.lint.isort]

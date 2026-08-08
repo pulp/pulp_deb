@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import re
 import subprocess
 from gettext import gettext as _
 from pathlib import Path
@@ -8,6 +7,7 @@ from tempfile import NamedTemporaryFile
 
 from django.conf import settings
 from django.db.models import Q
+from pysequoia.packet import PacketPile, Tag
 
 from pulpcore.plugin.models import (
     Artifact,
@@ -68,28 +68,20 @@ def _verify_package_fingerprint(path, signing_fingerprint):
         log.info(f"No _gpgorigin found in {path} (unsigned package).")
         return False
 
-    gpg_proc = subprocess.run(
-        ["gpg", "--list-packets", "--verbose"],
-        input=ar_proc.stdout,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    if gpg_proc.returncode != 0:
-        log.info(f"gpg --list-packets failed for {path}: {gpg_proc.stderr}")
-        return False
+    raw_fingerprint = signing_fingerprint.split(":", 1)[1].upper()
 
-    output = gpg_proc.stdout.decode("utf-8", errors="replace")
-    raw_fingerprint = signing_fingerprint.split(":", 1)[1]
+    for packet in PacketPile.from_bytes(ar_proc.stdout):
+        if packet.tag != Tag.Signature:
+            continue
+        # Prefer the full issuer fingerprint (v6 keys may omit the short key ID)
+        if packet.issuer_fingerprint is not None:
+            if raw_fingerprint.upper() == packet.issuer_fingerprint.upper():
+                return True
+        if packet.issuer_key_id is not None:
+            if raw_fingerprint.endswith(packet.issuer_key_id.upper()):
+                return True
 
-    # Look for key ID lines in gpg --list-packets output
-    key_ids = re.findall(r"keyid ([0-9A-Fa-f]+)", output, re.IGNORECASE)
-    for candidate in key_ids:
-        if raw_fingerprint.upper().endswith(candidate.upper()):
-            return True
-
-    log.debug(
-        f"Fingerprint mismatch for {path}: expected {raw_fingerprint}, found key IDs {key_ids}."
-    )
+    log.debug(f"Fingerprint mismatch for {path}: expected {raw_fingerprint}.")
     return False
 
 
@@ -192,11 +184,18 @@ def _sign_package(package, signing_service, signing_fingerprint, package_release
             content=signed_package,
             relative_path=content_artifact.relative_path,
         )
-        DebPackageSigningResult.objects.create(
+        # get_or_create guards against concurrent signing of the same package, which
+        # would otherwise violate the unique constraint and fail the task.
+        signing_result, created = DebPackageSigningResult.objects.get_or_create(
             sha256=artifact_obj.sha256,
             package_signing_fingerprint=signing_fingerprint,
-            result=signed_package,
+            defaults={"result": signed_package},
         )
+        if not created:
+            # Another worker won the race; reuse its result and let orphan cleanup
+            # reap the redundant package we just created.
+            log.info(f"Package {package.name} was signed concurrently; reusing existing result.")
+            return (package_id, str(signing_result.result.pk), prcs_to_update)
 
         resource = CreatedResource(content_object=signed_package)
         resource.save()
@@ -206,7 +205,7 @@ def _sign_package(package, signing_service, signing_fingerprint, package_release
 
 
 def signed_add_and_remove(
-    repository_pk, add_content_units, remove_content_units, base_version_pk=None
+    repository_pk, add_content_units, remove_content_units, base_version_pk=None, overwrite=True
 ):
     repo = AptRepository.objects.get(pk=repository_pk)
 
@@ -270,4 +269,10 @@ def signed_add_and_remove(
                 if str(new_prc.pk) not in add_content_units:
                     add_content_units.append(str(new_prc.pk))
 
-    return add_and_remove(repository_pk, add_content_units, remove_content_units, base_version_pk)
+    return add_and_remove(
+        repository_pk,
+        add_content_units,
+        remove_content_units,
+        base_version_pk,
+        overwrite=overwrite,
+    )

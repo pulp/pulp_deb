@@ -34,6 +34,7 @@ DEB_FIXTURE_COMPONENT_UPDATE = "jotunheimr"
 DEB_FIXTURE_ARCH = "ppc64"
 DEB_FIXTURE_ARCH_UPDATE = "armeb"
 DEB_FIXTURE_STANDARD_REPOSITORY_NAME = "/debian/"
+DEB_FIXTURE_METADATA_UPDATE_REPOSITORY_NAME = "/debian-metadata-update/"
 DEB_FIXTURE_UPDATE_REPOSITORY_NAME = "/debian-update/"
 DEB_FIXTURE_INVALID_REPOSITORY_NAME = "/debian-invalid/"
 DEB_FIXTURE_FLAT_REPOSITORY_NAME = "/debian-flat/"
@@ -480,7 +481,7 @@ tmpdir=$(mktemp -d)
 ctrl=$(ar t "$1" | grep -m1 '^control\.tar\.')
 data=$(ar t "$1" | grep -m1 '^data\.tar\.')
 ar p "$1" debian-binary "$ctrl" "$data" | \
-    gpg --openpgp --detach-sign --default-key "$GPG_NAME" > "$tmpdir/_gpgorigin"
+    gpg --openpgp --digest-algo SHA256 --detach-sign --default-key "$GPG_NAME" > "$tmpdir/_gpgorigin"
 ar r "$1" "$tmpdir/_gpgorigin" >/dev/null
 
 # Check the exit status

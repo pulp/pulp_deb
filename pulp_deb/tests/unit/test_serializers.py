@@ -59,3 +59,27 @@ def test_package_822_serializer_handles_architecture_variant():
     assert serializer.validated_data["architecture"] == "amd64"
     assert serializer.validated_data["architecture_variant"] == "amd64v3"
     assert "Architecture-Variant" not in serializer.validated_data.get("custom_fields", {})
+
+
+def test_package_822_serializer_metadata_digest_changes_with_custom_metadata():
+    old_paragraph = deb822.Packages()
+    old_paragraph["Package"] = "foo"
+    old_paragraph["Version"] = "1.0"
+    old_paragraph["Architecture"] = "amd64"
+    old_paragraph["Maintainer"] = "Example Maintainer <example@example.com>"
+    old_paragraph["Description"] = "Example Package"
+    old_paragraph["Phased-Update-Percentage"] = "20"
+
+    new_paragraph = deb822.Packages(old_paragraph)
+    new_paragraph["Phased-Update-Percentage"] = "50"
+
+    old_serializer = Package822Serializer.from822(old_paragraph)
+    new_serializer = Package822Serializer.from822(new_paragraph)
+    assert old_serializer.is_valid(), old_serializer.errors
+    assert new_serializer.is_valid(), new_serializer.errors
+
+    from pulp_deb.app.package_metadata import calculate_package_metadata_sha256
+
+    assert calculate_package_metadata_sha256(
+        old_serializer.validated_data
+    ) != calculate_package_metadata_sha256(new_serializer.validated_data)

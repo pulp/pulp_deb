@@ -1,17 +1,17 @@
 Package: geirrodr
 Version: 1.0
 Architecture: armeb
-Maintainer: Equivs Dummy Package Generator <root@>
+Maintainer: Equivs Dummy Package Generator <root@262391bc2bbb>
 Installed-Size: 9
 Multi-Arch: foreign
 Task: Æsir
 Priority: optional
 Section: misc
 Filename: pool/jotunheimr/g/geirrodr/geirrodr_1.0_armeb.deb
-Size: 2144
-SHA256: 813da09f14194aa4ce8d37afb141f6100254fc4843fabf9c1e35b75ac66959f6
-SHA1: ba8c1c4334f71bd5b44ae9803878c2d4fdf7078f
-MD5sum: a08565949a54e46dfade977e17127759
+Size: 2160
+SHA256: bbb95d8fe0cd698c10487db1d25375fb7b08f9ffbe26fd9edc1c7e300f72daf1
+SHA1: 223e6333ac946cd6423f15134bd8bfa5ed0a3196
+MD5sum: 269822f09d75eb4d381863a28841f546
 Description: Geirrodr
  Geirrodr was a jotunn and the father of the giantesses Gjalp and Greip.
 

@@ -2,10 +2,8 @@ import hashlib
 import shutil
 import subprocess
 import uuid
-from dataclasses import dataclass
 
 import pytest
-import requests
 
 from pulpcore.client.pulp_deb.exceptions import ApiException
 
@@ -20,36 +18,6 @@ def test_register_deb_package_signing_service(deb_package_signing_service):
     """
     service = deb_package_signing_service
     assert "/api/v3/signing-services/" in service.pulp_href
-
-
-@dataclass
-class GPGMetadata:
-    pubkey: str
-    fingerprint: str
-    keyid: str
-
-
-@pytest.fixture
-def signing_gpg_extra(signing_gpg_metadata):
-    """GPG instance with an extra gpg keypair registered."""
-    PRIVATE_KEY_PULP_QE = (
-        "https://raw.githubusercontent.com/pulp/pulp-fixtures/master/common/GPG-PRIVATE-KEY-pulp-qe"
-    )
-    gpg, fingerprint_a, keyid_a = signing_gpg_metadata
-
-    response_private = requests.get(PRIVATE_KEY_PULP_QE)
-    response_private.raise_for_status()
-    import_result = gpg.import_keys(response_private.content)
-    fingerprint_b = import_result.fingerprints[0]
-    gpg.trust_keys(fingerprint_b, "TRUST_ULTIMATE")
-
-    pubkey_a = gpg.export_keys(fingerprint_a)
-    pubkey_b = gpg.export_keys(fingerprint_b)
-    return (
-        gpg,
-        GPGMetadata(pubkey_a, fingerprint_a, fingerprint_a[-8:]),
-        GPGMetadata(pubkey_b, fingerprint_b, fingerprint_b[-8:]),
-    )
 
 
 @pytest.fixture
@@ -94,7 +62,8 @@ def add_package_to_repo(
 def test_sign_package_on_upload(
     tmp_path,
     download_content_unit,
-    signing_gpg_extra,
+    deb_signing_key_primary,
+    deb_signing_key_secondary,
     deb_package_signing_service,
     deb_package_factory,
     deb_repository_factory,
@@ -108,8 +77,8 @@ def test_sign_package_on_upload(
     This ensures different
     """
     # Setup gpg and package to upload
-    gpg, gpg_metadata_a, gpg_metadata_b = signing_gpg_extra
-    fingerprint_set = set([gpg_metadata_a.fingerprint, gpg_metadata_b.fingerprint])
+    combined_public_key = deb_signing_key_primary.public_key + deb_signing_key_secondary.public_key
+    fingerprint_set = {deb_signing_key_primary.fingerprint, deb_signing_key_secondary.fingerprint}
     assert len(fingerprint_set) == 2
 
     file_to_upload = shutil.copy(
@@ -118,7 +87,10 @@ def test_sign_package_on_upload(
     )
     with pytest.raises(Exception, match=".*Package is unsigned.*"):
         AptPackageSigningService._check_deb_signature(
-            file_to_upload, gpg_metadata_a.fingerprint, str(tmp_path), gpg
+            file_to_upload,
+            deb_signing_key_primary.fingerprint,
+            str(tmp_path),
+            combined_public_key,
         )
 
     # Upload Package to Repository
@@ -142,14 +114,16 @@ def test_sign_package_on_upload(
             download_content_unit(distribution.base_path, "pool/upload/f/frigg/frigg_1.0_ppc64.deb")
         )
         AptPackageSigningService._check_deb_signature(
-            str(downloaded_package), fingerprint, str(tmp_path), gpg
+            str(downloaded_package), fingerprint, str(tmp_path), combined_public_key
         )
 
     # Test release override
     repository = deb_repository_factory(
         package_signing_service=deb_package_signing_service.pulp_href,
-        package_signing_fingerprint=gpg_metadata_a.fingerprint,
-        package_signing_fingerprint_release_overrides={"test": gpg_metadata_b.fingerprint},
+        package_signing_fingerprint=deb_signing_key_primary.fingerprint,
+        package_signing_fingerprint_release_overrides={
+            "test": deb_signing_key_secondary.fingerprint,
+        },
     )
 
     deb_release_factory("test", "test", "test", repository=repository.pulp_href)
@@ -169,7 +143,10 @@ def test_sign_package_on_upload(
         download_content_unit(distribution.base_path, "pool/upload/f/frigg/frigg_1.0_ppc64.deb")
     )
     AptPackageSigningService._check_deb_signature(
-        str(downloaded_package), gpg_metadata_b.fingerprint, str(tmp_path), gpg
+        str(downloaded_package),
+        deb_signing_key_secondary.fingerprint,
+        str(tmp_path),
+        combined_public_key,
     )
 
 
@@ -234,7 +211,8 @@ def pulpcore_upload_chunks(
 def test_sign_chunked_package_on_upload(
     tmp_path,
     download_content_unit,
-    signing_gpg_extra,
+    deb_signing_key_primary,
+    deb_signing_key_secondary,
     deb_package_signing_service,
     deb_package_factory,
     deb_repository_factory,
@@ -248,8 +226,8 @@ def test_sign_chunked_package_on_upload(
 
     This ensures different
     """
-    gpg, gpg_metadata_a, gpg_metadata_b = signing_gpg_extra
-    fingerprint_set = set([gpg_metadata_a.fingerprint, gpg_metadata_b.fingerprint])
+    combined_public_key = deb_signing_key_primary.public_key + deb_signing_key_secondary.public_key
+    fingerprint_set = {deb_signing_key_primary.fingerprint, deb_signing_key_secondary.fingerprint}
     assert len(fingerprint_set) == 2
 
     file_to_upload = shutil.copy(
@@ -258,7 +236,10 @@ def test_sign_chunked_package_on_upload(
     )
     with pytest.raises(Exception, match=".*Package is unsigned.*"):
         AptPackageSigningService._check_deb_signature(
-            file_to_upload, gpg_metadata_a.fingerprint, str(tmp_path), gpg
+            file_to_upload,
+            deb_signing_key_primary.fingerprint,
+            str(tmp_path),
+            combined_public_key,
         )
 
     # Upload Package to Repository
@@ -287,7 +268,7 @@ def test_sign_chunked_package_on_upload(
             download_content_unit(distribution.base_path, "pool/upload/f/frigg/frigg_1.0_ppc64.deb")
         )
         AptPackageSigningService._check_deb_signature(
-            str(downloaded_package), fingerprint, str(tmp_path), gpg
+            str(downloaded_package), fingerprint, str(tmp_path), combined_public_key
         )
 
 
@@ -295,7 +276,7 @@ def test_signed_repo_modify(
     tmp_path,
     add_package_to_repo,
     download_content_unit,
-    signing_gpg_metadata,
+    deb_signing_key_primary,
     deb_package_signing_service,
     deb_repository_factory,
     deb_package_factory,
@@ -305,7 +286,8 @@ def test_signed_repo_modify(
     apt_package_api,
 ):
     """Ensure packages added via modify are signed before distribution."""
-    gpg, fingerprint, _ = signing_gpg_metadata
+    fingerprint = deb_signing_key_primary.fingerprint
+    public_key = deb_signing_key_primary.public_key
 
     file_to_upload = shutil.copy(
         get_local_package_absolute_path("frigg_1.0_ppc64.deb"),
@@ -313,7 +295,7 @@ def test_signed_repo_modify(
     )
     with pytest.raises(Exception, match=".*Package is unsigned.*"):
         AptPackageSigningService._check_deb_signature(
-            file_to_upload, fingerprint, str(tmp_path), gpg
+            file_to_upload, fingerprint, str(tmp_path), public_key
         )
 
     repository = deb_repository_factory(
@@ -333,7 +315,7 @@ def test_signed_repo_modify(
         download_content_unit(distribution.base_path, "pool/main/f/frigg/frigg_1.0_ppc64.deb")
     )
     AptPackageSigningService._check_deb_signature(
-        str(downloaded_package), fingerprint, str(tmp_path), gpg
+        str(downloaded_package), fingerprint, str(tmp_path), public_key
     )
 
     repository = apt_repository_api.read(repository.pulp_href)
@@ -353,10 +335,86 @@ def test_signed_repo_modify(
     assert [signed_package_href] == [pkg.pulp_href for pkg in results]
 
 
+def test_signed_repo_modify_overwrite_false_noop(
+    tmp_path,
+    monitor_task,
+    signing_gpg_metadata,
+    deb_package_signing_service,
+    deb_repository_factory,
+    deb_package_factory,
+    deb_release_component_factory,
+    deb_package_release_component_factory,
+    apt_repository_api,
+    apt_package_api,
+):
+    """
+    Re-adding an unsigned package with overwrite=False should NOOP, not raise.
+
+    The first add transparently signs the package and caches the result. A second
+    add of the same unsigned package would normally produce the same signed
+    package (already in the version) and trigger the pulpcore overwrite check.
+    The deb-specific override should exempt this signing-NOOP case.
+    """
+    _, fingerprint, _ = signing_gpg_metadata
+
+    repository = deb_repository_factory(
+        package_signing_service=deb_package_signing_service.pulp_href,
+        package_signing_fingerprint=fingerprint,
+    )
+
+    file_to_upload = shutil.copy(
+        get_local_package_absolute_path("frigg_1.0_ppc64.deb"),
+        tmp_path,
+    )
+    created_package = deb_package_factory(file=file_to_upload)
+    package_href = created_package.pulp_href
+
+    release_component = deb_release_component_factory(
+        distribution=str(uuid.uuid4()), component="main"
+    ).pulp_href
+    prc = deb_package_release_component_factory(
+        package=package_href,
+        release_component=release_component,
+    ).pulp_href
+
+    # First add: package gets signed and the result gets stored.
+    monitor_task(
+        apt_repository_api.modify(
+            repository.pulp_href,
+            {
+                "add_content_units": [package_href, release_component, prc],
+                "overwrite": False,
+            },
+        ).task
+    )
+    repository = apt_repository_api.read(repository.pulp_href)
+    signed_package = apt_package_api.list(
+        repository_version=repository.latest_version_href
+    ).results[0]
+    first_version_href = repository.latest_version_href
+
+    # Second add of the same unsigned package: should NOOP rather than raise
+    # ContentOverwriteError, because the already signed package is already present.
+    task_result = monitor_task(
+        apt_repository_api.modify(
+            repository.pulp_href,
+            {
+                "add_content_units": [package_href, release_component, prc],
+                "overwrite": False,
+            },
+        ).task
+    )
+    repository = apt_repository_api.read(repository.pulp_href)
+    assert repository.latest_version_href == first_version_href
+    assert task_result.created_resources == []
+    results = apt_package_api.list(repository_version=repository.latest_version_href).results
+    assert [signed_package.pulp_href] == [pkg.pulp_href for pkg in results]
+
+
 def test_already_signed_package(
     tmp_path,
     add_package_to_repo,
-    signing_gpg_metadata,
+    deb_signing_key_primary,
     deb_package_signing_service,
     deb_repository_factory,
     deb_package_factory,
@@ -365,7 +423,7 @@ def test_already_signed_package(
 ):
     """Don't sign a package if it's already signed with our key."""
 
-    _, fingerprint, _ = signing_gpg_metadata
+    fingerprint = deb_signing_key_primary.fingerprint
 
     repo_one = deb_repository_factory(
         package_signing_service=deb_package_signing_service.pulp_href,
@@ -408,7 +466,7 @@ def test_signed_repo_rejects_on_demand_content(
     add_package_to_repo,
     deb_init_and_sync,
     deb_package_signing_service,
-    signing_gpg_metadata,
+    deb_signing_key_primary,
     deb_repository_factory,
     apt_package_api,
 ):
@@ -416,7 +474,7 @@ def test_signed_repo_rejects_on_demand_content(
     monitor_task(pulpcore_bindings.OrphansCleanupApi.cleanup({"orphan_protection_time": 0}).task)
 
     source_repo, *_ = deb_init_and_sync(remote_args={"policy": "on_demand"})
-    _, fingerprint, _ = signing_gpg_metadata
+    fingerprint = deb_signing_key_primary.fingerprint
     destination_repo = deb_repository_factory(
         package_signing_service=deb_package_signing_service.pulp_href,
         package_signing_fingerprint=fingerprint,
@@ -436,21 +494,21 @@ def test_signed_repo_rejects_on_demand_content(
 
 @pytest.mark.parallel
 def test_set_and_unset_signing_service_release_overrides(
-    signing_gpg_extra,
+    deb_signing_key_primary,
+    deb_signing_key_secondary,
     deb_package_signing_service,
     deb_signing_service_factory,
     deb_repository_factory,
     apt_repository_api,
 ):
     """Ensure signing service release overrides can be set and removed via partial_update."""
-    _, gpg_metadata_a, gpg_metadata_b = signing_gpg_extra
 
     def _prefixed(fp):
         return fp if ":" in fp else f"v4:{fp}"
 
     repository = deb_repository_factory(
         package_signing_service=deb_package_signing_service.pulp_href,
-        package_signing_fingerprint=gpg_metadata_a.fingerprint,
+        package_signing_fingerprint=deb_signing_key_primary.fingerprint,
     )
     repo = apt_repository_api.read(repository.pulp_href)
     assert repo.package_signing_fingerprint_release_overrides == {}
@@ -459,11 +517,15 @@ def test_set_and_unset_signing_service_release_overrides(
     # Set a fingerprint override, then remove it with an empty string
     apt_repository_api.partial_update(
         repository.pulp_href,
-        {"package_signing_fingerprint_release_overrides": {"bionic": gpg_metadata_b.fingerprint}},
+        {
+            "package_signing_fingerprint_release_overrides": {
+                "bionic": deb_signing_key_secondary.fingerprint,
+            }
+        },
     )
     repo = apt_repository_api.read(repository.pulp_href)
     assert repo.package_signing_fingerprint_release_overrides == {
-        "bionic": _prefixed(gpg_metadata_b.fingerprint),
+        "bionic": _prefixed(deb_signing_key_secondary.fingerprint),
     }
 
     apt_repository_api.partial_update(
@@ -493,7 +555,7 @@ def test_set_and_unset_signing_service_release_overrides(
 def test_presigned_package_not_resigned(
     tmp_path,
     add_package_to_repo,
-    signing_gpg_extra,
+    deb_signing_key_secondary,
     package_signing_script_path,
     deb_package_signing_service,
     deb_repository_factory,
@@ -505,8 +567,6 @@ def test_presigned_package_not_resigned(
     Ensure a package already signed with the repo's signing fingerprint is not re-signed,
     even when the signing service uses a different key.
     """
-    gpg, gpg_metadata_a, gpg_metadata_b = signing_gpg_extra
-
     # Sign a package locally with key B (different from signing service's key A)
     file_to_upload = shutil.copy(
         get_local_package_absolute_path("frigg_1.0_ppc64.deb"),
@@ -514,7 +574,7 @@ def test_presigned_package_not_resigned(
     )
 
     # Sign the package with key B using the signing script
-    env = {"PULP_SIGNING_KEY_FINGERPRINT": gpg_metadata_b.fingerprint}
+    env = {"PULP_SIGNING_KEY_FINGERPRINT": deb_signing_key_secondary.fingerprint}
     result = subprocess.run(
         [str(package_signing_script_path), str(file_to_upload)],
         env=env,
@@ -524,7 +584,10 @@ def test_presigned_package_not_resigned(
 
     # Verify the package is signed with key B
     AptPackageSigningService._check_deb_signature(
-        str(file_to_upload), gpg_metadata_b.fingerprint, str(tmp_path), gpg
+        str(file_to_upload),
+        deb_signing_key_secondary.fingerprint,
+        str(tmp_path),
+        deb_signing_key_secondary.public_key,
     )
 
     # Upload the pre-signed package without a signing repository
@@ -534,7 +597,7 @@ def test_presigned_package_not_resigned(
     # Create a repo with signing service (key A) but package_signing_fingerprint = key B
     repository = deb_repository_factory(
         package_signing_service=deb_package_signing_service.pulp_href,
-        package_signing_fingerprint=gpg_metadata_b.fingerprint,
+        package_signing_fingerprint=deb_signing_key_secondary.fingerprint,
     )
 
     # Add the pre-signed package to the repo

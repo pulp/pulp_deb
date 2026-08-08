@@ -1,8 +1,8 @@
 """Tests that sync deb repositories in optimized mode."""
 
 import pytest
+from django.conf import settings
 
-from pulpcore.app import settings  # noqa: TID251
 from pulpcore.tests.functional.utils import PulpTaskError
 
 from pulp_deb.tests.functional.constants import (
@@ -11,6 +11,7 @@ from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_COMPONENT,
     DEB_FIXTURE_COMPONENT_UPDATE,
     DEB_FIXTURE_INVALID_REPOSITORY_NAME,
+    DEB_FIXTURE_METADATA_UPDATE_REPOSITORY_NAME,
     DEB_FIXTURE_SINGLE_DIST,
     DEB_FIXTURE_STANDARD_REPOSITORY_NAME,
     DEB_FIXTURE_SUMMARY,
@@ -318,6 +319,81 @@ def test_sync_optimize_skip_unchanged_package_index(
     assert apt_release_component_api.list(package=f"{package_href},{repo_v1_href}").count == 0
     assert apt_release_component_api.list(package=f"{package_href},{repo_v2_href}").count == 1
     assert apt_release_component_api.list(package=f"{package_href},{repo.pulp_href}").count == 1
+
+
+@pytest.mark.parallel
+@pytest.mark.parametrize("mirror", [False, True])
+def test_sync_replaces_package_when_only_metadata_changes(
+    deb_init_and_sync,
+    apt_package_api,
+    mirror,
+):
+    """Replace an unchanged package when only its Packages paragraph metadata changes."""
+    remote_args = {
+        "distributions": DEB_FIXTURE_SINGLE_DIST,
+        "components": DEB_FIXTURE_COMPONENT,
+        "architectures": DEB_FIXTURE_ARCH,
+    }
+
+    repo, _ = deb_init_and_sync(
+        remote_args=remote_args,
+        sync_args={"mirror": mirror},
+    )
+    repo_v1_href = repo.latest_version_href
+    assert repo_v1_href.endswith("/1/")
+
+    v1_frigg = [
+        package
+        for package in apt_package_api.list(repository_version=repo_v1_href).results
+        if package.package == "frigg"
+        and package.version == "1.0"
+        and package.architecture == "ppc64"
+    ]
+
+    assert len(v1_frigg) == 1
+    v1_frigg = v1_frigg[0]
+
+    repo, _ = deb_init_and_sync(
+        repository=repo,
+        url=DEB_FIXTURE_METADATA_UPDATE_REPOSITORY_NAME,
+        remote_args=remote_args,
+        sync_args={"mirror": mirror},
+    )
+
+    repo_v2_href = repo.latest_version_href
+    assert repo_v2_href.endswith("/2/")
+
+    v2_frigg = [
+        package
+        for package in apt_package_api.list(repository_version=repo_v2_href).results
+        if package.package == "frigg"
+        and package.version == "1.0"
+        and package.architecture == "ppc64"
+    ]
+
+    assert len(v2_frigg) == 1
+    v2_frigg = v2_frigg[0]
+
+    assert v2_frigg.sha256 == v1_frigg.sha256
+    assert v2_frigg.relative_path == v1_frigg.relative_path
+    assert v2_frigg.metadata_sha256 != v1_frigg.metadata_sha256
+    assert v2_frigg.pulp_href != v1_frigg.pulp_href
+
+    v1_response = apt_package_api.list(repository_version=repo_v1_href)
+    v2_response = apt_package_api.list(repository_version=repo_v2_href)
+    assert v2_response.count == v1_response.count
+
+    historical_frigg = [
+        package
+        for package in apt_package_api.list(repository_version=repo_v1_href).results
+        if package.package == "frigg"
+        and package.version == "1.0"
+        and package.architecture == "ppc64"
+    ]
+
+    assert len(historical_frigg) == 1
+    assert historical_frigg[0].pulp_href == v1_frigg.pulp_href
+    assert historical_frigg[0].metadata_sha256 == v1_frigg.metadata_sha256
 
 
 @pytest.mark.parallel
