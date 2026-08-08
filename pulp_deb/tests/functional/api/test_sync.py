@@ -17,10 +17,12 @@ from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_SUMMARY,
     DEB_FIXTURE_UPDATE_REPOSITORY_NAME,
     DEB_FIXTURE_VARIANT_REPOSITORY_NAME,
+    DEB_FIXTURE_MIXED_REPOSITORY_NAME,
     DEB_INSTALLER_FIXTURE_SUMMARY,
     DEB_INSTALLER_SOURCE_FIXTURE_SUMMARY,
     DEB_PACKAGE_NAME,
     DEB_PACKAGE_RELEASE_COMPONENT_NAME,
+    DEB_PACKAGE_INDEX_NAME,
     DEB_RELEASE_ARCHITECTURE_NAME,
     DEB_REPORT_CODE_SKIP_COMPLETE,
     DEB_REPORT_CODE_SKIP_PACKAGE,
@@ -515,3 +517,40 @@ def test_sync_architecture_variant_fields(
     )
     assert packages
     assert {pkg.architecture for pkg in packages} == {"amd64"}
+
+
+@pytest.mark.parallel
+def test_sync_hybrid_format_preserves_all_architecture_packages(
+    deb_init_and_sync,
+    deb_get_content_types,
+):
+    remote_args = {
+        "distributions": "muspelheim",
+        "components": "asgard",
+    }
+
+    repo, _, task = deb_init_and_sync(
+        url=DEB_FIXTURE_MIXED_REPOSITORY_NAME,
+        remote_args=remote_args,
+        return_task=True,
+    )
+
+    assert repo.latest_version_href.endswith("/1/")
+    assert not is_sync_skipped(task, DEB_REPORT_CODE_SKIP_RELEASE)
+
+    packages = deb_get_content_types(
+        "apt_package_api",
+        DEB_PACKAGE_NAME,
+        repo,
+        repo.latest_version_href,
+    )
+    assert packages
+    assert any(pkg.architecture == "all" for pkg in packages)
+
+    package_indices = deb_get_content_types(
+        "apt_package_indices_api",
+        DEB_PACKAGE_INDEX_NAME,
+        repo,
+        repo.latest_version_href,
+    )
+    assert any("binary-all/Packages" in pi.relative_path for pi in package_indices)
