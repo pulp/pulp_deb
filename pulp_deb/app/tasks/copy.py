@@ -2,11 +2,9 @@ import logging
 from gettext import gettext as _
 
 from django.db import transaction
-from django.db.models import Q
 
 from pulpcore.plugin.exceptions import FeatureNotImplementedError
 from pulpcore.plugin.models import RepositoryVersion
-from pulpcore.plugin.util import get_domain_pk
 
 from pulp_deb.app.models import (
     AptRepository,
@@ -15,6 +13,7 @@ from pulp_deb.app.models import (
     Release,
     ReleaseArchitecture,
 )
+from pulp_deb.app.sql_utils import get_content_in_repoversion, safe_in
 
 log = logging.getLogger(__name__)
 
@@ -32,39 +31,44 @@ def find_structured_publish_content(content, source_repo_version):
     # Packages:
     package_content_qs = content.filter(pulp_type=Package.get_pulp_type()).only("pk")
     package_qs = Package.objects.filter(pk__in=package_content_qs)
+    package_pks = list(package_qs.values_list("pk", flat=True))
 
     # PackageReleaseComponents:
-    package_prc_qs = PackageReleaseComponent.objects.filter(package__in=package_qs.only("pk")).only(
-        "pk"
+    prc_qs = PackageReleaseComponent.objects.filter(
+        safe_in("package_id", package_pks),
+        pk__in=get_content_in_repoversion(source_repo_version),
     )
-    prc_content_qs = source_repo_version.content.filter(pk__in=package_prc_qs)
-    prc_qs = PackageReleaseComponent.objects.filter(pk__in=prc_content_qs.only("pk"))
 
     # ReleaseComponents:
+    release_components = prc_qs.values_list(
+        "release_component_id", "release_component__distribution"
+    ).distinct()
     release_component_ids = set()
     distributions = set()
-    for prc in prc_qs.select_related("release_component").iterator():
-        release_component_ids.add(prc.release_component.pk)
-        distributions.add(prc.release_component.distribution)
+    for release_component_id, distribution in release_components:
+        release_component_ids.add(release_component_id)
+        distributions.add(distribution)
 
-    release_component_content_qs = source_repo_version.content.filter(
-        pk__in=release_component_ids
-    ).only("pk")
+    release_component_content_qs = (
+        get_content_in_repoversion(source_repo_version)
+        .filter(safe_in("pk", release_component_ids))
+        .only("pk")
+    )
 
     # ReleaseArchitectures:
     architectures = list(package_qs.values_list("architecture", flat=True).distinct())
     architecture_qs = ReleaseArchitecture.objects.filter(
-        architecture__in=architectures, distribution__in=distributions
+        safe_in("architecture", architectures), safe_in("distribution", distributions)
     ).only("pk")
 
     # Releases:
-    release_qs = Release.objects.filter(distribution__in=distributions).only("pk")
+    release_qs = Release.objects.filter(safe_in("distribution", distributions)).only("pk")
 
     combined_content_qs = content.only("pk").union(
         prc_qs.only("pk"), release_component_content_qs, architecture_qs, release_qs
     )
 
-    return source_repo_version.content.filter(pk__in=combined_content_qs)
+    return get_content_in_repoversion(source_repo_version).filter(pk__in=combined_content_qs)
 
 
 @transaction.atomic
@@ -88,21 +92,15 @@ def copy_content(config, structured, dependency_solving):
             if bool(entry.get("dest_base_version"))
             else None
         )
+        content_pks = entry.get("content")
 
-        if entry.get("content") is not None:
-            content_filter = Q(pk__in=entry.get("content"))
-        else:
-            content_filter = Q()
-
-        content_filter &= Q(pulp_domain=get_domain_pk())
-
-        log.info(_("Copying: {copy} created").format(copy=content_filter))
+        log.debug(_("Copying: {copy} created").format(copy=content_pks))
 
         return (
             source_repo_version,
             dest_repo,
             dest_base_version,
-            content_filter,
+            content_pks,
         )
 
     if dependency_solving:
@@ -115,10 +113,15 @@ def copy_content(config, structured, dependency_solving):
             source_repo_version,
             dest_repo,
             dest_base_version,
-            content_filter,
+            content_pks,
         ) = process_entry(entry)
 
-        content_to_copy = source_repo_version.content.filter(content_filter)
+        content_in_repo = get_content_in_repoversion(source_repo_version)
+        if content_pks is None:
+            content_to_copy = content_in_repo
+        else:
+            content_to_copy = content_in_repo.filter(safe_in("pk", content_pks))
+
         if structured:
             content_to_copy = find_structured_publish_content(content_to_copy, source_repo_version)
 
