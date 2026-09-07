@@ -913,6 +913,16 @@ class ReleaseArchitectureSerializer(NoArtifactContentSerializer):
         help_text="Architecture variant name, if this architecture is a variant.",
     )
 
+    def validate(self, data):
+        """
+        Ensure we do not create a ReleaseArchitecture object for special value 'all'.
+        """
+        data = super().validate(data)
+        if data.get("architecture") == "all":
+            message = "This field does not accept the special value 'all'!"
+            raise ValidationError({"architecture": _(message)})
+        return data
+
     def get_unique_together_validators(self):
         """
         We do not want UniqueTogetherValidator since we have retrieve logic!

@@ -1,0 +1,2 @@
+Added validation that prevents users from creating ReleaseArchitecture content for the special value "Architecture: all".
+If you have previously created the content unit you can keep using it.
