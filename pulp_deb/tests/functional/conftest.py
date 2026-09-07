@@ -491,19 +491,26 @@ def deb_acs_factory(apt_acs_api, gen_object_with_cleanup):
 def deb_copy_content(apt_copy_api, monitor_task):
     """Fixture that copies deb content from a source repository version to a target repository."""
 
-    def _deb_copy_content(source_repo_version, dest_repo, content=None, structured=True):
+    def _deb_copy_content(
+        source_repo_version,
+        dest_repo,
+        content=None,
+        structured=True,
+        dependency_solving=False,
+    ):
         """Copy deb content from a source repository version to a target repository.
 
         :param source_repo_version: The repository version href from where the content is copied.
         :dest_repo: The repository href where the content should be copied to.
         :content: List of package hrefs that should be copied from the source. Default: None
         :structured: Whether or not the content should be structured copied. Default: True
+        :dependency_solving: Also copy the Depends/Pre-Depends closure. Default: False
         :returns: The task of the copy operation.
         """
         config = {"source_repo_version": source_repo_version, "dest_repo": dest_repo}
         if content is not None:
             config["content"] = content
-        data = Copy(config=[config], structured=structured)
+        data = Copy(config=[config], structured=structured, dependency_solving=dependency_solving)
         response = apt_copy_api.copy_content(data)
         return monitor_task(response.task)
 
