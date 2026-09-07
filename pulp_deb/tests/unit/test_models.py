@@ -47,7 +47,9 @@ class TestPackage(TestCase):
             file=SimpleUploadedFile("test_filename", b"test content"),
         )
         self.artifact1.save()
-        ContentArtifact(artifact=self.artifact1, content=self.package1).save()
+        ContentArtifact(
+            artifact=self.artifact1, content=self.package1, relative_path="test_filename"
+        ).save()
 
     def test_package_fields(self):
         """Test package fields that typically identify a package."""
