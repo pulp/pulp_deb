@@ -62,6 +62,37 @@ def test_modify_package_creates_structure_without_release(
     assert [item.pulp_href for item in packages.results] == [package.pulp_href]
 
 
+def test_modify_architecture_all_package_creates_no_release_architecture(
+    apt_package_release_components_api,
+    apt_release_architecture_api,
+    deb_get_repository_by_href,
+    deb_modify_repository,
+    deb_package_factory,
+    deb_repository_factory,
+):
+    repository = deb_repository_factory()
+    package = deb_package_factory(
+        file=str(
+            get_local_package_absolute_path(
+                "eir_1.0_all.deb", relative_path="data/debian-mixed/pool/asgard/e/eir/"
+            )
+        )
+    )
+
+    _modify_with_package(
+        repository,
+        package,
+        deb_modify_repository,
+        distribution=str(uuid4()),
+        component=str(uuid4()),
+    )
+    repository = deb_get_repository_by_href(repository.pulp_href)
+
+    filters = {"repository_version": repository.latest_version_href}
+    assert apt_release_architecture_api.list(**filters).count == 0
+    assert apt_package_release_components_api.list(**filters).count == 1
+
+
 def test_modify_package_without_structure_fields_only_adds_package(
     apt_package_release_components_api,
     apt_release_architecture_api,
