@@ -8,6 +8,35 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.11.0 (2026-09-09) {: #3.11.0 }
+
+#### Features {: #3.11.0-feature }
+
+- Allow `repositories/deb/apt/{pulp_id}/modify/` requests to assign added packages using the optional
+  `distribution` and `component` parameters. Supplying either parameter creates the corresponding
+  release component, release architecture, and package-release-component content; omitting both
+  preserves the existing package-only behavior.
+  [#1491](https://github.com/pulp/pulp_deb/issues/1491)
+- Added configurable filtering of custom package metadata during sync and structured publish
+  [#1497](https://github.com/pulp/pulp_deb/issues/1497)
+- Allowed users with the content label management permission to set and unset labels on DEB packages.
+  [#1504](https://github.com/pulp/pulp_deb/issues/1504)
+
+#### Bugfixes {: #3.11.0-bugfix }
+
+- Fixed syncing debian packages when repository metadata changes without changing the package artifact, preserving the correct metadata in each repository version
+  [#1490](https://github.com/pulp/pulp_deb/issues/1490)
+- Fixed a bug where signing a package shared by multiple repositories could add package release-component associations from other repositories to the repository being modified.
+  [#1493](https://github.com/pulp/pulp_deb/issues/1493)
+- Fixed the Copy API hitting postgres's 65535 query parameter limit when copying a large number of content units
+
+#### Removals {: #3.11.0-removal }
+
+- Added validation that prevents users from creating ReleaseArchitecture content for the special value "Architecture: all".
+  If you have previously created the content unit you can keep using it.
+
+---
+
 ## 3.10.0 (2026-07-29) {: #3.10.0 }
 
 #### Features {: #3.10.0-feature }
