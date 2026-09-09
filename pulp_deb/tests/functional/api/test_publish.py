@@ -18,6 +18,7 @@ from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_FLAT_REPOSITORY_NAME,
     DEB_FIXTURE_METADATA_UPDATE_REPOSITORY_NAME,
     DEB_FIXTURE_MISSING_ARCHITECTURE_REPOSITORY_NAME,
+    DEB_FIXTURE_MIXED_REPOSITORY_NAME,
     DEB_FIXTURE_SINGLE_DIST,
     DEB_FIXTURE_VARIANT_REPOSITORY_NAME,
     DEB_PACKAGE_INDEX_NAME,
@@ -821,6 +822,91 @@ def parse_package_index(pkg_idx):
             package
         )
     return packages
+
+
+@pytest.mark.parallel
+def test_publish_no_support_for_architecture_all(
+    create_publication_and_verify_repo_version,
+    deb_distribution_factory,
+    download_content_unit,
+):
+    """Test publishing Architecture: all packages in every binary package index."""
+    remote_args = {
+        "distributions": "muspelheim",
+        "policy": "on_demand",
+    }
+    publication_args = {
+        **DEB_PUBLICATION_ARGS_ONLY_STRUCTURED,
+        "no_support_for_architecture_all": True,
+    }
+
+    publication, _, _, _ = create_publication_and_verify_repo_version(
+        remote_args=remote_args,
+        publication_args=publication_args,
+        remote_name=DEB_FIXTURE_MIXED_REPOSITORY_NAME,
+    )
+    assert publication.no_support_for_architecture_all is True
+
+    distribution = deb_distribution_factory(publication)
+    base_path = distribution.to_dict()["base_path"]
+
+    release_file = download_content_unit(base_path, "dists/muspelheim/Release")
+    release = deb822.Deb822(release_file.decode("utf-8"))
+    assert release["No-Support-for-Architecture-all"] == "Packages"
+
+    expected_packages = {
+        "asgard": {
+            "all": {"eir-1.0-all"},
+            "amd64": {"baldr-1.0-amd64", "eir-1.0-all"},
+            "ppc64": {"eir-1.0-all", "frigg-1.0-ppc64"},
+        },
+        "nidavellir": {
+            "all": {"regin-1.0-all"},
+            "amd64": {"hreidmar-1.0-amd64", "regin-1.0-all"},
+            "ppc64": {"fafner-1.0-ppc64", "regin-1.0-all"},
+        },
+    }
+    for component, architectures in expected_packages.items():
+        for architecture, expected in architectures.items():
+            package_index = download_content_unit(
+                base_path,
+                f"dists/muspelheim/{component}/binary-{architecture}/Packages",
+            )
+            assert set(parse_package_index(package_index)) == expected
+
+    package_path = "pool/asgard/e/eir/eir_1.0_all.deb"
+    cold_download = download_content_unit(base_path, package_path)
+    warm_download = download_content_unit(base_path, package_path)
+    assert cold_download.startswith(b"!<arch>\n")
+    assert warm_download == cold_download
+
+
+@pytest.mark.parallel
+def test_publish_architecture_all_default_format(
+    create_publication_and_verify_repo_version,
+    deb_distribution_factory,
+    download_content_unit,
+):
+    """Test that the default publisher keeps Architecture: all in binary-all only."""
+    publication, _, _, _ = create_publication_and_verify_repo_version(
+        remote_args={"distributions": "muspelheim"},
+        publication_args=DEB_PUBLICATION_ARGS_ONLY_STRUCTURED,
+        remote_name=DEB_FIXTURE_MIXED_REPOSITORY_NAME,
+    )
+    assert publication.no_support_for_architecture_all is False
+
+    distribution = deb_distribution_factory(publication)
+    base_path = distribution.to_dict()["base_path"]
+
+    release_file = download_content_unit(base_path, "dists/muspelheim/Release")
+    release = deb822.Deb822(release_file.decode("utf-8"))
+    assert "No-Support-for-Architecture-all" not in release
+
+    package_index = download_content_unit(
+        base_path,
+        "dists/muspelheim/asgard/binary-amd64/Packages",
+    )
+    assert set(parse_package_index(package_index)) == {"baldr-1.0-amd64"}
 
 
 @pytest.mark.parallel

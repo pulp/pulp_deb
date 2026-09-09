@@ -89,6 +89,7 @@ def publish(
     layout=LAYOUT_TYPES.NESTED_ALPHABETICALLY,
     publish_legacy_release_files=False,
     excluded_package_metadata_fields=None,
+    no_support_for_architecture_all=False,
 ):
     """
     Use provided publisher to create a Publication based on a RepositoryVersion.
@@ -103,6 +104,8 @@ def publish(
         publish_legacy_release_files (bool): publish legacy per architecture release files
         excluded_package_metadata_fields (list): Custom package metadata fields to omit from
             generated package indices.
+        no_support_for_architecture_all (bool): Publish Architecture: all packages in every
+            architecture-specific package index as well as the binary-all index.
 
     """
 
@@ -131,6 +134,7 @@ def publish(
         ) as publication:
             publication.simple = simple
             publication.structured = structured
+            publication.no_support_for_architecture_all = no_support_for_architecture_all
             publication.signing_service = signing_service
             publication.publish_legacy_release_files = publish_legacy_release_files
             publication.layout = layout
@@ -468,33 +472,41 @@ class _ComponentHelper:
                         )
                     )
 
-            metadata_arch = "all" if package.architecture == "all" else index_arch
-            package_index_entry = (package.pk, metadata_arch)
-            if package_index_entry in seen_package_index_entries:
-                continue
-            seen_package_index_entries.add(package_index_entry)
-
             package_serializer = Package822Serializer(package, context={"request": None})
-            try:
-                package_serializer.to822(
-                    self.component,
-                    artifact_dict,
-                    remote_artifact_dict,
-                    layout=layout,
-                    basename_override=upstream_basename,
-                    excluded_package_metadata_fields=excluded_fields,
-                ).dump(self.package_index_files[metadata_arch][0])
-            except KeyError:
-                log.warning(
-                    "Published package '%s' with index architecture '%s' was not added to "
-                    "component '%s' in distribution '%s' because it lacks this architecture!",
-                    getattr(package, "relative_path", None) or getattr(package, "pk", None),
-                    metadata_arch,
-                    self.component,
-                    self.parent.distribution,
-                )
+            if (
+                self.parent.publication.no_support_for_architecture_all
+                and package.architecture == "all"
+            ):
+                metadata_architectures = self.parent.architectures
             else:
-                self.package_index_files[metadata_arch][0].write(b"\n")
+                metadata_architectures = ["all" if package.architecture == "all" else index_arch]
+
+            for metadata_arch in metadata_architectures:
+                package_index_entry = (package.pk, metadata_arch)
+                if package_index_entry in seen_package_index_entries:
+                    continue
+                seen_package_index_entries.add(package_index_entry)
+
+                try:
+                    package_serializer.to822(
+                        self.component,
+                        artifact_dict,
+                        remote_artifact_dict,
+                        layout=layout,
+                        basename_override=upstream_basename,
+                        excluded_package_metadata_fields=excluded_fields,
+                    ).dump(self.package_index_files[metadata_arch][0])
+                except KeyError:
+                    log.warning(
+                        "Published package '%s' with index architecture '%s' was not added to "
+                        "component '%s' in distribution '%s' because it lacks this architecture!",
+                        getattr(package, "relative_path", None) or getattr(package, "pk", None),
+                        metadata_arch,
+                        self.component,
+                        self.parent.distribution,
+                    )
+                else:
+                    self.package_index_files[metadata_arch][0].write(b"\n")
 
         with transaction.atomic():
             if published_artifacts:
@@ -634,6 +646,8 @@ class _ReleaseHelper:
             release.codename = distribution.split("/")[0] if distribution != "/" else "flat-repo"
         self.release["Codename"] = release.codename
         self.release["Date"] = datetime.now(tz=timezone.utc).strftime("%a, %d %b %Y %H:%M:%S %z")
+        if publication.no_support_for_architecture_all:
+            self.release["No-Support-for-Architecture-all"] = "Packages"
         self.release["Architectures"] = " ".join(architectures)
         self.release["Components"] = ""  # Will be set later
         if release.description != NULL_VALUE:
