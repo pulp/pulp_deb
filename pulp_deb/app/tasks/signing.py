@@ -127,10 +127,11 @@ def _prepare_package_additions(add_content_units, distribution, component):
             architecture, _ = ReleaseArchitecture.objects.get_or_create(
                 distribution=distribution, architecture=package.architecture
             )
+            add_content_units.append(str(architecture.pk))
         package_component, _ = PackageReleaseComponent.objects.get_or_create(
             release_component=release_component, package=package
         )
-        add_content_units.extend([str(architecture.pk), str(package_component.pk)])
+        add_content_units.append(str(package_component.pk))
     # Source packages only need a link to the release component.
     for source_package in source_packages:
         source_package_component, _ = SourcePackageReleaseComponent.objects.get_or_create(
