@@ -259,7 +259,13 @@ def test_remove_package_outside_of_component_is_kept(
     """A package without a relationship in the given component is not removed."""
     repository = deb_repository_factory()
     package = deb_package_factory(file=str(get_local_package_absolute_path(DEB_PACKAGE_RELPATH)))
+    component_package = deb_package_factory(
+        file=str(
+            get_local_package_absolute_path("odin_1.0_ppc64.deb", "data/debian/pool/asgard/o/odin/")
+        )
+    )
     distribution = str(uuid4())
+    component = str(uuid4())
     deb_release_factory(
         codename=distribution,
         suite=distribution,
@@ -267,18 +273,66 @@ def test_remove_package_outside_of_component_is_kept(
         repository=repository.pulp_href,
     )
     _modify_with_package(repository, package, deb_modify_repository)
+    _modify_with_package(
+        repository,
+        component_package,
+        deb_modify_repository,
+        distribution=distribution,
+        component=component,
+    )
 
     deb_modify_repository(
         repository,
         {
             "remove_content_units": [package.pulp_href],
             "distribution": distribution,
-            "component": str(uuid4()),
+            "component": component,
         },
     )
     repository = deb_get_repository_by_href(repository.pulp_href)
 
-    assert apt_package_api.list(repository_version=repository.latest_version_href).count == 1
+    packages = apt_package_api.list(repository_version=repository.latest_version_href)
+    assert {item.pulp_href for item in packages.results} == {
+        package.pulp_href,
+        component_package.pulp_href,
+    }
+
+
+@pytest.mark.parametrize("missing_structure", ["distribution", "component"])
+def test_remove_package_from_missing_structure_raises(
+    missing_structure,
+    deb_modify_repository,
+    deb_package_factory,
+    deb_release_factory,
+    deb_repository_factory,
+):
+    repository = deb_repository_factory()
+    package = deb_package_factory(file=str(get_local_package_absolute_path(DEB_PACKAGE_RELPATH)))
+    distribution = str(uuid4())
+    component = str(uuid4())
+    _modify_with_package(repository, package, deb_modify_repository)
+    if missing_structure == "component":
+        deb_release_factory(
+            codename=distribution,
+            suite=distribution,
+            distribution=distribution,
+            repository=repository.pulp_href,
+        )
+
+    with pytest.raises(PulpTaskError) as exception:
+        deb_modify_repository(
+            repository,
+            {
+                "remove_content_units": [package.pulp_href],
+                "distribution": distribution,
+                "component": component,
+            },
+        )
+
+    description = exception.value.task.error["description"]
+    assert "[DEB0010]" in description
+    assert component in description
+    assert distribution in description
 
 
 def test_modify_component_only_uses_default_distribution(

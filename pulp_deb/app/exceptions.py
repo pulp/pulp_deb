@@ -165,3 +165,20 @@ class DuplicatePackageChecksumError(PulpException):
             "work around this issue by restricting syncs to only those distribution component "
             "combinations, that do not contain colliding duplicates!"
         )
+
+
+class ReleaseComponentDoesNotExist(PulpException):
+    """Raised when a scoped removal refers to repository structure that does not exist."""
+
+    error_code = "DEB0010"
+
+    def __init__(self, distribution, component):
+        super().__init__()
+        self.distribution = distribution
+        self.component = component
+
+    def __str__(self):
+        return f"[{self.error_code}] " + _(
+            "Component '{component}' in distribution '{distribution}' does not exist in the "
+            "selected repository version."
+        ).format(component=self.component, distribution=self.distribution)
