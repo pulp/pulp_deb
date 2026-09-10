@@ -1,0 +1,1 @@
+Preserved the `NotAutomatic` and `ButAutomaticUpgrades` fields from Debian Release metadata during sync and structured publish

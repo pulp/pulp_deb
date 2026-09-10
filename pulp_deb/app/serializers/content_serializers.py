@@ -827,6 +827,8 @@ class ReleaseSerializer(NoArtifactContentSerializer):
     origin = NullableCharField(required=False, allow_null=True, default=None)
     label = NullableCharField(required=False, allow_null=True, default=None)
     description = NullableCharField(required=False, allow_null=True, default=None)
+    not_automatic = YesNoField(required=False)
+    but_automatic_upgrades = YesNoField(required=False)
     architectures = ListField(child=CharField(), required=False)
     components = ListField(child=CharField(), required=False)
 
@@ -850,6 +852,8 @@ class ReleaseSerializer(NoArtifactContentSerializer):
             origin=validated_data.get("origin", NULL_VALUE),
             label=validated_data.get("label", NULL_VALUE),
             description=validated_data.get("description", NULL_VALUE),
+            not_automatic=validated_data.get("not_automatic", False),
+            but_automatic_upgrades=validated_data.get("but_automatic_upgrades", False),
             pulp_domain=get_domain_pk(),
         ).first()
 
@@ -892,6 +896,8 @@ class ReleaseSerializer(NoArtifactContentSerializer):
             "origin",
             "label",
             "description",
+            "not_automatic",
+            "but_automatic_upgrades",
             "architectures",
             "components",
         )

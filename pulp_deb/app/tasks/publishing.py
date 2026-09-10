@@ -278,6 +278,8 @@ def publish(
                                 codename=release.codename,
                                 suite=release.suite,
                                 origin="Pulp 3",
+                                not_automatic=release.not_automatic,
+                                but_automatic_upgrades=release.but_automatic_upgrades,
                             )
                             if repository.description:
                                 release.description = repository.description
@@ -634,6 +636,10 @@ class _ReleaseHelper:
             release.codename = distribution.split("/")[0] if distribution != "/" else "flat-repo"
         self.release["Codename"] = release.codename
         self.release["Date"] = datetime.now(tz=timezone.utc).strftime("%a, %d %b %Y %H:%M:%S %z")
+        if release.not_automatic:
+            self.release["NotAutomatic"] = "yes"
+        if release.but_automatic_upgrades:
+            self.release["ButAutomaticUpgrades"] = "yes"
         self.release["Architectures"] = " ".join(architectures)
         self.release["Components"] = ""  # Will be set later
         if release.description != NULL_VALUE:

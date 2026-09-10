@@ -620,6 +620,12 @@ class DebFirstStage(Stage):
             release_fields["label"] = release_file_dict["Label"]
         if "description" in release_file_dict:
             release_fields["description"] = release_file_dict["Description"]
+        release_fields["not_automatic"] = (
+            release_file_dict.get("NotAutomatic", "no").strip().lower() == "yes"
+        )
+        release_fields["but_automatic_upgrades"] = (
+            release_file_dict.get("ButAutomaticUpgrades", "no").strip().lower() == "yes"
+        )
 
         await self.put(DeclarativeContent(content=Release(**release_fields)))
 
