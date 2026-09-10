@@ -43,6 +43,7 @@ from pulpcore.plugin.util import get_domain, gpg_verify
 from pulp_deb.app.constants import (
     CHECKSUM_TYPE_MAP,
     NO_MD5_WARNING_MESSAGE,
+    NULL_VALUE,
     VARIANT_TO_BASE_ARCHITECTURE_MAP,
 )
 from pulp_deb.app.exceptions import (
@@ -620,6 +621,23 @@ class DebFirstStage(Stage):
             release_fields["label"] = release_file_dict["Label"]
         if "description" in release_file_dict:
             release_fields["description"] = release_file_dict["Description"]
+        if "notautomatic" in release_file_dict:
+            release_fields["not_automatic"] = release_file_dict["NotAutomatic"].strip().lower()
+        if "butautomaticupgrades" in release_file_dict:
+            release_fields["but_automatic_upgrades"] = (
+                release_file_dict["ButAutomaticUpgrades"].strip().lower()
+            )
+
+        if (
+            release_fields.get("but_automatic_upgrades", NULL_VALUE) == "yes"
+            and release_fields.get("not_automatic", NULL_VALUE) != "yes"
+        ):
+            message = (
+                "Release for distribution '{}' specifies ButAutomaticUpgrades=yes without "
+                "NotAutomatic=yes. This combination is invalid according to the Debian "
+                "repository format; preserving the upstream values."
+            )
+            log.warning(_(message).format(distribution))
 
         await self.put(DeclarativeContent(content=Release(**release_fields)))
 

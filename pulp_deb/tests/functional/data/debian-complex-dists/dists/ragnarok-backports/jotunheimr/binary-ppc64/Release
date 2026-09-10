@@ -4,4 +4,6 @@ Component: jotunheimr
 Origin: pulp-fixtures
 Label: Ubuntu-backports-like-fixture
 Architecture: ppc64
+NotAutomatic: yes
+ButAutomaticUpgrades: yes
 Description: A fixtures repo with a structure modeled on an ubuntu-backports release.

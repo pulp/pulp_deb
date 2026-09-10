@@ -2,12 +2,14 @@ import unittest
 
 from debian import deb822
 from django.test import TestCase
+from rest_framework.serializers import ValidationError
 
 from pulpcore.plugin.models import Artifact
 
+from pulp_deb.app.constants import NULL_VALUE
 from pulp_deb.app.models import GenericContent, Package
 from pulp_deb.app.serializers import GenericContentSerializer
-from pulp_deb.app.serializers.content_serializers import Package822Serializer
+from pulp_deb.app.serializers.content_serializers import NullableYesNoField, Package822Serializer
 
 
 # Fill data with sufficient information to create DebContent
@@ -125,3 +127,23 @@ def test_package_822_serializer_excludes_custom_metadata_on_publish():
 
     assert "Phased-Update-Percentage" not in paragraph
     assert paragraph["X-Keep-Me"] == "kept"
+
+
+def test_nullable_yes_no_field_preserves_three_states():
+    field = NullableYesNoField(allow_null=True)
+
+    assert field.run_validation(None) == NULL_VALUE
+    assert field.run_validation("no") == "no"
+    assert field.run_validation("YES") == "yes"
+    assert field.to_representation(NULL_VALUE) is None
+    assert field.to_representation("no") == "no"
+    assert field.to_representation("yes") == "yes"
+
+
+def test_nullable_yes_no_field_rejects_other_values():
+    field = NullableYesNoField(allow_null=True)
+
+    with unittest.TestCase().assertRaisesRegex(
+        ValidationError, 'Value must be "yes", "no", or null.'
+    ):
+        field.run_validation("true")

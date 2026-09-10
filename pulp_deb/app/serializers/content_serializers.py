@@ -120,6 +120,28 @@ class NullableCharField(CharField):
         return is_empty_value, data
 
 
+class NullableYesNoField(NullableCharField):
+    """
+    A serializer field that accepts ``yes``, ``no``, or null.
+
+    Null is stored using ``NULL_VALUE`` so the field can participate in content uniqueness while
+    preserving the distinction between an omitted Release field and an explicit ``no`` value.
+    """
+
+    def to_internal_value(self, data):
+        data = super().to_internal_value(data)
+        if data == NULL_VALUE:
+            return data
+
+        if not isinstance(data, str):
+            raise ValidationError('Value must be "yes", "no", or null.')
+
+        data = data.strip().lower()
+        if data in ("yes", "no"):
+            return data
+        raise ValidationError('Value must be "yes", "no", or null.')
+
+
 class GenericContentSerializer(SingleArtifactContentUploadSerializer, ContentChecksumSerializer):
     """
     A serializer for GenericContent.
@@ -827,6 +849,8 @@ class ReleaseSerializer(NoArtifactContentSerializer):
     origin = NullableCharField(required=False, allow_null=True, default=None)
     label = NullableCharField(required=False, allow_null=True, default=None)
     description = NullableCharField(required=False, allow_null=True, default=None)
+    not_automatic = NullableYesNoField(required=False, allow_null=True, default=None)
+    but_automatic_upgrades = NullableYesNoField(required=False, allow_null=True, default=None)
     architectures = ListField(child=CharField(), required=False)
     components = ListField(child=CharField(), required=False)
 
@@ -850,8 +874,25 @@ class ReleaseSerializer(NoArtifactContentSerializer):
             origin=validated_data.get("origin", NULL_VALUE),
             label=validated_data.get("label", NULL_VALUE),
             description=validated_data.get("description", NULL_VALUE),
+            not_automatic=validated_data.get("not_automatic", NULL_VALUE),
+            but_automatic_upgrades=validated_data.get("but_automatic_upgrades", NULL_VALUE),
             pulp_domain=get_domain_pk(),
         ).first()
+
+    def validate(self, data):
+        data = super().validate(data)
+        if (
+            data.get("but_automatic_upgrades", NULL_VALUE) == "yes"
+            and data.get("not_automatic", NULL_VALUE) != "yes"
+        ):
+            log.warning(
+                _(
+                    "ButAutomaticUpgrades is set to 'yes' while NotAutomatic is not set to "
+                    "'yes'. This combination is invalid according to the Debian repository "
+                    "format."
+                )
+            )
+        return data
 
     def create(self, validated_data):
         architectures = validated_data.pop("architectures", [])
@@ -892,6 +933,8 @@ class ReleaseSerializer(NoArtifactContentSerializer):
             "origin",
             "label",
             "description",
+            "not_automatic",
+            "but_automatic_upgrades",
             "architectures",
             "components",
         )

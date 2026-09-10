@@ -644,6 +644,36 @@ def test_publish_complex_dists(
 
 
 @pytest.mark.parallel
+def test_publish_preserves_backports_apt_priority_metadata(
+    create_publication_and_verify_repo_version,
+    deb_distribution_factory,
+    download_content_unit,
+):
+    """Test that Debian backports apt priority metadata survives sync and publication."""
+    remote_args = {
+        "distributions": DEB_PUBLISH_COMPLEX_UBUNTU_BACKPORTS["distribution"],
+    }
+
+    publication, _, _, _ = create_publication_and_verify_repo_version(
+        remote_args,
+        publication_args=DEB_PUBLICATION_ARGS_ONLY_STRUCTURED,
+        remote_name=DEB_FIXTURE_COMPLEX_REPOSITORY_NAME,
+    )
+
+    distribution = deb_distribution_factory(publication)
+    base_path = distribution.to_dict()["base_path"]
+    release_path = os.path.join(
+        DEB_PUBLISH_COMPLEX_UBUNTU_BACKPORTS["release_file_folder"],
+        "Release",
+    )
+    release_file = download_content_unit(base_path, release_path)
+    release = deb822.Deb822(release_file.decode("utf-8"))
+
+    assert release["NotAutomatic"] == "yes"
+    assert release["ButAutomaticUpgrades"] == "yes"
+
+
+@pytest.mark.parallel
 def test_remove_package_from_repository(
     create_publication_and_verify_repo_version,
     deb_get_content_types,
