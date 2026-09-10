@@ -57,6 +57,21 @@ from pulp_deb.app.package_metadata import calculate_package_metadata_sha256
 log = logging.getLogger(__name__)
 
 
+def validate_no_wildcards(**fields):
+    """Reject '*' as a name, since it is reserved as a selector when modifying repositories.
+
+    Each keyword argument maps a field name onto a single name or a list of names.
+    """
+    message = "This field does not accept the special value '*'!"
+    errors = {
+        name: _(message)
+        for name, values in fields.items()
+        if "*" in ([values] if isinstance(values, str) else values or [])
+    }
+    if errors:
+        raise ValidationError(errors)
+
+
 class YesNoField(Field):
     """
     A serializer field that accepts 'yes' or 'no' as boolean.
@@ -258,6 +273,16 @@ class SinglePackageUploadSerializer(SingleArtifactContentUploadSerializer):
 
     distribution = CharField(help_text="Name of the distribution.", required=False)
     component = CharField(help_text="Name of the component.", required=False)
+
+    def validate(self, data):
+        """
+        Ensure the upload does not create structure content named '*'.
+        """
+        data = super().validate(data)
+        validate_no_wildcards(
+            distribution=data.get("distribution"), component=data.get("component")
+        )
+        return data
 
     @staticmethod
     def _get_or_create_content_and_qs(model, **data):
@@ -830,6 +855,16 @@ class ReleaseSerializer(NoArtifactContentSerializer):
     architectures = ListField(child=CharField(), required=False)
     components = ListField(child=CharField(), required=False)
 
+    def validate(self, data):
+        """
+        Ensure we do not create a Release or ReleaseComponent object named '*'.
+        """
+        data = super().validate(data)
+        validate_no_wildcards(
+            distribution=data.get("distribution"), components=data.get("components")
+        )
+        return data
+
     @staticmethod
     def _get_or_create_content_pk(model, **data):
         content, created = model.objects.get_or_create(**data)
@@ -921,6 +956,7 @@ class ReleaseArchitectureSerializer(NoArtifactContentSerializer):
         if data.get("architecture") == "all":
             message = "This field does not accept the special value 'all'!"
             raise ValidationError({"architecture": _(message)})
+        validate_no_wildcards(distribution=data.get("distribution"))
         return data
 
     def get_unique_together_validators(self):
@@ -953,6 +989,16 @@ class ReleaseComponentSerializer(NoArtifactContentSerializer):
     """
     A Serializer for ReleaseComponent.
     """
+
+    def validate(self, data):
+        """
+        Ensure we do not create a ReleaseComponent object named '*'.
+        """
+        data = super().validate(data)
+        validate_no_wildcards(
+            distribution=data.get("distribution"), component=data.get("component")
+        )
+        return data
 
     def get_unique_together_validators(self):
         """
