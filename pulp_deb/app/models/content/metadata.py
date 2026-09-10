@@ -29,6 +29,8 @@ class Release(Content):
     origin = models.TextField(default=NULL_VALUE)
     label = models.TextField(default=NULL_VALUE)
     description = models.TextField(default=NULL_VALUE)
+    not_automatic = models.BooleanField(default=False)
+    but_automatic_upgrades = models.BooleanField(default=False)
     _pulp_domain = models.ForeignKey("core.Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     repo_key_fields = ("distribution",)
@@ -44,6 +46,8 @@ class Release(Content):
                 "origin",
                 "label",
                 "description",
+                "not_automatic",
+                "but_automatic_upgrades",
                 "_pulp_domain",
             ),
         )
