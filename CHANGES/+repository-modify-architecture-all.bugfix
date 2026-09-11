@@ -1,1 +1,0 @@
-Fixed modifying a repository with an architecture-independent package when distribution or component fields were provided.
