@@ -8,6 +8,14 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.11.1 (2026-09-11) {: #3.11.1 }
+
+#### Bugfixes {: #3.11.1-bugfix }
+
+- Fixed modifying a repository with an architecture-independent package when distribution or component fields were provided.
+
+---
+
 ## 3.11.0 (2026-09-09) {: #3.11.0 }
 
 #### Features {: #3.11.0-feature }
