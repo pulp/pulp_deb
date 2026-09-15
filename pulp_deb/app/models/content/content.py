@@ -26,6 +26,8 @@ class BasePackage(Content):
     Abstract base class for package like content.
     """
 
+    PROTECTED_FROM_RECLAIM = False
+
     MULTIARCH_CHOICES = [
         ("no", "no"),
         ("same", "same"),
@@ -170,6 +172,8 @@ class SourcePackage(Content):
     This model must contain all information that is needed to
     generate the corresponding paragraph in "Souces" indices files.
     """
+
+    PROTECTED_FROM_RECLAIM = False
 
     TYPE = "source_package"
 
