@@ -6,63 +6,65 @@ Label: Ubuntu-backports-like-fixture
 Suite: ragnarok-backports
 Codename: ragnarok
 Version: 18.04
-Date: Thu, 16 Nov 2023 17:44:16 UTC
+Date: Thu, 10 Sep 2026 08:43:03 UTC
 Architectures: armeb ppc64
 Components: asgard jotunheimr
 Description: A fixtures repo with a structure modeled on an ubuntu-backports release.
+NotAutomatic: yes
+ButAutomaticUpgrades: yes
 MD5Sum:
  d41d8cd98f00b204e9800998ecf8427e 0 asgard/binary-armeb/Packages
  7029066c27ac6f5ef18d660d5741979a 20 asgard/binary-armeb/Packages.gz
- 91a03678153f1a1523125d5532eb671c 226 asgard/binary-armeb/Release
- 90d6508547e1093bfd2e09613d291cdf 1632 asgard/binary-ppc64/Packages
- 6bbb5685f6eb0508c39121ffb79c3ead 792 asgard/binary-ppc64/Packages.gz
- cdc557fc9e2909e2ddfa6837092ae663 226 asgard/binary-ppc64/Release
- 2e15c9fb8bcbcd1a5a626ea284aaab7a 501 jotunheimr/binary-armeb/Packages
- d2d2b8b4cf912ca80300f071aaf729ab 373 jotunheimr/binary-armeb/Packages.gz
- 564b455c40049a6a00b82ff5601383e6 230 jotunheimr/binary-armeb/Release
+ 6bc157cc0ccc16b68a0075142570fdc4 270 asgard/binary-armeb/Release
+ e5fccfde4f6ce9d243d2cf82f3da3446 1668 asgard/binary-ppc64/Packages
+ 07f13e4efc55f963ddaa0ce1a5a01459 803 asgard/binary-ppc64/Packages.gz
+ e75411bcf9cf1b91e53c68bacf4a21d0 270 asgard/binary-ppc64/Release
+ 6a9c30d61287350e1ad0fbc971a3637d 513 jotunheimr/binary-armeb/Packages
+ 23f86f54e42e6f10a0381c850f5ff034 379 jotunheimr/binary-armeb/Packages.gz
+ 66e956340d2909006bd28e588c86faa3 274 jotunheimr/binary-armeb/Release
  d41d8cd98f00b204e9800998ecf8427e 0 jotunheimr/binary-ppc64/Packages
  7029066c27ac6f5ef18d660d5741979a 20 jotunheimr/binary-ppc64/Packages.gz
- 0ed8c5ede7755005df8ad552d63d805a 230 jotunheimr/binary-ppc64/Release
+ 57db69de66602094ebeedc52b14e9cc9 274 jotunheimr/binary-ppc64/Release
 SHA1:
  da39a3ee5e6b4b0d3255bfef95601890afd80709 0 asgard/binary-armeb/Packages
  46c6643f07aa7f6bfe7118de926b86defc5087c4 20 asgard/binary-armeb/Packages.gz
- 0cc74a8c384b141e6dbb0e421312c8298dfe57d1 226 asgard/binary-armeb/Release
- e3c8cfec1d0bf7653d653d354d42ab425bf48f57 1632 asgard/binary-ppc64/Packages
- 22dbb9b53d1e728506cd9d40910016058c867469 792 asgard/binary-ppc64/Packages.gz
- d5b453b45a57ca32c0301aab97be791551064deb 226 asgard/binary-ppc64/Release
- d6cb7f6ff0968dad639aeb1819d0f388da25f4ea 501 jotunheimr/binary-armeb/Packages
- fbe36d4d48b391f8cd22a6b1e3d24ac97c5012ae 373 jotunheimr/binary-armeb/Packages.gz
- e66b5f8553bf87f31a3668121e2523b3d0f3b9b6 230 jotunheimr/binary-armeb/Release
+ 44f602825bb5fdef60c7a3e5227391d3331b2fad 270 asgard/binary-armeb/Release
+ f6633cb8560322a6bfce60acc5b5841b12e88a3a 1668 asgard/binary-ppc64/Packages
+ c937dcc4d4dd5ff0743639a5e1d81a074b6dd2eb 803 asgard/binary-ppc64/Packages.gz
+ e4f3d699d08f06d147c82fef2c42a05d70483f06 270 asgard/binary-ppc64/Release
+ 5638ca09c40cae97d34a27768fb4b408cf762657 513 jotunheimr/binary-armeb/Packages
+ c263aebadb4220a68ce579ea7ad9f92068da005d 379 jotunheimr/binary-armeb/Packages.gz
+ 6d6db54fdb5be0b08d8c819716bc45bf8d3708ac 274 jotunheimr/binary-armeb/Release
  da39a3ee5e6b4b0d3255bfef95601890afd80709 0 jotunheimr/binary-ppc64/Packages
  46c6643f07aa7f6bfe7118de926b86defc5087c4 20 jotunheimr/binary-ppc64/Packages.gz
- c1747787f3070815a83e3af1479e15d458e2ae5c 230 jotunheimr/binary-ppc64/Release
+ 2c2cfbb0090ebb28289a1a51d31e6753d91f3a15 274 jotunheimr/binary-ppc64/Release
 SHA256:
  e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 0 asgard/binary-armeb/Packages
  59869db34853933b239f1e2219cf7d431da006aa919635478511fabbfc8849d2 20 asgard/binary-armeb/Packages.gz
- 2bff38bbae66942ddb4699fa2cfb5b05d26ba18649505412d1015f48d7376421 226 asgard/binary-armeb/Release
- 0aca8e7f5269fb91812b940a8eaae1b31d334497f8c89961417fc43e56c22a56 1632 asgard/binary-ppc64/Packages
- e9ef1e70734fb2c34f9380a2a7ebb22e37f7f8807c2c29a31e7693d85c767cc1 792 asgard/binary-ppc64/Packages.gz
- df836a07f4ac2f2afe959d55e588c60fea57c087485c0e34b46a582ceca2e0bf 226 asgard/binary-ppc64/Release
- d27dea2a9ddc79b6f44ce1edf6d1c4b906ecfdf05379a0c15c46da4059c8a9a1 501 jotunheimr/binary-armeb/Packages
- e3cd8031515167b1d378235d50904ff24e21b1630c0f1f85cbec70b7644efc12 373 jotunheimr/binary-armeb/Packages.gz
- 9a3e975f34d655840186f2b5209c6b2c5cd992dd4c83920d035cc87ccc75cef2 230 jotunheimr/binary-armeb/Release
+ 4455cd9a4bbb4ff99be85e9ed4c3dc4eab0ab56c318c7f6fc08d38a6b6440dd4 270 asgard/binary-armeb/Release
+ 123b912b038cf65fd9cab66092c16a764c41267745432fa4aba97ff5c2500063 1668 asgard/binary-ppc64/Packages
+ a6c3f73364c226747892b03eb72d2b21d745d9f7bdbbce83b4d3d61651f442ca 803 asgard/binary-ppc64/Packages.gz
+ 4840e23a3d534da967f7a0b8b73fe78277750be1704ca10a0c423b04556cf791 270 asgard/binary-ppc64/Release
+ 2ffd7a10146b46eaea99af9ffda1d1ae01c038682ea0513db663b482aa4d4f76 513 jotunheimr/binary-armeb/Packages
+ 4b811b5498332ae499dfff5258cd3214365de4791b6fedebf2f352a34ebae9da 379 jotunheimr/binary-armeb/Packages.gz
+ 4607cb1aa40f6bbb73334c069c8af80e1fe97137e0c11d5b2145f765ad8d26fe 274 jotunheimr/binary-armeb/Release
  e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 0 jotunheimr/binary-ppc64/Packages
  59869db34853933b239f1e2219cf7d431da006aa919635478511fabbfc8849d2 20 jotunheimr/binary-ppc64/Packages.gz
- 3287fe1156311a88add7dfd6ae49693ad36bf64995204a38a3b694cdfbb9307d 230 jotunheimr/binary-ppc64/Release
+ e26fc769cd058322414a70cc01204cb09b1b0e0abee6475f305e8588dd410fc5 274 jotunheimr/binary-ppc64/Release
 -----BEGIN PGP SIGNATURE-----
 
-iQJaBAEBCABEFiEEDBqJTruGr64hhCTK3e8wGcLUqM8FAmVWVPEmHGdlbmVyYXRl
-ZC1zaWduaW5nLWtleUBwdWxwcHJvamVjdC5vcmcACgkQ3e8wGcLUqM/2Sg//fBPt
-SKWxON1lTB2Ilz/E9YQY8libwQJb16Z/9WqJi22HzXp+i6USmNyfDAJ0jU1wuz3Y
-sqzcc+xJXX9T+JIvxiJMIfCOqI8hBiI0Cul/WsqUFa1KxpU0mJppLT564NN6aQap
-BUIwMLBDUeuRvwCPw/eFntS9lHRUBybs1BCqY4OUUDmyVQ3YMRiegEyE7vQgF9D5
-vAtk565f0q5jTmPcFzEccSEs1iq8yK9GUARXD5gmTixsbX7CY/odUVJ1+Rixz0IE
-KmZ+uX5JZYQoUTMUMBBPxWRyuUIekTl0OC3DDlNZBtIUMI5GBSSJ8NWzKTb02ZbI
-it5qtNKz/QG2NJuXsyNkPgUxmTbTvSSWmXNKU0accdo+JrCVmQkBNdAsXL6zpQ43
-YncCs5Ar9UMOmZn2nmH+goYsZiogEP+rLQw+0BPgKT8J3woEYyeVIyyw3hNXmT4w
-eUSFoGNQAoQbUpU+IwOAXXLPUK19SXO3uX50FCiRUFkObyec9Uw86WgEnZF+2mRY
-QQHbaTnkRMAHacbJ7D3PIq7siW3s7SKoDDkQugjQLVhQ9WduE1cbpGD/JIoCiF9B
-3WhB1dvDxPjtLn30WdeWi5kzRhD4NRgjUiOEV/QWi5nQkrwopaX6uNfu7ibovskH
-gW4cBhRZ6PhG0Iqdr/mepeSPqGiaKROfewiE5xE=
-=fiF1
+iQJaBAEBCABEFiEEDBqJTruGr64hhCTK3e8wGcLUqM8FAmqibZcmHGdlbmVyYXRl
+ZC1zaWduaW5nLWtleUBwdWxwcHJvamVjdC5vcmcACgkQ3e8wGcLUqM/1yg/+Ni/p
+97tu67O+Ceghw8HTinvD9rdYRjBJYDY3Pf/uB1AKl8QqFIwaojRlyzHGRgV1h+tb
+zMiTcRiAwcH0XpYfurGKsuilLmoxx6szYe0OGkszOJ947NCQDqrLhaMXBfj5O7cB
++MB/4AvhByTPZ2fJSCjiiSmQ457XzN5KUPf/DQa4UjxC16Ss/54qHkTJ4tpLVt84
+/xjapeBcucNHiDd9AiGLhEePTw7mA5V6mMJvvg4x7O6iTuNnWJCJisAnlfGUyrIc
+qHxbNlFcLrGj+dlkHm33QvcRG0GhvTH9FBLbst1UCI25O5AbsYfYyK8EnEaTY3iv
+xbtT2jUAPlKnI/nPY57a5mx5x6QVMrn4Km5pAlIrnT89y4kBFAOJBiJlD+ATVNCr
+NgELG5I9QBkqsHbAVW9DPsPZugwQ1u2oTWPmq6VFHLf2smgD4dktKpS3oWjPtUN1
+f7bj3PWt2lOoFqmd5pMy9EnuDATDf5byne6PmfNIC8eYAHUm+qdJnvZO4a1F2x9F
+Payo/VrcWu0fk2zF3sFwSMZhj/mJRdK5kAjGHm2TBco6kwOnqN3lJEBMoZfyc4kS
+x/YyYmtMUzjhj0rpayyJ9DW//6TIRc+8Y9MTVCJSpvRCvEd1HKoiLmB6wKXTpWuT
+oE/FwPtS7FyzSyt9dvBna5mazDVIDsYbJt1Mp2o=
+=+X9f
 -----END PGP SIGNATURE-----
