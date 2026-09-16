@@ -72,6 +72,7 @@ class AptPublication(Publication, AutoAddObjPermsMixin):
 
     simple = models.BooleanField(default=False)
     structured = models.BooleanField(default=True)
+    no_support_for_architecture_all = models.BooleanField(default=False)
     layout = models.TextField(choices=LAYOUT_CHOICES, default=LAYOUT_TYPES.NESTED_ALPHABETICALLY)
     excluded_package_metadata_fields = ArrayField(models.TextField(), default=list)
     signing_service = models.ForeignKey(
