@@ -1,0 +1,1 @@
+Raised an error when a repository modify request removes packages from a distribution and component that do not exist in the selected repository version.
