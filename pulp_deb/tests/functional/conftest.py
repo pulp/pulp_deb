@@ -539,29 +539,56 @@ def deb_copy_content_domain(apt_copy_api, monitor_task):
     return _deb_copy_content_domain
 
 
-def import_signing_key(key_url, gpg_home):
-    """Import a PGP key into a GPG home directory and trust it.
+def import_signing_key(key_url, home, *, backend="gpg"):
+    """Import a PGP key into a keyring and return metadata.
 
-    Returns ``(gpg, fingerprint, keyid)``.
+    Returns `(gpg_instance_or_none, fingerprint, keyid)`. The first element
+    is a `gnupg.GPG` instance when `backend` is `"gpg"`, or `None` when
+    `backend` is `"sq"`.
     """
-    try:
-        import gnupg
-    except ImportError:
-        pytest.skip("python-gnupg not installed")
-
-    gpg = gnupg.GPG(gnupghome=gpg_home)
-
     response = requests.get(key_url)
     response.raise_for_status()
-    result = gpg.import_keys(response.content)
-    assert result.count >= 1, f"Failed to import key from {key_url}"
 
-    key_info = gpg.list_keys()[0]
-    fingerprint = key_info["fingerprint"]
-    keyid = key_info["keyid"]
-    gpg.trust_keys(fingerprint, "TRUST_ULTIMATE")
+    if backend == "sq":
+        from pysequoia import Cert
 
-    return gpg, fingerprint, keyid
+        def openpgp_key_id(fingerprint):
+            """Return the OpenPGP key ID for a hexadecimal fingerprint.
+
+            OpenPGP v4 key IDs use the low-order 64 bits, while v6 key IDs use the
+            high-order 64 bits. The fingerprint length distinguishes these versions.
+            """
+            return (fingerprint[:16] if len(fingerprint) == 64 else fingerprint[-16:]).upper()
+
+        completed = subprocess.run(
+            ("sq", "--home", str(home), "key", "import"),
+            input=response.content,
+            capture_output=True,
+        )
+        assert completed.returncode == 0, completed.stderr.decode()
+
+        cert = Cert.from_bytes(response.content)
+        fingerprint = cert.fingerprint.upper()
+        keyid = openpgp_key_id(fingerprint)
+
+        return None, fingerprint, keyid
+    else:
+        try:
+            import gnupg
+        except ImportError:
+            pytest.skip("python-gnupg not installed")
+
+        gpg = gnupg.GPG(gnupghome=home)
+
+        result = gpg.import_keys(response.content)
+        assert result.count >= 1, f"Failed to import key from {key_url}"
+
+        key_info = gpg.list_keys()[0]
+        fingerprint = key_info["fingerprint"]
+        keyid = key_info["keyid"]
+        gpg.trust_keys(fingerprint, "TRUST_ULTIMATE")
+
+        return gpg, fingerprint, keyid
 
 
 def create_signing_service(

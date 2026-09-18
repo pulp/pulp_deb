@@ -4,11 +4,27 @@ from random import choice
 from uuid import uuid4
 
 import pytest
+import requests
 
 from pulpcore.client.pulp_deb.exceptions import ApiException
+from pulpcore.pytest_plugin import KEY_V6_ED25519_PUBLIC, KEY_V6_MLDSA65_ED25519_PUBLIC
 
 from pulp_deb.tests.functional.constants import DOWNLOAD_POLICIES
 from pulp_deb.tests.functional.utils import gen_deb_remote_verbose
+
+
+@pytest.mark.parametrize("key_url", [KEY_V6_ED25519_PUBLIC, KEY_V6_MLDSA65_ED25519_PUBLIC])
+def test_create_remote_with_openpgp_gpgkey(
+    apt_remote_api, deb_remote_custom_data_factory, deb_get_fixture_server_url, key_url
+):
+    """Verify that classical and PQC OpenPGP keys can be stored on an AptRemote."""
+    key = requests.get(key_url)
+    key.raise_for_status()
+    remote = deb_remote_custom_data_factory(
+        gen_deb_remote_verbose(deb_get_fixture_server_url()) | {"gpgkey": key.text}
+    )
+
+    assert remote.gpgkey == key.text
 
 
 @pytest.fixture
