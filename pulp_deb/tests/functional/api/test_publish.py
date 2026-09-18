@@ -1,13 +1,18 @@
 import os
 import re
+import shutil
 from random import choice
 
 import pytest
+import requests
 from debian import deb822
 from django.conf import settings
 
 from pulpcore.client.pulp_deb.exceptions import ApiException
+from pulpcore.pytest_plugin import KEY_V6_MLDSA65_ED25519_PRIVATE, KEY_V6_MLDSA65_ED25519_PUBLIC
 
+from pulp_deb.app.models import AptReleaseSigningService
+from pulp_deb.tests.functional.conftest import import_signing_key
 from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_ALT_SINGLE_DIST,
     DEB_FIXTURE_ARCH,
@@ -380,6 +385,34 @@ def test_publish_signing_services(
     # deletion will result in a `django.db.models.deletion.ProtectedError`.
     deb_delete_publication(publication)
     deb_delete_repository(repo)
+
+
+@pytest.mark.skipif(shutil.which("sq") is None, reason="Sequoia sq is required")
+def test_pqc_release_signing_service(tmp_path):
+    """Verify detached and inline Release signatures made with an ML-DSA key."""
+    public_key = requests.get(KEY_V6_MLDSA65_ED25519_PUBLIC)
+    public_key.raise_for_status()
+    home = tmp_path / "sq-home"
+    home.mkdir()
+    _, fingerprint, _ = import_signing_key(KEY_V6_MLDSA65_ED25519_PRIVATE, home, backend="sq")
+    script = tmp_path / "sign.sh"
+    script.write_text(
+        "#!/bin/sh\n"
+        f'sq --home "{home}" sign --signer {fingerprint} '
+        '--signature-file="$PULP_TEMP_WORKING_DIR/Release.gpg" "$1"\n'
+        f'sq --home "{home}" sign --signer {fingerprint} --clear-sign '
+        '--output="$PULP_TEMP_WORKING_DIR/InRelease" "$1"\n'
+        'python -c \'import json, os; print(json.dumps({"signatures": '
+        '{"detached": os.environ["PULP_TEMP_WORKING_DIR"] + "/Release.gpg", '
+        '"inline": os.environ["PULP_TEMP_WORKING_DIR"] + "/InRelease"}}))\'\n'
+    )
+    script.chmod(0o755)
+    AptReleaseSigningService(
+        name="pqc-test",
+        pubkey_fingerprint=fingerprint,
+        public_key=public_key.text,
+        script=str(script),
+    ).validate()
 
 
 @pytest.mark.parallel
