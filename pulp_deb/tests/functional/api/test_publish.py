@@ -3,11 +3,23 @@ import re
 from random import choice
 
 import pytest
+import requests
 from debian import deb822
 from django.conf import settings
 
 from pulpcore.client.pulp_deb.exceptions import ApiException
+from pulpcore.pytest_plugin import (
+    KEY_V6_ED25519_PRIVATE,
+    KEY_V6_ED25519_PUBLIC,
+    KEY_V6_MLDSA65_ED25519_PRIVATE,
+    KEY_V6_MLDSA65_ED25519_PUBLIC,
+)
 
+from pulp_deb.tests.functional.conftest import (
+    create_signing_service,
+    import_signing_key,
+    remove_signing_service,
+)
 from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_ALT_SINGLE_DIST,
     DEB_FIXTURE_ARCH,
@@ -24,6 +36,7 @@ from pulp_deb.tests.functional.constants import (
     DEB_PACKAGE_INDEX_NAME,
     DEB_PACKAGE_NAME,
     DEB_PACKAGE_RELEASE_COMPONENT_NAME,
+    DEB_PQC_SIGNING_SCRIPT_STRING,
     DEB_PUBLICATION_ARGS_ALL,
     DEB_PUBLICATION_ARGS_NESTED_ALPHABETICALLY,
     DEB_PUBLICATION_ARGS_NESTED_BY_BOTH,
@@ -271,7 +284,10 @@ def test_publish_layout(
     apt_distribution_api,
     create_publication_and_verify_repo_version,
     deb_distribution_factory,
+    deb_delete_publication,
+    deb_delete_repository,
     download_content_unit,
+    pulpcore_bindings,
     publication_args,
 ):
     """Test whether a the layout parameter is generating expected package URLs
@@ -381,6 +397,70 @@ def test_publish_signing_services(
     # deletion will result in a `django.db.models.deletion.ProtectedError`.
     deb_delete_publication(publication)
     deb_delete_repository(repo)
+
+
+@pytest.mark.parametrize(
+    "private_key_url, public_key_url",
+    [
+        (KEY_V6_ED25519_PRIVATE, KEY_V6_ED25519_PUBLIC),
+        (KEY_V6_MLDSA65_ED25519_PRIVATE, KEY_V6_MLDSA65_ED25519_PUBLIC),
+    ],
+    ids=["v6-ed25519", "v6-mldsa65-ed25519"],
+)
+def test_release_signing_service(
+    tmp_path,
+    create_publication_and_verify_repo_version,
+    deb_delete_publication,
+    deb_delete_repository,
+    deb_distribution_factory,
+    download_content_unit,
+    pulpcore_bindings,
+    private_key_url,
+    public_key_url,
+):
+    """Verify API-created signing services publish detached and inline signatures."""
+    backend = "sq"
+    home = tmp_path / backend
+    home.mkdir()
+    _, fingerprint, _ = import_signing_key(private_key_url, home, backend=backend)
+    script = tmp_path / "sign.sh"
+    script.write_text(
+        DEB_PQC_SIGNING_SCRIPT_STRING.replace("SQ_HOME", str(home)).replace(
+            "PQC_SIGNER", fingerprint
+        )
+    )
+    public_key = requests.get(public_key_url)
+    public_key.raise_for_status()
+    public_key = public_key.text
+    script.chmod(0o755)
+    service_name = create_signing_service(
+        home,
+        fingerprint,
+        script,
+        service_class="deb:AptReleaseSigningService",
+        backend=backend,
+    )
+    try:
+        service = pulpcore_bindings.SigningServicesApi.list(name=service_name).results[0]
+        publication, repo, _, _ = create_publication_and_verify_repo_version(
+            {"distributions": DEB_FIXTURE_SINGLE_DIST},
+            {"signing_service": service.pulp_href},
+        )
+        distribution = deb_distribution_factory(publication)
+        inrelease = download_content_unit(
+            distribution.to_dict()["base_path"], "dists/ragnarok/InRelease"
+        )
+        assert inrelease.startswith(b"-----BEGIN PGP SIGNED MESSAGE-----")
+        release_gpg = download_content_unit(
+            distribution.to_dict()["base_path"], "dists/ragnarok/Release.gpg"
+        )
+        from pysequoia import Sig
+
+        Sig.from_bytes(release_gpg)
+        deb_delete_publication(publication)
+        deb_delete_repository(repo)
+    finally:
+        remove_signing_service(service_name, service_class="deb:AptReleaseSigningService")
 
 
 @pytest.mark.parallel
