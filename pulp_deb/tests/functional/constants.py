@@ -471,6 +471,17 @@ echo { \
      }
 """
 
+DEB_PQC_SIGNING_SCRIPT_STRING = r"""#!/bin/sh
+
+sq --home "SQ_HOME" sign --signer "PQC_SIGNER" \
+    --signature-file="$PULP_TEMP_WORKING_DIR/Release.gpg" "$1"
+sq --home "SQ_HOME" sign --signer "PQC_SIGNER" --cleartext \
+    --output="$PULP_TEMP_WORKING_DIR/InRelease" "$1"
+python3 -c 'import json, os; print(json.dumps({"signatures": {
+"detached": os.environ["PULP_TEMP_WORKING_DIR"] + "/Release.gpg",
+"inline": os.environ["PULP_TEMP_WORKING_DIR"] + "/InRelease"}}))'
+"""
+
 DEB_PACKAGE_SIGNING_SCRIPT_STRING = r"""#!/usr/bin/env bash
 export GNUPGHOME="HOMEDIRHERE"
 GPG_NAME="${PULP_SIGNING_KEY_FINGERPRINT}"
