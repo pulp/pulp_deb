@@ -646,9 +646,9 @@ class _ReleaseHelper:
             release.codename = distribution.split("/")[0] if distribution != "/" else "flat-repo"
         self.release["Codename"] = release.codename
         self.release["Date"] = datetime.now(tz=timezone.utc).strftime("%a, %d %b %Y %H:%M:%S %z")
+        self.release["Architectures"] = " ".join(architectures)
         if publication.no_support_for_architecture_all:
             self.release["No-Support-for-Architecture-all"] = "Packages"
-        self.release["Architectures"] = " ".join(architectures)
         self.release["Components"] = ""  # Will be set later
         if release.description != NULL_VALUE:
             self.release["Description"] = release.description
