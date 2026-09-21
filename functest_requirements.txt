@@ -6,3 +6,4 @@ trustme~=1.0.0
 proxy.py~=2.4.3
 pytest-timeout
 python-gnupg
+pytest-django
