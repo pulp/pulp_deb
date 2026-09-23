@@ -18,6 +18,7 @@ from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_FLAT_REPOSITORY_NAME,
     DEB_FIXTURE_METADATA_UPDATE_REPOSITORY_NAME,
     DEB_FIXTURE_MISSING_ARCHITECTURE_REPOSITORY_NAME,
+    DEB_FIXTURE_MIXED_REPOSITORY_NAME,
     DEB_FIXTURE_SINGLE_DIST,
     DEB_FIXTURE_VARIANT_REPOSITORY_NAME,
     DEB_PACKAGE_INDEX_NAME,
@@ -851,6 +852,39 @@ def parse_package_index(pkg_idx):
             package
         )
     return packages
+
+
+@pytest.mark.parallel
+def test_publish_architecture_all_package_index(
+    create_publication_and_verify_repo_version,
+    deb_distribution_factory,
+    download_content_unit,
+):
+    """Test that architecture all packages are preserved when publishing."""
+    remote_args = {
+        "distributions": "muspelheim",
+        "components": "nidavellir",
+        "architectures": "amd64",
+    }
+
+    publication, _, _, _ = create_publication_and_verify_repo_version(
+        remote_args=remote_args,
+        publication_args=DEB_PUBLICATION_ARGS_ONLY_STRUCTURED,
+        remote_name=DEB_FIXTURE_MIXED_REPOSITORY_NAME,
+    )
+
+    distribution = deb_distribution_factory(publication)
+    base_path = distribution.to_dict()["base_path"]
+
+    package_index = download_content_unit(
+        base_path,
+        "dists/muspelheim/nidavellir/binary-all/Packages",
+    )
+    packages = list(deb822.Packages.iter_paragraphs(package_index, use_apt_pkg=False))
+
+    assert packages
+    assert {package["Package"] for package in packages} == {"regin"}
+    assert {package["Architecture"] for package in packages} == {"all"}
 
 
 @pytest.mark.parallel
