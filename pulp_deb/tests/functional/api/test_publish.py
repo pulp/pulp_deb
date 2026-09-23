@@ -825,6 +825,89 @@ def parse_package_index(pkg_idx):
 
 
 @pytest.mark.parallel
+def test_publish_architecture_variant_package_indices(
+    create_publication_and_verify_repo_version,
+    deb_distribution_factory,
+    download_content_unit,
+    verify_distribution,
+):
+    """Test whether a repository with architecture variants can be published."""
+    remote_args = {
+        "distributions": "muspelheim",
+        "components": "nidavellir",
+        "architectures": "amd64v3",
+    }
+
+    publication, _, _, _ = create_publication_and_verify_repo_version(
+        remote_args=remote_args,
+        publication_args=DEB_PUBLICATION_ARGS_ONLY_STRUCTURED,
+        remote_name=DEB_FIXTURE_VARIANT_REPOSITORY_NAME,
+    )
+
+    distribution = deb_distribution_factory(publication)
+    verify_distribution(distribution, DEB_PUBLISH_VARIANT)
+
+    base_path = distribution.to_dict()["base_path"]
+    release_file = download_content_unit(base_path, "dists/muspelheim/Release")
+    release = deb822.Deb822(release_file.decode("utf-8"))
+    assert "amd64v3" in release["Architectures"].split()
+
+    package_index = download_content_unit(
+        base_path,
+        "dists/muspelheim/nidavellir/binary-amd64v3/Packages",
+    )
+    packages = list(deb822.Packages.iter_paragraphs(package_index, use_apt_pkg=False))
+    assert packages
+    assert {package["Architecture"] for package in packages} == {"amd64"}
+    assert {package["Architecture-Variant"] for package in packages} == {"amd64v3"}
+
+
+@pytest.mark.parallel
+def test_publish_base_and_architecture_variant_package_indices(
+    create_publication_and_verify_repo_version,
+    deb_distribution_factory,
+    download_content_unit,
+):
+    """Test publishing both base and variant package indices from the same remote."""
+    remote_args = {
+        "distributions": "muspelheim",
+        "components": "nidavellir",
+        "architectures": "amd64 amd64v3",
+    }
+
+    publication, _, _, _ = create_publication_and_verify_repo_version(
+        remote_args=remote_args,
+        publication_args=DEB_PUBLICATION_ARGS_ONLY_STRUCTURED,
+        remote_name=DEB_FIXTURE_VARIANT_REPOSITORY_NAME,
+    )
+
+    distribution = deb_distribution_factory(publication)
+    base_path = distribution.to_dict()["base_path"]
+
+    release_file = download_content_unit(base_path, "dists/muspelheim/Release")
+    release = deb822.Deb822(release_file.decode("utf-8"))
+
+    assert "amd64" in release["Architectures"].split()
+    assert "amd64v3" in release["Architectures"].split()
+
+    amd64_index = download_content_unit(
+        base_path,
+        "dists/muspelheim/nidavellir/binary-amd64/Packages",
+    )
+    amd64_packages = list(deb822.Packages.iter_paragraphs(amd64_index, use_apt_pkg=False))
+    assert amd64_packages
+
+    amd64v3_index = download_content_unit(
+        base_path,
+        "dists/muspelheim/nidavellir/binary-amd64v3/Packages",
+    )
+    amd64v3_packages = list(deb822.Packages.iter_paragraphs(amd64v3_index, use_apt_pkg=False))
+    assert amd64v3_packages
+    assert {package["Architecture"] for package in amd64v3_packages} == {"amd64"}
+    assert {package["Architecture-Variant"] for package in amd64v3_packages} == {"amd64v3"}
+
+
+@pytest.mark.parallel
 def test_publish_no_support_for_architecture_all(
     create_publication_and_verify_repo_version,
     deb_distribution_factory,
@@ -907,86 +990,3 @@ def test_publish_architecture_all_default_format(
         "dists/muspelheim/asgard/binary-amd64/Packages",
     )
     assert set(parse_package_index(package_index)) == {"baldr-1.0-amd64"}
-
-
-@pytest.mark.parallel
-def test_publish_architecture_variant_package_indices(
-    create_publication_and_verify_repo_version,
-    deb_distribution_factory,
-    download_content_unit,
-    verify_distribution,
-):
-    """Test whether a repository with architecture variants can be published."""
-    remote_args = {
-        "distributions": "muspelheim",
-        "components": "nidavellir",
-        "architectures": "amd64v3",
-    }
-
-    publication, _, _, _ = create_publication_and_verify_repo_version(
-        remote_args=remote_args,
-        publication_args=DEB_PUBLICATION_ARGS_ONLY_STRUCTURED,
-        remote_name=DEB_FIXTURE_VARIANT_REPOSITORY_NAME,
-    )
-
-    distribution = deb_distribution_factory(publication)
-    verify_distribution(distribution, DEB_PUBLISH_VARIANT)
-
-    base_path = distribution.to_dict()["base_path"]
-    release_file = download_content_unit(base_path, "dists/muspelheim/Release")
-    release = deb822.Deb822(release_file.decode("utf-8"))
-    assert "amd64v3" in release["Architectures"].split()
-
-    package_index = download_content_unit(
-        base_path,
-        "dists/muspelheim/nidavellir/binary-amd64v3/Packages",
-    )
-    packages = list(deb822.Packages.iter_paragraphs(package_index, use_apt_pkg=False))
-    assert packages
-    assert {package["Architecture"] for package in packages} == {"amd64"}
-    assert {package["Architecture-Variant"] for package in packages} == {"amd64v3"}
-
-
-@pytest.mark.parallel
-def test_publish_base_and_architecture_variant_package_indices(
-    create_publication_and_verify_repo_version,
-    deb_distribution_factory,
-    download_content_unit,
-):
-    """Test publishing both base and variant package indices from the same remote."""
-    remote_args = {
-        "distributions": "muspelheim",
-        "components": "nidavellir",
-        "architectures": "amd64 amd64v3",
-    }
-
-    publication, _, _, _ = create_publication_and_verify_repo_version(
-        remote_args=remote_args,
-        publication_args=DEB_PUBLICATION_ARGS_ONLY_STRUCTURED,
-        remote_name=DEB_FIXTURE_VARIANT_REPOSITORY_NAME,
-    )
-
-    distribution = deb_distribution_factory(publication)
-    base_path = distribution.to_dict()["base_path"]
-
-    release_file = download_content_unit(base_path, "dists/muspelheim/Release")
-    release = deb822.Deb822(release_file.decode("utf-8"))
-
-    assert "amd64" in release["Architectures"].split()
-    assert "amd64v3" in release["Architectures"].split()
-
-    amd64_index = download_content_unit(
-        base_path,
-        "dists/muspelheim/nidavellir/binary-amd64/Packages",
-    )
-    amd64_packages = list(deb822.Packages.iter_paragraphs(amd64_index, use_apt_pkg=False))
-    assert amd64_packages
-
-    amd64v3_index = download_content_unit(
-        base_path,
-        "dists/muspelheim/nidavellir/binary-amd64v3/Packages",
-    )
-    amd64v3_packages = list(deb822.Packages.iter_paragraphs(amd64v3_index, use_apt_pkg=False))
-    assert amd64v3_packages
-    assert {package["Architecture"] for package in amd64v3_packages} == {"amd64"}
-    assert {package["Architecture-Variant"] for package in amd64v3_packages} == {"amd64v3"}
