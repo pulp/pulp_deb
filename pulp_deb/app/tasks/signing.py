@@ -25,6 +25,7 @@ from pulp_deb.app.constants import (
     DEFAULT_COMPONENT,
     DEFAULT_DISTRIBUTION,
 )
+from pulp_deb.app.exceptions import ReleaseComponentDoesNotExist
 from pulp_deb.app.models import (
     AptRepository,
     Package,
@@ -70,6 +71,16 @@ def _prepare_package_removals(repo, remove_content_units, base_version_pk, distr
         (SourcePackage, SourcePackageReleaseComponent, "source_package"),
     ):
         units = model.objects.filter(pk__in=remove_content_units)
+        if (
+            scoped
+            and units.exists()
+            and not ReleaseComponent.objects.filter(
+                pk__in=repository_version.content,
+                distribution=distribution,
+                component=component,
+            ).exists()
+        ):
+            raise ReleaseComponentDoesNotExist(distribution, component)
         relationships = relationship_model.objects.filter(
             **{
                 f"{relationship_field}__in": units,
