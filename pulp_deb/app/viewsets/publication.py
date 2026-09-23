@@ -211,6 +211,9 @@ class AptPublicationViewSet(PublicationViewSet, RolesMixin):
         repository_version = serializer.validated_data.get("repository_version")
         simple = serializer.validated_data.get("simple")
         structured = serializer.validated_data.get("structured")
+        no_support_for_architecture_all = serializer.validated_data.get(
+            "no_support_for_architecture_all"
+        )
         checkpoint = serializer.validated_data.get("checkpoint")
         signing_service = serializer.validated_data.get("signing_service")
         publish_upstream_release_fields = serializer.validated_data.get(
@@ -226,6 +229,7 @@ class AptPublicationViewSet(PublicationViewSet, RolesMixin):
             "repository_version_pk": repository_version.pk,
             "simple": simple,
             "structured": structured,
+            "no_support_for_architecture_all": no_support_for_architecture_all,
             "signing_service_pk": getattr(signing_service, "pk", None),
             "publish_upstream_release_fields": publish_upstream_release_fields,
             "publish_legacy_release_files": publish_legacy_release_files,
