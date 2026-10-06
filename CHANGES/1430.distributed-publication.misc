@@ -1,0 +1,3 @@
+Pulp Deb now is guaranteed to use pulpcore's distributed-publication tracking.
+This change deactivates deb's DistributedPublication code and does the data migration.
+Table deletion should be done in a future release do enable zero-downtime upgrades.
