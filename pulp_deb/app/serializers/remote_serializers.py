@@ -57,6 +57,8 @@ class AptRemoteSerializer(RemoteSerializer):
 
     sync_installer = BooleanField(help_text="Sync installer files", required=False)
 
+    sync_dep11 = BooleanField(help_text="Sync dep11 metadata files", required=False)
+
     gpgkey = CharField(
         help_text="Gpg public key to verify origin releases against",
         required=False,
@@ -100,6 +102,7 @@ class AptRemoteSerializer(RemoteSerializer):
             "sync_sources",
             "sync_udebs",
             "sync_installer",
+            "sync_dep11",
             "gpgkey",
             "ignore_missing_package_indices",
             "excluded_package_metadata_fields",
