@@ -591,7 +591,7 @@ class DebFirstStage(Stage):
             )
             if previous_release_file.artifact_set_sha256 == release_file.artifact_set_sha256:
                 await _readd_previous_package_indices(
-                    self.previous_repo_version, self.new_version, stored_distribution
+                    self.previous_repo_version, self.new_version, release_file
                 )
                 message = 'ReleaseFile has not changed for distribution="{}". Skipping.'
                 log.info(_(message).format(distribution))
@@ -921,7 +921,12 @@ class DebFirstStage(Stage):
             previous_package_index = await _get_previous_package_index(
                 self.previous_repo_version, relative_path
             )
-            if previous_package_index.artifact_set_sha256 == package_index.artifact_set_sha256:
+            # The previous version may lack this PackageIndex, for example if the index is new
+            # upstream. Then there is nothing to compare against.
+            if (
+                previous_package_index
+                and previous_package_index.artifact_set_sha256 == package_index.artifact_set_sha256
+            ):
                 message = 'PackageIndex has not changed for relative_path="{}". Skipped.'
                 log.info(_(message).format(relative_path))
                 async with ProgressReport(
@@ -1249,16 +1254,20 @@ def _get_content_artifact_file(content_artifact):
 
 
 @sync_to_async
-def _readd_previous_package_indices(previous_version, new_version, distribution):
+def _readd_previous_package_indices(previous_version, new_version, release_file):
+    # Match on the directory of the Release file, not on the distribution name: a flat repo is
+    # stored as "flat-repo", which is not part of its index paths, and a name like "jammy" is also
+    # a substring of "jammy-updates".
+    release_base_path = os.path.dirname(release_file.relative_path)
+    if release_base_path:
+        path_filter = {"relative_path__startswith": f"{release_base_path}/"}
+    else:
+        path_filter = {"relative_path__regex": r"^[^/]+$"}
     new_version.add_content(
-        previous_version.get_content(
-            PackageIndex.objects.filter(relative_path__contains=distribution)
-        )
+        previous_version.get_content(PackageIndex.objects.filter(**path_filter))
     )
     new_version.add_content(
-        previous_version.get_content(
-            InstallerFileIndex.objects.filter(relative_path__contains=distribution)
-        )
+        previous_version.get_content(InstallerFileIndex.objects.filter(**path_filter))
     )
 
 

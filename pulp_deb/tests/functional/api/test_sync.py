@@ -10,6 +10,7 @@ from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_ARCH_UPDATE,
     DEB_FIXTURE_COMPONENT,
     DEB_FIXTURE_COMPONENT_UPDATE,
+    DEB_FIXTURE_FLAT_REPOSITORY_NAME,
     DEB_FIXTURE_INVALID_REPOSITORY_NAME,
     DEB_FIXTURE_METADATA_UPDATE_REPOSITORY_NAME,
     DEB_FIXTURE_SINGLE_DIST,
@@ -464,6 +465,21 @@ def test_sync_optimize_with_mirror_enabled(deb_init_and_sync):
     )
     assert repo.latest_version_href.endswith("/1/")
     assert is_sync_skipped(task, DEB_REPORT_CODE_SKIP_COMPLETE)
+
+
+@pytest.mark.parallel
+def test_sync_optimize_flat_repo_keeps_package_index(deb_init_and_sync, apt_package_indices_api):
+    """Test that an unchanged optimized resync of a flat repo keeps its package index."""
+    remote_args = {"distributions": "/"}
+    repo, remote = deb_init_and_sync(url=DEB_FIXTURE_FLAT_REPOSITORY_NAME, remote_args=remote_args)
+    repo_v1_href = repo.latest_version_href
+    assert apt_package_indices_api.list(repository_version=repo_v1_href).count > 0
+
+    repo, _, task = deb_init_and_sync(repository=repo, remote=remote, return_task=True)
+
+    # Before the fix, the resync created a new version without the package index.
+    assert is_sync_skipped(task, DEB_REPORT_CODE_SKIP_RELEASE)
+    assert repo.latest_version_href == repo_v1_href
 
 
 @pytest.mark.skipif(settings.DOMAIN_ENABLED, reason="Domain produces different results.")
