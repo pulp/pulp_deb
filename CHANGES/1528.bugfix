@@ -1,0 +1,1 @@
+Fixed synchronization of APT repositories whose Release files do not contain SHA256 checksums.

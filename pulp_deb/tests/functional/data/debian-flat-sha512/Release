@@ -1,0 +1,8 @@
+Suite: mythology
+Codename: ragnarok
+Architectures: ppc64
+Components: asgard
+Date: Thu, 16 Nov 2023 17:44:35 +0000
+SHA512:
+ 13c3533ee333f02aa984b220aa3a0e47097fd0408627b4eb36133e6daa9e7e74b636278b8bdf232098cfda740fcbf66e26d5d7fe90e0d3b9e595360d60ae71c2             1580 Packages
+ 052ad852fca047fbb424885ca90b4ecc132cf9a92cf4f55a0ce80c547f94c545332a66df03fcd5e63d7d3f1e52350b71665228d83a617c39dc3a9f3db608ac5d              779 Packages.gz
