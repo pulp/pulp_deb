@@ -6,6 +6,8 @@ from pulp_deb.app.tasks.synchronizing import (
     _filter_split_architectures,
     _filter_split_components,
     _get_artifact_set_sha256,
+    _get_uncompressed_index_artifact,
+    _init_uncompressed_index_artifact,
     filter_arch_tokens,
 )
 
@@ -49,6 +51,48 @@ class TestArtifactSetSha256Generation(TestCase):
         new_artifact_list = ["Something.new", "Packages", "Packages.xz", "Release"]
         self.assertEqual(
             _get_artifact_set_sha256(self.d_content, new_artifact_list), self.expected_hash
+        )
+
+
+class TestUncompressedIndexArtifactHelpers(TestCase):
+    """Tests helpers for identifying and creating uncompressed index artifacts."""
+
+    def test_get_uncompressed_index_artifact_by_relative_path(self):
+        compressed = mock.Mock(relative_path="dists/stable/main/binary-amd64/Packages.gz")
+        uncompressed = mock.Mock(relative_path="dists/stable/main/binary-amd64/Packages")
+
+        result = _get_uncompressed_index_artifact(
+            [compressed, uncompressed], "dists/stable/main/binary-amd64/Packages"
+        )
+
+        self.assertIs(result, uncompressed)
+
+    def test_get_uncompressed_index_artifact_missing(self):
+        compressed = mock.Mock(relative_path="Packages.gz")
+
+        self.assertIsNone(_get_uncompressed_index_artifact([compressed], "Packages"))
+
+    @mock.patch("pulp_deb.app.tasks.synchronizing.Artifact.init_and_validate")
+    def test_init_uncompressed_index_artifact_without_sha256(self, init_and_validate):
+        expected_artifact = mock.Mock()
+        init_and_validate.return_value = expected_artifact
+
+        result = _init_uncompressed_index_artifact("/tmp/Packages", "")
+
+        self.assertIs(result, expected_artifact)
+        init_and_validate.assert_called_once_with("/tmp/Packages")
+
+    @mock.patch("pulp_deb.app.tasks.synchronizing.Artifact.init_and_validate")
+    def test_init_uncompressed_index_artifact_with_sha256(self, init_and_validate):
+        expected_artifact = mock.Mock()
+        init_and_validate.return_value = expected_artifact
+        expected_sha256 = "a" * 64
+
+        result = _init_uncompressed_index_artifact("/tmp/Packages", expected_sha256)
+
+        self.assertIs(result, expected_artifact)
+        init_and_validate.assert_called_once_with(
+            "/tmp/Packages", expected_digests={"sha256": expected_sha256}
         )
 
 

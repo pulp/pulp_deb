@@ -426,18 +426,21 @@ class DebUpdatePackageIndexAttributes(Stage):  # TODO: Needs a new name
                         d_content.resolve()
                         continue
                     content = d_content.content
-                    if not [
-                        da for da in d_content.d_artifacts if da.artifact.sha256 == content.sha256
-                    ]:
-                        # No main_artifact found, uncompress one
+                    main_d_artifact = _get_uncompressed_index_artifact(
+                        d_content.d_artifacts, content.relative_path
+                    )
+                    if main_d_artifact:
+                        # Release file may omit SHA256 but pulp calculates it during download
+                        content.sha256 = main_d_artifact.artifact.sha256
+                    else:
                         relative_dir = os.path.dirname(d_content.content.relative_path)
                         filename = _uncompress_artifact(d_content.d_artifacts, relative_dir)
 
                         try:
+                            artifact = _init_uncompressed_index_artifact(filename, content.sha256)
+                            content.sha256 = artifact.sha256
                             da = DeclarativeArtifact(
-                                artifact=Artifact.init_and_validate(
-                                    filename, expected_digests={"sha256": content.sha256}
-                                ),
+                                artifact=artifact,
                                 url=filename,
                                 relative_path=content.relative_path,
                                 remote=d_content.d_artifacts[0].remote,
@@ -453,6 +456,21 @@ class DebUpdatePackageIndexAttributes(Stage):  # TODO: Needs a new name
                     )
                     await pb.aincrement()
                 await self.put(d_content)
+
+
+def _get_uncompressed_index_artifact(d_artifacts, relative_path):
+    """Return the uncompressed Packages declarative artifact if present"""
+    return next(
+        (d_artifact for d_artifact in d_artifacts if d_artifact.relative_path == relative_path),
+        None,
+    )
+
+
+def _init_uncompressed_index_artifact(filename, expected_sha256):
+    """Create an artifact and validating its SHA256 when available"""
+    if expected_sha256:
+        return Artifact.init_and_validate(filename, expected_digests={"sha256": expected_sha256})
+    return Artifact.init_and_validate(filename)
 
 
 def _uncompress_artifact(d_artifacts, relative_dir):
@@ -897,10 +915,12 @@ class DebFirstStage(Stage):
             return
         relative_path = os.path.join(package_index_dir, "Packages")
         log.info(_('Creating PackageIndex unit with relative_path="{}".').format(relative_path))
+        main_d_artifact = _get_uncompressed_index_artifact(d_artifacts, relative_path)
         content_unit = PackageIndex(
             component=release_component.component,
             architecture=index_architecture,
-            sha256=d_artifacts[0].artifact.sha256,
+            # Use the uncompressed index SHA256 if available.
+            sha256=main_d_artifact.artifact.sha256 if main_d_artifact else "",
             relative_path=relative_path,
         )
         package_index = await self._create_unit(

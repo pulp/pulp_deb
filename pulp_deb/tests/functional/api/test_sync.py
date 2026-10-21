@@ -10,6 +10,7 @@ from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_ARCH_UPDATE,
     DEB_FIXTURE_COMPONENT,
     DEB_FIXTURE_COMPONENT_UPDATE,
+    DEB_FIXTURE_FLAT_SHA512_REPOSITORY_NAME,
     DEB_FIXTURE_INVALID_REPOSITORY_NAME,
     DEB_FIXTURE_METADATA_UPDATE_REPOSITORY_NAME,
     DEB_FIXTURE_SINGLE_DIST,
@@ -19,6 +20,7 @@ from pulp_deb.tests.functional.constants import (
     DEB_FIXTURE_VARIANT_REPOSITORY_NAME,
     DEB_INSTALLER_FIXTURE_SUMMARY,
     DEB_INSTALLER_SOURCE_FIXTURE_SUMMARY,
+    DEB_PACKAGE_INDEX_NAME,
     DEB_PACKAGE_NAME,
     DEB_PACKAGE_RELEASE_COMPONENT_NAME,
     DEB_RELEASE_ARCHITECTURE_NAME,
@@ -73,6 +75,20 @@ def test_sync(
 
     # Verify that the repo content still matches the summary
     assert get_counts_from_content_summary(summary.present) == fixture_summary
+
+
+@pytest.mark.parallel
+def test_sync_flat_repo_with_sha512_only_release(deb_init_and_sync, deb_get_content_summary):
+    """Sync a flat repository whose Release file advertises SHA512 but no SHA256."""
+    repo, _ = deb_init_and_sync(
+        url=DEB_FIXTURE_FLAT_SHA512_REPOSITORY_NAME,
+        remote_args={"distributions": "/", "policy": "immediate"},
+    )
+
+    counts = get_counts_from_content_summary(deb_get_content_summary(repo).present)
+
+    assert counts[DEB_PACKAGE_INDEX_NAME] == 1
+    assert counts[DEB_PACKAGE_NAME] == 3
 
 
 @pytest.mark.skip("Skip - ignore_missing_package_indices sync parameter does currently not work")
