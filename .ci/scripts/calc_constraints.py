@@ -4,6 +4,15 @@
 # './plugin-template --github pulp_deb' to update this file.
 #
 # For more info visit https://github.com/pulp/plugin_template
+#!/usr/bin/env python
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#     "packaging>=26.0,<27",
+#     "pyyaml>=6.0.3,<6.1",
+#     "tomli;python_version<'3.11'",
+# ]
+# ///
 
 import argparse
 import fileinput
