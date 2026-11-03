@@ -17,6 +17,7 @@ class AptRemote(Remote, AutoAddObjPermsMixin):
     sync_sources = models.BooleanField(default=False)
     sync_udebs = models.BooleanField(default=False)
     sync_installer = models.BooleanField(default=False)
+    sync_dep11 = models.BooleanField(default=False)
     gpgkey = models.TextField(null=True)
     ignore_missing_package_indices = models.BooleanField(default=False)
     excluded_package_metadata_fields = ArrayField(models.TextField(), default=list)

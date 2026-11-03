@@ -1,0 +1,1 @@
+Added optional support for syncing DEP11 metadata files if available in the source repo.
