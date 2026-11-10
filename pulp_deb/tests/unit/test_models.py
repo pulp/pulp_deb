@@ -1,7 +1,9 @@
+import uuid
+
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
-from pulpcore.plugin.models import Artifact, ContentArtifact
+from pulpcore.plugin.models import Artifact, ContentArtifact, RepositoryVersion
 
 from pulp_deb.app.constants import LAYOUT_TYPES
 from pulp_deb.app.models import AptRepository, Package, Release
@@ -138,3 +140,37 @@ class TestRepositoryFunctions(TestCase):
             handle_duplicate_releases(version)
             self.assertEqual(1, version.content.count())
             self.assertEqual(rel1.pk, version.content[0].pk)
+
+    def test_handle_duplicate_release_over_postgres_parameter_limit(self):
+        """Test release handling when repository content exceeds postgres parameter limit."""
+        repo = AptRepository.objects.create(name=f"large-copy-{uuid.uuid4()}")
+        old_release = Release.objects.create(distribution="old-dist")
+        new_release = Release.objects.create(distribution="new-dist")
+
+        with repo.new_version() as base_version:
+            base_version.add_content(Release.objects.filter(pk=old_release.pk))
+
+        # Create an incomplete version to test release handling directly
+        new_version = repo.new_version(base_version=base_version)
+        new_version.add_content(Release.objects.filter(pk=new_release.pk))
+
+        # Exceed the parameter limit across both repository versions
+        padding = [uuid.UUID(int=i + 1) for i in range(32_767)]
+        base_version.content_ids = [old_release.pk, *padding]
+        new_version.content_ids = [old_release.pk, new_release.pk, *padding]
+
+        self.assertGreater(len(base_version.content_ids) + len(new_version.content_ids), 65_535)
+
+        # Persist the arrays for database-side queries
+        RepositoryVersion.objects.filter(pk=base_version.pk).update(
+            content_ids=base_version.content_ids
+        )
+        RepositoryVersion.objects.filter(pk=new_version.pk).update(
+            content_ids=new_version.content_ids
+        )
+
+        handle_duplicate_releases(new_version)
+        self.assertCountEqual(
+            new_version.content.filter(pulp_type="deb.release").values_list("pk", flat=True),
+            [old_release.pk, new_release.pk],
+        )
