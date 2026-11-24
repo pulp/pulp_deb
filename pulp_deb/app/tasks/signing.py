@@ -29,6 +29,7 @@ from pulp_deb.app.models import (
     AptRepository,
     Package,
     PackageReleaseComponent,
+    Release,
     ReleaseArchitecture,
     ReleaseComponent,
     SourcePackage,
@@ -42,6 +43,37 @@ from pulp_deb.app.models.signing_service import (
 log = logging.getLogger(__name__)
 
 
+def _filter_by_scope(queryset, distribution, component, prefix=""):
+    """Narrow a queryset to a distribution/component, where "*" matches every value."""
+    if distribution != "*":
+        queryset = queryset.filter(**{f"{prefix}distribution": distribution})
+    if component != "*":
+        queryset = queryset.filter(**{f"{prefix}component": component})
+    return queryset
+
+
+def _prepare_release_removals(repository_version, remove_content_units, distribution, component):
+    """Expand a scoped wildcard removal to the release metadata it covers.
+
+    Emptying a single component drops only that ReleaseComponent, while emptying a whole
+    distribution ("*" component) also drops its Release and ReleaseArchitectures.
+    """
+    release_components = _filter_by_scope(
+        ReleaseComponent.objects.filter(pk__in=repository_version.content),
+        distribution,
+        component,
+    )
+    remove_content_units.extend(str(pk) for pk in release_components.values_list("pk", flat=True))
+    if component != "*":
+        return
+
+    for model in (Release, ReleaseArchitecture):
+        units = model.objects.filter(pk__in=repository_version.content)
+        if distribution != "*":
+            units = units.filter(distribution=distribution)
+        remove_content_units.extend(str(pk) for pk in units.values_list("pk", flat=True))
+
+
 def _prepare_package_removals(repo, remove_content_units, base_version_pk, distribution, component):
     """Expand the removal list to include the release component relationships of each package.
 
@@ -49,9 +81,16 @@ def _prepare_package_removals(repo, remove_content_units, base_version_pk, distr
     SourcePackageReleaseComponent links. When a distribution/component is given, the removal is
     scoped to that component: a package is only removed from the repository if the scope held its
     last relationship, so packages linked elsewhere or not linked at all are kept.
+
+    A "*" removal names every package in scope rather than an explicit list, and additionally
+    removes the release metadata that scope covers.
     """
-    # "*" removes all content, so there is nothing to resolve here.
-    if not remove_content_units or "*" in remove_content_units:
+    if not remove_content_units:
+        return
+
+    wildcard_removal = "*" in remove_content_units
+    # An unscoped wildcard removes all repository content through pulpcore.
+    if wildcard_removal and distribution in (None, "*") and component in (None, "*"):
         return
 
     repository_version = (
@@ -64,23 +103,35 @@ def _prepare_package_removals(repo, remove_content_units, base_version_pk, distr
     if scoped:
         distribution = distribution or DEFAULT_DISTRIBUTION
         component = component or DEFAULT_COMPONENT
+    if wildcard_removal:
+        remove_content_units.clear()
 
     for model, relationship_model, relationship_field in (
         (Package, PackageReleaseComponent, "package"),
         (SourcePackage, SourcePackageReleaseComponent, "source_package"),
     ):
-        units = model.objects.filter(pk__in=remove_content_units)
-        relationships = relationship_model.objects.filter(
-            **{
-                f"{relationship_field}__in": units,
-                "pk__in": repository_version.content,
-            }
-        )
-        if scoped:
-            scoped_relationships = relationships.filter(
-                release_component__distribution=distribution,
-                release_component__component=component,
+        if wildcard_removal:
+            relationships = relationship_model.objects.filter(pk__in=repository_version.content)
+            scoped_relationships = _filter_by_scope(
+                relationships, distribution, component, "release_component__"
             )
+            units = model.objects.filter(
+                pk__in=scoped_relationships.values_list(f"{relationship_field}_id", flat=True)
+            )
+            remove_content_units.extend(str(pk) for pk in units.values_list("pk", flat=True))
+        else:
+            units = model.objects.filter(pk__in=remove_content_units)
+            relationships = relationship_model.objects.filter(
+                **{
+                    f"{relationship_field}__in": units,
+                    "pk__in": repository_version.content,
+                }
+            )
+            if scoped:
+                scoped_relationships = _filter_by_scope(
+                    relationships, distribution, component, "release_component__"
+                )
+        if scoped:
             # Relationships named in the request are removed alongside the scoped ones.
             removed_relationship_ids = set(
                 relationship_model.objects.filter(pk__in=remove_content_units).values_list(
@@ -101,6 +152,9 @@ def _prepare_package_removals(repo, remove_content_units, base_version_pk, distr
             ]
             relationships = scoped_relationships
         remove_content_units.extend(str(pk) for pk in relationships.values_list("pk", flat=True))
+
+    if wildcard_removal:
+        _prepare_release_removals(repository_version, remove_content_units, distribution, component)
 
 
 def _prepare_package_additions(add_content_units, distribution, component):

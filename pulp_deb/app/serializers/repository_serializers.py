@@ -25,6 +25,7 @@ from pulp_deb.app.models import (
     AptRepositoryReleaseServiceOverride,
 )
 from pulp_deb.app.schema import COPY_CONFIG_SCHEMA
+from pulp_deb.app.serializers.content_serializers import validate_no_wildcards
 
 
 class AptRepositoryAddRemoveContentSerializer(RepositoryAddRemoveContentSerializer):
@@ -32,7 +33,10 @@ class AptRepositoryAddRemoveContentSerializer(RepositoryAddRemoveContentSerializ
         help_text=_(
             "Name of the distribution any packages from add_content_units or remove_content_units "
             "should be added to or removed from. Defaults to DEFAULT_DISTRIBUTION if only a "
-            "component is provided."
+            "component is provided. When remove_content_units is ['*'], a distribution limits "
+            "the removal to packages in that distribution, along with its Release and "
+            "ReleaseArchitectures. Set both distribution and component to '*' to remove all "
+            "content units from the repository."
         ),
         required=False,
     )
@@ -40,10 +44,24 @@ class AptRepositoryAddRemoveContentSerializer(RepositoryAddRemoveContentSerializ
         help_text=_(
             "Name of the component any packages from add_content_units or remove_content_units "
             "should be added to or removed from. Defaults to DEFAULT_COMPONENT if only a "
-            "distribution is provided.."
+            "distribution is provided. When remove_content_units is ['*'], a component limits "
+            "the removal to packages in that component, along with its ReleaseComponent. Set "
+            "component to '*' to remove packages from every component in the selected "
+            "distribution."
         ),
         required=False,
     )
+
+    def validate(self, data):
+        """
+        Ensure adding content does not create structure content named '*'.
+        """
+        data = super().validate(data)
+        if data.get("add_content_units"):
+            validate_no_wildcards(
+                distribution=data.get("distribution"), component=data.get("component")
+            )
+        return data
 
     class Meta(RepositoryAddRemoveContentSerializer.Meta):
         fields = RepositoryAddRemoveContentSerializer.Meta.fields + ["distribution", "component"]
