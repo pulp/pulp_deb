@@ -34,6 +34,24 @@ An example `base_url` could be:
 http://my-pulp-instance.com:5001/pulp/content/my-repository/
 ```
 
+## Compatibility with APT Clients Before 1.1
+
+APT clients before version 1.1 do not download the `binary-all/Packages` index.
+To make `Architecture: all` packages available to these clients, create the publication with
+`no_support_for_architecture_all` enabled:
+
+```bash
+pulp deb publication create \
+  --repository=${NAME} \
+  --no-support-for-architecture-all
+```
+
+This publishes `Architecture: all` packages in every architecture-specific `Packages` index in
+addition to the `binary-all` index. The generated `Release` file advertises the repository format
+using `No-Support-for-Architecture-all: Packages`.
+
+The option defaults to disabled, so existing publication behavior remains unchanged.
+
 
 
 ## Metadata Signing

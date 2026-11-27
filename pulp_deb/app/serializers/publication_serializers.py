@@ -38,6 +38,14 @@ class AptPublicationSerializer(PublicationSerializer):
         default=False,
     )
     structured = BooleanField(help_text="Activate structured publishing mode.", default=True)
+    no_support_for_architecture_all = BooleanField(
+        help_text=(
+            "Publish Architecture: all packages in every architecture-specific Packages index "
+            "in addition to the binary-all index, and advertise this repository format in "
+            "Release files."
+        ),
+        default=False,
+    )
     publish_upstream_release_fields = BooleanField(help_text="", required=False)
     checkpoint = serializers.BooleanField(required=False)
     layout = serializers.ChoiceField(
@@ -82,6 +90,7 @@ class AptPublicationSerializer(PublicationSerializer):
         fields = PublicationSerializer.Meta.fields + (
             "simple",
             "structured",
+            "no_support_for_architecture_all",
             "checkpoint",
             "signing_service",
             "publish_upstream_release_fields",
